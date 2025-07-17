@@ -1,0 +1,84 @@
+#!/data/data/com.termux/files/usr/bin/env python
+
+import sys
+import json
+from eth_keys import keys
+from eth_utils import to_checksum_address
+
+PRIVATE_KEY_HEX = "36f11568eff3d86a86fb863a0c5ab81b7bef921e7dc5d5283b7c27dc4ed2e759"
+
+def sign_msg(msg, as_json=False, save_to_file=False):
+    priv = keys.PrivateKey(bytes.fromhex(PRIVATE_KEY_HEX))
+    signature = priv.sign_msg(msg.encode())
+    address = to_checksum_address(priv.public_key.to_address())
+
+    output = {
+        "message": msg,
+        "address": address,
+        "signature": str(signature),
+        "v": signature.v,
+        "r": hex(signature.r),
+        "s": hex(signature.s)
+    }
+
+    if as_json:
+        print(json.dumps(output, indent=2))
+    else:
+        print("Address:", address)
+        print("Signature:", signature)
+        print("V:", signature.v)
+        print("R:", hex(signature.r))
+        print("S:", hex(signature.s))
+
+    if save_to_file:
+        import time
+        filename = f"signed_{msg.replace(' ', '_')}_{int(time.time())}.json"
+        with open(filename, "w") as f:
+            json.dump(output, f, indent=2)
+        print(f"Saved to {filename}")
+
+def verify_msg(msg, sig_hex):
+    signature = keys.Signature(bytes.fromhex(sig_hex[2:] if sig_hex.startswith("0x") else sig_hex))
+    recovered_pub = signature.recover_public_key_from_msg(msg.encode())
+    recovered_addr = to_checksum_address(recovered_pub.to_address())
+    print("Recovered Address:", recovered_addr)
+
+def txsign(tx_json_str):
+    from eth_account import Account
+
+    tx_dict = json.loads(tx_json_str)
+    priv = keys.PrivateKey(bytes.fromhex(PRIVATE_KEY_HEX))
+    acct = Account.from_key(priv.to_bytes())
+    signed_tx = acct.sign_transaction(tx_dict)
+    print("Signed raw transaction (hex):")
+    print(signed_tx.rawTransaction.hex())
+
+def show_usage():
+    print("Usage:")
+    print("  ./ethcli sign \"message\"")
+    print("  ./ethcli sign --json \"message\"")
+    print("  ./ethcli sign --json --save \"message\"")
+    print("  ./ethcli verify \"message\" <signature>")
+    print("  ./ethcli txsign '<json_tx_dict>'")
+
+if len(sys.argv) < 3:
+    show_usage()
+    sys.exit(1)
+
+cmd = sys.argv[1].lower()
+
+if cmd == "sign":
+    args = sys.argv[2:]
+    msg = args[-1]
+    as_json = "--json" in args
+    save_to_file = "--save" in args
+    sign_msg(msg, as_json=as_json, save_to_file=save_to_file)
+
+elif cmd == "verify" and len(sys.argv) == 4:
+    verify_msg(sys.argv[2], sys.argv[3])
+
+elif cmd == "txsign":
+    txsign(sys.argv[2])
+
+else:
+    show_usage()

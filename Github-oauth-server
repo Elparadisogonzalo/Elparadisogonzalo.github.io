@@ -1,0 +1,31 @@
+// File: index.js import express from "express"; import fetch from "node-fetch"; import dotenv from "dotenv";
+
+dotenv.config();
+
+const app = express(); const PORT = process.env.PORT || 3000; const CLIENT_ID = "Ov23li62rIC3QRB7b8ZO"; const CLIENT_SECRET = "749387d2545f22bde5473e69ed18babfe5a143ad"; const REDIRECT_URI = process.env.REDIRECT_URI || "http://localhost:3000/callback";
+
+app.get("/", (req, res) => { res.send(<a href="https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=read:user user:email">Login with GitHub</a>); });
+
+app.get("/callback", async (req, res) => { const code = req.query.code; if (!code) return res.status(400).send("No code provided");
+
+try { const tokenRes = await fetch("https://github.com/login/oauth/access_token", { method: "POST", headers: { "Accept": "application/json", "Content-Type": "application/json" }, body: JSON.stringify({ client_id: CLIENT_ID, client_secret: CLIENT_SECRET, code: code, redirect_uri: REDIRECT_URI }) });
+
+const tokenData = await tokenRes.json();
+if (tokenData.error) return res.status(400).send(tokenData);
+
+const accessToken = tokenData.access_token;
+
+const userRes = await fetch("https://api.github.com/user", {
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+    Accept: "application/vnd.github+json"
+  }
+});
+const userData = await userRes.json();
+
+res.json({ user: userData, access_token: accessToken });
+
+} catch (err) { console.error("OAuth Error:", err); res.status(500).send("OAuth Failed"); } });
+
+app.listen(PORT, () => { console.log(OAuth server running at http://localhost:${PORT}); });
+

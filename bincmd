@@ -1,0 +1,25 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+echo "🧹 Cleaning up project junk..."
+
+# Define root (you can change this if needed)
+PROJECT_DIR=~/elparadisogonzalo
+
+# List of patterns to remove
+JUNK=(
+  "node_modules"
+  ".next"
+  ".turbo"
+  "dist"
+  ".cache"
+  ".eslintcache"
+  "build"
+)
+
+# delete each target
+for junk in "${JUNK[@]}"; do
+  echo "🚮 Removing: $junk"
+  find "$PROJECT_DIR" -type d -name "$junk" -prune -exec rm -rf {} +
+done
+
+echo "✅ Cleanup complete."

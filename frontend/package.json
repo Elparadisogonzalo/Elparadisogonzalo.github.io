@@ -1,0 +1,36 @@
+{
+  "name": "home",
+  "version": "1.0.0",
+  "description": "npm is a little package manager for the Node javascript library.",
+  "main": "main.js",
+  "directories": {
+    "doc": "doc",
+    "lib": "lib"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "dotenv": "^17.2.0",
+    "esbuild": "^0.25.5",
+    "fdir": "^6.4.6",
+    "form-data": "^4.0.3",
+    "nanoid": "^3.3.11",
+    "picocolors": "^1.1.1",
+    "picomatch": "^4.0.2",
+    "postcss": "^8.5.6",
+    "rollup": "^4.44.2",
+    "source-map-js": "^1.2.1",
+    "tinyglobby": "^0.2.14",
+    "vite": "^7.0.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://u0_a123@192.168.0.199:8022/data/data/com.termux/files/home/repos/elparadisogonzalo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

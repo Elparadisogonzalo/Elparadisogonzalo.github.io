@@ -1,0 +1,8 @@
+{
+  "name": "Elparadisogonzalo dApp",
+  "short_name": "Elparadiso",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "Elparadisogonzalo decentralized app"
+}

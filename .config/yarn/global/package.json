@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "create-eth-app": "^1.8.3"
+  }
+}

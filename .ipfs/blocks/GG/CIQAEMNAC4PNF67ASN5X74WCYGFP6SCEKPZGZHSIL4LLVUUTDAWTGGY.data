@@ -1,0 +1,83 @@
+тановив более низкий лимит расходов.",
+    "description": "$1 is a warning icon with text 'Be careful' in 'warning' colour"
+  },
+  "weak": {
+    "message": "Слабый"
+  },
+  "web3ShimUsageNotification": {
+    "message": "Мы заметили, что текущий веб-сайт пытался использовать удаленный API window.web3. Если сайт не работает, нажмите $1 для получения дополнительной информации.",
+    "description": "$1 is a clickable link."
+  },
+  "webhid": {
+    "message": "WebHID",
+    "description": "Refers to a interface for connecting external devices to the browser. Used for connecting ledger to the browser. Read more here https://developer.mozilla.org/en-US/docs/Web/API/WebHID_API"
+  },
+  "websites": {
+    "message": "веб-сайты",
+    "description": "Used in the 'permission_rpc' message."
+  },
+  "welcomeBack": {
+    "message": "С возвращением!"
+  },
+  "welcomeExploreDescription": {
+    "message": "Храните, отправляйте и тратьте криптовалюту и активы."
+  },
+  "welcomeExploreTitle": {
+    "message": "Ознакомьтесь с децентрализованными приложениями"
+  },
+  "welcomeLoginDescription": {
+    "message": "Используйте кошелек MetaMask для входа в децентрализованные приложения — регистрация не потребуется."
+  },
+  "welcomeLoginTitle": {
+    "message": "Поприветствуйте свой кошелек"
+  },
+  "welcomeToMetaMask": {
+    "message": "Давайте приступим к делу"
+  },
+  "welcomeToMetaMaskIntro": {
+    "message": "MetaMask, которому доверяют миллионы, — это безопасный кошелек, предоставляющий всем доступ к миру web3."
+  },
+  "whatsNew": {
+    "message": "Что нового",
+    "description": "This is the title of a popup that gives users notifications about new features and updates to MetaMask."
+  },
+  "whatsThis": {
+    "message": "Что это?"
+  },
+  "xOfY": {
+    "message": "$1 из $2",
+    "description": "$1 and $2 are intended to be two numbers, where $2 is a total, and $1 is a count towards that total"
+  },
+  "xOfYPending": {
+    "message": "$1 из $2 ожидающих",
+    "description": "$1 and $2 are intended to be two numbers, where $2 is a total number of pending confirmations, and $1 is a count towards that total"
+  },
+  "yes": {
+    "message": "Да"
+  },
+  "youHaveAddedAll": {
+    "message": "Вы добавили все популярные сети. Вы можете открыть для себя больше сетей $1 или можете $2",
+    "description": "$1 is a link with the text 'here' and $2 is a button with the text 'add more networks manually'"
+  },
+  "youNeedToAllowCameraAccess": {
+    "message": "Для использования этой функции вам необходимо предоставить доступ к камере."
+  },
+  "youSign": {
+    "message": "Вы подписываете"
+  },
+  "yourAccounts": {
+    "message": "Ваши счета"
+  },
+  "yourFundsMayBeAtRisk": {
+    "message": "Ваши средства могут быть в опасности"
+  },
+  "yourNFTmayBeAtRisk": {
+    "message": "Ваш NFT могут быть в опасности"
+  },
+  "yourPrivateSeedPhrase": {
+    "message": "Ваша личная секретная фраза для восстановления"
+  },
+  "zeroGasPriceOnSpeedUpError": {
+    "message": "Нулевая цена газа при ускорении"
+  }
+}

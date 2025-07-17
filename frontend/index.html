@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Wallet Auth</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@4.16.0/dist/web3.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 2rem;
+    }
+    img {
+      width: 100%;
+      max-width: 400px;
+      margin: 2rem auto;
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    }
+    button {
+      padding: 1rem 2rem;
+      background: #00ffd5;
+      color: #111;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #00c4a7;
+    }
+  </style>
+</head>
+<body>
+  <img src="/tokens/0xparadiso-street.png" alt="0xPARADISO" />
+
+  <h1>🔐 Sign in with Wallet</h1>
+  <button onclick="signInWithWallet()">Connect Wallet</button>
+  <p id="status"></p>
+
+  <script src="auth.js"></script>
+</body>
+</html>

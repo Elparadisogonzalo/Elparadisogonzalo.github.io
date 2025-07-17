@@ -1,0 +1,7 @@
+ít se seznamem parametrů, které nejsou jednoduché.",
+  "use_strict_directive_used_here_1349": "Direktiva use strict se použila tady.",
+  "with_statements_are_not_allowed_in_an_async_function_block_1300": "Příkazy with se ve funkčním bloku async nepovolují.",
+  "with_statements_are_not_allowed_in_strict_mode_1101": "Příkazy with se ve striktním režimu nepovolují.",
+  "yield_expression_implicitly_results_in_an_any_type_because_its_containing_generator_lacks_a_return_t_7057": "Implicitním výsledkem výrazu yield je typ any, protože v jeho obsahujícím generátoru chybí anotace návratového typu.",
+  "yield_expressions_cannot_be_used_in_a_parameter_initializer_2523": "Výrazy yield nejde použít v inicializátoru parametru."
+}

@@ -1,0 +1,1110 @@
+  dirxml(...data: any[]): void;
+    error(...data: any[]): void;
+    exception(message?: string, ...optionalParams: any[]): void;
+    group(...data: any[]): void;
+    groupCollapsed(...data: any[]): void;
+    groupEnd(): void;
+    info(...data: any[]): void;
+    log(...data: any[]): void;
+    table(tabularData?: any, properties?: string[]): void;
+    time(label?: string): void;
+    timeEnd(label?: string): void;
+    timeLog(label?: string, ...data: any[]): void;
+    timeStamp(label?: string): void;
+    trace(...data: any[]): void;
+    warn(...data: any[]): void;
+}
+
+declare var console: Console;
+
+/** Holds useful CSS-related methods. No object with this interface are implemented: it contains only static methods and therefore is a utilitarian interface. */
+declare namespace CSS {
+    function escape(ident: string): string;
+    function supports(property: string, value: string): boolean;
+    function supports(conditionText: string): boolean;
+}
+
+declare namespace WebAssembly {
+    interface CompileError {
+    }
+    
+    var CompileError: {
+        prototype: CompileError;
+        new(): CompileError;
+    };
+    
+    interface Global {
+        value: any;
+        valueOf(): any;
+    }
+    
+    var Global: {
+        prototype: Global;
+        new(descriptor: GlobalDescriptor, v?: any): Global;
+    };
+    
+    interface Instance {
+        readonly exports: Exports;
+    }
+    
+    var Instance: {
+        prototype: Instance;
+        new(module: Module, importObject?: Imports): Instance;
+    };
+    
+    interface LinkError {
+    }
+    
+    var LinkError: {
+        prototype: LinkError;
+        new(): LinkError;
+    };
+    
+    interface Memory {
+        readonly buffer: ArrayBuffer;
+        grow(delta: number): number;
+    }
+    
+    var Memory: {
+        prototype: Memory;
+        new(descriptor: MemoryDescriptor): Memory;
+    };
+    
+    interface Module {
+    }
+    
+    var Module: {
+        prototype: Module;
+        new(bytes: BufferSource): Module;
+        customSections(moduleObject: Module, sectionName: string): ArrayBuffer[];
+        exports(moduleObject: Module): ModuleExportDescriptor[];
+        imports(moduleObject: Module): ModuleImportDescriptor[];
+    };
+    
+    interface RuntimeError {
+    }
+    
+    var RuntimeError: {
+        prototype: RuntimeError;
+        new(): RuntimeError;
+    };
+    
+    interface Table {
+        readonly length: number;
+        get(index: number): Function | null;
+        grow(delta: number): number;
+        set(index: number, value: Function | null): void;
+    }
+    
+    var Table: {
+        prototype: Table;
+        new(descriptor: TableDescriptor): Table;
+    };
+    
+    interface GlobalDescriptor {
+        mutable?: boolean;
+        value: ValueType;
+    }
+    
+    interface MemoryDescriptor {
+        initial: number;
+        maximum?: number;
+    }
+    
+    interface ModuleExportDescriptor {
+        kind: ImportExportKind;
+        name: string;
+    }
+    
+    interface ModuleImportDescriptor {
+        kind: ImportExportKind;
+        module: string;
+        name: string;
+    }
+    
+    interface TableDescriptor {
+        element: TableKind;
+        initial: number;
+        maximum?: number;
+    }
+    
+    interface WebAssemblyInstantiatedSource {
+        instance: Instance;
+        module: Module;
+    }
+    
+    type ImportExportKind = "function" | "global" | "memory" | "table";
+    type TableKind = "anyfunc";
+    type ValueType = "f32" | "f64" | "i32" | "i64";
+    type ExportValue = Function | Global | Memory | Table;
+    type Exports = Record<string, ExportValue>;
+    type ImportValue = ExportValue | number;
+    type ModuleImports = Record<string, ImportValue>;
+    type Imports = Record<string, ModuleImports>;
+    function compile(bytes: BufferSource): Promise<Module>;
+    function compileStreaming(source: Response | Promise<Response>): Promise<Module>;
+    function instantiate(bytes: BufferSource, importObject?: Imports): Promise<WebAssemblyInstantiatedSource>;
+    function instantiate(moduleObject: Module, importObject?: Imports): Promise<Instance>;
+    function instantiateStreaming(response: Response | PromiseLike<Response>, importObject?: Imports): Promise<WebAssemblyInstantiatedSource>;
+    function validate(bytes: BufferSource): boolean;
+}
+
+interface BlobCallback {
+    (blob: Blob | null): void;
+}
+
+interface CustomElementConstructor {
+    new (...params: any[]): HTMLElement;
+}
+
+interface DecodeErrorCallback {
+    (error: DOMException): void;
+}
+
+interface DecodeSuccessCallback {
+    (decodedData: AudioBuffer): void;
+}
+
+interface EventHandlerNonNull {
+    (event: Event): any;
+}
+
+interface ForEachCallback {
+    (keyId: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer | null, status: MediaKeyStatus): void;
+}
+
+interface FrameRequestCallback {
+    (time: number): void;
+}
+
+interface FunctionStringCallback {
+    (data: string): void;
+}
+
+interface IntersectionObserverCallback {
+    (entries: IntersectionObserverEntry[], observer: IntersectionObserver): void;
+}
+
+interface MSLaunchUriCallback {
+    (): void;
+}
+
+interface MutationCallback {
+    (mutations: MutationRecord[], observer: MutationObserver): void;
+}
+
+interface NavigatorUserMediaErrorCallback {
+    (error: MediaStreamError): void;
+}
+
+interface NavigatorUserMediaSuccessCallback {
+    (stream: MediaStream): void;
+}
+
+interface NotificationPermissionCallback {
+    (permission: NotificationPermission): void;
+}
+
+interface OnBeforeUnloadEventHandlerNonNull {
+    (event: Event): string | null;
+}
+
+interface OnErrorEventHandlerNonNull {
+    (event: Event | string, source?: string, lineno?: number, colno?: number, error?: Error): any;
+}
+
+interface PerformanceObserverCallback {
+    (entries: PerformanceObserverEntryList, observer: PerformanceObserver): void;
+}
+
+interface PositionCallback {
+    (position: Position): void;
+}
+
+interface PositionErrorCallback {
+    (positionError: PositionError): void;
+}
+
+interface QueuingStrategySizeCallback<T = any> {
+    (chunk: T): number;
+}
+
+interface RTCPeerConnectionErrorCallback {
+    (error: DOMException): void;
+}
+
+interface RTCSessionDescriptionCallback {
+    (description: RTCSessionDescriptionInit): void;
+}
+
+interface RTCStatsCallback {
+    (report: RTCStatsReport): void;
+}
+
+interface ReadableByteStreamControllerCallback {
+    (controller: ReadableByteStreamController): void | PromiseLike<void>;
+}
+
+interface ReadableStreamDefaultControllerCallback<R> {
+    (controller: ReadableStreamDefaultController<R>): void | PromiseLike<void>;
+}
+
+interface ReadableStreamErrorCallback {
+    (reason: any): void | PromiseLike<void>;
+}
+
+interface TransformStreamDefaultControllerCallback<O> {
+    (controller: TransformStreamDefaultController<O>): void | PromiseLike<void>;
+}
+
+interface TransformStreamDefaultControllerTransformCallback<I, O> {
+    (chunk: I, controller: TransformStreamDefaultController<O>): void | PromiseLike<void>;
+}
+
+interface VoidFunction {
+    (): void;
+}
+
+interface WritableStreamDefaultControllerCloseCallback {
+    (): void | PromiseLike<void>;
+}
+
+interface WritableStreamDefaultControllerStartCallback {
+    (controller: WritableStreamDefaultController): void | PromiseLike<void>;
+}
+
+interface WritableStreamDefaultControllerWriteCallback<W> {
+    (chunk: W, controller: WritableStreamDefaultController): void | PromiseLike<void>;
+}
+
+interface WritableStreamErrorCallback {
+    (reason: any): void | PromiseLike<void>;
+}
+
+interface HTMLElementTagNameMap {
+    "a": HTMLAnchorElement;
+    "abbr": HTMLElement;
+    "address": HTMLElement;
+    "applet": HTMLAppletElement;
+    "area": HTMLAreaElement;
+    "article": HTMLElement;
+    "aside": HTMLElement;
+    "audio": HTMLAudioElement;
+    "b": HTMLElement;
+    "base": HTMLBaseElement;
+    "basefont": HTMLBaseFontElement;
+    "bdi": HTMLElement;
+    "bdo": HTMLElement;
+    "blockquote": HTMLQuoteElement;
+    "body": HTMLBodyElement;
+    "br": HTMLBRElement;
+    "button": HTMLButtonElement;
+    "canvas": HTMLCanvasElement;
+    "caption": HTMLTableCaptionElement;
+    "cite": HTMLElement;
+    "code": HTMLElement;
+    "col": HTMLTableColElement;
+    "colgroup": HTMLTableColElement;
+    "data": HTMLDataElement;
+    "datalist": HTMLDataListElement;
+    "dd": HTMLElement;
+    "del": HTMLModElement;
+    "details": HTMLDetailsElement;
+    "dfn": HTMLElement;
+    "dialog": HTMLDialogElement;
+    "dir": HTMLDirectoryElement;
+    "div": HTMLDivElement;
+    "dl": HTMLDListElement;
+    "dt": HTMLElement;
+    "em": HTMLElement;
+    "embed": HTMLEmbedElement;
+    "fieldset": HTMLFieldSetElement;
+    "figcaption": HTMLElement;
+    "figure": HTMLElement;
+    "font": HTMLFontElement;
+    "footer": HTMLElement;
+    "form": HTMLFormElement;
+    "frame": HTMLFrameElement;
+    "frameset": HTMLFrameSetElement;
+    "h1": HTMLHeadingElement;
+    "h2": HTMLHeadingElement;
+    "h3": HTMLHeadingElement;
+    "h4": HTMLHeadingElement;
+    "h5": HTMLHeadingElement;
+    "h6": HTMLHeadingElement;
+    "head": HTMLHeadElement;
+    "header": HTMLElement;
+    "hgroup": HTMLElement;
+    "hr": HTMLHRElement;
+    "html": HTMLHtmlElement;
+    "i": HTMLElement;
+    "iframe": HTMLIFrameElement;
+    "img": HTMLImageElement;
+    "input": HTMLInputElement;
+    "ins": HTMLModElement;
+    "kbd": HTMLElement;
+    "label": HTMLLabelElement;
+    "legend": HTMLLegendElement;
+    "li": HTMLLIElement;
+    "link": HTMLLinkElement;
+    "main": HTMLElement;
+    "map": HTMLMapElement;
+    "mark": HTMLElement;
+    "marquee": HTMLMarqueeElement;
+    "menu": HTMLMenuElement;
+    "meta": HTMLMetaElement;
+    "meter": HTMLMeterElement;
+    "nav": HTMLElement;
+    "noscript": HTMLElement;
+    "object": HTMLObjectElement;
+    "ol": HTMLOListElement;
+    "optgroup": HTMLOptGroupElement;
+    "option": HTMLOptionElement;
+    "output": HTMLOutputElement;
+    "p": HTMLParagraphElement;
+    "param": HTMLParamElement;
+    "picture": HTMLPictureElement;
+    "pre": HTMLPreElement;
+    "progress": HTMLProgressElement;
+    "q": HTMLQuoteElement;
+    "rp": HTMLElement;
+    "rt": HTMLElement;
+    "ruby": HTMLElement;
+    "s": HTMLElement;
+    "samp": HTMLElement;
+    "script": HTMLScriptElement;
+    "section": HTMLElement;
+    "select": HTMLSelectElement;
+    "slot": HTMLSlotElement;
+    "small": HTMLElement;
+    "source": HTMLSourceElement;
+    "span": HTMLSpanElement;
+    "strong": HTMLElement;
+    "style": HTMLStyleElement;
+    "sub": HTMLElement;
+    "summary": HTMLElement;
+    "sup": HTMLElement;
+    "table": HTMLTableElement;
+    "tbody": HTMLTableSectionElement;
+    "td": HTMLTableDataCellElement;
+    "template": HTMLTemplateElement;
+    "textarea": HTMLTextAreaElement;
+    "tfoot": HTMLTableSectionElement;
+    "th": HTMLTableHeaderCellElement;
+    "thead": HTMLTableSectionElement;
+    "time": HTMLTimeElement;
+    "title": HTMLTitleElement;
+    "tr": HTMLTableRowElement;
+    "track": HTMLTrackElement;
+    "u": HTMLElement;
+    "ul": HTMLUListElement;
+    "var": HTMLElement;
+    "video": HTMLVideoElement;
+    "wbr": HTMLElement;
+}
+
+interface HTMLElementDeprecatedTagNameMap {
+    "listing": HTMLPreElement;
+    "xmp": HTMLPreElement;
+}
+
+interface SVGElementTagNameMap {
+    "a": SVGAElement;
+    "circle": SVGCircleElement;
+    "clipPath": SVGClipPathElement;
+    "defs": SVGDefsElement;
+    "desc": SVGDescElement;
+    "ellipse": SVGEllipseElement;
+    "feBlend": SVGFEBlendElement;
+    "feColorMatrix": SVGFEColorMatrixElement;
+    "feComponentTransfer": SVGFEComponentTransferElement;
+    "feComposite": SVGFECompositeElement;
+    "feConvolveMatrix": SVGFEConvolveMatrixElement;
+    "feDiffuseLighting": SVGFEDiffuseLightingElement;
+    "feDisplacementMap": SVGFEDisplacementMapElement;
+    "feDistantLight": SVGFEDistantLightElement;
+    "feFlood": SVGFEFloodElement;
+    "feFuncA": SVGFEFuncAElement;
+    "feFuncB": SVGFEFuncBElement;
+    "feFuncG": SVGFEFuncGElement;
+    "feFuncR": SVGFEFuncRElement;
+    "feGaussianBlur": SVGFEGaussianBlurElement;
+    "feImage": SVGFEImageElement;
+    "feMerge": SVGFEMergeElement;
+    "feMergeNode": SVGFEMergeNodeElement;
+    "feMorphology": SVGFEMorphologyElement;
+    "feOffset": SVGFEOffsetElement;
+    "fePointLight": SVGFEPointLightElement;
+    "feSpecularLighting": SVGFESpecularLightingElement;
+    "feSpotLight": SVGFESpotLightElement;
+    "feTile": SVGFETileElement;
+    "feTurbulence": SVGFETurbulenceElement;
+    "filter": SVGFilterElement;
+    "foreignObject": SVGForeignObjectElement;
+    "g": SVGGElement;
+    "image": SVGImageElement;
+    "line": SVGLineElement;
+    "linearGradient": SVGLinearGradientElement;
+    "marker": SVGMarkerElement;
+    "mask": SVGMaskElement;
+    "metadata": SVGMetadataElement;
+    "path": SVGPathElement;
+    "pattern": SVGPatternElement;
+    "polygon": SVGPolygonElement;
+    "polyline": SVGPolylineElement;
+    "radialGradient": SVGRadialGradientElement;
+    "rect": SVGRectElement;
+    "script": SVGScriptElement;
+    "stop": SVGStopElement;
+    "style": SVGStyleElement;
+    "svg": SVGSVGElement;
+    "switch": SVGSwitchElement;
+    "symbol": SVGSymbolElement;
+    "text": SVGTextElement;
+    "textPath": SVGTextPathElement;
+    "title": SVGTitleElement;
+    "tspan": SVGTSpanElement;
+    "use": SVGUseElement;
+    "view": SVGViewElement;
+}
+
+/** @deprecated Directly use HTMLElementTagNameMap or SVGElementTagNameMap as appropriate, instead. */
+type ElementTagNameMap = HTMLElementTagNameMap & Pick<SVGElementTagNameMap, Exclude<keyof SVGElementTagNameMap, keyof HTMLElementTagNameMap>>;
+
+declare var Audio: {
+    new(src?: string): HTMLAudioElement;
+};
+declare var Image: {
+    new(width?: number, height?: number): HTMLImageElement;
+};
+declare var Option: {
+    new(text?: string, value?: string, defaultSelected?: boolean, selected?: boolean): HTMLOptionElement;
+};
+declare var applicationCache: ApplicationCache;
+declare var clientInformation: Navigator;
+declare var closed: boolean;
+declare var customElements: CustomElementRegistry;
+declare var defaultStatus: string;
+declare var devicePixelRatio: number;
+declare var doNotTrack: string;
+declare var document: Document;
+/** @deprecated */
+declare var event: Event | undefined;
+/** @deprecated */
+declare var external: External;
+declare var frameElement: Element;
+declare var frames: Window;
+declare var history: History;
+declare var innerHeight: number;
+declare var innerWidth: number;
+declare var length: number;
+declare var location: Location;
+declare var locationbar: BarProp;
+declare var menubar: BarProp;
+declare var msContentScript: ExtensionScriptApis;
+declare const name: never;
+declare var navigator: Navigator;
+declare var offscreenBuffering: string | boolean;
+declare var oncompassneedscalibration: ((this: Window, ev: Event) => any) | null;
+declare var ondevicelight: ((this: Window, ev: DeviceLightEvent) => any) | null;
+declare var ondevicemotion: ((this: Window, ev: DeviceMotionEvent) => any) | null;
+declare var ondeviceorientation: ((this: Window, ev: DeviceOrientationEvent) => any) | null;
+declare var ondeviceorientationabsolute: ((this: Window, ev: DeviceOrientationEvent) => any) | null;
+declare var onmousewheel: ((this: Window, ev: Event) => any) | null;
+declare var onmsgesturechange: ((this: Window, ev: Event) => any) | null;
+declare var onmsgesturedoubletap: ((this: Window, ev: Event) => any) | null;
+declare var onmsgestureend: ((this: Window, ev: Event) => any) | null;
+declare var onmsgesturehold: ((this: Window, ev: Event) => any) | null;
+declare var onmsgesturestart: ((this: Window, ev: Event) => any) | null;
+declare var onmsgesturetap: ((this: Window, ev: Event) => any) | null;
+declare var onmsinertiastart: ((this: Window, ev: Event) => any) | null;
+declare var onmspointercancel: ((this: Window, ev: Event) => any) | null;
+declare var onmspointerdown: ((this: Window, ev: Event) => any) | null;
+declare var onmspointerenter: ((this: Window, ev: Event) => any) | null;
+declare var onmspointerleave: ((this: Window, ev: Event) => any) | null;
+declare var onmspointermove: ((this: Window, ev: Event) => any) | null;
+declare var onmspointerout: ((this: Window, ev: Event) => any) | null;
+declare var onmspointerover: ((this: Window, ev: Event) => any) | null;
+declare var onmspointerup: ((this: Window, ev: Event) => any) | null;
+/** @deprecated */
+declare var onorientationchange: ((this: Window, ev: Event) => any) | null;
+declare var onreadystatechange: ((this: Window, ev: ProgressEvent<Window>) => any) | null;
+declare var onvrdisplayactivate: ((this: Window, ev: Event) => any) | null;
+declare var onvrdisplayblur: ((this: Window, ev: Event) => any) | null;
+declare var onvrdisplayconnect: ((this: Window, ev: Event) => any) | null;
+declare var onvrdisplaydeactivate: ((this: Window, ev: Event) => any) | null;
+declare var onvrdisplaydisconnect: ((this: Window, ev: Event) => any) | null;
+declare var onvrdisplayfocus: ((this: Window, ev: Event) => any) | null;
+declare var onvrdisplaypointerrestricted: ((this: Window, ev: Event) => any) | null;
+declare var onvrdisplaypointerunrestricted: ((this: Window, ev: Event) => any) | null;
+declare var onvrdisplaypresentchange: ((this: Window, ev: Event) => any) | null;
+declare var opener: any;
+/** @deprecated */
+declare var orientation: string | number;
+declare var outerHeight: number;
+declare var outerWidth: number;
+declare var pageXOffset: number;
+declare var pageYOffset: number;
+declare var parent: Window;
+declare var personalbar: BarProp;
+declare var screen: Screen;
+declare var screenLeft: number;
+declare var screenTop: number;
+declare var screenX: number;
+declare var screenY: number;
+declare var scrollX: number;
+declare var scrollY: number;
+declare var scrollbars: BarProp;
+declare var self: Window & typeof globalThis;
+declare var speechSynthesis: SpeechSynthesis;
+declare var status: string;
+declare var statusbar: BarProp;
+declare var styleMedia: StyleMedia;
+declare var toolbar: BarProp;
+declare var top: Window;
+declare var window: Window & typeof globalThis;
+declare function alert(message?: any): void;
+declare function blur(): void;
+/** @deprecated */
+declare function captureEvents(): void;
+declare function close(): void;
+declare function confirm(message?: string): boolean;
+declare function departFocus(navigationReason: NavigationReason, origin: FocusNavigationOrigin): void;
+declare function focus(): void;
+declare function getComputedStyle(elt: Element, pseudoElt?: string | null): CSSStyleDeclaration;
+declare function getMatchedCSSRules(elt: Element, pseudoElt?: string | null): CSSRuleList;
+declare function getSelection(): Selection | null;
+declare function matchMedia(query: string): MediaQueryList;
+declare function moveBy(x: number, y: number): void;
+declare function moveTo(x: number, y: number): void;
+declare function msWriteProfilerMark(profilerMarkName: string): void;
+declare function open(url?: string, target?: string, features?: string, replace?: boolean): Window | null;
+declare function postMessage(message: any, targetOrigin: string, transfer?: Transferable[]): void;
+declare function print(): void;
+declare function prompt(message?: string, _default?: string): string | null;
+/** @deprecated */
+declare function releaseEvents(): void;
+declare function resizeBy(x: number, y: number): void;
+declare function resizeTo(x: number, y: number): void;
+declare function scroll(options?: ScrollToOptions): void;
+declare function scroll(x: number, y: number): void;
+declare function scrollBy(options?: ScrollToOptions): void;
+declare function scrollBy(x: number, y: number): void;
+declare function scrollTo(options?: ScrollToOptions): void;
+declare function scrollTo(x: number, y: number): void;
+declare function stop(): void;
+declare function webkitCancelAnimationFrame(handle: number): void;
+declare function webkitConvertPointFromNodeToPage(node: Node, pt: WebKitPoint): WebKitPoint;
+declare function webkitConvertPointFromPageToNode(node: Node, pt: WebKitPoint): WebKitPoint;
+declare function webkitRequestAnimationFrame(callback: FrameRequestCallback): number;
+declare function toString(): string;
+/**
+ * Dispatches a synthetic event event to target and returns true if either event's cancelable attribute value is false or its preventDefault() method was not invoked, and false otherwise.
+ */
+declare function dispatchEvent(event: Event): boolean;
+declare var sessionStorage: Storage;
+declare var localStorage: Storage;
+/**
+ * Fires when the user aborts the download.
+ * @param ev The event.
+ */
+declare var onabort: ((this: Window, ev: UIEvent) => any) | null;
+declare var onanimationcancel: ((this: Window, ev: AnimationEvent) => any) | null;
+declare var onanimationend: ((this: Window, ev: AnimationEvent) => any) | null;
+declare var onanimationiteration: ((this: Window, ev: AnimationEvent) => any) | null;
+declare var onanimationstart: ((this: Window, ev: AnimationEvent) => any) | null;
+declare var onauxclick: ((this: Window, ev: MouseEvent) => any) | null;
+/**
+ * Fires when the object loses the input focus.
+ * @param ev The focus event.
+ */
+declare var onblur: ((this: Window, ev: FocusEvent) => any) | null;
+declare var oncancel: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when playback is possible, but would require further buffering.
+ * @param ev The event.
+ */
+declare var oncanplay: ((this: Window, ev: Event) => any) | null;
+declare var oncanplaythrough: ((this: Window, ev: Event) => any) | null;
+/**
+ * Fires when the contents of the object or selection have changed.
+ * @param ev The event.
+ */
+declare var onchange: ((this: Window, ev: Event) => any) | null;
+/**
+ * Fires when the user clicks the left mouse button on the object
+ * @param ev The mouse event.
+ */
+declare var onclick: ((this: Window, ev: MouseEvent) => any) | null;
+declare var onclose: ((this: Window, ev: Event) => any) | null;
+/**
+ * Fires when the user clicks the right mouse button in the client area, opening the context menu.
+ * @param ev The mouse event.
+ */
+declare var oncontextmenu: ((this: Window, ev: MouseEvent) => any) | null;
+declare var oncuechange: ((this: Window, ev: Event) => any) | null;
+/**
+ * Fires when the user double-clicks the object.
+ * @param ev The mouse event.
+ */
+declare var ondblclick: ((this: Window, ev: MouseEvent) => any) | null;
+/**
+ * Fires on the source object continuously during a drag operation.
+ * @param ev The event.
+ */
+declare var ondrag: ((this: Window, ev: DragEvent) => any) | null;
+/**
+ * Fires on the source object when the user releases the mouse at the close of a drag operation.
+ * @param ev The event.
+ */
+declare var ondragend: ((this: Window, ev: DragEvent) => any) | null;
+/**
+ * Fires on the target element when the user drags the object to a valid drop target.
+ * @param ev The drag event.
+ */
+declare var ondragenter: ((this: Window, ev: DragEvent) => any) | null;
+declare var ondragexit: ((this: Window, ev: Event) => any) | null;
+/**
+ * Fires on the target object when the user moves the mouse out of a valid drop target during a drag operation.
+ * @param ev The drag event.
+ */
+declare var ondragleave: ((this: Window, ev: DragEvent) => any) | null;
+/**
+ * Fires on the target element continuously while the user drags the object over a valid drop target.
+ * @param ev The event.
+ */
+declare var ondragover: ((this: Window, ev: DragEvent) => any) | null;
+/**
+ * Fires on the source object when the user starts to drag a text selection or selected object.
+ * @param ev The event.
+ */
+declare var ondragstart: ((this: Window, ev: DragEvent) => any) | null;
+declare var ondrop: ((this: Window, ev: DragEvent) => any) | null;
+/**
+ * Occurs when the duration attribute is updated.
+ * @param ev The event.
+ */
+declare var ondurationchange: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when the media element is reset to its initial state.
+ * @param ev The event.
+ */
+declare var onemptied: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when the end of playback is reached.
+ * @param ev The event
+ */
+declare var onended: ((this: Window, ev: Event) => any) | null;
+/**
+ * Fires when an error occurs during object loading.
+ * @param ev The event.
+ */
+declare var onerror: OnErrorEventHandler;
+/**
+ * Fires when the object receives focus.
+ * @param ev The event.
+ */
+declare var onfocus: ((this: Window, ev: FocusEvent) => any) | null;
+declare var ongotpointercapture: ((this: Window, ev: PointerEvent) => any) | null;
+declare var oninput: ((this: Window, ev: Event) => any) | null;
+declare var oninvalid: ((this: Window, ev: Event) => any) | null;
+/**
+ * Fires when the user presses a key.
+ * @param ev The keyboard event
+ */
+declare var onkeydown: ((this: Window, ev: KeyboardEvent) => any) | null;
+/**
+ * Fires when the user presses an alphanumeric key.
+ * @param ev The event.
+ */
+declare var onkeypress: ((this: Window, ev: KeyboardEvent) => any) | null;
+/**
+ * Fires when the user releases a key.
+ * @param ev The keyboard event
+ */
+declare var onkeyup: ((this: Window, ev: KeyboardEvent) => any) | null;
+/**
+ * Fires immediately after the browser loads the object.
+ * @param ev The event.
+ */
+declare var onload: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when media data is loaded at the current playback position.
+ * @param ev The event.
+ */
+declare var onloadeddata: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when the duration and dimensions of the media have been determined.
+ * @param ev The event.
+ */
+declare var onloadedmetadata: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when Internet Explorer begins looking for media data.
+ * @param ev The event.
+ */
+declare var onloadstart: ((this: Window, ev: Event) => any) | null;
+declare var onlostpointercapture: ((this: Window, ev: PointerEvent) => any) | null;
+/**
+ * Fires when the user clicks the object with either mouse button.
+ * @param ev The mouse event.
+ */
+declare var onmousedown: ((this: Window, ev: MouseEvent) => any) | null;
+declare var onmouseenter: ((this: Window, ev: MouseEvent) => any) | null;
+declare var onmouseleave: ((this: Window, ev: MouseEvent) => any) | null;
+/**
+ * Fires when the user moves the mouse over the object.
+ * @param ev The mouse event.
+ */
+declare var onmousemove: ((this: Window, ev: MouseEvent) => any) | null;
+/**
+ * Fires when the user moves the mouse pointer outside the boundaries of the object.
+ * @param ev The mouse event.
+ */
+declare var onmouseout: ((this: Window, ev: MouseEvent) => any) | null;
+/**
+ * Fires when the user moves the mouse pointer into the object.
+ * @param ev The mouse event.
+ */
+declare var onmouseover: ((this: Window, ev: MouseEvent) => any) | null;
+/**
+ * Fires when the user releases a mouse button while the mouse is over the object.
+ * @param ev The mouse event.
+ */
+declare var onmouseup: ((this: Window, ev: MouseEvent) => any) | null;
+/**
+ * Occurs when playback is paused.
+ * @param ev The event.
+ */
+declare var onpause: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when the play method is requested.
+ * @param ev The event.
+ */
+declare var onplay: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when the audio or video has started playing.
+ * @param ev The event.
+ */
+declare var onplaying: ((this: Window, ev: Event) => any) | null;
+declare var onpointercancel: ((this: Window, ev: PointerEvent) => any) | null;
+declare var onpointerdown: ((this: Window, ev: PointerEvent) => any) | null;
+declare var onpointerenter: ((this: Window, ev: PointerEvent) => any) | null;
+declare var onpointerleave: ((this: Window, ev: PointerEvent) => any) | null;
+declare var onpointermove: ((this: Window, ev: PointerEvent) => any) | null;
+declare var onpointerout: ((this: Window, ev: PointerEvent) => any) | null;
+declare var onpointerover: ((this: Window, ev: PointerEvent) => any) | null;
+declare var onpointerup: ((this: Window, ev: PointerEvent) => any) | null;
+/**
+ * Occurs to indicate progress while downloading media data.
+ * @param ev The event.
+ */
+declare var onprogress: ((this: Window, ev: ProgressEvent) => any) | null;
+/**
+ * Occurs when the playback rate is increased or decreased.
+ * @param ev The event.
+ */
+declare var onratechange: ((this: Window, ev: Event) => any) | null;
+/**
+ * Fires when the user resets a form.
+ * @param ev The event.
+ */
+declare var onreset: ((this: Window, ev: Event) => any) | null;
+declare var onresize: ((this: Window, ev: UIEvent) => any) | null;
+/**
+ * Fires when the user repositions the scroll box in the scroll bar on the object.
+ * @param ev The event.
+ */
+declare var onscroll: ((this: Window, ev: Event) => any) | null;
+declare var onsecuritypolicyviolation: ((this: Window, ev: SecurityPolicyViolationEvent) => any) | null;
+/**
+ * Occurs when the seek operation ends.
+ * @param ev The event.
+ */
+declare var onseeked: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when the current playback position is moved.
+ * @param ev The event.
+ */
+declare var onseeking: ((this: Window, ev: Event) => any) | null;
+/**
+ * Fires when the current selection changes.
+ * @param ev The event.
+ */
+declare var onselect: ((this: Window, ev: Event) => any) | null;
+declare var onselectionchange: ((this: Window, ev: Event) => any) | null;
+declare var onselectstart: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when the download has stopped.
+ * @param ev The event.
+ */
+declare var onstalled: ((this: Window, ev: Event) => any) | null;
+declare var onsubmit: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs if the load operation has been intentionally halted.
+ * @param ev The event.
+ */
+declare var onsuspend: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs to indicate the current playback position.
+ * @param ev The event.
+ */
+declare var ontimeupdate: ((this: Window, ev: Event) => any) | null;
+declare var ontoggle: ((this: Window, ev: Event) => any) | null;
+declare var ontouchcancel: ((this: Window, ev: TouchEvent) => any) | null | undefined;
+declare var ontouchend: ((this: Window, ev: TouchEvent) => any) | null | undefined;
+declare var ontouchmove: ((this: Window, ev: TouchEvent) => any) | null | undefined;
+declare var ontouchstart: ((this: Window, ev: TouchEvent) => any) | null | undefined;
+declare var ontransitioncancel: ((this: Window, ev: TransitionEvent) => any) | null;
+declare var ontransitionend: ((this: Window, ev: TransitionEvent) => any) | null;
+declare var ontransitionrun: ((this: Window, ev: TransitionEvent) => any) | null;
+declare var ontransitionstart: ((this: Window, ev: TransitionEvent) => any) | null;
+/**
+ * Occurs when the volume is changed, or playback is muted or unmuted.
+ * @param ev The event.
+ */
+declare var onvolumechange: ((this: Window, ev: Event) => any) | null;
+/**
+ * Occurs when playback stops because the next frame of a video resource is not available.
+ * @param ev The event.
+ */
+declare var onwaiting: ((this: Window, ev: Event) => any) | null;
+declare var onwheel: ((this: Window, ev: WheelEvent) => any) | null;
+declare function cancelAnimationFrame(handle: number): void;
+declare function requestAnimationFrame(callback: FrameRequestCallback): number;
+declare var caches: CacheStorage;
+declare var crypto: Crypto;
+declare var indexedDB: IDBFactory;
+declare var isSecureContext: boolean;
+declare var origin: string;
+declare var performance: Performance;
+declare function atob(data: string): string;
+declare function btoa(data: string): string;
+declare function clearInterval(handle?: number): void;
+declare function clearTimeout(handle?: number): void;
+declare function createImageBitmap(image: ImageBitmapSource, options?: ImageBitmapOptions): Promise<ImageBitmap>;
+declare function createImageBitmap(image: ImageBitmapSource, sx: number, sy: number, sw: number, sh: number, options?: ImageBitmapOptions): Promise<ImageBitmap>;
+declare function fetch(input: RequestInfo, init?: RequestInit): Promise<Response>;
+declare function queueMicrotask(callback: VoidFunction): void;
+declare function setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
+declare function setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
+declare var onafterprint: ((this: Window, ev: Event) => any) | null;
+declare var onbeforeprint: ((this: Window, ev: Event) => any) | null;
+declare var onbeforeunload: ((this: Window, ev: BeforeUnloadEvent) => any) | null;
+declare var onhashchange: ((this: Window, ev: HashChangeEvent) => any) | null;
+declare var onlanguagechange: ((this: Window, ev: Event) => any) | null;
+declare var onmessage: ((this: Window, ev: MessageEvent) => any) | null;
+declare var onmessageerror: ((this: Window, ev: MessageEvent) => any) | null;
+declare var onoffline: ((this: Window, ev: Event) => any) | null;
+declare var ononline: ((this: Window, ev: Event) => any) | null;
+declare var onpagehide: ((this: Window, ev: PageTransitionEvent) => any) | null;
+declare var onpageshow: ((this: Window, ev: PageTransitionEvent) => any) | null;
+declare var onpopstate: ((this: Window, ev: PopStateEvent) => any) | null;
+declare var onrejectionhandled: ((this: Window, ev: PromiseRejectionEvent) => any) | null;
+declare var onstorage: ((this: Window, ev: StorageEvent) => any) | null;
+declare var onunhandledrejection: ((this: Window, ev: PromiseRejectionEvent) => any) | null;
+declare var onunload: ((this: Window, ev: Event) => any) | null;
+declare function addEventListener<K extends keyof WindowEventMap>(type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+declare function addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+declare function removeEventListener<K extends keyof WindowEventMap>(type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+declare function removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+type HeadersInit = Headers | string[][] | Record<string, string>;
+type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
+type RequestInfo = Request | string;
+type BlobPart = BufferSource | Blob | string;
+type DOMHighResTimeStamp = number;
+type RenderingContext = CanvasRenderingContext2D | ImageBitmapRenderingContext | WebGLRenderingContext | WebGL2RenderingContext;
+type HTMLOrSVGImageElement = HTMLImageElement | SVGImageElement;
+type CanvasImageSource = HTMLOrSVGImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas;
+type OffscreenRenderingContext = OffscreenCanvasRenderingContext2D | ImageBitmapRenderingContext | WebGLRenderingContext | WebGL2RenderingContext;
+type MessageEventSource = WindowProxy | MessagePort | ServiceWorker;
+type HTMLOrSVGScriptElement = HTMLScriptElement | SVGScriptElement;
+type ImageBitmapSource = CanvasImageSource | Blob | ImageData;
+type MediaProvider = MediaStream | MediaSource | Blob;
+type OnErrorEventHandler = OnErrorEventHandlerNonNull | null;
+type OnBeforeUnloadEventHandler = OnBeforeUnloadEventHandlerNonNull | null;
+type TimerHandler = string | Function;
+type ConstrainULong = number | ConstrainULongRange;
+type ConstrainDouble = number | ConstrainDoubleRange;
+type ConstrainBoolean = boolean | ConstrainBooleanParameters;
+type ConstrainDOMString = string | string[] | ConstrainDOMStringParameters;
+type PerformanceEntryList = PerformanceEntry[];
+type ReadableStreamReadResult<T> = ReadableStreamReadValueResult<T> | ReadableStreamReadDoneResult<T>;
+type VibratePattern = number | number[];
+type COSEAlgorithmIdentifier = number;
+type AuthenticatorSelectionList = AAGUID[];
+type AAGUID = BufferSource;
+type AuthenticationExtensionsSupported = string[];
+type UvmEntry = number[];
+type UvmEntries = UvmEntry[];
+type AlgorithmIdentifier = string | Algorithm;
+type HashAlgorithmIdentifier = AlgorithmIdentifier;
+type BigInteger = Uint8Array;
+type NamedCurve = string;
+type GLenum = number;
+type GLboolean = boolean;
+type GLbitfield = number;
+type GLint = number;
+type GLsizei = number;
+type GLintptr = number;
+type GLsizeiptr = number;
+type GLuint = number;
+type GLfloat = number;
+type GLclampf = number;
+type TexImageSource = ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | OffscreenCanvas;
+type Float32List = Float32Array | GLfloat[];
+type Int32List = Int32Array | GLint[];
+type GLint64 = number;
+type GLuint64 = number;
+type Uint32List = Uint32Array | GLuint[];
+type BufferSource = ArrayBufferView | ArrayBuffer;
+type DOMTimeStamp = number;
+type LineAndPositionSetting = number | AutoKeyword;
+type FormDataEntryValue = File | string;
+type InsertPosition = "beforebegin" | "afterbegin" | "beforeend" | "afterend";
+type IDBValidKey = number | string | Date | BufferSource | IDBArrayKey;
+type MutationRecordType = "attributes" | "characterData" | "childList";
+type IDBKeyPath = string;
+type Transferable = ArrayBuffer | MessagePort | ImageBitmap | OffscreenCanvas;
+type RTCIceGatherCandidate = RTCIceCandidateDictionary | RTCIceCandidateComplete;
+type RTCTransport = RTCDtlsTransport | RTCSrtpSdesTransport;
+/** @deprecated */
+type MouseWheelEvent = WheelEvent;
+type WindowProxy = Window;
+type AlignSetting = "center" | "end" | "left" | "right" | "start";
+type AnimationPlayState = "finished" | "idle" | "paused" | "running";
+type AppendMode = "segments" | "sequence";
+type AttestationConveyancePreference = "direct" | "indirect" | "none";
+type AudioContextLatencyCategory = "balanced" | "interactive" | "playback";
+type AudioContextState = "closed" | "running" | "suspended";
+type AuthenticatorAttachment = "cross-platform" | "platform";
+type AuthenticatorTransport = "ble" | "internal" | "nfc" | "usb";
+type AutoKeyword = "auto";
+type AutomationRate = "a-rate" | "k-rate";
+type BinaryType = "arraybuffer" | "blob";
+type BiquadFilterType = "allpass" | "bandpass" | "highpass" | "highshelf" | "lowpass" | "lowshelf" | "notch" | "peaking";
+type CanPlayTypeResult = "" | "maybe" | "probably";
+type CanvasDirection = "inherit" | "ltr" | "rtl";
+type CanvasFillRule = "evenodd" | "nonzero";
+type CanvasLineCap = "butt" | "round" | "square";
+type CanvasLineJoin = "bevel" | "miter" | "round";
+type CanvasTextAlign = "center" | "end" | "left" | "right" | "start";
+type CanvasTextBaseline = "alphabetic" | "bottom" | "hanging" | "ideographic" | "middle" | "top";
+type ChannelCountMode = "clamped-max" | "explicit" | "max";
+type ChannelInterpretation = "discrete" | "speakers";
+type ClientTypes = "all" | "sharedworker" | "window" | "worker";
+type ColorSpaceConversion = "default" | "none";
+type CompositeOperation = "accumulate" | "add" | "replace";
+type CompositeOperationOrAuto = "accumulate" | "add" | "auto" | "replace";
+type CredentialMediationRequirement = "optional" | "required" | "silent";
+type DirectionSetting = "" | "lr" | "rl";
+type DisplayCaptureSurfaceType = "application" | "browser" | "monitor" | "window";
+type DistanceModelType = "exponential" | "inverse" | "linear";
+type DocumentReadyState = "complete" | "interactive" | "loading";
+type EndOfStreamError = "decode" | "network";
+type EndingType = "native" | "transparent";
+type FillMode = "auto" | "backwards" | "both" | "forwards" | "none";
+type FullscreenNavigationUI = "auto" | "hide" | "show";
+type GamepadHand = "" | "left" | "right";
+type GamepadHapticActuatorType = "vibration";
+type GamepadMappingType = "" | "standard";
+type IDBCursorDirection = "next" | "nextunique" | "prev" | "prevunique";
+type IDBRequestReadyState = "done" | "pending";
+type IDBTransactionMode = "readonly" | "readwrite" | "versionchange";
+type ImageOrientation = "flipY" | "none";
+type ImageSmoothingQuality = "high" | "low" | "medium";
+type IterationCompositeOperation = "accumulate" | "replace";
+type KeyFormat = "jwk" | "pkcs8" | "raw" | "spki";
+type KeyType = "private" | "public" | "secret";
+type KeyUsage = "decrypt" | "deriveBits" | "deriveKey" | "encrypt" | "sign" | "unwrapKey" | "verify" | "wrapKey";
+type LineAlignSetting = "center" | "end" | "start";
+type ListeningState = "active" | "disambiguation" | "inactive";
+type MSCredentialType = "FIDO_2_0";
+type MSTransportType = "BT" | "Embedded" | "NFC" | "USB";
+type MSWebViewPermissionState = "allow" | "defer" | "deny" | "unknown";
+type MSWebViewPermissionType = "geolocation" | "media" | "pointerlock" | "unlimitedIndexedDBQuota" | "webnotifications";
+type MediaDeviceKind = "audioinput" | "audiooutput" | "videoinput";
+type MediaKeyMessageType = "individualization-request" | "license-release" | "license-renewal" | "license-request";
+type MediaKeySessionType = "persistent-license" | "temporary";
+type MediaKeyStatus = "expired" | "internal-error" | "output-downscaled" | "output-restricted" | "released" | "status-pending" | "usable";
+type MediaKeysRequirement = "not-allowed" | "optional" | "required";
+type MediaStreamTrackState = "ended" | "live";
+type NavigationReason = "down" | "left" | "right" | "up";
+type NavigationType = "back_forward" | "navigate" | "prerender" | "reload";
+type NotificationDirection = "auto" | "ltr" | "rtl";
+type NotificationPermission = "default" | "denied" | "granted";
+type OffscreenRenderingContextId = "2d" | "bitmaprenderer" | "webgl" | "webgl2";
+type OrientationLockType = "any" | "landscape" | "landscape-primary" | "landscape-secondary" | "natural" | "portrait" | "portrait-primary" | "portrait-secondary";
+type OrientationType = "landscape-primary" | "landscape-secondary" | "portrait-primary" | "portrait-secondary";
+type OscillatorType = "custom" | "sawtooth" | "sine" | "square" | "triangle";
+type OverSampleType = "2x" | "4x" | "none";
+type PanningModelType = "HRTF" | "equalpower";
+type PaymentComplete = "fail" | "success" | "unknown";
+type PaymentShippingType = "delivery" | "pickup" | "shipping";
+type PermissionName = "accelerometer" | "ambient-light-sensor" | "background-sync" | "bluetooth" | "camera" | "clipboard" | "device-info" | "geolocation" | "gyroscope" | "magnetometer" | "microphone" | "midi" | "notifications" | "persistent-storage" | "push" | "speaker";
+type PermissionState = "denied" | "granted" | "prompt";
+type PlaybackDirection = "alternate" | "alternate-reverse" | "normal" | "reverse";
+type PositionAlignSetting = "auto" | "center" | "line-left" | "line-right";
+type PremultiplyAlpha = "default" | "none" | "premultiply";
+type PublicKeyCredentialType = "public-key";
+type PushEncryptionKeyName = "auth" | "p256dh";
+type PushPermissionState = "denied" | "granted" | "prompt";
+type RTCBundlePolicy = "balanced" | "max-bundle" | "max-compat";
+type RTCDataChannelState = "closed" | "closing" | "connecting" | "open";
+type RTCDegradationPreference = "balanced" | "maintain-framerate" | "maintain-resolution";
+type RTCDtlsRole = "auto" | "client" | "server";
+type RTCDtlsTransportState = "closed" | "connected" | "connecting" | "failed" | "new";
+type RTCDtxStatus = "disabled" | "enabled";
+type RTCErrorDetailType = "data-channel-failure" | "dtls-failure" | "fingerprint-failure" | "hardware-encoder-error" | "hardware-encoder-not-available" | "idp-bad-script-failure" | "idp-execution-failure" | "idp-load-failure" | "idp-need-login" | "idp-timeout" | "idp-tls-failure" | "idp-token-expired" | "idp-token-invalid" | "sctp-failure" | "sdp-syntax-error";
+type RTCIceCandidateType = "host" | "prflx" | "relay" | "srflx";
+type RTCIceComponent = "rtcp" | "rtp";
+type RTCIceConnectionState = "checking" | "closed" | "completed" | "connected" | "disconnected" | "failed" | "new";
+type RTCIceCredentialType = "oauth" | "password";
+type RTCIceGatherPolicy = "all" | "nohost" | "relay";
+type RTCIceGathererState = "complete" | "gathering" | "new";
+type RTCIceGatheringState = "complete" | "gathering" | "new";
+type RTCIceProtocol = "tcp" | "udp";
+type RTCIceRole = "controlled" | "controlling" | "unknown";
+type RTCIceTcpCandidateType = "active" | "passive" | "so";
+type RTCIceTransportPolicy = "all" | "relay";
+type RTCIceTransportState = "checking" | "closed" | "completed" | "connected" | "disconnected" | "failed" | "new";
+type RTCPeerConnectionState = "closed" | "connected" | "connecting" | "disconnected" | "failed" | "new";
+type RTCPriorityType = "high" | "low" | "medium" | "very-low";
+type RTCRtcpMuxPolicy = "negotiate" | "require";
+type RTCRtpTransceiverDirection = "inactive" | "recvonly" | "sendonly" | "sendrecv" | "stopped";
+type RTCSctpTransportState = "closed" | "connected" | "connecting";
+type RTCSdpType = "answer" | "offer" | "pranswer" | "rollback";
+type RTCSignalingState = "closed" | "have-local-offer" | "have-local-pranswer" | "have-remote-offer" | "have-remote-pranswer" | "stable";
+type RTCStatsIceCandidatePairState = "cancelled" | "failed" | "frozen" | "inprogress" | "succeeded" | "waiting";
+type RTCStatsIceCandidateType = "host" | "peerreflexive" | "relayed" | "serverreflexive";
+type RTCStatsType = "candidatepair" | "datachannel" | "inboundrtp" | "localcandidate" | "outboundrtp" | "remotecandidate" | "session" | "track" | "transport";
+type ReadyState = "closed" | "ended" | "open";
+type ReferrerPolicy = "" | "no-referrer" | "no-referrer-when-downgrade" | "origin" | "origin-when-cross-origin" | "same-origin" | "strict-origin" | "strict-origin-when-cross-origin" | "unsafe-url";
+type RequestCache = "default" | "force-cache" | "no-cache" | "no-store" | "only-if-cached" | "reload";
+type RequestCredentials = "include" | "omit" | "same-origin";
+type RequestDestination = "" | "audio" | "audioworklet" | "document" | "embed" | "font" | "image" | "manifest" | "object" | "paintworklet" | "report" | "script" | "sharedworker" | "style" | "track" | "video" | "worker" | "xslt";
+type RequestMode = "cors" | "navigate" | "no-cors" | "same-origin";
+type RequestRedirect = "error" | "follow" | "manual";
+type ResizeQuality = "high" | "low" | "medium" | "pixelated";
+type ResponseType = "basic" | "cors" | "default" | "error" | "opaque" | "opaqueredirect";
+type ScopedCredentialType = "ScopedCred";
+type ScrollBehavior = "auto" | "smooth";
+type ScrollLogicalPosition = "center" | "end" | "nearest" | "start";
+type ScrollRestoration = "auto" | "manual";
+type ScrollSetting = "" | "up";
+type SelectionMode = "end" | "preserve" | "select" | "start";
+type ServiceWorkerState = "activated" | "activating" | "installed" | "installing" | "parsed" | "redundant";
+type ServiceWorkerUpdateViaCache = "all" | "imports" | "none";
+type ShadowRootMode = "closed" | "open";
+type SpeechSynthesisErrorCode = "audio-busy" | "audio-hardware" | "canceled" | "interrupted" | "invalid-argument" | "language-unavailable" | "network" | "not-allowed" | "synthesis-failed" | "synthesis-unavailable" | "text-too-long" | "voice-unavailable";
+type SupportedType = "application/xhtml+xml" | "application/xml" | "image/svg+xml" | "text/html" | "text/xml";
+type TextTrackKind = "captions" | "chapters" | "descriptions" | "metadata" | "subtitles";
+type TextTrackMode = "disabled" | "hidden" | "showing";
+type TouchType = "direct" | "stylus";
+type Transport = "ble" | "nfc" | "usb";
+type UserVerificationRequirement = "discouraged" | "preferred" | "required";
+type VRDisplayEventReason = "mounted" | "navigation" | "requested" | "unmounted";
+type VideoFacingModeEnum = "environment" | "left" | "right" | "user";
+type VisibilityState = "hidden" | "visible";
+type WebGLPowerPreference = "default" | "high-performance" | "low-power";
+type WorkerType = "classic" | "module";
+type XMLHttpRequestResponseType = "" | "arraybuffer" | "blob" | "document" | "json" | "text";

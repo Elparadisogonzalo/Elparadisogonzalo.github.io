@@ -1,0 +1,35 @@
+{
+	"motd": {
+		"cloudBuildErrorAfter": 1594252800000,
+		"cloudBuildWarnAfter": 1590019200000,
+		"defaultNode10After": 1594252800000,
+		"minVersion": "3.0.5",
+		"node8DeploysDisabledAfter": 1613390400000,
+		"node8RuntimeDisabledAfter": 1615809600000,
+		"node8WarnAfter": 1600128000000,
+		"fetched": 1747037068134
+	},
+	"usage": true,
+	"analytics-uuid": "6ddb4748-4344-4283-997d-1835cbd10744",
+	"user": {
+		"iss": "accounts.google.com",
+		"azp": "563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com",
+		"aud": "563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com",
+		"sub": "117041364354133772106",
+		"email": "genyoungclip@gmail.com",
+		"email_verified": true,
+		"at_hash": "mma-1OwP9uiyVkYuk_E9PA",
+		"iat": 1747037094,
+		"exp": 1747040694
+	},
+	"tokens": {
+		"expires_at": 1747040692684,
+		"access_token": "ya29.a0AW4XtxhBPpcB2gHKgXtlP3R6eRaiHFzG5XQwXu-asre3mmaVvBq00WR_Ofbsa7mnP5uVuQIZYLq5niwECTede2jze4KiVXDV7yCcvtnZD-BGxTfbtFJy_sCy-l1zP0Ykg0JX1MTbpVUDqfe5Q-jhpmwjkw1IPERItQZ5sZBs_i59XgaCgYKATsSARASFQHGX2MinWC0eOqvS9pXDdSr_eGS8Q0181",
+		"expires_in": 3599,
+		"refresh_token":
+		"scope": "openid https://www.googleapis.com/auth/cloudplatformprojects.readonly https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase https://www.googleapis.com/auth/userinfo.email",
+		"token_type": "Bearer",
+		"id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImUxNGMzN2Q2ZTVjNzU2ZThiNzJmZGI1MDA0YzBjYzM1NjMzNzkyNGUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoiNTYzNTg0MzM1ODY5LWZncmhnbWQ0N2JxbmVraWo1aThiNXByMDNobzg0OWU2LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiNTYzNTg0MzM1ODY5LWZncmhnbWQ0N2JxbmVraWo1aThiNXByMDNobzg0OWU2LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTE3MDQxMzY0MzU0MTMzNzcyMTA2IiwiZW1haWwiOiJnZW55b3VuZ2NsaXBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJtbWEtMU93UDl1aXlWa1l1a19FOVBBIiwiaWF0IjoxNzQ3MDM3MDk0LCJleHAiOjE3NDcwNDA2OTR9.ER8JJXEIQbnN__nFjnmPd65qQiUj8vR6Vj4soPWNulsDRUfGtRK_UFU8FXBafPgjY0GhipAxQGU09vflIhSZfFpHBa5dNXp-FW7ClsXdOsO7RDZnE3EcQZb4AlOaOW4tA9N0nrt8dZC1nUYGEdgloCMrjB2e08BtwJM910JVxf0FF9KoMO5U6Z5icrBxxZtahOYcCbHjQMzjf0i5RgLIJRa93udoeIZj3nIYIxaMUBS2wQLkaf6lQfOQka2t9pISqRtaWh-c6IazEy45G3YYZDOHpcSbcxWpYpLx6BlmWoSoWWK2FtcIrstsS1LoBBHvO_UqnACJq9QJ2tgWJuTC5A"
+	},
+	"lastError": 1747037265220
+}

@@ -1,0 +1,5944 @@
+arseAndCatch(f) {
+    const result = this.tryParse(abort => f() || abort());
+    if (result.aborted || !result.node) return undefined;
+    if (result.error) this.state = result.failState;
+    return result.node;
+  }
+
+  tsTryParse(f) {
+    const state = this.state.clone();
+    const result = f();
+
+    if (result !== undefined && result !== false) {
+      return result;
+    } else {
+      this.state = state;
+      return undefined;
+    }
+  }
+
+  tsTryParseDeclare(nany) {
+    if (this.isLineTerminator()) {
+      return;
+    }
+
+    let starttype = this.state.type;
+    let kind;
+
+    if (this.isContextual(90)) {
+      starttype = 65;
+      kind = "let";
+    }
+
+    return this.tsInAmbientContext(() => {
+      switch (starttype) {
+        case 59:
+          nany.declare = true;
+          return this.parseFunctionStatement(nany, false, true);
+
+        case 71:
+          nany.declare = true;
+          return this.parseClass(nany, true, false);
+
+        case 66:
+          if (this.match(66) && this.isLookaheadContextual("enum")) {
+            this.expect(66);
+            this.expectContextual(113);
+            return this.tsParseEnumDeclaration(nany, true);
+          }
+
+        case 65:
+          kind = kind || this.state.value;
+          return this.parseVarStatement(nany, kind);
+
+        case 100:
+          return this.tsParseAmbientExternalModuleDeclaration(nany);
+
+        default:
+          {
+            if (tokenIsIdentifier(starttype)) {
+              return this.tsParseDeclaration(nany, this.state.value, true);
+            }
+          }
+      }
+    });
+  }
+
+  tsTryParseExportDeclaration() {
+    return this.tsParseDeclaration(this.startNode(), this.state.value, true);
+  }
+
+  tsParseExpressionStatement(node, expr) {
+    switch (expr.name) {
+      case "declare":
+        {
+          const declaration = this.tsTryParseDeclare(node);
+
+          if (declaration) {
+            declaration.declare = true;
+            return declaration;
+          }
+
+          break;
+        }
+
+      case "global":
+        if (this.match(5)) {
+          this.scope.enter(SCOPE_TS_MODULE);
+          this.prodParam.enter(PARAM);
+          const mod = node;
+          mod.global = true;
+          mod.id = expr;
+          mod.body = this.tsParseModuleBlock();
+          this.scope.exit();
+          this.prodParam.exit();
+          return this.finishNode(mod, "TSModuleDeclaration");
+        }
+
+        break;
+
+      default:
+        return this.tsParseDeclaration(node, expr.name, false);
+    }
+  }
+
+  tsParseDeclaration(node, value, next) {
+    switch (value) {
+      case "abstract":
+        if (this.tsCheckLineTerminator(next) && (this.match(71) || tokenIsIdentifier(this.state.type))) {
+          return this.tsParseAbstractDeclaration(node);
+        }
+
+        break;
+
+      case "enum":
+        if (next || tokenIsIdentifier(this.state.type)) {
+          if (next) this.next();
+          return this.tsParseEnumDeclaration(node, false);
+        }
+
+        break;
+
+      case "interface":
+        if (this.tsCheckLineTerminator(next) && tokenIsIdentifier(this.state.type)) {
+          return this.tsParseInterfaceDeclaration(node);
+        }
+
+        break;
+
+      case "module":
+        if (this.tsCheckLineTerminator(next)) {
+          if (this.match(120)) {
+            return this.tsParseAmbientExternalModuleDeclaration(node);
+          } else if (tokenIsIdentifier(this.state.type)) {
+            return this.tsParseModuleOrNamespaceDeclaration(node);
+          }
+        }
+
+        break;
+
+      case "namespace":
+        if (this.tsCheckLineTerminator(next) && tokenIsIdentifier(this.state.type)) {
+          return this.tsParseModuleOrNamespaceDeclaration(node);
+        }
+
+        break;
+
+      case "type":
+        if (this.tsCheckLineTerminator(next) && tokenIsIdentifier(this.state.type)) {
+          return this.tsParseTypeAliasDeclaration(node);
+        }
+
+        break;
+    }
+  }
+
+  tsCheckLineTerminator(next) {
+    if (next) {
+      if (this.hasFollowingLineBreak()) return false;
+      this.next();
+      return true;
+    }
+
+    return !this.isLineTerminator();
+  }
+
+  tsTryParseGenericAsyncArrowFunction(startPos, startLoc) {
+    if (!this.isRelational("<")) {
+      return undefined;
+    }
+
+    const oldMaybeInArrowParameters = this.state.maybeInArrowParameters;
+    this.state.maybeInArrowParameters = true;
+    const res = this.tsTryParseAndCatch(() => {
+      const node = this.startNodeAt(startPos, startLoc);
+      node.typeParameters = this.tsParseTypeParameters();
+      super.parseFunctionParams(node);
+      node.returnType = this.tsTryParseTypeOrTypePredicateAnnotation();
+      this.expect(19);
+      return node;
+    });
+    this.state.maybeInArrowParameters = oldMaybeInArrowParameters;
+
+    if (!res) {
+      return undefined;
+    }
+
+    return this.parseArrowExpression(res, null, true);
+  }
+
+  tsParseTypeArguments() {
+    const node = this.startNode();
+    node.params = this.tsInType(() => this.tsInNoContext(() => {
+      this.expectRelational("<");
+      return this.tsParseDelimitedList("TypeParametersOrArguments", this.tsParseType.bind(this));
+    }));
+
+    if (node.params.length === 0) {
+      this.raise(node.start, TSErrors.EmptyTypeArguments);
+    }
+
+    this.expectRelational(">");
+    return this.finishNode(node, "TSTypeParameterInstantiation");
+  }
+
+  tsIsDeclarationStart() {
+    return tokenIsTSDeclarationStart(this.state.type);
+  }
+
+  isExportDefaultSpecifier() {
+    if (this.tsIsDeclarationStart()) return false;
+    return super.isExportDefaultSpecifier();
+  }
+
+  parseAssignableListItem(allowModifiers, decorators) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    let accessibility;
+    let readonly = false;
+    let override = false;
+
+    if (allowModifiers !== undefined) {
+      const modified = {};
+      this.tsParseModifiers(modified, ["public", "private", "protected", "override", "readonly"]);
+      accessibility = modified.accessibility;
+      override = modified.override;
+      readonly = modified.readonly;
+
+      if (allowModifiers === false && (accessibility || readonly || override)) {
+        this.raise(startPos, TSErrors.UnexpectedParameterModifier);
+      }
+    }
+
+    const left = this.parseMaybeDefault();
+    this.parseAssignableListItemTypes(left);
+    const elt = this.parseMaybeDefault(left.start, left.loc.start, left);
+
+    if (accessibility || readonly || override) {
+      const pp = this.startNodeAt(startPos, startLoc);
+
+      if (decorators.length) {
+        pp.decorators = decorators;
+      }
+
+      if (accessibility) pp.accessibility = accessibility;
+      if (readonly) pp.readonly = readonly;
+      if (override) pp.override = override;
+
+      if (elt.type !== "Identifier" && elt.type !== "AssignmentPattern") {
+        this.raise(pp.start, TSErrors.UnsupportedParameterPropertyKind);
+      }
+
+      pp.parameter = elt;
+      return this.finishNode(pp, "TSParameterProperty");
+    }
+
+    if (decorators.length) {
+      left.decorators = decorators;
+    }
+
+    return elt;
+  }
+
+  parseFunctionBodyAndFinish(node, type, isMethod = false) {
+    if (this.match(14)) {
+      node.returnType = this.tsParseTypeOrTypePredicateAnnotation(14);
+    }
+
+    const bodilessType = type === "FunctionDeclaration" ? "TSDeclareFunction" : type === "ClassMethod" ? "TSDeclareMethod" : undefined;
+
+    if (bodilessType && !this.match(5) && this.isLineTerminator()) {
+      this.finishNode(node, bodilessType);
+      return;
+    }
+
+    if (bodilessType === "TSDeclareFunction" && this.state.isAmbientContext) {
+      this.raise(node.start, TSErrors.DeclareFunctionHasImplementation);
+
+      if (node.declare) {
+        super.parseFunctionBodyAndFinish(node, bodilessType, isMethod);
+        return;
+      }
+    }
+
+    super.parseFunctionBodyAndFinish(node, type, isMethod);
+  }
+
+  registerFunctionStatementId(node) {
+    if (!node.body && node.id) {
+      this.checkLVal(node.id, "function name", BIND_TS_AMBIENT);
+    } else {
+      super.registerFunctionStatementId(...arguments);
+    }
+  }
+
+  tsCheckForInvalidTypeCasts(items) {
+    items.forEach(node => {
+      if ((node == null ? void 0 : node.type) === "TSTypeCastExpression") {
+        this.raise(node.typeAnnotation.start, TSErrors.UnexpectedTypeAnnotation);
+      }
+    });
+  }
+
+  toReferencedList(exprList, isInParens) {
+    this.tsCheckForInvalidTypeCasts(exprList);
+    return exprList;
+  }
+
+  parseArrayLike(...args) {
+    const node = super.parseArrayLike(...args);
+
+    if (node.type === "ArrayExpression") {
+      this.tsCheckForInvalidTypeCasts(node.elements);
+    }
+
+    return node;
+  }
+
+  parseSubscript(base, startPos, startLoc, noCalls, state) {
+    if (!this.hasPrecedingLineBreak() && this.match(32)) {
+      this.state.exprAllowed = false;
+      this.next();
+      const nonNullExpression = this.startNodeAt(startPos, startLoc);
+      nonNullExpression.expression = base;
+      return this.finishNode(nonNullExpression, "TSNonNullExpression");
+    }
+
+    let isOptionalCall = false;
+
+    if (this.match(18) && this.lookaheadCharCode() === 60) {
+      if (noCalls) {
+        state.stop = true;
+        return base;
+      }
+
+      state.optionalChainMember = isOptionalCall = true;
+      this.next();
+    }
+
+    if (this.isRelational("<")) {
+      let missingParenErrorPos;
+      const result = this.tsTryParseAndCatch(() => {
+        if (!noCalls && this.atPossibleAsyncArrow(base)) {
+          const asyncArrowFn = this.tsTryParseGenericAsyncArrowFunction(startPos, startLoc);
+
+          if (asyncArrowFn) {
+            return asyncArrowFn;
+          }
+        }
+
+        const node = this.startNodeAt(startPos, startLoc);
+        node.callee = base;
+        const typeArguments = this.tsParseTypeArguments();
+
+        if (typeArguments) {
+          if (isOptionalCall && !this.match(10)) {
+            missingParenErrorPos = this.state.pos;
+            this.unexpected();
+          }
+
+          if (!noCalls && this.eat(10)) {
+            node.arguments = this.parseCallExpressionArguments(11, false);
+            this.tsCheckForInvalidTypeCasts(node.arguments);
+            node.typeParameters = typeArguments;
+
+            if (state.optionalChainMember) {
+              node.optional = isOptionalCall;
+            }
+
+            return this.finishCallExpression(node, state.optionalChainMember);
+          } else if (this.match(22)) {
+            const result = this.parseTaggedTemplateExpression(base, startPos, startLoc, state);
+            result.typeParameters = typeArguments;
+            return result;
+          }
+        }
+
+        this.unexpected();
+      });
+
+      if (missingParenErrorPos) {
+        this.unexpected(missingParenErrorPos, 10);
+      }
+
+      if (result) return result;
+    }
+
+    return super.parseSubscript(base, startPos, startLoc, noCalls, state);
+  }
+
+  parseNewArguments(node) {
+    if (this.isRelational("<")) {
+      const typeParameters = this.tsTryParseAndCatch(() => {
+        const args = this.tsParseTypeArguments();
+        if (!this.match(10)) this.unexpected();
+        return args;
+      });
+
+      if (typeParameters) {
+        node.typeParameters = typeParameters;
+      }
+    }
+
+    super.parseNewArguments(node);
+  }
+
+  parseExprOp(left, leftStartPos, leftStartLoc, minPrec) {
+    if (tokenOperatorPrecedence(49) > minPrec && !this.hasPrecedingLineBreak() && this.isContextual(84)) {
+      const node = this.startNodeAt(leftStartPos, leftStartLoc);
+      node.expression = left;
+
+      const _const = this.tsTryNextParseConstantContext();
+
+      if (_const) {
+        node.typeAnnotation = _const;
+      } else {
+        node.typeAnnotation = this.tsNextThenParseType();
+      }
+
+      this.finishNode(node, "TSAsExpression");
+      this.reScan_lt_gt();
+      return this.parseExprOp(node, leftStartPos, leftStartLoc, minPrec);
+    }
+
+    return super.parseExprOp(left, leftStartPos, leftStartLoc, minPrec);
+  }
+
+  checkReservedWord(word, startLoc, checkKeywords, isBinding) {}
+
+  checkDuplicateExports() {}
+
+  parseImport(node) {
+    node.importKind = "value";
+
+    if (tokenIsIdentifier(this.state.type) || this.match(46) || this.match(5)) {
+      let ahead = this.lookahead();
+
+      if (this.isContextual(117) && ahead.type !== 12 && ahead.type !== 88 && ahead.type !== 27) {
+        node.importKind = "type";
+        this.next();
+        ahead = this.lookahead();
+      }
+
+      if (tokenIsIdentifier(this.state.type) && ahead.type === 27) {
+        return this.tsParseImportEqualsDeclaration(node);
+      }
+    }
+
+    const importNode = super.parseImport(node);
+
+    if (importNode.importKind === "type" && importNode.specifiers.length > 1 && importNode.specifiers[0].type === "ImportDefaultSpecifier") {
+      this.raise(importNode.start, TSErrors.TypeImportCannotSpecifyDefaultAndNamed);
+    }
+
+    return importNode;
+  }
+
+  parseExport(node) {
+    if (this.match(74)) {
+      this.next();
+
+      if (this.isContextual(117) && this.lookaheadCharCode() !== 61) {
+        node.importKind = "type";
+        this.next();
+      } else {
+        node.importKind = "value";
+      }
+
+      return this.tsParseImportEqualsDeclaration(node, true);
+    } else if (this.eat(27)) {
+      const assign = node;
+      assign.expression = this.parseExpression();
+      this.semicolon();
+      return this.finishNode(assign, "TSExportAssignment");
+    } else if (this.eatContextual(84)) {
+      const decl = node;
+      this.expectContextual(115);
+      decl.id = this.parseIdentifier();
+      this.semicolon();
+      return this.finishNode(decl, "TSNamespaceExportDeclaration");
+    } else {
+      if (this.isContextual(117) && this.lookahead().type === 5) {
+        this.next();
+        node.exportKind = "type";
+      } else {
+        node.exportKind = "value";
+      }
+
+      return super.parseExport(node);
+    }
+  }
+
+  isAbstractClass() {
+    return this.isContextual(111) && this.lookahead().type === 71;
+  }
+
+  parseExportDefaultExpression() {
+    if (this.isAbstractClass()) {
+      const cls = this.startNode();
+      this.next();
+      cls.abstract = true;
+      this.parseClass(cls, true, true);
+      return cls;
+    }
+
+    if (this.match(116)) {
+      const interfaceNode = this.startNode();
+      this.next();
+      const result = this.tsParseInterfaceDeclaration(interfaceNode);
+      if (result) return result;
+    }
+
+    return super.parseExportDefaultExpression();
+  }
+
+  parseStatementContent(context, topLevel) {
+    if (this.state.type === 66) {
+      const ahead = this.lookahead();
+
+      if (ahead.type === 113) {
+        const node = this.startNode();
+        this.next();
+        this.expectContextual(113);
+        return this.tsParseEnumDeclaration(node, true);
+      }
+    }
+
+    return super.parseStatementContent(context, topLevel);
+  }
+
+  parseAccessModifier() {
+    return this.tsParseModifier(["public", "protected", "private"]);
+  }
+
+  tsHasSomeModifiers(member, modifiers) {
+    return modifiers.some(modifier => {
+      if (tsIsAccessModifier(modifier)) {
+        return member.accessibility === modifier;
+      }
+
+      return !!member[modifier];
+    });
+  }
+
+  tsIsStartOfStaticBlocks() {
+    return this.isContextual(95) && this.lookaheadCharCode() === 123;
+  }
+
+  parseClassMember(classBody, member, state) {
+    const modifiers = ["declare", "private", "public", "protected", "override", "abstract", "readonly", "static"];
+    this.tsParseModifiers(member, modifiers, undefined, undefined, true);
+
+    const callParseClassMemberWithIsStatic = () => {
+      if (this.tsIsStartOfStaticBlocks()) {
+        this.next();
+        this.next();
+
+        if (this.tsHasSomeModifiers(member, modifiers)) {
+          this.raise(this.state.pos, TSErrors.StaticBlockCannotHaveModifier);
+        }
+
+        this.parseClassStaticBlock(classBody, member);
+      } else {
+        this.parseClassMemberWithIsStatic(classBody, member, state, !!member.static);
+      }
+    };
+
+    if (member.declare) {
+      this.tsInAmbientContext(callParseClassMemberWithIsStatic);
+    } else {
+      callParseClassMemberWithIsStatic();
+    }
+  }
+
+  parseClassMemberWithIsStatic(classBody, member, state, isStatic) {
+    const idx = this.tsTryParseIndexSignature(member);
+
+    if (idx) {
+      classBody.body.push(idx);
+
+      if (member.abstract) {
+        this.raise(member.start, TSErrors.IndexSignatureHasAbstract);
+      }
+
+      if (member.accessibility) {
+        this.raise(member.start, TSErrors.IndexSignatureHasAccessibility, member.accessibility);
+      }
+
+      if (member.declare) {
+        this.raise(member.start, TSErrors.IndexSignatureHasDeclare);
+      }
+
+      if (member.override) {
+        this.raise(member.start, TSErrors.IndexSignatureHasOverride);
+      }
+
+      return;
+    }
+
+    if (!this.state.inAbstractClass && member.abstract) {
+      this.raise(member.start, TSErrors.NonAbstractClassHasAbstractMethod);
+    }
+
+    if (member.override) {
+      if (!state.hadSuperClass) {
+        this.raise(member.start, TSErrors.OverrideNotInSubClass);
+      }
+    }
+
+    super.parseClassMemberWithIsStatic(classBody, member, state, isStatic);
+  }
+
+  parsePostMemberNameModifiers(methodOrProp) {
+    const optional = this.eat(17);
+    if (optional) methodOrProp.optional = true;
+
+    if (methodOrProp.readonly && this.match(10)) {
+      this.raise(methodOrProp.start, TSErrors.ClassMethodHasReadonly);
+    }
+
+    if (methodOrProp.declare && this.match(10)) {
+      this.raise(methodOrProp.start, TSErrors.ClassMethodHasDeclare);
+    }
+  }
+
+  parseExpressionStatement(node, expr) {
+    const decl = expr.type === "Identifier" ? this.tsParseExpressionStatement(node, expr) : undefined;
+    return decl || super.parseExpressionStatement(node, expr);
+  }
+
+  shouldParseExportDeclaration() {
+    if (this.tsIsDeclarationStart()) return true;
+    return super.shouldParseExportDeclaration();
+  }
+
+  parseConditional(expr, startPos, startLoc, refExpressionErrors) {
+    if (!this.state.maybeInArrowParameters || !this.match(17)) {
+      return super.parseConditional(expr, startPos, startLoc, refExpressionErrors);
+    }
+
+    const result = this.tryParse(() => super.parseConditional(expr, startPos, startLoc));
+
+    if (!result.node) {
+      if (result.error) {
+        super.setOptionalParametersError(refExpressionErrors, result.error);
+      }
+
+      return expr;
+    }
+
+    if (result.error) this.state = result.failState;
+    return result.node;
+  }
+
+  parseParenItem(node, startPos, startLoc) {
+    node = super.parseParenItem(node, startPos, startLoc);
+
+    if (this.eat(17)) {
+      node.optional = true;
+      this.resetEndLocation(node);
+    }
+
+    if (this.match(14)) {
+      const typeCastNode = this.startNodeAt(startPos, startLoc);
+      typeCastNode.expression = node;
+      typeCastNode.typeAnnotation = this.tsParseTypeAnnotation();
+      return this.finishNode(typeCastNode, "TSTypeCastExpression");
+    }
+
+    return node;
+  }
+
+  parseExportDeclaration(node) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    const isDeclare = this.eatContextual(112);
+
+    if (isDeclare && (this.isContextual(112) || !this.shouldParseExportDeclaration())) {
+      throw this.raise(this.state.start, TSErrors.ExpectedAmbientAfterExportDeclare);
+    }
+
+    let declaration;
+
+    if (tokenIsIdentifier(this.state.type)) {
+      declaration = this.tsTryParseExportDeclaration();
+    }
+
+    if (!declaration) {
+      declaration = super.parseExportDeclaration(node);
+    }
+
+    if (declaration && (declaration.type === "TSInterfaceDeclaration" || declaration.type === "TSTypeAliasDeclaration" || isDeclare)) {
+      node.exportKind = "type";
+    }
+
+    if (declaration && isDeclare) {
+      this.resetStartLocation(declaration, startPos, startLoc);
+      declaration.declare = true;
+    }
+
+    return declaration;
+  }
+
+  parseClassId(node, isStatement, optionalId) {
+    if ((!isStatement || optionalId) && this.isContextual(101)) {
+      return;
+    }
+
+    super.parseClassId(node, isStatement, optionalId, node.declare ? BIND_TS_AMBIENT : BIND_CLASS);
+    const typeParameters = this.tsTryParseTypeParameters();
+    if (typeParameters) node.typeParameters = typeParameters;
+  }
+
+  parseClassPropertyAnnotation(node) {
+    if (!node.optional && this.eat(32)) {
+      node.definite = true;
+    }
+
+    const type = this.tsTryParseTypeAnnotation();
+    if (type) node.typeAnnotation = type;
+  }
+
+  parseClassProperty(node) {
+    this.parseClassPropertyAnnotation(node);
+
+    if (this.state.isAmbientContext && this.match(27)) {
+      this.raise(this.state.start, TSErrors.DeclareClassFieldHasInitializer);
+    }
+
+    if (node.abstract && this.match(27)) {
+      const {
+        key
+      } = node;
+      this.raise(this.state.start, TSErrors.AbstractPropertyHasInitializer, key.type === "Identifier" && !node.computed ? key.name : `[${this.input.slice(key.start, key.end)}]`);
+    }
+
+    return super.parseClassProperty(node);
+  }
+
+  parseClassPrivateProperty(node) {
+    if (node.abstract) {
+      this.raise(node.start, TSErrors.PrivateElementHasAbstract);
+    }
+
+    if (node.accessibility) {
+      this.raise(node.start, TSErrors.PrivateElementHasAccessibility, node.accessibility);
+    }
+
+    this.parseClassPropertyAnnotation(node);
+    return super.parseClassPrivateProperty(node);
+  }
+
+  pushClassMethod(classBody, method, isGenerator, isAsync, isConstructor, allowsDirectSuper) {
+    const typeParameters = this.tsTryParseTypeParameters();
+
+    if (typeParameters && isConstructor) {
+      this.raise(typeParameters.start, TSErrors.ConstructorHasTypeParameters);
+    }
+
+    if (method.declare && (method.kind === "get" || method.kind === "set")) {
+      this.raise(method.start, TSErrors.DeclareAccessor, method.kind);
+    }
+
+    if (typeParameters) method.typeParameters = typeParameters;
+    super.pushClassMethod(classBody, method, isGenerator, isAsync, isConstructor, allowsDirectSuper);
+  }
+
+  pushClassPrivateMethod(classBody, method, isGenerator, isAsync) {
+    const typeParameters = this.tsTryParseTypeParameters();
+    if (typeParameters) method.typeParameters = typeParameters;
+    super.pushClassPrivateMethod(classBody, method, isGenerator, isAsync);
+  }
+
+  parseClassSuper(node) {
+    super.parseClassSuper(node);
+
+    if (node.superClass && this.isRelational("<")) {
+      node.superTypeParameters = this.tsParseTypeArguments();
+    }
+
+    if (this.eatContextual(101)) {
+      node.implements = this.tsParseHeritageClause("implements");
+    }
+  }
+
+  parseObjPropValue(prop, ...args) {
+    const typeParameters = this.tsTryParseTypeParameters();
+    if (typeParameters) prop.typeParameters = typeParameters;
+    super.parseObjPropValue(prop, ...args);
+  }
+
+  parseFunctionParams(node, allowModifiers) {
+    const typeParameters = this.tsTryParseTypeParameters();
+    if (typeParameters) node.typeParameters = typeParameters;
+    super.parseFunctionParams(node, allowModifiers);
+  }
+
+  parseVarId(decl, kind) {
+    super.parseVarId(decl, kind);
+
+    if (decl.id.type === "Identifier" && this.eat(32)) {
+      decl.definite = true;
+    }
+
+    const type = this.tsTryParseTypeAnnotation();
+
+    if (type) {
+      decl.id.typeAnnotation = type;
+      this.resetEndLocation(decl.id);
+    }
+  }
+
+  parseAsyncArrowFromCallExpression(node, call) {
+    if (this.match(14)) {
+      node.returnType = this.tsParseTypeAnnotation();
+    }
+
+    return super.parseAsyncArrowFromCallExpression(node, call);
+  }
+
+  parseMaybeAssign(...args) {
+    var _jsx, _jsx2, _typeCast, _jsx3, _typeCast2, _jsx4, _typeCast3;
+
+    let state;
+    let jsx;
+    let typeCast;
+
+    if (this.hasPlugin("jsx") && (this.match(129) || this.isRelational("<"))) {
+      state = this.state.clone();
+      jsx = this.tryParse(() => super.parseMaybeAssign(...args), state);
+      if (!jsx.error) return jsx.node;
+      const {
+        context
+      } = this.state;
+
+      if (context[context.length - 1] === types.j_oTag) {
+        context.length -= 2;
+      } else if (context[context.length - 1] === types.j_expr) {
+        context.length -= 1;
+      }
+    }
+
+    if (!((_jsx = jsx) != null && _jsx.error) && !this.isRelational("<")) {
+      return super.parseMaybeAssign(...args);
+    }
+
+    let typeParameters;
+    state = state || this.state.clone();
+    const arrow = this.tryParse(abort => {
+      var _expr$extra, _typeParameters;
+
+      typeParameters = this.tsParseTypeParameters();
+      const expr = super.parseMaybeAssign(...args);
+
+      if (expr.type !== "ArrowFunctionExpression" || (_expr$extra = expr.extra) != null && _expr$extra.parenthesized) {
+        abort();
+      }
+
+      if (((_typeParameters = typeParameters) == null ? void 0 : _typeParameters.params.length) !== 0) {
+        this.resetStartLocationFromNode(expr, typeParameters);
+      }
+
+      expr.typeParameters = typeParameters;
+      return expr;
+    }, state);
+    if (!arrow.error && !arrow.aborted) return arrow.node;
+
+    if (!jsx) {
+      assert(!this.hasPlugin("jsx"));
+      typeCast = this.tryParse(() => super.parseMaybeAssign(...args), state);
+      if (!typeCast.error) return typeCast.node;
+    }
+
+    if ((_jsx2 = jsx) != null && _jsx2.node) {
+      this.state = jsx.failState;
+      return jsx.node;
+    }
+
+    if (arrow.node) {
+      this.state = arrow.failState;
+      return arrow.node;
+    }
+
+    if ((_typeCast = typeCast) != null && _typeCast.node) {
+      this.state = typeCast.failState;
+      return typeCast.node;
+    }
+
+    if ((_jsx3 = jsx) != null && _jsx3.thrown) throw jsx.error;
+    if (arrow.thrown) throw arrow.error;
+    if ((_typeCast2 = typeCast) != null && _typeCast2.thrown) throw typeCast.error;
+    throw ((_jsx4 = jsx) == null ? void 0 : _jsx4.error) || arrow.error || ((_typeCast3 = typeCast) == null ? void 0 : _typeCast3.error);
+  }
+
+  parseMaybeUnary(refExpressionErrors) {
+    if (!this.hasPlugin("jsx") && this.isRelational("<")) {
+      return this.tsParseTypeAssertion();
+    } else {
+      return super.parseMaybeUnary(refExpressionErrors);
+    }
+  }
+
+  parseArrow(node) {
+    if (this.match(14)) {
+      const result = this.tryParse(abort => {
+        const returnType = this.tsParseTypeOrTypePredicateAnnotation(14);
+        if (this.canInsertSemicolon() || !this.match(19)) abort();
+        return returnType;
+      });
+      if (result.aborted) return;
+
+      if (!result.thrown) {
+        if (result.error) this.state = result.failState;
+        node.returnType = result.node;
+      }
+    }
+
+    return super.parseArrow(node);
+  }
+
+  parseAssignableListItemTypes(param) {
+    if (this.eat(17)) {
+      if (param.type !== "Identifier" && !this.state.isAmbientContext && !this.state.inType) {
+        this.raise(param.start, TSErrors.PatternIsOptional);
+      }
+
+      param.optional = true;
+    }
+
+    const type = this.tsTryParseTypeAnnotation();
+    if (type) param.typeAnnotation = type;
+    this.resetEndLocation(param);
+    return param;
+  }
+
+  isAssignable(node, isBinding) {
+    switch (node.type) {
+      case "TSTypeCastExpression":
+        return this.isAssignable(node.expression, isBinding);
+
+      case "TSParameterProperty":
+        return true;
+
+      default:
+        return super.isAssignable(node, isBinding);
+    }
+  }
+
+  toAssignable(node, isLHS = false) {
+    switch (node.type) {
+      case "TSTypeCastExpression":
+        return super.toAssignable(this.typeCastToParameter(node), isLHS);
+
+      case "TSParameterProperty":
+        return super.toAssignable(node, isLHS);
+
+      case "ParenthesizedExpression":
+        return this.toAssignableParenthesizedExpression(node, isLHS);
+
+      case "TSAsExpression":
+      case "TSNonNullExpression":
+      case "TSTypeAssertion":
+        node.expression = this.toAssignable(node.expression, isLHS);
+        return node;
+
+      default:
+        return super.toAssignable(node, isLHS);
+    }
+  }
+
+  toAssignableParenthesizedExpression(node, isLHS) {
+    switch (node.expression.type) {
+      case "TSAsExpression":
+      case "TSNonNullExpression":
+      case "TSTypeAssertion":
+      case "ParenthesizedExpression":
+        node.expression = this.toAssignable(node.expression, isLHS);
+        return node;
+
+      default:
+        return super.toAssignable(node, isLHS);
+    }
+  }
+
+  checkLVal(expr, contextDescription, ...args) {
+    var _expr$extra2;
+
+    switch (expr.type) {
+      case "TSTypeCastExpression":
+        return;
+
+      case "TSParameterProperty":
+        this.checkLVal(expr.parameter, "parameter property", ...args);
+        return;
+
+      case "TSAsExpression":
+      case "TSTypeAssertion":
+        if (!args[0] && contextDescription !== "parenthesized expression" && !((_expr$extra2 = expr.extra) != null && _expr$extra2.parenthesized)) {
+          this.raise(expr.start, ErrorMessages.InvalidLhs, contextDescription);
+          break;
+        }
+
+        this.checkLVal(expr.expression, "parenthesized expression", ...args);
+        return;
+
+      case "TSNonNullExpression":
+        this.checkLVal(expr.expression, contextDescription, ...args);
+        return;
+
+      default:
+        super.checkLVal(expr, contextDescription, ...args);
+        return;
+    }
+  }
+
+  parseBindingAtom() {
+    switch (this.state.type) {
+      case 69:
+        return this.parseIdentifier(true);
+
+      default:
+        return super.parseBindingAtom();
+    }
+  }
+
+  parseMaybeDecoratorArguments(expr) {
+    if (this.isRelational("<")) {
+      const typeArguments = this.tsParseTypeArguments();
+
+      if (this.match(10)) {
+        const call = super.parseMaybeDecoratorArguments(expr);
+        call.typeParameters = typeArguments;
+        return call;
+      }
+
+      this.unexpected(this.state.start, 10);
+    }
+
+    return super.parseMaybeDecoratorArguments(expr);
+  }
+
+  checkCommaAfterRest(close) {
+    if (this.state.isAmbientContext && this.match(12) && this.lookaheadCharCode() === close) {
+      this.next();
+    } else {
+      super.checkCommaAfterRest(close);
+    }
+  }
+
+  isClassMethod() {
+    return this.isRelational("<") || super.isClassMethod();
+  }
+
+  isClassProperty() {
+    return this.match(32) || this.match(14) || super.isClassProperty();
+  }
+
+  parseMaybeDefault(...args) {
+    const node = super.parseMaybeDefault(...args);
+
+    if (node.type === "AssignmentPattern" && node.typeAnnotation && node.right.start < node.typeAnnotation.start) {
+      this.raise(node.typeAnnotation.start, TSErrors.TypeAnnotationAfterAssign);
+    }
+
+    return node;
+  }
+
+  getTokenFromCode(code) {
+    if (this.state.inType && (code === 62 || code === 60)) {
+      return this.finishOp(42, 1);
+    } else {
+      return super.getTokenFromCode(code);
+    }
+  }
+
+  reScan_lt_gt() {
+    if (this.match(42)) {
+      const code = this.input.charCodeAt(this.state.start);
+
+      if (code === 60 || code === 62) {
+        this.state.pos -= 1;
+        this.readToken_lt_gt(code);
+      }
+    }
+  }
+
+  toAssignableList(exprList) {
+    for (let i = 0; i < exprList.length; i++) {
+      const expr = exprList[i];
+      if (!expr) continue;
+
+      switch (expr.type) {
+        case "TSTypeCastExpression":
+          exprList[i] = this.typeCastToParameter(expr);
+          break;
+
+        case "TSAsExpression":
+        case "TSTypeAssertion":
+          if (!this.state.maybeInArrowParameters) {
+            exprList[i] = this.typeCastToParameter(expr);
+          } else {
+            this.raise(expr.start, TSErrors.UnexpectedTypeCastInParameter);
+          }
+
+          break;
+      }
+    }
+
+    return super.toAssignableList(...arguments);
+  }
+
+  typeCastToParameter(node) {
+    node.expression.typeAnnotation = node.typeAnnotation;
+    this.resetEndLocation(node.expression, node.typeAnnotation.end, node.typeAnnotation.loc.end);
+    return node.expression;
+  }
+
+  shouldParseArrow(params) {
+    if (this.match(14)) {
+      return params.every(expr => this.isAssignable(expr, true));
+    }
+
+    return super.shouldParseArrow(params);
+  }
+
+  shouldParseAsyncArrow() {
+    return this.match(14) || super.shouldParseAsyncArrow();
+  }
+
+  canHaveLeadingDecorator() {
+    return super.canHaveLeadingDecorator() || this.isAbstractClass();
+  }
+
+  jsxParseOpeningElementAfterName(node) {
+    if (this.isRelational("<")) {
+      const typeArguments = this.tsTryParseAndCatch(() => this.tsParseTypeArguments());
+      if (typeArguments) node.typeParameters = typeArguments;
+    }
+
+    return super.jsxParseOpeningElementAfterName(node);
+  }
+
+  getGetterSetterExpectedParamCount(method) {
+    const baseCount = super.getGetterSetterExpectedParamCount(method);
+    const params = this.getObjectOrClassMethodParams(method);
+    const firstParam = params[0];
+    const hasContextParam = firstParam && this.isThisParam(firstParam);
+    return hasContextParam ? baseCount + 1 : baseCount;
+  }
+
+  parseCatchClauseParam() {
+    const param = super.parseCatchClauseParam();
+    const type = this.tsTryParseTypeAnnotation();
+
+    if (type) {
+      param.typeAnnotation = type;
+      this.resetEndLocation(param);
+    }
+
+    return param;
+  }
+
+  tsInAmbientContext(cb) {
+    const oldIsAmbientContext = this.state.isAmbientContext;
+    this.state.isAmbientContext = true;
+
+    try {
+      return cb();
+    } finally {
+      this.state.isAmbientContext = oldIsAmbientContext;
+    }
+  }
+
+  parseClass(node, ...args) {
+    const oldInAbstractClass = this.state.inAbstractClass;
+    this.state.inAbstractClass = !!node.abstract;
+
+    try {
+      return super.parseClass(node, ...args);
+    } finally {
+      this.state.inAbstractClass = oldInAbstractClass;
+    }
+  }
+
+  tsParseAbstractDeclaration(node) {
+    if (this.match(71)) {
+      node.abstract = true;
+      return this.parseClass(node, true, false);
+    } else if (this.isContextual(116)) {
+      if (!this.hasFollowingLineBreak()) {
+        node.abstract = true;
+        this.raise(node.start, TSErrors.NonClassMethodPropertyHasAbstractModifer);
+        this.next();
+        return this.tsParseInterfaceDeclaration(node);
+      }
+    } else {
+      this.unexpected(null, 71);
+    }
+  }
+
+  parseMethod(...args) {
+    const method = super.parseMethod(...args);
+
+    if (method.abstract) {
+      const hasBody = this.hasPlugin("estree") ? !!method.value.body : !!method.body;
+
+      if (hasBody) {
+        const {
+          key
+        } = method;
+        this.raise(method.start, TSErrors.AbstractMethodHasImplementation, key.type === "Identifier" && !method.computed ? key.name : `[${this.input.slice(key.start, key.end)}]`);
+      }
+    }
+
+    return method;
+  }
+
+  tsParseTypeParameterName() {
+    const typeName = this.parseIdentifier();
+    return typeName.name;
+  }
+
+  shouldParseAsAmbientContext() {
+    return !!this.getPluginOption("typescript", "dts");
+  }
+
+  parse() {
+    if (this.shouldParseAsAmbientContext()) {
+      this.state.isAmbientContext = true;
+    }
+
+    return super.parse();
+  }
+
+  getExpression() {
+    if (this.shouldParseAsAmbientContext()) {
+      this.state.isAmbientContext = true;
+    }
+
+    return super.getExpression();
+  }
+
+});
+
+const PlaceHolderErrors = makeErrorTemplates({
+  ClassNameIsRequired: "A class name is required."
+}, ErrorCodes.SyntaxError);
+var placeholders = (superClass => class extends superClass {
+  parsePlaceholder(expectedNode) {
+    if (this.match(131)) {
+      const node = this.startNode();
+      this.next();
+      this.assertNoSpace("Unexpected space in placeholder.");
+      node.name = super.parseIdentifier(true);
+      this.assertNoSpace("Unexpected space in placeholder.");
+      this.expect(131);
+      return this.finishPlaceholder(node, expectedNode);
+    }
+  }
+
+  finishPlaceholder(node, expectedNode) {
+    const isFinished = !!(node.expectedNode && node.type === "Placeholder");
+    node.expectedNode = expectedNode;
+    return isFinished ? node : this.finishNode(node, "Placeholder");
+  }
+
+  getTokenFromCode(code) {
+    if (code === 37 && this.input.charCodeAt(this.state.pos + 1) === 37) {
+      return this.finishOp(131, 2);
+    }
+
+    return super.getTokenFromCode(...arguments);
+  }
+
+  parseExprAtom() {
+    return this.parsePlaceholder("Expression") || super.parseExprAtom(...arguments);
+  }
+
+  parseIdentifier() {
+    return this.parsePlaceholder("Identifier") || super.parseIdentifier(...arguments);
+  }
+
+  checkReservedWord(word) {
+    if (word !== undefined) super.checkReservedWord(...arguments);
+  }
+
+  parseBindingAtom() {
+    return this.parsePlaceholder("Pattern") || super.parseBindingAtom(...arguments);
+  }
+
+  checkLVal(expr) {
+    if (expr.type !== "Placeholder") super.checkLVal(...arguments);
+  }
+
+  toAssignable(node) {
+    if (node && node.type === "Placeholder" && node.expectedNode === "Expression") {
+      node.expectedNode = "Pattern";
+      return node;
+    }
+
+    return super.toAssignable(...arguments);
+  }
+
+  isLet(context) {
+    if (super.isLet(context)) {
+      return true;
+    }
+
+    if (!this.isContextual(90)) {
+      return false;
+    }
+
+    if (context) return false;
+    const nextToken = this.lookahead();
+
+    if (nextToken.type === 131) {
+      return true;
+    }
+
+    return false;
+  }
+
+  verifyBreakContinue(node) {
+    if (node.label && node.label.type === "Placeholder") return;
+    super.verifyBreakContinue(...arguments);
+  }
+
+  parseExpressionStatement(node, expr) {
+    if (expr.type !== "Placeholder" || expr.extra && expr.extra.parenthesized) {
+      return super.parseExpressionStatement(...arguments);
+    }
+
+    if (this.match(14)) {
+      const stmt = node;
+      stmt.label = this.finishPlaceholder(expr, "Identifier");
+      this.next();
+      stmt.body = this.parseStatement("label");
+      return this.finishNode(stmt, "LabeledStatement");
+    }
+
+    this.semicolon();
+    node.name = expr.name;
+    return this.finishPlaceholder(node, "Statement");
+  }
+
+  parseBlock() {
+    return this.parsePlaceholder("BlockStatement") || super.parseBlock(...arguments);
+  }
+
+  parseFunctionId() {
+    return this.parsePlaceholder("Identifier") || super.parseFunctionId(...arguments);
+  }
+
+  parseClass(node, isStatement, optionalId) {
+    const type = isStatement ? "ClassDeclaration" : "ClassExpression";
+    this.next();
+    this.takeDecorators(node);
+    const oldStrict = this.state.strict;
+    const placeholder = this.parsePlaceholder("Identifier");
+
+    if (placeholder) {
+      if (this.match(72) || this.match(131) || this.match(5)) {
+        node.id = placeholder;
+      } else if (optionalId || !isStatement) {
+        node.id = null;
+        node.body = this.finishPlaceholder(placeholder, "ClassBody");
+        return this.finishNode(node, type);
+      } else {
+        this.unexpected(null, PlaceHolderErrors.ClassNameIsRequired);
+      }
+    } else {
+      this.parseClassId(node, isStatement, optionalId);
+    }
+
+    this.parseClassSuper(node);
+    node.body = this.parsePlaceholder("ClassBody") || this.parseClassBody(!!node.superClass, oldStrict);
+    return this.finishNode(node, type);
+  }
+
+  parseExport(node) {
+    const placeholder = this.parsePlaceholder("Identifier");
+    if (!placeholder) return super.parseExport(...arguments);
+
+    if (!this.isContextual(88) && !this.match(12)) {
+      node.specifiers = [];
+      node.source = null;
+      node.declaration = this.finishPlaceholder(placeholder, "Declaration");
+      return this.finishNode(node, "ExportNamedDeclaration");
+    }
+
+    this.expectPlugin("exportDefaultFrom");
+    const specifier = this.startNode();
+    specifier.exported = placeholder;
+    node.specifiers = [this.finishNode(specifier, "ExportDefaultSpecifier")];
+    return super.parseExport(node);
+  }
+
+  isExportDefaultSpecifier() {
+    if (this.match(56)) {
+      const next = this.nextTokenStart();
+
+      if (this.isUnparsedContextual(next, "from")) {
+        if (this.input.startsWith(tokenLabelName(131), this.nextTokenStartSince(next + 4))) {
+          return true;
+        }
+      }
+    }
+
+    return super.isExportDefaultSpecifier();
+  }
+
+  maybeParseExportDefaultSpecifier(node) {
+    if (node.specifiers && node.specifiers.length > 0) {
+      return true;
+    }
+
+    return super.maybeParseExportDefaultSpecifier(...arguments);
+  }
+
+  checkExport(node) {
+    const {
+      specifiers
+    } = node;
+
+    if (specifiers != null && specifiers.length) {
+      node.specifiers = specifiers.filter(node => node.exported.type === "Placeholder");
+    }
+
+    super.checkExport(node);
+    node.specifiers = specifiers;
+  }
+
+  parseImport(node) {
+    const placeholder = this.parsePlaceholder("Identifier");
+    if (!placeholder) return super.parseImport(...arguments);
+    node.specifiers = [];
+
+    if (!this.isContextual(88) && !this.match(12)) {
+      node.source = this.finishPlaceholder(placeholder, "StringLiteral");
+      this.semicolon();
+      return this.finishNode(node, "ImportDeclaration");
+    }
+
+    const specifier = this.startNodeAtNode(placeholder);
+    specifier.local = placeholder;
+    this.finishNode(specifier, "ImportDefaultSpecifier");
+    node.specifiers.push(specifier);
+
+    if (this.eat(12)) {
+      const hasStarImport = this.maybeParseStarImportSpecifier(node);
+      if (!hasStarImport) this.parseNamedImportSpecifiers(node);
+    }
+
+    this.expectContextual(88);
+    node.source = this.parseImportSource();
+    this.semicolon();
+    return this.finishNode(node, "ImportDeclaration");
+  }
+
+  parseImportSource() {
+    return this.parsePlaceholder("StringLiteral") || super.parseImportSource(...arguments);
+  }
+
+});
+
+var v8intrinsic = (superClass => class extends superClass {
+  parseV8Intrinsic() {
+    if (this.match(45)) {
+      const v8IntrinsicStart = this.state.start;
+      const node = this.startNode();
+      this.next();
+
+      if (tokenIsIdentifier(this.state.type)) {
+        const name = this.parseIdentifierName(this.state.start);
+        const identifier = this.createIdentifier(node, name);
+        identifier.type = "V8IntrinsicIdentifier";
+
+        if (this.match(10)) {
+          return identifier;
+        }
+      }
+
+      this.unexpected(v8IntrinsicStart);
+    }
+  }
+
+  parseExprAtom() {
+    return this.parseV8Intrinsic() || super.parseExprAtom(...arguments);
+  }
+
+});
+
+function hasPlugin(plugins, name) {
+  return plugins.some(plugin => {
+    if (Array.isArray(plugin)) {
+      return plugin[0] === name;
+    } else {
+      return plugin === name;
+    }
+  });
+}
+function getPluginOption(plugins, name, option) {
+  const plugin = plugins.find(plugin => {
+    if (Array.isArray(plugin)) {
+      return plugin[0] === name;
+    } else {
+      return plugin === name;
+    }
+  });
+
+  if (plugin && Array.isArray(plugin)) {
+    return plugin[1][option];
+  }
+
+  return null;
+}
+const PIPELINE_PROPOSALS = ["minimal", "fsharp", "hack", "smart"];
+const TOPIC_TOKENS = ["%", "#"];
+const RECORD_AND_TUPLE_SYNTAX_TYPES = ["hash", "bar"];
+function validatePlugins(plugins) {
+  if (hasPlugin(plugins, "decorators")) {
+    if (hasPlugin(plugins, "decorators-legacy")) {
+      throw new Error("Cannot use the decorators and decorators-legacy plugin together");
+    }
+
+    const decoratorsBeforeExport = getPluginOption(plugins, "decorators", "decoratorsBeforeExport");
+
+    if (decoratorsBeforeExport == null) {
+      throw new Error("The 'decorators' plugin requires a 'decoratorsBeforeExport' option," + " whose value must be a boolean. If you are migrating from" + " Babylon/Babel 6 or want to use the old decorators proposal, you" + " should use the 'decorators-legacy' plugin instead of 'decorators'.");
+    } else if (typeof decoratorsBeforeExport !== "boolean") {
+      throw new Error("'decoratorsBeforeExport' must be a boolean.");
+    }
+  }
+
+  if (hasPlugin(plugins, "flow") && hasPlugin(plugins, "typescript")) {
+    throw new Error("Cannot combine flow and typescript plugins.");
+  }
+
+  if (hasPlugin(plugins, "placeholders") && hasPlugin(plugins, "v8intrinsic")) {
+    throw new Error("Cannot combine placeholders and v8intrinsic plugins.");
+  }
+
+  if (hasPlugin(plugins, "pipelineOperator")) {
+    const proposal = getPluginOption(plugins, "pipelineOperator", "proposal");
+
+    if (!PIPELINE_PROPOSALS.includes(proposal)) {
+      const proposalList = PIPELINE_PROPOSALS.map(p => `"${p}"`).join(", ");
+      throw new Error(`"pipelineOperator" requires "proposal" option whose value must be one of: ${proposalList}.`);
+    }
+
+    const tupleSyntaxIsHash = hasPlugin(plugins, "recordAndTuple") && getPluginOption(plugins, "recordAndTuple", "syntaxType") === "hash";
+
+    if (proposal === "hack") {
+      if (hasPlugin(plugins, "placeholders")) {
+        throw new Error("Cannot combine placeholders plugin and Hack-style pipes.");
+      }
+
+      if (hasPlugin(plugins, "v8intrinsic")) {
+        throw new Error("Cannot combine v8intrinsic plugin and Hack-style pipes.");
+      }
+
+      const topicToken = getPluginOption(plugins, "pipelineOperator", "topicToken");
+
+      if (!TOPIC_TOKENS.includes(topicToken)) {
+        const tokenList = TOPIC_TOKENS.map(t => `"${t}"`).join(", ");
+        throw new Error(`"pipelineOperator" in "proposal": "hack" mode also requires a "topicToken" option whose value must be one of: ${tokenList}.`);
+      }
+
+      if (topicToken === "#" && tupleSyntaxIsHash) {
+        throw new Error('Plugin conflict between `["pipelineOperator", { proposal: "hack", topicToken: "#" }]` and `["recordAndtuple", { syntaxType: "hash"}]`.');
+      }
+    } else if (proposal === "smart" && tupleSyntaxIsHash) {
+      throw new Error('Plugin conflict between `["pipelineOperator", { proposal: "smart" }]` and `["recordAndtuple", { syntaxType: "hash"}]`.');
+    }
+  }
+
+  if (hasPlugin(plugins, "moduleAttributes")) {
+    {
+      if (hasPlugin(plugins, "importAssertions")) {
+        throw new Error("Cannot combine importAssertions and moduleAttributes plugins.");
+      }
+
+      const moduleAttributesVerionPluginOption = getPluginOption(plugins, "moduleAttributes", "version");
+
+      if (moduleAttributesVerionPluginOption !== "may-2020") {
+        throw new Error("The 'moduleAttributes' plugin requires a 'version' option," + " representing the last proposal update. Currently, the" + " only supported value is 'may-2020'.");
+      }
+    }
+  }
+
+  if (hasPlugin(plugins, "recordAndTuple") && !RECORD_AND_TUPLE_SYNTAX_TYPES.includes(getPluginOption(plugins, "recordAndTuple", "syntaxType"))) {
+    throw new Error("'recordAndTuple' requires 'syntaxType' option whose value should be one of: " + RECORD_AND_TUPLE_SYNTAX_TYPES.map(p => `'${p}'`).join(", "));
+  }
+
+  if (hasPlugin(plugins, "asyncDoExpressions") && !hasPlugin(plugins, "doExpressions")) {
+    const error = new Error("'asyncDoExpressions' requires 'doExpressions', please add 'doExpressions' to parser plugins.");
+    error.missingPlugins = "doExpressions";
+    throw error;
+  }
+}
+const mixinPlugins = {
+  estree,
+  jsx,
+  flow,
+  typescript,
+  v8intrinsic,
+  placeholders
+};
+const mixinPluginNames = Object.keys(mixinPlugins);
+
+const defaultOptions = {
+  sourceType: "script",
+  sourceFilename: undefined,
+  startLine: 1,
+  allowAwaitOutsideFunction: false,
+  allowReturnOutsideFunction: false,
+  allowImportExportEverywhere: false,
+  allowSuperOutsideMethod: false,
+  allowUndeclaredExports: false,
+  plugins: [],
+  strictMode: null,
+  ranges: false,
+  tokens: false,
+  createParenthesizedExpressions: false,
+  errorRecovery: false,
+  attachComment: true
+};
+function getOptions(opts) {
+  const options = {};
+
+  for (const key of Object.keys(defaultOptions)) {
+    options[key] = opts && opts[key] != null ? opts[key] : defaultOptions[key];
+  }
+
+  return options;
+}
+
+const unwrapParenthesizedExpression = node => {
+  return node.type === "ParenthesizedExpression" ? unwrapParenthesizedExpression(node.expression) : node;
+};
+
+class LValParser extends NodeUtils {
+  toAssignable(node, isLHS = false) {
+    var _node$extra, _node$extra3;
+
+    let parenthesized = undefined;
+
+    if (node.type === "ParenthesizedExpression" || (_node$extra = node.extra) != null && _node$extra.parenthesized) {
+      parenthesized = unwrapParenthesizedExpression(node);
+
+      if (isLHS) {
+        if (parenthesized.type === "Identifier") {
+          this.expressionScope.recordParenthesizedIdentifierError(node.start, ErrorMessages.InvalidParenthesizedAssignment);
+        } else if (parenthesized.type !== "MemberExpression") {
+          this.raise(node.start, ErrorMessages.InvalidParenthesizedAssignment);
+        }
+      } else {
+        this.raise(node.start, ErrorMessages.InvalidParenthesizedAssignment);
+      }
+    }
+
+    switch (node.type) {
+      case "Identifier":
+      case "ObjectPattern":
+      case "ArrayPattern":
+      case "AssignmentPattern":
+      case "RestElement":
+        break;
+
+      case "ObjectExpression":
+        node.type = "ObjectPattern";
+
+        for (let i = 0, length = node.properties.length, last = length - 1; i < length; i++) {
+          var _node$extra2;
+
+          const prop = node.properties[i];
+          const isLast = i === last;
+          this.toAssignableObjectExpressionProp(prop, isLast, isLHS);
+
+          if (isLast && prop.type === "RestElement" && (_node$extra2 = node.extra) != null && _node$extra2.trailingComma) {
+            this.raiseRestNotLast(node.extra.trailingComma);
+          }
+        }
+
+        break;
+
+      case "ObjectProperty":
+        this.toAssignable(node.value, isLHS);
+        break;
+
+      case "SpreadElement":
+        {
+          this.checkToRestConversion(node);
+          node.type = "RestElement";
+          const arg = node.argument;
+          this.toAssignable(arg, isLHS);
+          break;
+        }
+
+      case "ArrayExpression":
+        node.type = "ArrayPattern";
+        this.toAssignableList(node.elements, (_node$extra3 = node.extra) == null ? void 0 : _node$extra3.trailingComma, isLHS);
+        break;
+
+      case "AssignmentExpression":
+        if (node.operator !== "=") {
+          this.raise(node.left.end, ErrorMessages.MissingEqInAssignment);
+        }
+
+        node.type = "AssignmentPattern";
+        delete node.operator;
+        this.toAssignable(node.left, isLHS);
+        break;
+
+      case "ParenthesizedExpression":
+        this.toAssignable(parenthesized, isLHS);
+        break;
+    }
+
+    return node;
+  }
+
+  toAssignableObjectExpressionProp(prop, isLast, isLHS) {
+    if (prop.type === "ObjectMethod") {
+      const error = prop.kind === "get" || prop.kind === "set" ? ErrorMessages.PatternHasAccessor : ErrorMessages.PatternHasMethod;
+      this.raise(prop.key.start, error);
+    } else if (prop.type === "SpreadElement" && !isLast) {
+      this.raiseRestNotLast(prop.start);
+    } else {
+      this.toAssignable(prop, isLHS);
+    }
+  }
+
+  toAssignableList(exprList, trailingCommaPos, isLHS) {
+    let end = exprList.length;
+
+    if (end) {
+      const last = exprList[end - 1];
+
+      if ((last == null ? void 0 : last.type) === "RestElement") {
+        --end;
+      } else if ((last == null ? void 0 : last.type) === "SpreadElement") {
+        last.type = "RestElement";
+        let arg = last.argument;
+        this.toAssignable(arg, isLHS);
+        arg = unwrapParenthesizedExpression(arg);
+
+        if (arg.type !== "Identifier" && arg.type !== "MemberExpression" && arg.type !== "ArrayPattern" && arg.type !== "ObjectPattern") {
+          this.unexpected(arg.start);
+        }
+
+        if (trailingCommaPos) {
+          this.raiseTrailingCommaAfterRest(trailingCommaPos);
+        }
+
+        --end;
+      }
+    }
+
+    for (let i = 0; i < end; i++) {
+      const elt = exprList[i];
+
+      if (elt) {
+        this.toAssignable(elt, isLHS);
+
+        if (elt.type === "RestElement") {
+          this.raiseRestNotLast(elt.start);
+        }
+      }
+    }
+
+    return exprList;
+  }
+
+  isAssignable(node, isBinding) {
+    switch (node.type) {
+      case "Identifier":
+      case "ObjectPattern":
+      case "ArrayPattern":
+      case "AssignmentPattern":
+      case "RestElement":
+        return true;
+
+      case "ObjectExpression":
+        {
+          const last = node.properties.length - 1;
+          return node.properties.every((prop, i) => {
+            return prop.type !== "ObjectMethod" && (i === last || prop.type !== "SpreadElement") && this.isAssignable(prop);
+          });
+        }
+
+      case "ObjectProperty":
+        return this.isAssignable(node.value);
+
+      case "SpreadElement":
+        return this.isAssignable(node.argument);
+
+      case "ArrayExpression":
+        return node.elements.every(element => element === null || this.isAssignable(element));
+
+      case "AssignmentExpression":
+        return node.operator === "=";
+
+      case "ParenthesizedExpression":
+        return this.isAssignable(node.expression);
+
+      case "MemberExpression":
+      case "OptionalMemberExpression":
+        return !isBinding;
+
+      default:
+        return false;
+    }
+  }
+
+  toReferencedList(exprList, isParenthesizedExpr) {
+    return exprList;
+  }
+
+  toReferencedListDeep(exprList, isParenthesizedExpr) {
+    this.toReferencedList(exprList, isParenthesizedExpr);
+
+    for (const expr of exprList) {
+      if ((expr == null ? void 0 : expr.type) === "ArrayExpression") {
+        this.toReferencedListDeep(expr.elements);
+      }
+    }
+  }
+
+  parseSpread(refExpressionErrors, refNeedsArrowPos) {
+    const node = this.startNode();
+    this.next();
+    node.argument = this.parseMaybeAssignAllowIn(refExpressionErrors, undefined, refNeedsArrowPos);
+    return this.finishNode(node, "SpreadElement");
+  }
+
+  parseRestBinding() {
+    const node = this.startNode();
+    this.next();
+    node.argument = this.parseBindingAtom();
+    return this.finishNode(node, "RestElement");
+  }
+
+  parseBindingAtom() {
+    switch (this.state.type) {
+      case 0:
+        {
+          const node = this.startNode();
+          this.next();
+          node.elements = this.parseBindingList(3, 93, true);
+          return this.finishNode(node, "ArrayPattern");
+        }
+
+      case 5:
+        return this.parseObjectLike(8, true);
+    }
+
+    return this.parseIdentifier();
+  }
+
+  parseBindingList(close, closeCharCode, allowEmpty, allowModifiers) {
+    const elts = [];
+    let first = true;
+
+    while (!this.eat(close)) {
+      if (first) {
+        first = false;
+      } else {
+        this.expect(12);
+      }
+
+      if (allowEmpty && this.match(12)) {
+        elts.push(null);
+      } else if (this.eat(close)) {
+        break;
+      } else if (this.match(21)) {
+        elts.push(this.parseAssignableListItemTypes(this.parseRestBinding()));
+        this.checkCommaAfterRest(closeCharCode);
+        this.expect(close);
+        break;
+      } else {
+        const decorators = [];
+
+        if (this.match(24) && this.hasPlugin("decorators")) {
+          this.raise(this.state.start, ErrorMessages.UnsupportedParameterDecorator);
+        }
+
+        while (this.match(24)) {
+          decorators.push(this.parseDecorator());
+        }
+
+        elts.push(this.parseAssignableListItem(allowModifiers, decorators));
+      }
+    }
+
+    return elts;
+  }
+
+  parseAssignableListItem(allowModifiers, decorators) {
+    const left = this.parseMaybeDefault();
+    this.parseAssignableListItemTypes(left);
+    const elt = this.parseMaybeDefault(left.start, left.loc.start, left);
+
+    if (decorators.length) {
+      left.decorators = decorators;
+    }
+
+    return elt;
+  }
+
+  parseAssignableListItemTypes(param) {
+    return param;
+  }
+
+  parseMaybeDefault(startPos, startLoc, left) {
+    var _startLoc, _startPos, _left;
+
+    startLoc = (_startLoc = startLoc) != null ? _startLoc : this.state.startLoc;
+    startPos = (_startPos = startPos) != null ? _startPos : this.state.start;
+    left = (_left = left) != null ? _left : this.parseBindingAtom();
+    if (!this.eat(27)) return left;
+    const node = this.startNodeAt(startPos, startLoc);
+    node.left = left;
+    node.right = this.parseMaybeAssignAllowIn();
+    return this.finishNode(node, "AssignmentPattern");
+  }
+
+  checkLVal(expr, contextDescription, bindingType = BIND_NONE, checkClashes, disallowLetBinding, strictModeChanged = false) {
+    switch (expr.type) {
+      case "Identifier":
+        {
+          const {
+            name
+          } = expr;
+
+          if (this.state.strict && (strictModeChanged ? isStrictBindReservedWord(name, this.inModule) : isStrictBindOnlyReservedWord(name))) {
+            this.raise(expr.start, bindingType === BIND_NONE ? ErrorMessages.StrictEvalArguments : ErrorMessages.StrictEvalArgumentsBinding, name);
+          }
+
+          if (checkClashes) {
+            if (checkClashes.has(name)) {
+              this.raise(expr.start, ErrorMessages.ParamDupe);
+            } else {
+              checkClashes.add(name);
+            }
+          }
+
+          if (disallowLetBinding && name === "let") {
+            this.raise(expr.start, ErrorMessages.LetInLexicalBinding);
+          }
+
+          if (!(bindingType & BIND_NONE)) {
+            this.scope.declareName(name, bindingType, expr.start);
+          }
+
+          break;
+        }
+
+      case "MemberExpression":
+        if (bindingType !== BIND_NONE) {
+          this.raise(expr.start, ErrorMessages.InvalidPropertyBindingPattern);
+        }
+
+        break;
+
+      case "ObjectPattern":
+        for (let prop of expr.properties) {
+          if (this.isObjectProperty(prop)) prop = prop.value;else if (this.isObjectMethod(prop)) continue;
+          this.checkLVal(prop, "object destructuring pattern", bindingType, checkClashes, disallowLetBinding);
+        }
+
+        break;
+
+      case "ArrayPattern":
+        for (const elem of expr.elements) {
+          if (elem) {
+            this.checkLVal(elem, "array destructuring pattern", bindingType, checkClashes, disallowLetBinding);
+          }
+        }
+
+        break;
+
+      case "AssignmentPattern":
+        this.checkLVal(expr.left, "assignment pattern", bindingType, checkClashes);
+        break;
+
+      case "RestElement":
+        this.checkLVal(expr.argument, "rest element", bindingType, checkClashes);
+        break;
+
+      case "ParenthesizedExpression":
+        this.checkLVal(expr.expression, "parenthesized expression", bindingType, checkClashes);
+        break;
+
+      default:
+        {
+          this.raise(expr.start, bindingType === BIND_NONE ? ErrorMessages.InvalidLhs : ErrorMessages.InvalidLhsBinding, contextDescription);
+        }
+    }
+  }
+
+  checkToRestConversion(node) {
+    if (node.argument.type !== "Identifier" && node.argument.type !== "MemberExpression") {
+      this.raise(node.argument.start, ErrorMessages.InvalidRestAssignmentPattern);
+    }
+  }
+
+  checkCommaAfterRest(close) {
+    if (this.match(12)) {
+      if (this.lookaheadCharCode() === close) {
+        this.raiseTrailingCommaAfterRest(this.state.start);
+      } else {
+        this.raiseRestNotLast(this.state.start);
+      }
+    }
+  }
+
+  raiseRestNotLast(pos) {
+    throw this.raise(pos, ErrorMessages.ElementAfterRest);
+  }
+
+  raiseTrailingCommaAfterRest(pos) {
+    this.raise(pos, ErrorMessages.RestTrailingComma);
+  }
+
+}
+
+const invalidHackPipeBodies = new Map([["ArrowFunctionExpression", "arrow function"], ["AssignmentExpression", "assignment"], ["ConditionalExpression", "conditional"], ["YieldExpression", "yield"]]);
+class ExpressionParser extends LValParser {
+  checkProto(prop, isRecord, protoRef, refExpressionErrors) {
+    if (prop.type === "SpreadElement" || this.isObjectMethod(prop) || prop.computed || prop.shorthand) {
+      return;
+    }
+
+    const key = prop.key;
+    const name = key.type === "Identifier" ? key.name : key.value;
+
+    if (name === "__proto__") {
+      if (isRecord) {
+        this.raise(key.start, ErrorMessages.RecordNoProto);
+        return;
+      }
+
+      if (protoRef.used) {
+        if (refExpressionErrors) {
+          if (refExpressionErrors.doubleProto === -1) {
+            refExpressionErrors.doubleProto = key.start;
+          }
+        } else {
+          this.raise(key.start, ErrorMessages.DuplicateProto);
+        }
+      }
+
+      protoRef.used = true;
+    }
+  }
+
+  shouldExitDescending(expr, potentialArrowAt) {
+    return expr.type === "ArrowFunctionExpression" && expr.start === potentialArrowAt;
+  }
+
+  getExpression() {
+    this.enterInitialScopes();
+    this.nextToken();
+    const expr = this.parseExpression();
+
+    if (!this.match(126)) {
+      this.unexpected();
+    }
+
+    this.finalizeRemainingComments();
+    expr.comments = this.state.comments;
+    expr.errors = this.state.errors;
+
+    if (this.options.tokens) {
+      expr.tokens = this.tokens;
+    }
+
+    return expr;
+  }
+
+  parseExpression(disallowIn, refExpressionErrors) {
+    if (disallowIn) {
+      return this.disallowInAnd(() => this.parseExpressionBase(refExpressionErrors));
+    }
+
+    return this.allowInAnd(() => this.parseExpressionBase(refExpressionErrors));
+  }
+
+  parseExpressionBase(refExpressionErrors) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    const expr = this.parseMaybeAssign(refExpressionErrors);
+
+    if (this.match(12)) {
+      const node = this.startNodeAt(startPos, startLoc);
+      node.expressions = [expr];
+
+      while (this.eat(12)) {
+        node.expressions.push(this.parseMaybeAssign(refExpressionErrors));
+      }
+
+      this.toReferencedList(node.expressions);
+      return this.finishNode(node, "SequenceExpression");
+    }
+
+    return expr;
+  }
+
+  parseMaybeAssignDisallowIn(refExpressionErrors, afterLeftParse) {
+    return this.disallowInAnd(() => this.parseMaybeAssign(refExpressionErrors, afterLeftParse));
+  }
+
+  parseMaybeAssignAllowIn(refExpressionErrors, afterLeftParse) {
+    return this.allowInAnd(() => this.parseMaybeAssign(refExpressionErrors, afterLeftParse));
+  }
+
+  setOptionalParametersError(refExpressionErrors, resultError) {
+    var _resultError$pos;
+
+    refExpressionErrors.optionalParameters = (_resultError$pos = resultError == null ? void 0 : resultError.pos) != null ? _resultError$pos : this.state.start;
+  }
+
+  parseMaybeAssign(refExpressionErrors, afterLeftParse) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+
+    if (this.isContextual(96)) {
+      if (this.prodParam.hasYield) {
+        let left = this.parseYield();
+
+        if (afterLeftParse) {
+          left = afterLeftParse.call(this, left, startPos, startLoc);
+        }
+
+        return left;
+      }
+    }
+
+    let ownExpressionErrors;
+
+    if (refExpressionErrors) {
+      ownExpressionErrors = false;
+    } else {
+      refExpressionErrors = new ExpressionErrors();
+      ownExpressionErrors = true;
+    }
+
+    const {
+      type
+    } = this.state;
+
+    if (type === 10 || tokenIsIdentifier(type)) {
+      this.state.potentialArrowAt = this.state.start;
+    }
+
+    let left = this.parseMaybeConditional(refExpressionErrors);
+
+    if (afterLeftParse) {
+      left = afterLeftParse.call(this, left, startPos, startLoc);
+    }
+
+    if (tokenIsAssignment(this.state.type)) {
+      const node = this.startNodeAt(startPos, startLoc);
+      const operator = this.state.value;
+      node.operator = operator;
+
+      if (this.match(27)) {
+        node.left = this.toAssignable(left, true);
+        refExpressionErrors.doubleProto = -1;
+      } else {
+        node.left = left;
+      }
+
+      if (refExpressionErrors.shorthandAssign >= node.left.start) {
+        refExpressionErrors.shorthandAssign = -1;
+      }
+
+      this.checkLVal(left, "assignment expression");
+      this.next();
+      node.right = this.parseMaybeAssign();
+      return this.finishNode(node, "AssignmentExpression");
+    } else if (ownExpressionErrors) {
+      this.checkExpressionErrors(refExpressionErrors, true);
+    }
+
+    return left;
+  }
+
+  parseMaybeConditional(refExpressionErrors) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    const potentialArrowAt = this.state.potentialArrowAt;
+    const expr = this.parseExprOps(refExpressionErrors);
+
+    if (this.shouldExitDescending(expr, potentialArrowAt)) {
+      return expr;
+    }
+
+    return this.parseConditional(expr, startPos, startLoc, refExpressionErrors);
+  }
+
+  parseConditional(expr, startPos, startLoc, refExpressionErrors) {
+    if (this.eat(17)) {
+      const node = this.startNodeAt(startPos, startLoc);
+      node.test = expr;
+      node.consequent = this.parseMaybeAssignAllowIn();
+      this.expect(14);
+      node.alternate = this.parseMaybeAssign();
+      return this.finishNode(node, "ConditionalExpression");
+    }
+
+    return expr;
+  }
+
+  parseMaybeUnaryOrPrivate(refExpressionErrors) {
+    return this.match(125) ? this.parsePrivateName() : this.parseMaybeUnary(refExpressionErrors);
+  }
+
+  parseExprOps(refExpressionErrors) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    const potentialArrowAt = this.state.potentialArrowAt;
+    const expr = this.parseMaybeUnaryOrPrivate(refExpressionErrors);
+
+    if (this.shouldExitDescending(expr, potentialArrowAt)) {
+      return expr;
+    }
+
+    return this.parseExprOp(expr, startPos, startLoc, -1);
+  }
+
+  parseExprOp(left, leftStartPos, leftStartLoc, minPrec) {
+    if (this.isPrivateName(left)) {
+      const value = this.getPrivateNameSV(left);
+      const {
+        start
+      } = left;
+
+      if (minPrec >= tokenOperatorPrecedence(49) || !this.prodParam.hasIn || !this.match(49)) {
+        this.raise(start, ErrorMessages.PrivateInExpectedIn, value);
+      }
+
+      this.classScope.usePrivateName(value, start);
+    }
+
+    const op = this.state.type;
+
+    if (tokenIsOperator(op) && (this.prodParam.hasIn || !this.match(49))) {
+      let prec = tokenOperatorPrecedence(op);
+
+      if (prec > minPrec) {
+        if (op === 34) {
+          this.expectPlugin("pipelineOperator");
+
+          if (this.state.inFSharpPipelineDirectBody) {
+            return left;
+          }
+
+          this.checkPipelineAtInfixOperator(left, leftStartPos);
+        }
+
+        const node = this.startNodeAt(leftStartPos, leftStartLoc);
+        node.left = left;
+        node.operator = this.state.value;
+        const logical = op === 36 || op === 37;
+        const coalesce = op === 35;
+
+        if (coalesce) {
+          prec = tokenOperatorPrecedence(37);
+        }
+
+        this.next();
+
+        if (op === 34 && this.getPluginOption("pipelineOperator", "proposal") === "minimal") {
+          if (this.state.type === 87 && this.prodParam.hasAwait) {
+            throw this.raise(this.state.start, ErrorMessages.UnexpectedAwaitAfterPipelineBody);
+          }
+        }
+
+        node.right = this.parseExprOpRightExpr(op, prec);
+        this.finishNode(node, logical || coalesce ? "LogicalExpression" : "BinaryExpression");
+        const nextOp = this.state.type;
+
+        if (coalesce && (nextOp === 36 || nextOp === 37) || logical && nextOp === 35) {
+          throw this.raise(this.state.start, ErrorMessages.MixingCoalesceWithLogical);
+        }
+
+        return this.parseExprOp(node, leftStartPos, leftStartLoc, minPrec);
+      }
+    }
+
+    return left;
+  }
+
+  parseExprOpRightExpr(op, prec) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+
+    switch (op) {
+      case 34:
+        switch (this.getPluginOption("pipelineOperator", "proposal")) {
+          case "hack":
+            return this.withTopicBindingContext(() => {
+              return this.parseHackPipeBody();
+            });
+
+          case "smart":
+            return this.withTopicBindingContext(() => {
+              if (this.prodParam.hasYield && this.isContextual(96)) {
+                throw this.raise(this.state.start, ErrorMessages.PipeBodyIsTighter, this.state.value);
+              }
+
+              return this.parseSmartPipelineBodyInStyle(this.parseExprOpBaseRightExpr(op, prec), startPos, startLoc);
+            });
+
+          case "fsharp":
+            return this.withSoloAwaitPermittingContext(() => {
+              return this.parseFSharpPipelineBody(prec);
+            });
+        }
+
+      default:
+        return this.parseExprOpBaseRightExpr(op, prec);
+    }
+  }
+
+  parseExprOpBaseRightExpr(op, prec) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    return this.parseExprOp(this.parseMaybeUnaryOrPrivate(), startPos, startLoc, tokenIsRightAssociative(op) ? prec - 1 : prec);
+  }
+
+  parseHackPipeBody() {
+    var _body$extra;
+
+    const {
+      start
+    } = this.state;
+    const body = this.parseMaybeAssign();
+
+    if (invalidHackPipeBodies.has(body.type) && !((_body$extra = body.extra) != null && _body$extra.parenthesized)) {
+      this.raise(start, ErrorMessages.PipeUnparenthesizedBody, invalidHackPipeBodies.get(body.type));
+    }
+
+    if (!this.topicReferenceWasUsedInCurrentContext()) {
+      this.raise(start, ErrorMessages.PipeTopicUnused);
+    }
+
+    return body;
+  }
+
+  checkExponentialAfterUnary(node) {
+    if (this.match(48)) {
+      this.raise(node.argument.start, ErrorMessages.UnexpectedTokenUnaryExponentiation);
+    }
+  }
+
+  parseMaybeUnary(refExpressionErrors, sawUnary) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    const isAwait = this.isContextual(87);
+
+    if (isAwait && this.isAwaitAllowed()) {
+      this.next();
+      const expr = this.parseAwait(startPos, startLoc);
+      if (!sawUnary) this.checkExponentialAfterUnary(expr);
+      return expr;
+    }
+
+    const update = this.match(31);
+    const node = this.startNode();
+
+    if (tokenIsPrefix(this.state.type)) {
+      node.operator = this.state.value;
+      node.prefix = true;
+
+      if (this.match(63)) {
+        this.expectPlugin("throwExpressions");
+      }
+
+      const isDelete = this.match(80);
+      this.next();
+      node.argument = this.parseMaybeUnary(null, true);
+      this.checkExpressionErrors(refExpressionErrors, true);
+
+      if (this.state.strict && isDelete) {
+        const arg = node.argument;
+
+        if (arg.type === "Identifier") {
+          this.raise(node.start, ErrorMessages.StrictDelete);
+        } else if (this.hasPropertyAsPrivateName(arg)) {
+          this.raise(node.start, ErrorMessages.DeletePrivateField);
+        }
+      }
+
+      if (!update) {
+        if (!sawUnary) this.checkExponentialAfterUnary(node);
+        return this.finishNode(node, "UnaryExpression");
+      }
+    }
+
+    const expr = this.parseUpdate(node, update, refExpressionErrors);
+
+    if (isAwait) {
+      const {
+        type
+      } = this.state;
+      const startsExpr = this.hasPlugin("v8intrinsic") ? tokenCanStartExpression(type) : tokenCanStartExpression(type) && !this.match(45);
+
+      if (startsExpr && !this.isAmbiguousAwait()) {
+        this.raiseOverwrite(startPos, ErrorMessages.AwaitNotInAsyncContext);
+        return this.parseAwait(startPos, startLoc);
+      }
+    }
+
+    return expr;
+  }
+
+  parseUpdate(node, update, refExpressionErrors) {
+    if (update) {
+      this.checkLVal(node.argument, "prefix operation");
+      return this.finishNode(node, "UpdateExpression");
+    }
+
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    let expr = this.parseExprSubscripts(refExpressionErrors);
+    if (this.checkExpressionErrors(refExpressionErrors, false)) return expr;
+
+    while (tokenIsPostfix(this.state.type) && !this.canInsertSemicolon()) {
+      const node = this.startNodeAt(startPos, startLoc);
+      node.operator = this.state.value;
+      node.prefix = false;
+      node.argument = expr;
+      this.checkLVal(expr, "postfix operation");
+      this.next();
+      expr = this.finishNode(node, "UpdateExpression");
+    }
+
+    return expr;
+  }
+
+  parseExprSubscripts(refExpressionErrors) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    const potentialArrowAt = this.state.potentialArrowAt;
+    const expr = this.parseExprAtom(refExpressionErrors);
+
+    if (this.shouldExitDescending(expr, potentialArrowAt)) {
+      return expr;
+    }
+
+    return this.parseSubscripts(expr, startPos, startLoc);
+  }
+
+  parseSubscripts(base, startPos, startLoc, noCalls) {
+    const state = {
+      optionalChainMember: false,
+      maybeAsyncArrow: this.atPossibleAsyncArrow(base),
+      stop: false
+    };
+
+    do {
+      base = this.parseSubscript(base, startPos, startLoc, noCalls, state);
+      state.maybeAsyncArrow = false;
+    } while (!state.stop);
+
+    return base;
+  }
+
+  parseSubscript(base, startPos, startLoc, noCalls, state) {
+    if (!noCalls && this.eat(15)) {
+      return this.parseBind(base, startPos, startLoc, noCalls, state);
+    } else if (this.match(22)) {
+      return this.parseTaggedTemplateExpression(base, startPos, startLoc, state);
+    }
+
+    let optional = false;
+
+    if (this.match(18)) {
+      if (noCalls && this.lookaheadCharCode() === 40) {
+        state.stop = true;
+        return base;
+      }
+
+      state.optionalChainMember = optional = true;
+      this.next();
+    }
+
+    if (!noCalls && this.match(10)) {
+      return this.parseCoverCallAndAsyncArrowHead(base, startPos, startLoc, state, optional);
+    } else {
+      const computed = this.eat(0);
+
+      if (computed || optional || this.eat(16)) {
+        return this.parseMember(base, startPos, startLoc, state, computed, optional);
+      } else {
+        state.stop = true;
+        return base;
+      }
+    }
+  }
+
+  parseMember(base, startPos, startLoc, state, computed, optional) {
+    const node = this.startNodeAt(startPos, startLoc);
+    node.object = base;
+    node.computed = computed;
+    const privateName = !computed && this.match(125) && this.state.value;
+    const property = computed ? this.parseExpression() : privateName ? this.parsePrivateName() : this.parseIdentifier(true);
+
+    if (privateName !== false) {
+      if (node.object.type === "Super") {
+        this.raise(startPos, ErrorMessages.SuperPrivateField);
+      }
+
+      this.classScope.usePrivateName(privateName, property.start);
+    }
+
+    node.property = property;
+
+    if (computed) {
+      this.expect(3);
+    }
+
+    if (state.optionalChainMember) {
+      node.optional = optional;
+      return this.finishNode(node, "OptionalMemberExpression");
+    } else {
+      return this.finishNode(node, "MemberExpression");
+    }
+  }
+
+  parseBind(base, startPos, startLoc, noCalls, state) {
+    const node = this.startNodeAt(startPos, startLoc);
+    node.object = base;
+    node.callee = this.parseNoCallExpr();
+    state.stop = true;
+    return this.parseSubscripts(this.finishNode(node, "BindExpression"), startPos, startLoc, noCalls);
+  }
+
+  parseCoverCallAndAsyncArrowHead(base, startPos, startLoc, state, optional) {
+    const oldMaybeInArrowParameters = this.state.maybeInArrowParameters;
+    let refExpressionErrors = null;
+    this.state.maybeInArrowParameters = true;
+    this.next();
+    let node = this.startNodeAt(startPos, startLoc);
+    node.callee = base;
+
+    if (state.maybeAsyncArrow) {
+      this.expressionScope.enter(newAsyncArrowScope());
+      refExpressionErrors = new ExpressionErrors();
+    }
+
+    if (state.optionalChainMember) {
+      node.optional = optional;
+    }
+
+    if (optional) {
+      node.arguments = this.parseCallExpressionArguments(11);
+    } else {
+      node.arguments = this.parseCallExpressionArguments(11, base.type === "Import", base.type !== "Super", node, refExpressionErrors);
+    }
+
+    this.finishCallExpression(node, state.optionalChainMember);
+
+    if (state.maybeAsyncArrow && this.shouldParseAsyncArrow() && !optional) {
+      state.stop = true;
+      this.expressionScope.validateAsPattern();
+      this.expressionScope.exit();
+      node = this.parseAsyncArrowFromCallExpression(this.startNodeAt(startPos, startLoc), node);
+    } else {
+      if (state.maybeAsyncArrow) {
+        this.checkExpressionErrors(refExpressionErrors, true);
+        this.expressionScope.exit();
+      }
+
+      this.toReferencedArguments(node);
+    }
+
+    this.state.maybeInArrowParameters = oldMaybeInArrowParameters;
+    return node;
+  }
+
+  toReferencedArguments(node, isParenthesizedExpr) {
+    this.toReferencedListDeep(node.arguments, isParenthesizedExpr);
+  }
+
+  parseTaggedTemplateExpression(base, startPos, startLoc, state) {
+    const node = this.startNodeAt(startPos, startLoc);
+    node.tag = base;
+    node.quasi = this.parseTemplate(true);
+
+    if (state.optionalChainMember) {
+      this.raise(startPos, ErrorMessages.OptionalChainingNoTemplate);
+    }
+
+    return this.finishNode(node, "TaggedTemplateExpression");
+  }
+
+  atPossibleAsyncArrow(base) {
+    return base.type === "Identifier" && base.name === "async" && this.state.lastTokEnd === base.end && !this.canInsertSemicolon() && base.end - base.start === 5 && base.start === this.state.potentialArrowAt;
+  }
+
+  finishCallExpression(node, optional) {
+    if (node.callee.type === "Import") {
+      if (node.arguments.length === 2) {
+        {
+          if (!this.hasPlugin("moduleAttributes")) {
+            this.expectPlugin("importAssertions");
+          }
+        }
+      }
+
+      if (node.arguments.length === 0 || node.arguments.length > 2) {
+        this.raise(node.start, ErrorMessages.ImportCallArity, this.hasPlugin("importAssertions") || this.hasPlugin("moduleAttributes") ? "one or two arguments" : "one argument");
+      } else {
+        for (const arg of node.arguments) {
+          if (arg.type === "SpreadElement") {
+            this.raise(arg.start, ErrorMessages.ImportCallSpreadArgument);
+          }
+        }
+      }
+    }
+
+    return this.finishNode(node, optional ? "OptionalCallExpression" : "CallExpression");
+  }
+
+  parseCallExpressionArguments(close, dynamicImport, allowPlaceholder, nodeForExtra, refExpressionErrors) {
+    const elts = [];
+    let first = true;
+    const oldInFSharpPipelineDirectBody = this.state.inFSharpPipelineDirectBody;
+    this.state.inFSharpPipelineDirectBody = false;
+
+    while (!this.eat(close)) {
+      if (first) {
+        first = false;
+      } else {
+        this.expect(12);
+
+        if (this.match(close)) {
+          if (dynamicImport && !this.hasPlugin("importAssertions") && !this.hasPlugin("moduleAttributes")) {
+            this.raise(this.state.lastTokStart, ErrorMessages.ImportCallArgumentTrailingComma);
+          }
+
+          if (nodeForExtra) {
+            this.addExtra(nodeForExtra, "trailingComma", this.state.lastTokStart);
+          }
+
+          this.next();
+          break;
+        }
+      }
+
+      elts.push(this.parseExprListItem(false, refExpressionErrors, allowPlaceholder));
+    }
+
+    this.state.inFSharpPipelineDirectBody = oldInFSharpPipelineDirectBody;
+    return elts;
+  }
+
+  shouldParseAsyncArrow() {
+    return this.match(19) && !this.canInsertSemicolon();
+  }
+
+  parseAsyncArrowFromCallExpression(node, call) {
+    var _call$extra;
+
+    this.resetPreviousNodeTrailingComments(call);
+    this.expect(19);
+    this.parseArrowExpression(node, call.arguments, true, (_call$extra = call.extra) == null ? void 0 : _call$extra.trailingComma);
+
+    if (call.innerComments) {
+      setInnerComments(node, call.innerComments);
+    }
+
+    if (call.callee.trailingComments) {
+      setInnerComments(node, call.callee.trailingComments);
+    }
+
+    return node;
+  }
+
+  parseNoCallExpr() {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    return this.parseSubscripts(this.parseExprAtom(), startPos, startLoc, true);
+  }
+
+  parseExprAtom(refExpressionErrors) {
+    let node;
+    const {
+      type
+    } = this.state;
+
+    switch (type) {
+      case 70:
+        return this.parseSuper();
+
+      case 74:
+        node = this.startNode();
+        this.next();
+
+        if (this.match(16)) {
+          return this.parseImportMetaProperty(node);
+        }
+
+        if (!this.match(10)) {
+          this.raise(this.state.lastTokStart, ErrorMessages.UnsupportedImport);
+        }
+
+        return this.finishNode(node, "Import");
+
+      case 69:
+        node = this.startNode();
+        this.next();
+        return this.finishNode(node, "ThisExpression");
+
+      case 81:
+        {
+          return this.parseDo(this.startNode(), false);
+        }
+
+      case 47:
+      case 29:
+        {
+          this.readRegexp();
+          return this.parseRegExpLiteral(this.state.value);
+        }
+
+      case 121:
+        return this.parseNumericLiteral(this.state.value);
+
+      case 122:
+        return this.parseBigIntLiteral(this.state.value);
+
+      case 123:
+        return this.parseDecimalLiteral(this.state.value);
+
+      case 120:
+        return this.parseStringLiteral(this.state.value);
+
+      case 75:
+        return this.parseNullLiteral();
+
+      case 76:
+        return this.parseBooleanLiteral(true);
+
+      case 77:
+        return this.parseBooleanLiteral(false);
+
+      case 10:
+        {
+          const canBeArrow = this.state.potentialArrowAt === this.state.start;
+          return this.parseParenAndDistinguishExpression(canBeArrow);
+        }
+
+      case 2:
+      case 1:
+        {
+          return this.parseArrayLike(this.state.type === 2 ? 4 : 3, false, true, refExpressionErrors);
+        }
+
+      case 0:
+        {
+          return this.parseArrayLike(3, true, false, refExpressionErrors);
+        }
+
+      case 6:
+      case 7:
+        {
+          return this.parseObjectLike(this.state.type === 6 ? 9 : 8, false, true, refExpressionErrors);
+        }
+
+      case 5:
+        {
+          return this.parseObjectLike(8, false, false, refExpressionErrors);
+        }
+
+      case 59:
+        return this.parseFunctionOrFunctionSent();
+
+      case 24:
+        this.parseDecorators();
+
+      case 71:
+        node = this.startNode();
+        this.takeDecorators(node);
+        return this.parseClass(node, false);
+
+      case 68:
+        return this.parseNewOrNewTarget();
+
+      case 22:
+        return this.parseTemplate(false);
+
+      case 15:
+        {
+          node = this.startNode();
+          this.next();
+          node.object = null;
+          const callee = node.callee = this.parseNoCallExpr();
+
+          if (callee.type === "MemberExpression") {
+            return this.finishNode(node, "BindExpression");
+          } else {
+            throw this.raise(callee.start, ErrorMessages.UnsupportedBind);
+          }
+        }
+
+      case 125:
+        {
+          this.raise(this.state.start, ErrorMessages.PrivateInExpectedIn, this.state.value);
+          return this.parsePrivateName();
+        }
+
+      case 30:
+        if (this.getPluginOption("pipelineOperator", "proposal") === "hack" && this.getPluginOption("pipelineOperator", "topicToken") === "%") {
+          this.state.value = "%";
+          this.state.type = 45;
+          this.state.pos--;
+          this.state.end--;
+          this.state.endLoc.column--;
+        } else {
+          throw this.unexpected();
+        }
+
+      case 45:
+      case 25:
+        {
+          const pipeProposal = this.getPluginOption("pipelineOperator", "proposal");
+
+          if (pipeProposal) {
+            node = this.startNode();
+            const start = this.state.start;
+            const tokenType = this.state.type;
+            this.next();
+            return this.finishTopicReference(node, start, pipeProposal, tokenType);
+          }
+        }
+
+      case 42:
+        {
+          if (this.state.value === "<") {
+            const lookaheadCh = this.input.codePointAt(this.nextTokenStart());
+
+            if (isIdentifierStart(lookaheadCh) || lookaheadCh === 62) {
+              this.expectOnePlugin(["jsx", "flow", "typescript"]);
+            }
+          }
+        }
+
+      default:
+        if (tokenIsIdentifier(type)) {
+          if (this.isContextual(114) && this.lookaheadCharCode() === 123 && !this.hasFollowingLineBreak()) {
+            return this.parseModuleExpression();
+          }
+
+          const canBeArrow = this.state.potentialArrowAt === this.state.start;
+          const containsEsc = this.state.containsEsc;
+          const id = this.parseIdentifier();
+
+          if (!containsEsc && id.name === "async" && !this.canInsertSemicolon()) {
+            const {
+              type
+            } = this.state;
+
+            if (type === 59) {
+              this.resetPreviousNodeTrailingComments(id);
+              this.next();
+              return this.parseFunction(this.startNodeAtNode(id), undefined, true);
+            } else if (tokenIsIdentifier(type)) {
+              if (this.lookaheadCharCode() === 61) {
+                return this.parseAsyncArrowUnaryFunction(this.startNodeAtNode(id));
+              } else {
+                return id;
+              }
+            } else if (type === 81) {
+              this.resetPreviousNodeTrailingComments(id);
+              return this.parseDo(this.startNodeAtNode(id), true);
+            }
+          }
+
+          if (canBeArrow && this.match(19) && !this.canInsertSemicolon()) {
+            this.next();
+            return this.parseArrowExpression(this.startNodeAtNode(id), [id], false);
+          }
+
+          return id;
+        } else {
+          throw this.unexpected();
+        }
+
+    }
+  }
+
+  finishTopicReference(node, start, pipeProposal, tokenType) {
+    if (this.testTopicReferenceConfiguration(pipeProposal, start, tokenType)) {
+      let nodeType;
+
+      if (pipeProposal === "smart") {
+        nodeType = "PipelinePrimaryTopicReference";
+      } else {
+        nodeType = "TopicReference";
+      }
+
+      if (!this.topicReferenceIsAllowedInCurrentContext()) {
+        if (pipeProposal === "smart") {
+          this.raise(start, ErrorMessages.PrimaryTopicNotAllowed);
+        } else {
+          this.raise(start, ErrorMessages.PipeTopicUnbound);
+        }
+      }
+
+      this.registerTopicReference();
+      return this.finishNode(node, nodeType);
+    } else {
+      throw this.raise(start, ErrorMessages.PipeTopicUnconfiguredToken, tokenLabelName(tokenType));
+    }
+  }
+
+  testTopicReferenceConfiguration(pipeProposal, start, tokenType) {
+    switch (pipeProposal) {
+      case "hack":
+        {
+          const pluginTopicToken = this.getPluginOption("pipelineOperator", "topicToken");
+          return tokenLabelName(tokenType) === pluginTopicToken;
+        }
+
+      case "smart":
+        return tokenType === 25;
+
+      default:
+        throw this.raise(start, ErrorMessages.PipeTopicRequiresHackPipes);
+    }
+  }
+
+  parseAsyncArrowUnaryFunction(node) {
+    this.prodParam.enter(functionFlags(true, this.prodParam.hasYield));
+    const params = [this.parseIdentifier()];
+    this.prodParam.exit();
+
+    if (this.hasPrecedingLineBreak()) {
+      this.raise(this.state.pos, ErrorMessages.LineTerminatorBeforeArrow);
+    }
+
+    this.expect(19);
+    this.parseArrowExpression(node, params, true);
+    return node;
+  }
+
+  parseDo(node, isAsync) {
+    this.expectPlugin("doExpressions");
+
+    if (isAsync) {
+      this.expectPlugin("asyncDoExpressions");
+    }
+
+    node.async = isAsync;
+    this.next();
+    const oldLabels = this.state.labels;
+    this.state.labels = [];
+
+    if (isAsync) {
+      this.prodParam.enter(PARAM_AWAIT);
+      node.body = this.parseBlock();
+      this.prodParam.exit();
+    } else {
+      node.body = this.parseBlock();
+    }
+
+    this.state.labels = oldLabels;
+    return this.finishNode(node, "DoExpression");
+  }
+
+  parseSuper() {
+    const node = this.startNode();
+    this.next();
+
+    if (this.match(10) && !this.scope.allowDirectSuper && !this.options.allowSuperOutsideMethod) {
+      this.raise(node.start, ErrorMessages.SuperNotAllowed);
+    } else if (!this.scope.allowSuper && !this.options.allowSuperOutsideMethod) {
+      this.raise(node.start, ErrorMessages.UnexpectedSuper);
+    }
+
+    if (!this.match(10) && !this.match(0) && !this.match(16)) {
+      this.raise(node.start, ErrorMessages.UnsupportedSuper);
+    }
+
+    return this.finishNode(node, "Super");
+  }
+
+  parseMaybePrivateName(isPrivateNameAllowed) {
+    const isPrivate = this.match(125);
+
+    if (isPrivate) {
+      if (!isPrivateNameAllowed) {
+        this.raise(this.state.start + 1, ErrorMessages.UnexpectedPrivateField);
+      }
+
+      return this.parsePrivateName();
+    } else {
+      return this.parseIdentifier(true);
+    }
+  }
+
+  parsePrivateName() {
+    const node = this.startNode();
+    const id = this.startNodeAt(this.state.start + 1, new Position(this.state.curLine, this.state.start + 1 - this.state.lineStart));
+    const name = this.state.value;
+    this.next();
+    node.id = this.createIdentifier(id, name);
+    return this.finishNode(node, "PrivateName");
+  }
+
+  parseFunctionOrFunctionSent() {
+    const node = this.startNode();
+    this.next();
+
+    if (this.prodParam.hasYield && this.match(16)) {
+      const meta = this.createIdentifier(this.startNodeAtNode(node), "function");
+      this.next();
+
+      if (this.match(93)) {
+        this.expectPlugin("functionSent");
+      } else if (!this.hasPlugin("functionSent")) {
+        this.unexpected();
+      }
+
+      return this.parseMetaProperty(node, meta, "sent");
+    }
+
+    return this.parseFunction(node);
+  }
+
+  parseMetaProperty(node, meta, propertyName) {
+    node.meta = meta;
+    const containsEsc = this.state.containsEsc;
+    node.property = this.parseIdentifier(true);
+
+    if (node.property.name !== propertyName || containsEsc) {
+      this.raise(node.property.start, ErrorMessages.UnsupportedMetaProperty, meta.name, propertyName);
+    }
+
+    return this.finishNode(node, "MetaProperty");
+  }
+
+  parseImportMetaProperty(node) {
+    const id = this.createIdentifier(this.startNodeAtNode(node), "import");
+    this.next();
+
+    if (this.isContextual(91)) {
+      if (!this.inModule) {
+        this.raise(id.start, SourceTypeModuleErrorMessages.ImportMetaOutsideModule);
+      }
+
+      this.sawUnambiguousESM = true;
+    }
+
+    return this.parseMetaProperty(node, id, "meta");
+  }
+
+  parseLiteralAtNode(value, type, node) {
+    this.addExtra(node, "rawValue", value);
+    this.addExtra(node, "raw", this.input.slice(node.start, this.state.end));
+    node.value = value;
+    this.next();
+    return this.finishNode(node, type);
+  }
+
+  parseLiteral(value, type) {
+    const node = this.startNode();
+    return this.parseLiteralAtNode(value, type, node);
+  }
+
+  parseStringLiteral(value) {
+    return this.parseLiteral(value, "StringLiteral");
+  }
+
+  parseNumericLiteral(value) {
+    return this.parseLiteral(value, "NumericLiteral");
+  }
+
+  parseBigIntLiteral(value) {
+    return this.parseLiteral(value, "BigIntLiteral");
+  }
+
+  parseDecimalLiteral(value) {
+    return this.parseLiteral(value, "DecimalLiteral");
+  }
+
+  parseRegExpLiteral(value) {
+    const node = this.parseLiteral(value.value, "RegExpLiteral");
+    node.pattern = value.pattern;
+    node.flags = value.flags;
+    return node;
+  }
+
+  parseBooleanLiteral(value) {
+    const node = this.startNode();
+    node.value = value;
+    this.next();
+    return this.finishNode(node, "BooleanLiteral");
+  }
+
+  parseNullLiteral() {
+    const node = this.startNode();
+    this.next();
+    return this.finishNode(node, "NullLiteral");
+  }
+
+  parseParenAndDistinguishExpression(canBeArrow) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    let val;
+    this.next();
+    this.expressionScope.enter(newArrowHeadScope());
+    const oldMaybeInArrowParameters = this.state.maybeInArrowParameters;
+    const oldInFSharpPipelineDirectBody = this.state.inFSharpPipelineDirectBody;
+    this.state.maybeInArrowParameters = true;
+    this.state.inFSharpPipelineDirectBody = false;
+    const innerStartPos = this.state.start;
+    const innerStartLoc = this.state.startLoc;
+    const exprList = [];
+    const refExpressionErrors = new ExpressionErrors();
+    let first = true;
+    let spreadStart;
+    let optionalCommaStart;
+
+    while (!this.match(11)) {
+      if (first) {
+        first = false;
+      } else {
+        this.expect(12, refExpressionErrors.optionalParameters === -1 ? null : refExpressionErrors.optionalParameters);
+
+        if (this.match(11)) {
+          optionalCommaStart = this.state.start;
+          break;
+        }
+      }
+
+      if (this.match(21)) {
+        const spreadNodeStartPos = this.state.start;
+        const spreadNodeStartLoc = this.state.startLoc;
+        spreadStart = this.state.start;
+        exprList.push(this.parseParenItem(this.parseRestBinding(), spreadNodeStartPos, spreadNodeStartLoc));
+        this.checkCommaAfterRest(41);
+        break;
+      } else {
+        exprList.push(this.parseMaybeAssignAllowIn(refExpressionErrors, this.parseParenItem));
+      }
+    }
+
+    const innerEndPos = this.state.lastTokEnd;
+    const innerEndLoc = this.state.lastTokEndLoc;
+    this.expect(11);
+    this.state.maybeInArrowParameters = oldMaybeInArrowParameters;
+    this.state.inFSharpPipelineDirectBody = oldInFSharpPipelineDirectBody;
+    let arrowNode = this.startNodeAt(startPos, startLoc);
+
+    if (canBeArrow && this.shouldParseArrow(exprList) && (arrowNode = this.parseArrow(arrowNode))) {
+      this.expressionScope.validateAsPattern();
+      this.expressionScope.exit();
+      this.parseArrowExpression(arrowNode, exprList, false);
+      return arrowNode;
+    }
+
+    this.expressionScope.exit();
+
+    if (!exprList.length) {
+      this.unexpected(this.state.lastTokStart);
+    }
+
+    if (optionalCommaStart) this.unexpected(optionalCommaStart);
+    if (spreadStart) this.unexpected(spreadStart);
+    this.checkExpressionErrors(refExpressionErrors, true);
+    this.toReferencedListDeep(exprList, true);
+
+    if (exprList.length > 1) {
+      val = this.startNodeAt(innerStartPos, innerStartLoc);
+      val.expressions = exprList;
+      this.finishNode(val, "SequenceExpression");
+      this.resetEndLocation(val, innerEndPos, innerEndLoc);
+    } else {
+      val = exprList[0];
+    }
+
+    if (!this.options.createParenthesizedExpressions) {
+      this.addExtra(val, "parenthesized", true);
+      this.addExtra(val, "parenStart", startPos);
+      this.takeSurroundingComments(val, startPos, this.state.lastTokEnd);
+      return val;
+    }
+
+    const parenExpression = this.startNodeAt(startPos, startLoc);
+    parenExpression.expression = val;
+    this.finishNode(parenExpression, "ParenthesizedExpression");
+    return parenExpression;
+  }
+
+  shouldParseArrow(params) {
+    return !this.canInsertSemicolon();
+  }
+
+  parseArrow(node) {
+    if (this.eat(19)) {
+      return node;
+    }
+  }
+
+  parseParenItem(node, startPos, startLoc) {
+    return node;
+  }
+
+  parseNewOrNewTarget() {
+    const node = this.startNode();
+    this.next();
+
+    if (this.match(16)) {
+      const meta = this.createIdentifier(this.startNodeAtNode(node), "new");
+      this.next();
+      const metaProp = this.parseMetaProperty(node, meta, "target");
+
+      if (!this.scope.inNonArrowFunction && !this.scope.inClass) {
+        this.raise(metaProp.start, ErrorMessages.UnexpectedNewTarget);
+      }
+
+      return metaProp;
+    }
+
+    return this.parseNew(node);
+  }
+
+  parseNew(node) {
+    node.callee = this.parseNoCallExpr();
+
+    if (node.callee.type === "Import") {
+      this.raise(node.callee.start, ErrorMessages.ImportCallNotNewExpression);
+    } else if (this.isOptionalChain(node.callee)) {
+      this.raise(this.state.lastTokEnd, ErrorMessages.OptionalChainingNoNew);
+    } else if (this.eat(18)) {
+      this.raise(this.state.start, ErrorMessages.OptionalChainingNoNew);
+    }
+
+    this.parseNewArguments(node);
+    return this.finishNode(node, "NewExpression");
+  }
+
+  parseNewArguments(node) {
+    if (this.eat(10)) {
+      const args = this.parseExprList(11);
+      this.toReferencedList(args);
+      node.arguments = args;
+    } else {
+      node.arguments = [];
+    }
+  }
+
+  parseTemplateElement(isTagged) {
+    const elem = this.startNode();
+
+    if (this.state.value === null) {
+      if (!isTagged) {
+        this.raise(this.state.start + 1, ErrorMessages.InvalidEscapeSequenceTemplate);
+      }
+    }
+
+    elem.value = {
+      raw: this.input.slice(this.state.start, this.state.end).replace(/\r\n?/g, "\n"),
+      cooked: this.state.value
+    };
+    this.next();
+    elem.tail = this.match(22);
+    return this.finishNode(elem, "TemplateElement");
+  }
+
+  parseTemplate(isTagged) {
+    const node = this.startNode();
+    this.next();
+    node.expressions = [];
+    let curElt = this.parseTemplateElement(isTagged);
+    node.quasis = [curElt];
+
+    while (!curElt.tail) {
+      this.expect(23);
+      node.expressions.push(this.parseTemplateSubstitution());
+      this.expect(8);
+      node.quasis.push(curElt = this.parseTemplateElement(isTagged));
+    }
+
+    this.next();
+    return this.finishNode(node, "TemplateLiteral");
+  }
+
+  parseTemplateSubstitution() {
+    return this.parseExpression();
+  }
+
+  parseObjectLike(close, isPattern, isRecord, refExpressionErrors) {
+    if (isRecord) {
+      this.expectPlugin("recordAndTuple");
+    }
+
+    const oldInFSharpPipelineDirectBody = this.state.inFSharpPipelineDirectBody;
+    this.state.inFSharpPipelineDirectBody = false;
+    const propHash = Object.create(null);
+    let first = true;
+    const node = this.startNode();
+    node.properties = [];
+    this.next();
+
+    while (!this.match(close)) {
+      if (first) {
+        first = false;
+      } else {
+        this.expect(12);
+
+        if (this.match(close)) {
+          this.addExtra(node, "trailingComma", this.state.lastTokStart);
+          break;
+        }
+      }
+
+      const prop = this.parsePropertyDefinition(isPattern, refExpressionErrors);
+
+      if (!isPattern) {
+        this.checkProto(prop, isRecord, propHash, refExpressionErrors);
+      }
+
+      if (isRecord && !this.isObjectProperty(prop) && prop.type !== "SpreadElement") {
+        this.raise(prop.start, ErrorMessages.InvalidRecordProperty);
+      }
+
+      if (prop.shorthand) {
+        this.addExtra(prop, "shorthand", true);
+      }
+
+      node.properties.push(prop);
+    }
+
+    this.next();
+    this.state.inFSharpPipelineDirectBody = oldInFSharpPipelineDirectBody;
+    let type = "ObjectExpression";
+
+    if (isPattern) {
+      type = "ObjectPattern";
+    } else if (isRecord) {
+      type = "RecordExpression";
+    }
+
+    return this.finishNode(node, type);
+  }
+
+  maybeAsyncOrAccessorProp(prop) {
+    return !prop.computed && prop.key.type === "Identifier" && (this.isLiteralPropertyName() || this.match(0) || this.match(46));
+  }
+
+  parsePropertyDefinition(isPattern, refExpressionErrors) {
+    let decorators = [];
+
+    if (this.match(24)) {
+      if (this.hasPlugin("decorators")) {
+        this.raise(this.state.start, ErrorMessages.UnsupportedPropertyDecorator);
+      }
+
+      while (this.match(24)) {
+        decorators.push(this.parseDecorator());
+      }
+    }
+
+    const prop = this.startNode();
+    let isGenerator = false;
+    let isAsync = false;
+    let isAccessor = false;
+    let startPos;
+    let startLoc;
+
+    if (this.match(21)) {
+      if (decorators.length) this.unexpected();
+
+      if (isPattern) {
+        this.next();
+        prop.argument = this.parseIdentifier();
+        this.checkCommaAfterRest(125);
+        return this.finishNode(prop, "RestElement");
+      }
+
+      return this.parseSpread();
+    }
+
+    if (decorators.length) {
+      prop.decorators = decorators;
+      decorators = [];
+    }
+
+    prop.method = false;
+
+    if (isPattern || refExpressionErrors) {
+      startPos = this.state.start;
+      startLoc = this.state.startLoc;
+    }
+
+    if (!isPattern) {
+      isGenerator = this.eat(46);
+    }
+
+    const containsEsc = this.state.containsEsc;
+    const key = this.parsePropertyName(prop, false);
+
+    if (!isPattern && !isGenerator && !containsEsc && this.maybeAsyncOrAccessorProp(prop)) {
+      const keyName = key.name;
+
+      if (keyName === "async" && !this.hasPrecedingLineBreak()) {
+        isAsync = true;
+        this.resetPreviousNodeTrailingComments(key);
+        isGenerator = this.eat(46);
+        this.parsePropertyName(prop, false);
+      }
+
+      if (keyName === "get" || keyName === "set") {
+        isAccessor = true;
+        this.resetPreviousNodeTrailingComments(key);
+        prop.kind = keyName;
+
+        if (this.match(46)) {
+          isGenerator = true;
+          this.raise(this.state.pos, ErrorMessages.AccessorIsGenerator, keyName);
+          this.next();
+        }
+
+        this.parsePropertyName(prop, false);
+      }
+    }
+
+    this.parseObjPropValue(prop, startPos, startLoc, isGenerator, isAsync, isPattern, isAccessor, refExpressionErrors);
+    return prop;
+  }
+
+  getGetterSetterExpectedParamCount(method) {
+    return method.kind === "get" ? 0 : 1;
+  }
+
+  getObjectOrClassMethodParams(method) {
+    return method.params;
+  }
+
+  checkGetterSetterParams(method) {
+    var _params;
+
+    const paramCount = this.getGetterSetterExpectedParamCount(method);
+    const params = this.getObjectOrClassMethodParams(method);
+    const start = method.start;
+
+    if (params.length !== paramCount) {
+      if (method.kind === "get") {
+        this.raise(start, ErrorMessages.BadGetterArity);
+      } else {
+        this.raise(start, ErrorMessages.BadSetterArity);
+      }
+    }
+
+    if (method.kind === "set" && ((_params = params[params.length - 1]) == null ? void 0 : _params.type) === "RestElement") {
+      this.raise(start, ErrorMessages.BadSetterRestParameter);
+    }
+  }
+
+  parseObjectMethod(prop, isGenerator, isAsync, isPattern, isAccessor) {
+    if (isAccessor) {
+      this.parseMethod(prop, isGenerator, false, false, false, "ObjectMethod");
+      this.checkGetterSetterParams(prop);
+      return prop;
+    }
+
+    if (isAsync || isGenerator || this.match(10)) {
+      if (isPattern) this.unexpected();
+      prop.kind = "method";
+      prop.method = true;
+      return this.parseMethod(prop, isGenerator, isAsync, false, false, "ObjectMethod");
+    }
+  }
+
+  parseObjectProperty(prop, startPos, startLoc, isPattern, refExpressionErrors) {
+    prop.shorthand = false;
+
+    if (this.eat(14)) {
+      prop.value = isPattern ? this.parseMaybeDefault(this.state.start, this.state.startLoc) : this.parseMaybeAssignAllowIn(refExpressionErrors);
+      return this.finishNode(prop, "ObjectProperty");
+    }
+
+    if (!prop.computed && prop.key.type === "Identifier") {
+      this.checkReservedWord(prop.key.name, prop.key.start, true, false);
+
+      if (isPattern) {
+        prop.value = this.parseMaybeDefault(startPos, startLoc, cloneIdentifier(prop.key));
+      } else if (this.match(27) && refExpressionErrors) {
+        if (refExpressionErrors.shorthandAssign === -1) {
+          refExpressionErrors.shorthandAssign = this.state.start;
+        }
+
+        prop.value = this.parseMaybeDefault(startPos, startLoc, cloneIdentifier(prop.key));
+      } else {
+        prop.value = cloneIdentifier(prop.key);
+      }
+
+      prop.shorthand = true;
+      return this.finishNode(prop, "ObjectProperty");
+    }
+  }
+
+  parseObjPropValue(prop, startPos, startLoc, isGenerator, isAsync, isPattern, isAccessor, refExpressionErrors) {
+    const node = this.parseObjectMethod(prop, isGenerator, isAsync, isPattern, isAccessor) || this.parseObjectProperty(prop, startPos, startLoc, isPattern, refExpressionErrors);
+    if (!node) this.unexpected();
+    return node;
+  }
+
+  parsePropertyName(prop, isPrivateNameAllowed) {
+    if (this.eat(0)) {
+      prop.computed = true;
+      prop.key = this.parseMaybeAssignAllowIn();
+      this.expect(3);
+    } else {
+      const oldInPropertyName = this.state.inPropertyName;
+      this.state.inPropertyName = true;
+      const type = this.state.type;
+      prop.key = type === 121 || type === 120 || type === 122 || type === 123 ? this.parseExprAtom() : this.parseMaybePrivateName(isPrivateNameAllowed);
+
+      if (type !== 125) {
+        prop.computed = false;
+      }
+
+      this.state.inPropertyName = oldInPropertyName;
+    }
+
+    return prop.key;
+  }
+
+  initFunction(node, isAsync) {
+    node.id = null;
+    node.generator = false;
+    node.async = !!isAsync;
+  }
+
+  parseMethod(node, isGenerator, isAsync, isConstructor, allowDirectSuper, type, inClassScope = false) {
+    this.initFunction(node, isAsync);
+    node.generator = !!isGenerator;
+    const allowModifiers = isConstructor;
+    this.scope.enter(SCOPE_FUNCTION | SCOPE_SUPER | (inClassScope ? SCOPE_CLASS : 0) | (allowDirectSuper ? SCOPE_DIRECT_SUPER : 0));
+    this.prodParam.enter(functionFlags(isAsync, node.generator));
+    this.parseFunctionParams(node, allowModifiers);
+    this.parseFunctionBodyAndFinish(node, type, true);
+    this.prodParam.exit();
+    this.scope.exit();
+    return node;
+  }
+
+  parseArrayLike(close, canBePattern, isTuple, refExpressionErrors) {
+    if (isTuple) {
+      this.expectPlugin("recordAndTuple");
+    }
+
+    const oldInFSharpPipelineDirectBody = this.state.inFSharpPipelineDirectBody;
+    this.state.inFSharpPipelineDirectBody = false;
+    const node = this.startNode();
+    this.next();
+    node.elements = this.parseExprList(close, !isTuple, refExpressionErrors, node);
+    this.state.inFSharpPipelineDirectBody = oldInFSharpPipelineDirectBody;
+    return this.finishNode(node, isTuple ? "TupleExpression" : "ArrayExpression");
+  }
+
+  parseArrowExpression(node, params, isAsync, trailingCommaPos) {
+    this.scope.enter(SCOPE_FUNCTION | SCOPE_ARROW);
+    let flags = functionFlags(isAsync, false);
+
+    if (!this.match(0) && this.prodParam.hasIn) {
+      flags |= PARAM_IN;
+    }
+
+    this.prodParam.enter(flags);
+    this.initFunction(node, isAsync);
+    const oldMaybeInArrowParameters = this.state.maybeInArrowParameters;
+
+    if (params) {
+      this.state.maybeInArrowParameters = true;
+      this.setArrowFunctionParameters(node, params, trailingCommaPos);
+    }
+
+    this.state.maybeInArrowParameters = false;
+    this.parseFunctionBody(node, true);
+    this.prodParam.exit();
+    this.scope.exit();
+    this.state.maybeInArrowParameters = oldMaybeInArrowParameters;
+    return this.finishNode(node, "ArrowFunctionExpression");
+  }
+
+  setArrowFunctionParameters(node, params, trailingCommaPos) {
+    node.params = this.toAssignableList(params, trailingCommaPos, false);
+  }
+
+  parseFunctionBodyAndFinish(node, type, isMethod = false) {
+    this.parseFunctionBody(node, false, isMethod);
+    this.finishNode(node, type);
+  }
+
+  parseFunctionBody(node, allowExpression, isMethod = false) {
+    const isExpression = allowExpression && !this.match(5);
+    this.expressionScope.enter(newExpressionScope());
+
+    if (isExpression) {
+      node.body = this.parseMaybeAssign();
+      this.checkParams(node, false, allowExpression, false);
+    } else {
+      const oldStrict = this.state.strict;
+      const oldLabels = this.state.labels;
+      this.state.labels = [];
+      this.prodParam.enter(this.prodParam.currentFlags() | PARAM_RETURN);
+      node.body = this.parseBlock(true, false, hasStrictModeDirective => {
+        const nonSimple = !this.isSimpleParamList(node.params);
+
+        if (hasStrictModeDirective && nonSimple) {
+          const errorPos = (node.kind === "method" || node.kind === "constructor") && !!node.key ? node.key.end : node.start;
+          this.raise(errorPos, ErrorMessages.IllegalLanguageModeDirective);
+        }
+
+        const strictModeChanged = !oldStrict && this.state.strict;
+        this.checkParams(node, !this.state.strict && !allowExpression && !isMethod && !nonSimple, allowExpression, strictModeChanged);
+
+        if (this.state.strict && node.id) {
+          this.checkLVal(node.id, "function name", BIND_OUTSIDE, undefined, undefined, strictModeChanged);
+        }
+      });
+      this.prodParam.exit();
+      this.expressionScope.exit();
+      this.state.labels = oldLabels;
+    }
+  }
+
+  isSimpleParamList(params) {
+    for (let i = 0, len = params.length; i < len; i++) {
+      if (params[i].type !== "Identifier") return false;
+    }
+
+    return true;
+  }
+
+  checkParams(node, allowDuplicates, isArrowFunction, strictModeChanged = true) {
+    const checkClashes = new Set();
+
+    for (const param of node.params) {
+      this.checkLVal(param, "function parameter list", BIND_VAR, allowDuplicates ? null : checkClashes, undefined, strictModeChanged);
+    }
+  }
+
+  parseExprList(close, allowEmpty, refExpressionErrors, nodeForExtra) {
+    const elts = [];
+    let first = true;
+
+    while (!this.eat(close)) {
+      if (first) {
+        first = false;
+      } else {
+        this.expect(12);
+
+        if (this.match(close)) {
+          if (nodeForExtra) {
+            this.addExtra(nodeForExtra, "trailingComma", this.state.lastTokStart);
+          }
+
+          this.next();
+          break;
+        }
+      }
+
+      elts.push(this.parseExprListItem(allowEmpty, refExpressionErrors));
+    }
+
+    return elts;
+  }
+
+  parseExprListItem(allowEmpty, refExpressionErrors, allowPlaceholder) {
+    let elt;
+
+    if (this.match(12)) {
+      if (!allowEmpty) {
+        this.raise(this.state.pos, ErrorMessages.UnexpectedToken, ",");
+      }
+
+      elt = null;
+    } else if (this.match(21)) {
+      const spreadNodeStartPos = this.state.start;
+      const spreadNodeStartLoc = this.state.startLoc;
+      elt = this.parseParenItem(this.parseSpread(refExpressionErrors), spreadNodeStartPos, spreadNodeStartLoc);
+    } else if (this.match(17)) {
+      this.expectPlugin("partialApplication");
+
+      if (!allowPlaceholder) {
+        this.raise(this.state.start, ErrorMessages.UnexpectedArgumentPlaceholder);
+      }
+
+      const node = this.startNode();
+      this.next();
+      elt = this.finishNode(node, "ArgumentPlaceholder");
+    } else {
+      elt = this.parseMaybeAssignAllowIn(refExpressionErrors, this.parseParenItem);
+    }
+
+    return elt;
+  }
+
+  parseIdentifier(liberal) {
+    const node = this.startNode();
+    const name = this.parseIdentifierName(node.start, liberal);
+    return this.createIdentifier(node, name);
+  }
+
+  createIdentifier(node, name) {
+    node.name = name;
+    node.loc.identifierName = name;
+    return this.finishNode(node, "Identifier");
+  }
+
+  parseIdentifierName(pos, liberal) {
+    let name;
+    const {
+      start,
+      type
+    } = this.state;
+
+    if (tokenIsKeywordOrIdentifier(type)) {
+      name = this.state.value;
+    } else {
+      throw this.unexpected();
+    }
+
+    if (liberal) {
+      this.state.type = 119;
+    } else {
+      this.checkReservedWord(name, start, tokenIsKeyword(type), false);
+    }
+
+    this.next();
+    return name;
+  }
+
+  checkReservedWord(word, startLoc, checkKeywords, isBinding) {
+    if (word.length > 10) {
+      return;
+    }
+
+    if (!canBeReservedWord(word)) {
+      return;
+    }
+
+    if (word === "yield") {
+      if (this.prodParam.hasYield) {
+        this.raise(startLoc, ErrorMessages.YieldBindingIdentifier);
+        return;
+      }
+    } else if (word === "await") {
+      if (this.prodParam.hasAwait) {
+        this.raise(startLoc, ErrorMessages.AwaitBindingIdentifier);
+        return;
+      } else if (this.scope.inStaticBlock) {
+        this.raise(startLoc, ErrorMessages.AwaitBindingIdentifierInStaticBlock);
+        return;
+      } else {
+        this.expressionScope.recordAsyncArrowParametersError(startLoc, ErrorMessages.AwaitBindingIdentifier);
+      }
+    } else if (word === "arguments") {
+      if (this.scope.inClassAndNotInNonArrowFunction) {
+        this.raise(startLoc, ErrorMessages.ArgumentsInClass);
+        return;
+      }
+    }
+
+    if (checkKeywords && isKeyword(word)) {
+      this.raise(startLoc, ErrorMessages.UnexpectedKeyword, word);
+      return;
+    }
+
+    const reservedTest = !this.state.strict ? isReservedWord : isBinding ? isStrictBindReservedWord : isStrictReservedWord;
+
+    if (reservedTest(word, this.inModule)) {
+      this.raise(startLoc, ErrorMessages.UnexpectedReservedWord, word);
+    }
+  }
+
+  isAwaitAllowed() {
+    if (this.prodParam.hasAwait) return true;
+
+    if (this.options.allowAwaitOutsideFunction && !this.scope.inFunction) {
+      return true;
+    }
+
+    return false;
+  }
+
+  parseAwait(startPos, startLoc) {
+    const node = this.startNodeAt(startPos, startLoc);
+    this.expressionScope.recordParameterInitializerError(node.start, ErrorMessages.AwaitExpressionFormalParameter);
+
+    if (this.eat(46)) {
+      this.raise(node.start, ErrorMessages.ObsoleteAwaitStar);
+    }
+
+    if (!this.scope.inFunction && !this.options.allowAwaitOutsideFunction) {
+      if (this.isAmbiguousAwait()) {
+        this.ambiguousScriptDifferentAst = true;
+      } else {
+        this.sawUnambiguousESM = true;
+      }
+    }
+
+    if (!this.state.soloAwait) {
+      node.argument = this.parseMaybeUnary(null, true);
+    }
+
+    return this.finishNode(node, "AwaitExpression");
+  }
+
+  isAmbiguousAwait() {
+    return this.hasPrecedingLineBreak() || this.match(44) || this.match(10) || this.match(0) || this.match(22) || this.match(124) || this.match(47) || this.hasPlugin("v8intrinsic") && this.match(45);
+  }
+
+  parseYield() {
+    const node = this.startNode();
+    this.expressionScope.recordParameterInitializerError(node.start, ErrorMessages.YieldInParameter);
+    this.next();
+    let delegating = false;
+    let argument = null;
+
+    if (!this.hasPrecedingLineBreak()) {
+      delegating = this.eat(46);
+
+      switch (this.state.type) {
+        case 13:
+        case 126:
+        case 8:
+        case 11:
+        case 3:
+        case 9:
+        case 14:
+        case 12:
+          if (!delegating) break;
+
+        default:
+          argument = this.parseMaybeAssign();
+      }
+    }
+
+    node.delegate = delegating;
+    node.argument = argument;
+    return this.finishNode(node, "YieldExpression");
+  }
+
+  checkPipelineAtInfixOperator(left, leftStartPos) {
+    if (this.getPluginOption("pipelineOperator", "proposal") === "smart") {
+      if (left.type === "SequenceExpression") {
+        this.raise(leftStartPos, ErrorMessages.PipelineHeadSequenceExpression);
+      }
+    }
+  }
+
+  checkHackPipeBodyEarlyErrors(startPos) {
+    if (!this.topicReferenceWasUsedInCurrentContext()) {
+      this.raise(startPos, ErrorMessages.PipeTopicUnused);
+    }
+  }
+
+  parseSmartPipelineBodyInStyle(childExpr, startPos, startLoc) {
+    const bodyNode = this.startNodeAt(startPos, startLoc);
+
+    if (this.isSimpleReference(childExpr)) {
+      bodyNode.callee = childExpr;
+      return this.finishNode(bodyNode, "PipelineBareFunction");
+    } else {
+      this.checkSmartPipeTopicBodyEarlyErrors(startPos);
+      bodyNode.expression = childExpr;
+      return this.finishNode(bodyNode, "PipelineTopicExpression");
+    }
+  }
+
+  isSimpleReference(expression) {
+    switch (expression.type) {
+      case "MemberExpression":
+        return !expression.computed && this.isSimpleReference(expression.object);
+
+      case "Identifier":
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  checkSmartPipeTopicBodyEarlyErrors(startPos) {
+    if (this.match(19)) {
+      throw this.raise(this.state.start, ErrorMessages.PipelineBodyNoArrow);
+    } else if (!this.topicReferenceWasUsedInCurrentContext()) {
+      this.raise(startPos, ErrorMessages.PipelineTopicUnused);
+    }
+  }
+
+  withTopicBindingContext(callback) {
+    const outerContextTopicState = this.state.topicContext;
+    this.state.topicContext = {
+      maxNumOfResolvableTopics: 1,
+      maxTopicIndex: null
+    };
+
+    try {
+      return callback();
+    } finally {
+      this.state.topicContext = outerContextTopicState;
+    }
+  }
+
+  withSmartMixTopicForbiddingContext(callback) {
+    const proposal = this.getPluginOption("pipelineOperator", "proposal");
+
+    if (proposal === "smart") {
+      const outerContextTopicState = this.state.topicContext;
+      this.state.topicContext = {
+        maxNumOfResolvableTopics: 0,
+        maxTopicIndex: null
+      };
+
+      try {
+        return callback();
+      } finally {
+        this.state.topicContext = outerContextTopicState;
+      }
+    } else {
+      return callback();
+    }
+  }
+
+  withSoloAwaitPermittingContext(callback) {
+    const outerContextSoloAwaitState = this.state.soloAwait;
+    this.state.soloAwait = true;
+
+    try {
+      return callback();
+    } finally {
+      this.state.soloAwait = outerContextSoloAwaitState;
+    }
+  }
+
+  allowInAnd(callback) {
+    const flags = this.prodParam.currentFlags();
+    const prodParamToSet = PARAM_IN & ~flags;
+
+    if (prodParamToSet) {
+      this.prodParam.enter(flags | PARAM_IN);
+
+      try {
+        return callback();
+      } finally {
+        this.prodParam.exit();
+      }
+    }
+
+    return callback();
+  }
+
+  disallowInAnd(callback) {
+    const flags = this.prodParam.currentFlags();
+    const prodParamToClear = PARAM_IN & flags;
+
+    if (prodParamToClear) {
+      this.prodParam.enter(flags & ~PARAM_IN);
+
+      try {
+        return callback();
+      } finally {
+        this.prodParam.exit();
+      }
+    }
+
+    return callback();
+  }
+
+  registerTopicReference() {
+    this.state.topicContext.maxTopicIndex = 0;
+  }
+
+  topicReferenceIsAllowedInCurrentContext() {
+    return this.state.topicContext.maxNumOfResolvableTopics >= 1;
+  }
+
+  topicReferenceWasUsedInCurrentContext() {
+    return this.state.topicContext.maxTopicIndex != null && this.state.topicContext.maxTopicIndex >= 0;
+  }
+
+  parseFSharpPipelineBody(prec) {
+    const startPos = this.state.start;
+    const startLoc = this.state.startLoc;
+    this.state.potentialArrowAt = this.state.start;
+    const oldInFSharpPipelineDirectBody = this.state.inFSharpPipelineDirectBody;
+    this.state.inFSharpPipelineDirectBody = true;
+    const ret = this.parseExprOp(this.parseMaybeUnaryOrPrivate(), startPos, startLoc, prec);
+    this.state.inFSharpPipelineDirectBody = oldInFSharpPipelineDirectBody;
+    return ret;
+  }
+
+  parseModuleExpression() {
+    this.expectPlugin("moduleBlocks");
+    const node = this.startNode();
+    this.next();
+    this.eat(5);
+    const revertScopes = this.initializeScopes(true);
+    this.enterInitialScopes();
+    const program = this.startNode();
+
+    try {
+      node.body = this.parseProgram(program, 8, "module");
+    } finally {
+      revertScopes();
+    }
+
+    this.eat(8);
+    return this.finishNode(node, "ModuleExpression");
+  }
+
+}
+
+const loopLabel = {
+  kind: "loop"
+},
+      switchLabel = {
+  kind: "switch"
+};
+const FUNC_NO_FLAGS = 0b000,
+      FUNC_STATEMENT = 0b001,
+      FUNC_HANGING_STATEMENT = 0b010,
+      FUNC_NULLABLE_ID = 0b100;
+const loneSurrogate = /[\uD800-\uDFFF]/u;
+const keywordRelationalOperator = /in(?:stanceof)?/y;
+
+function babel7CompatTokens(tokens) {
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const {
+      type
+    } = token;
+
+    if (type === 125) {
+      {
+        const {
+          loc,
+          start,
+          value,
+          end
+        } = token;
+        const hashEndPos = start + 1;
+        const hashEndLoc = new Position(loc.start.line, loc.start.column + 1);
+        tokens.splice(i, 1, new Token({
+          type: getExportedToken(25),
+          value: "#",
+          start: start,
+          end: hashEndPos,
+          startLoc: loc.start,
+          endLoc: hashEndLoc
+        }), new Token({
+          type: getExportedToken(119),
+          value: value,
+          start: hashEndPos,
+          end: end,
+          startLoc: hashEndLoc,
+          endLoc: loc.end
+        }));
+        i++;
+        continue;
+      }
+    }
+
+    if (typeof type === "number") {
+      token.type = getExportedToken(type);
+    }
+  }
+
+  return tokens;
+}
+
+class StatementParser extends ExpressionParser {
+  parseTopLevel(file, program) {
+    file.program = this.parseProgram(program);
+    file.comments = this.state.comments;
+    if (this.options.tokens) file.tokens = babel7CompatTokens(this.tokens);
+    return this.finishNode(file, "File");
+  }
+
+  parseProgram(program, end = 126, sourceType = this.options.sourceType) {
+    program.sourceType = sourceType;
+    program.interpreter = this.parseInterpreterDirective();
+    this.parseBlockBody(program, true, true, end);
+
+    if (this.inModule && !this.options.allowUndeclaredExports && this.scope.undefinedExports.size > 0) {
+      for (const [name] of Array.from(this.scope.undefinedExports)) {
+        const pos = this.scope.undefinedExports.get(name);
+        this.raise(pos, ErrorMessages.ModuleExportUndefined, name);
+      }
+    }
+
+    return this.finishNode(program, "Program");
+  }
+
+  stmtToDirective(stmt) {
+    const directive = stmt;
+    directive.type = "Directive";
+    directive.value = directive.expression;
+    delete directive.expression;
+    const directiveLiteral = directive.value;
+    const raw = this.input.slice(directiveLiteral.start, directiveLiteral.end);
+    const val = directiveLiteral.value = raw.slice(1, -1);
+    this.addExtra(directiveLiteral, "raw", raw);
+    this.addExtra(directiveLiteral, "rawValue", val);
+    directiveLiteral.type = "DirectiveLiteral";
+    return directive;
+  }
+
+  parseInterpreterDirective() {
+    if (!this.match(26)) {
+      return null;
+    }
+
+    const node = this.startNode();
+    node.value = this.state.value;
+    this.next();
+    return this.finishNode(node, "InterpreterDirective");
+  }
+
+  isLet(context) {
+    if (!this.isContextual(90)) {
+      return false;
+    }
+
+    return this.isLetKeyword(context);
+  }
+
+  isLetKeyword(context) {
+    const next = this.nextTokenStart();
+    const nextCh = this.codePointAtPos(next);
+
+    if (nextCh === 92 || nextCh === 91) {
+      return true;
+    }
+
+    if (context) return false;
+    if (nextCh === 123) return true;
+
+    if (isIdentifierStart(nextCh)) {
+      keywordRelationalOperator.lastIndex = next;
+
+      if (keywordRelationalOperator.test(this.input)) {
+        const endCh = this.codePointAtPos(keywordRelationalOperator.lastIndex);
+
+        if (!isIdentifierChar(endCh) && endCh !== 92) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  parseStatement(context, topLevel) {
+    if (this.match(24)) {
+      this.parseDecorators(true);
+    }
+
+    return this.parseStatementContent(context, topLevel);
+  }
+
+  parseStatementContent(context, topLevel) {
+    let starttype = this.state.type;
+    const node = this.startNode();
+    let kind;
+
+    if (this.isLet(context)) {
+      starttype = 65;
+      kind = "let";
+    }
+
+    switch (starttype) {
+      case 51:
+        return this.parseBreakContinueStatement(node, true);
+
+      case 54:
+        return this.parseBreakContinueStatement(node, false);
+
+      case 55:
+        return this.parseDebuggerStatement(node);
+
+      case 81:
+        return this.parseDoStatement(node);
+
+      case 82:
+        return this.parseForStatement(node);
+
+      case 59:
+        if (this.lookaheadCharCode() === 46) break;
+
+        if (context) {
+          if (this.state.strict) {
+            this.raise(this.state.start, ErrorMessages.StrictFunction);
+          } else if (context !== "if" && context !== "label") {
+            this.raise(this.state.start, ErrorMessages.SloppyFunction);
+          }
+        }
+
+        return this.parseFunctionStatement(node, false, !context);
+
+      case 71:
+        if (context) this.unexpected();
+        return this.parseClass(node, true);
+
+      case 60:
+        return this.parseIfStatement(node);
+
+      case 61:
+        return this.parseReturnStatement(node);
+
+      case 62:
+        return this.parseSwitchStatement(node);
+
+      case 63:
+        return this.parseThrowStatement(node);
+
+      case 64:
+        return this.parseTryStatement(node);
+
+      case 66:
+      case 65:
+        kind = kind || this.state.value;
+
+        if (context && kind !== "var") {
+          this.raise(this.state.start, ErrorMessages.UnexpectedLexicalDeclaration);
+        }
+
+        return this.parseVarStatement(node, kind);
+
+      case 83:
+        return this.parseWhileStatement(node);
+
+      case 67:
+        return this.parseWithStatement(node);
+
+      case 5:
+        return this.parseBlock();
+
+      case 13:
+        return this.parseEmptyStatement(node);
+
+      case 74:
+        {
+          const nextTokenCharCode = this.lookaheadCharCode();
+
+          if (nextTokenCharCode === 40 || nextTokenCharCode === 46) {
+            break;
+          }
+        }
+
+      case 73:
+        {
+          if (!this.options.allowImportExportEverywhere && !topLevel) {
+            this.raise(this.state.start, ErrorMessages.UnexpectedImportExport);
+          }
+
+          this.next();
+          let result;
+
+          if (starttype === 74) {
+            result = this.parseImport(node);
+
+            if (result.type === "ImportDeclaration" && (!result.importKind || result.importKind === "value")) {
+              this.sawUnambiguousESM = true;
+            }
+          } else {
+            result = this.parseExport(node);
+
+            if (result.type === "ExportNamedDeclaration" && (!result.exportKind || result.exportKind === "value") || result.type === "ExportAllDeclaration" && (!result.exportKind || result.exportKind === "value") || result.type === "ExportDefaultDeclaration") {
+              this.sawUnambiguousESM = true;
+            }
+          }
+
+          this.assertModuleNodeAllowed(node);
+          return result;
+        }
+
+      default:
+        {
+          if (this.isAsyncFunction()) {
+            if (context) {
+              this.raise(this.state.start, ErrorMessages.AsyncFunctionInSingleStatementContext);
+            }
+
+            this.next();
+            return this.parseFunctionStatement(node, true, !context);
+          }
+        }
+    }
+
+    const maybeName = this.state.value;
+    const expr = this.parseExpression();
+
+    if (tokenIsIdentifier(starttype) && expr.type === "Identifier" && this.eat(14)) {
+      return this.parseLabeledStatement(node, maybeName, expr, context);
+    } else {
+      return this.parseExpressionStatement(node, expr);
+    }
+  }
+
+  assertModuleNodeAllowed(node) {
+    if (!this.options.allowImportExportEverywhere && !this.inModule) {
+      this.raise(node.start, SourceTypeModuleErrorMessages.ImportOutsideModule);
+    }
+  }
+
+  takeDecorators(node) {
+    const decorators = this.state.decoratorStack[this.state.decoratorStack.length - 1];
+
+    if (decorators.length) {
+      node.decorators = decorators;
+      this.resetStartLocationFromNode(node, decorators[0]);
+      this.state.decoratorStack[this.state.decoratorStack.length - 1] = [];
+    }
+  }
+
+  canHaveLeadingDecorator() {
+    return this.match(71);
+  }
+
+  parseDecorators(allowExport) {
+    const currentContextDecorators = this.state.decoratorStack[this.state.decoratorStack.length - 1];
+
+    while (this.match(24)) {
+      const decorator = this.parseDecorator();
+      currentContextDecorators.push(decorator);
+    }
+
+    if (this.match(73)) {
+      if (!allowExport) {
+        this.unexpected();
+      }
+
+      if (this.hasPlugin("decorators") && !this.getPluginOption("decorators", "decoratorsBeforeExport")) {
+        this.raise(this.state.start, ErrorMessages.DecoratorExportClass);
+      }
+    } else if (!this.canHaveLeadingDecorator()) {
+      throw this.raise(this.state.start, ErrorMessages.UnexpectedLeadingDecorator);
+    }
+  }
+
+  parseDecorator() {
+    this.expectOnePlugin(["decorators-legacy", "decorators"]);
+    const node = this.startNode();
+    this.next();
+
+    if (this.hasPlugin("decorators")) {
+      this.state.decoratorStack.push([]);
+      const startPos = this.state.start;
+      const startLoc = this.state.startLoc;
+      let expr;
+
+      if (this.eat(10)) {
+        expr = this.parseExpression();
+        this.expect(11);
+      } else {
+        expr = this.parseIdentifier(false);
+
+        while (this.eat(16)) {
+          const node = this.startNodeAt(startPos, startLoc);
+          node.object = expr;
+          node.property = this.parseIdentifier(true);
+          node.computed = false;
+          expr = this.finishNode(node, "MemberExpression");
+        }
+      }
+
+      node.expression = this.parseMaybeDecoratorArguments(expr);
+      this.state.decoratorStack.pop();
+    } else {
+      node.expression = this.parseExprSubscripts();
+    }
+
+    return this.finishNode(node, "Decorator");
+  }
+
+  parseMaybeDecoratorArguments(expr) {
+    if (this.eat(10)) {
+      const node = this.startNodeAtNode(expr);
+      node.callee = expr;
+      node.arguments = this.parseCallExpressionArguments(11, false);
+      this.toReferencedList(node.arguments);
+      return this.finishNode(node, "CallExpression");
+    }
+
+    return expr;
+  }
+
+  parseBreakContinueStatement(node, isBreak) {
+    this.next();
+
+    if (this.isLineTerminator()) {
+      node.label = null;
+    } else {
+      node.label = this.parseIdentifier();
+      this.semicolon();
+    }
+
+    this.verifyBreakContinue(node, isBreak);
+    return this.finishNode(node, isBreak ? "BreakStatement" : "ContinueStatement");
+  }
+
+  verifyBreakContinue(node, isBreak) {
+    let i;
+
+    for (i = 0; i < this.state.labels.length; ++i) {
+      const lab = this.state.labels[i];
+
+      if (node.label == null || lab.name === node.label.name) {
+        if (lab.kind != null && (isBreak || lab.kind === "loop")) break;
+        if (node.label && isBreak) break;
+      }
+    }
+
+    if (i === this.state.labels.length) {
+      this.raise(node.start, ErrorMessages.IllegalBreakContinue, isBreak ? "break" : "continue");
+    }
+  }
+
+  parseDebuggerStatement(node) {
+    this.next();
+    this.semicolon();
+    return this.finishNode(node, "DebuggerStatement");
+  }
+
+  parseHeaderExpression() {
+    this.expect(10);
+    const val = this.parseExpression();
+    this.expect(11);
+    return val;
+  }
+
+  parseDoStatement(node) {
+    this.next();
+    this.state.labels.push(loopLabel);
+    node.body = this.withSmartMixTopicForbiddingContext(() => this.parseStatement("do"));
+    this.state.labels.pop();
+    this.expect(83);
+    node.test = this.parseHeaderExpression();
+    this.eat(13);
+    return this.finishNode(node, "DoWhileStatement");
+  }
+
+  parseForStatement(node) {
+    this.next();
+    this.state.labels.push(loopLabel);
+    let awaitAt = -1;
+
+    if (this.isAwaitAllowed() && this.eatContextual(87)) {
+      awaitAt = this.state.lastTokStart;
+    }
+
+    this.scope.enter(SCOPE_OTHER);
+    this.expect(10);
+
+    if (this.match(13)) {
+      if (awaitAt > -1) {
+        this.unexpected(awaitAt);
+      }
+
+      return this.parseFor(node, null);
+    }
+
+    const startsWithLet = this.isContextual(90);
+    const isLet = startsWithLet && this.isLetKeyword();
+
+    if (this.match(65) || this.match(66) || isLet) {
+      const init = this.startNode();
+      const kind = isLet ? "let" : this.state.value;
+      this.next();
+      this.parseVar(init, true, kind);
+      this.finishNode(init, "VariableDeclaration");
+
+      if ((this.match(49) || this.isContextual(92)) && init.declarations.length === 1) {
+        return this.parseForIn(node, init, awaitAt);
+      }
+
+      if (awaitAt > -1) {
+        this.unexpected(awaitAt);
+      }
+
+      return this.parseFor(node, init);
+    }
+
+    const startsWithAsync = this.isContextual(86);
+    const refExpressionErrors = new ExpressionErrors();
+    const init = this.parseExpression(true, refExpressionErrors);
+    const isForOf = this.isContextual(92);
+
+    if (isForOf) {
+      if (startsWithLet) {
+        this.raise(init.start, ErrorMessages.ForOfLet);
+      } else if (awaitAt === -1 && startsWithAsync && init.type === "Identifier") {
+        this.raise(init.start, ErrorMessages.ForOfAsync);
+      }
+    }
+
+    if (isForOf || this.match(49)) {
+      this.toAssignable(init, true);
+      const description = isForOf ? "for-of statement" : "for-in statement";
+      this.checkLVal(init, description);
+      return this.parseForIn(node, init, awaitAt);
+    } else {
+      this.checkExpressionErrors(refExpressionErrors, true);
+    }
+
+    if (awaitAt > -1) {
+      this.unexpected(awaitAt);
+    }
+
+    return this.parseFor(node, init);
+  }
+
+  parseFunctionStatement(node, isAsync, declarationPosition) {
+    this.next();
+    return this.parseFunction(node, FUNC_STATEMENT | (declarationPosition ? 0 : FUNC_HANGING_STATEMENT), isAsync);
+  }
+
+  parseIfStatement(node) {
+    this.next();
+    node.test = this.parseHeaderExpression();
+    node.consequent = this.parseStatement("if");
+    node.alternate = this.eat(57) ? this.parseStatement("if") : null;
+    return this.finishNode(node, "IfStatement");
+  }
+
+  parseReturnStatement(node) {
+    if (!this.prodParam.hasReturn && !this.options.allowReturnOutsideFunction) {
+      this.raise(this.state.start, ErrorMessages.IllegalReturn);
+    }
+
+    this.next();
+
+    if (this.isLineTerminator()) {
+      node.argument = null;
+    } else {
+      node.argument = this.parseExpression();
+      this.semicolon();
+    }
+
+    return this.finishNode(node, "ReturnStatement");
+  }
+
+  parseSwitchStatement(node) {
+    this.next();
+    node.discriminant = this.parseHeaderExpression();
+    const cases = node.cases = [];
+    this.expect(5);
+    this.state.labels.push(switchLabel);
+    this.scope.enter(SCOPE_OTHER);
+    let cur;
+
+    for (let sawDefault; !this.match(8);) {
+      if (this.match(52) || this.match(56)) {
+        const isCase = this.match(52);
+        if (cur) this.finishNode(cur, "SwitchCase");
+        cases.push(cur = this.startNode());
+        cur.consequent = [];
+        this.next();
+
+        if (isCase) {
+          cur.test = this.parseExpression();
+        } else {
+          if (sawDefault) {
+            this.raise(this.state.lastTokStart, ErrorMessages.MultipleDefaultsInSwitch);
+          }
+
+          sawDefault = true;
+          cur.test = null;
+        }
+
+        this.expect(14);
+      } else {
+        if (cur) {
+          cur.consequent.push(this.parseStatement(null));
+        } else {
+          this.unexpected();
+        }
+      }
+    }
+
+    this.scope.exit();
+    if (cur) this.finishNode(cur, "SwitchCase");
+    this.next();
+    this.state.labels.pop();
+    return this.finishNode(node, "SwitchStatement");
+  }
+
+  parseThrowStatement(node) {
+    this.next();
+
+    if (this.hasPrecedingLineBreak()) {
+      this.raise(this.state.lastTokEnd, ErrorMessages.NewlineAfterThrow);
+    }
+
+    node.argument = this.parseExpression();
+    this.semicolon();
+    return this.finishNode(node, "ThrowStatement");
+  }
+
+  parseCatchClauseParam() {
+    const param = this.parseBindingAtom();
+    const simple = param.type === "Identifier";
+    this.scope.enter(simple ? SCOPE_SIMPLE_CATCH : 0);
+    this.checkLVal(param, "catch clause", BIND_LEXICAL);
+    return param;
+  }
+
+  parseTryStatement(node) {
+    this.next();
+    node.block = this.parseBlock();
+    node.handler = null;
+
+    if (this.match(53)) {
+      const clause = this.startNode();
+      this.next();
+
+      if (this.match(10)) {
+        this.expect(10);
+        clause.param = this.parseCatchClauseParam();
+        this.expect(11);
+      } else {
+        clause.param = null;
+        this.scope.enter(SCOPE_OTHER);
+      }
+
+      clause.body = this.withSmartMixTopicForbiddingContext(() => this.parseBlock(false, false));
+      this.scope.exit();
+      node.handler = this.finishNode(clause, "CatchClause");
+    }
+
+    node.finalizer = this.eat(58) ? this.parseBlock() : null;
+
+    if (!node.handler && !node.finalizer) {
+      this.raise(node.start, ErrorMessages.NoCatchOrFinally);
+    }
+
+    return this.finishNode(node, "TryStatement");
+  }
+
+  parseVarStatement(node, kind) {
+    this.next();
+    this.parseVar(node, false, kind);
+    this.semicolon();
+    return this.finishNode(node, "VariableDeclaration");
+  }
+
+  parseWhileStatement(node) {
+    this.next();
+    node.test = this.parseHeaderExpression();
+    this.state.labels.push(loopLabel);
+    node.body = this.withSmartMixTopicForbiddingContext(() => this.parseStatement("while"));
+    this.state.labels.pop();
+    return this.finishNode(node, "WhileStatement");
+  }
+
+  parseWithStatement(node) {
+    if (this.state.strict) {
+      this.raise(this.state.start, ErrorMessages.StrictWith);
+    }
+
+    this.next();
+    node.object = this.parseHeaderExpression();
+    node.body = this.withSmartMixTopicForbiddingContext(() => this.parseStatement("with"));
+    return this.finishNode(node, "WithStatement");
+  }
+
+  parseEmptyStatement(node) {
+    this.next();
+    return this.finishNode(node, "EmptyStatement");
+  }
+
+  parseLabeledStatement(node, maybeName, expr, context) {
+    for (const label of this.state.labels) {
+      if (label.name === maybeName) {
+        this.raise(expr.start, ErrorMessages.LabelRedeclaration, maybeName);
+      }
+    }
+
+    const kind = tokenIsLoop(this.state.type) ? "loop" : this.match(62) ? "switch" : null;
+
+    for (let i = this.state.labels.length - 1; i >= 0; i--) {
+      const label = this.state.labels[i];
+
+      if (label.statementStart === node.start) {
+        label.statementStart = this.state.start;
+        label.kind = kind;
+      } else {
+        break;
+      }
+    }
+
+    this.state.labels.push({
+      name: maybeName,
+      kind: kind,
+      statementStart: this.state.start
+    });
+    node.body = this.parseStatement(context ? context.indexOf("label") === -1 ? context + "label" : context : "label");
+    this.state.labels.pop();
+    node.label = expr;
+    return this.finishNode(node, "LabeledStatement");
+  }
+
+  parseExpressionStatement(node, expr) {
+    node.expression = expr;
+    this.semicolon();
+    return this.finishNode(node, "ExpressionStatement");
+  }
+
+  parseBlock(allowDirectives = false, createNewLexicalScope = true, afterBlockParse) {
+    const node = this.startNode();
+
+    if (allowDirectives) {
+      this.state.strictErrors.clear();
+    }
+
+    this.expect(5);
+
+    if (createNewLexicalScope) {
+      this.scope.enter(SCOPE_OTHER);
+    }
+
+    this.parseBlockBody(node, allowDirectives, false, 8, afterBlockParse);
+
+    if (createNewLexicalScope) {
+      this.scope.exit();
+    }
+
+    return this.finishNode(node, "BlockStatement");
+  }
+
+  isValidDirective(stmt) {
+    return stmt.type === "ExpressionStatement" && stmt.expression.type === "StringLiteral" && !stmt.expression.extra.parenthesized;
+  }
+
+  parseBlockBody(node, allowDirectives, topLevel, end, afterBlockParse) {
+    const body = node.body = [];
+    const directives = node.directives = [];
+    this.parseBlockOrModuleBlockBody(body, allowDirectives ? directives : undefined, topLevel, end, afterBlockParse);
+  }
+
+  parseBlockOrModuleBlockBody(body, directives, topLevel, end, afterBlockParse) {
+    const oldStrict = this.state.strict;
+    let hasStrictModeDirective = false;
+    let parsedNonDirective = false;
+
+    while (!this.match(end)) {
+      const stmt = this.parseStatement(null, topLevel);
+
+      if (directives && !parsedNonDirective) {
+        if (this.isValidDirective(stmt)) {
+          const directive = this.stmtToDirective(stmt);
+          directives.push(directive);
+
+          if (!hasStrictModeDirective && directive.value.value === "use strict") {
+            hasStrictModeDirective = true;
+            this.setStrict(true);
+          }
+
+          continue;
+        }
+
+        parsedNonDirective = true;
+        this.state.strictErrors.clear();
+      }
+
+      body.push(stmt);
+    }
+
+    if (afterBlockParse) {
+      afterBlockParse.call(this, hasStrictModeDirective);
+    }
+
+    if (!oldStrict) {
+      this.setStrict(false);
+    }
+
+    this.next();
+  }
+
+  parseFor(node, init) {
+    node.init = init;
+    this.semicolon(false);
+    node.test = this.match(13) ? null : this.parseExpression();
+    this.semicolon(false);
+    node.update = this.match(11) ? null : this.parseExpression();
+    this.expect(11);
+    node.body = this.withSmartMixTopicForbiddingContext(() => this.parseStatement("for"));
+    this.scope.exit();
+    this.state.labels.pop();
+    return this.finishNode(node, "ForStatement");
+  }
+
+  parseForIn(node, init, awaitAt) {
+    const isForIn = this.match(49);
+    this.next();
+
+    if (isForIn) {
+      if (awaitAt > -1) this.unexpected(awaitAt);
+    } else {
+      node.await = awaitAt > -1;
+    }
+
+    if (init.type === "VariableDeclaration" && init.declarations[0].init != null && (!isForIn || this.state.strict || init.kind !== "var" || init.declarations[0].id.type !== "Identifier")) {
+      this.raise(init.start, ErrorMessages.ForInOfLoopInitializer, isForIn ? "for-in" : "for-of");
+    } else if (init.type === "AssignmentPattern") {
+      this.raise(init.start, ErrorMessages.InvalidLhs, "for-loop");
+    }
+
+    node.left = init;
+    node.right = isForIn ? this.parseExpression() : this.parseMaybeAssignAllowIn();
+    this.expect(11);
+    node.body = this.withSmartMixTopicForbiddingContext(() => this.parseStatement("for"));
+    this.scope.exit();
+    this.state.labels.pop();
+    return this.finishNode(node, isForIn ? "ForInStatement" : "ForOfStatement");
+  }
+
+  parseVar(node, isFor, kind) {
+    const declarations = node.declarations = [];
+    const isTypescript = this.hasPlugin("typescript");
+    node.kind = kind;
+
+    for (;;) {
+      const decl = this.startNode();
+      this.parseVarId(decl, kind);
+
+      if (this.eat(27)) {
+        decl.init = isFor ? this.parseMaybeAssignDisallowIn() : this.parseMaybeAssignAllowIn();
+      } else {
+        if (kind === "const" && !(this.match(49) || this.isContextual(92))) {
+          if (!isTypescript) {
+            this.raise(this.state.lastTokEnd, ErrorMessages.DeclarationMissingInitializer, "Const declarations");
+          }
+        } else if (decl.id.type !== "Identifier" && !(isFor && (this.match(49) || this.isContextual(92)))) {
+          this.raise(this.state.lastTokEnd, ErrorMessages.DeclarationMissingInitializer, "Complex binding patterns");
+        }
+
+        decl.init = null;
+      }
+
+      declarations.push(this.finishNode(decl, "VariableDeclarator"));
+      if (!this.eat(12)) break;
+    }
+
+    return node;
+  }
+
+  parseVarId(decl, kind) {
+    decl.id = this.parseBindingAtom();
+    this.checkLVal(decl.id, "variable declaration", kind === "var" ? BIND_VAR : BIND_LEXICAL, undefined, kind !== "var");
+  }
+
+  parseFunction(node, statement = FUNC_NO_FLAGS, isAsync = false) {
+    const isStatement = statement & FUNC_STATEMENT;
+    const isHangingStatement = statement & FUNC_HANGING_STATEMENT;
+    const requireId = !!isStatement && !(statement & FUNC_NULLABLE_ID);
+    this.initFunction(node, isAsync);
+
+    if (this.match(46) && isHangingStatement) {
+      this.raise(this.state.start, ErrorMessages.GeneratorInSingleStatementContext);
+    }
+
+    node.generator = this.eat(46);
+
+    if (isStatement) {
+      node.id = this.parseFunctionId(requireId);
+    }
+
+    const oldMaybeInArrowParameters = this.state.maybeInArrowParameters;
+    this.state.maybeInArrowParameters = false;
+    this.scope.enter(SCOPE_FUNCTION);
+    this.prodParam.enter(functionFlags(isAsync, node.generator));
+
+    if (!isStatement) {
+      node.id = this.parseFunctionId();
+    }
+
+    this.parseFunctionParams(node, false);
+    this.withSmartMixTopicForbiddingContext(() => {
+      this.parseFunctionBodyAndFinish(node, isStatement ? "FunctionDeclaration" : "FunctionExpression");
+    });
+    this.prodParam.exit();
+    this.scope.exit();
+
+    if (isStatement && !isHangingStatement) {
+      this.registerFunctionStatementId(node);
+    }
+
+    this.state.maybeInArrowParameters = oldMaybeInArrowParameters;
+    return node;
+  }
+
+  parseFunctionId(requireId) {
+    return requireId || tokenIsIdentifier(this.state.type) ? this.parseIdentifier() : null;
+  }
+
+  parseFunctionParams(node, allowModifiers) {
+    this.expect(10);
+    this.expressionScope.enter(newParameterDeclarationScope());
+    node.params = this.parseBindingList(11, 41, false, allowModifiers);
+    this.expressionScope.exit();
+  }
+
+  registerFunctionStatementId(node) {
+    if (!node.id) return;
+    this.scope.declareName(node.id.name, this.state.strict || node.generator || node.async ? this.scope.treatFunctionsAsVar ? BIND_VAR : BIND_LEXICAL : BIND_FUNCTION, node.id.start);
+  }
+
+  parseClass(node, isStatement, optionalId) {
+    this.next();
+    this.takeDecorators(node);
+    const oldStrict = this.state.strict;
+    this.state.strict = true;
+    this.parseClassId(node, isStatement, optionalId);
+    this.parseClassSuper(node);
+    node.body = this.parseClassBody(!!node.superClass, oldStrict);
+    return this.finishNode(node, isStatement ? "ClassDeclaration" : "ClassExpression");
+  }
+
+  isClassProperty() {
+    return this.match(27) || this.match(13) || this.match(8);
+  }
+
+  isClassMethod() {
+    return this.match(10);
+  }
+
+  isNonstaticConstructor(method) {
+    return !method.computed && !method.static && (method.key.name === "constructor" || method.key.value === "constructor");
+  }
+
+  parseClassBody(hadSuperClass, oldStrict) {
+    this.classScope.enter();
+    const state = {
+      hadConstructor: false,
+      hadSuperClass
+    };
+    let decorators = [];
+    const classBody = this.startNode();
+    classBody.body = [];
+    this.expect(5);
+    this.withSmartMixTopicForbiddingContext(() => {
+      while (!this.match(8)) {
+        if (this.eat(13)) {
+          if (decorators.length > 0) {
+            throw this.raise(this.state.lastTokEnd, ErrorMessages.DecoratorSemicolon);
+          }
+
+          continue;
+        }
+
+        if (this.match(24)) {
+          decorators.push(this.parseDecorator());
+          continue;
+        }
+
+        const member = this.startNode();
+
+        if (decorators.length) {
+          member.decorators = decorators;
+          this.resetStartLocationFromNode(member, decorators[0]);
+          decorators = [];
+        }
+
+        this.parseClassMember(classBody, member, state);
+
+        if (member.kind === "constructor" && member.decorators && member.decorators.length > 0) {
+          this.raise(member.start, ErrorMessages.DecoratorConstructor);
+        }
+      }
+    });
+    this.state.strict = oldStrict;
+    this.next();
+
+    if (decorators.length) {
+      throw this.raise(this.state.start, ErrorMessages.TrailingDecorator);
+    }
+
+    this.classScope.exit();
+    return this.finishNode(classBody, "ClassBody");
+  }
+
+  parseClassMemberFromModifier(classBody, member) {
+    const key = this.parseIdentifier(true);
+
+    if (this.isClassMethod()) {
+      const method = member;
+      method.kind = "method";
+      method.computed = false;
+      method.key = key;
+      method.static = false;
+      this.pushClassMethod(classBody, method, false, false, false, false);
+      return true;
+    } else if (this.isClassProperty()) {
+      const prop = member;
+      prop.computed = false;
+      prop.key = key;
+      prop.static = false;
+      classBody.body.push(this.parseClassProperty(prop));
+      return true;
+    }
+
+    this.resetPreviousNodeTrailingComments(key);
+    return false;
+  }
+
+  parseClassMember(classBody, member, state) {
+    const isStatic = this.isContextual(95);
+
+    if (isStatic) {
+      if (this.parseClassMemberFromModifier(classBody, member)) {
+        return;
+      }
+
+      if (this.eat(5)) {
+        this.parseClassStaticBlock(classBody, member);
+        return;
+      }
+    }
+
+    this.parseClassMemberWithIsStatic(classBody, member, state, isStatic);
+  }
+
+  parseClassMemberWithIsStatic(classBody, member, state, isStatic) {
+    const publicMethod = member;
+    const privateMethod = member;
+    const publicProp = member;
+    const privateProp = member;
+    const method = publicMethod;
+    const publicMember = publicMethod;
+    member.static = isStatic;
+
+    if (this.eat(46)) {
+      method.kind = "method";
+      const isPrivateName = this.match(125);
+      this.parseClassElementName(method);
+
+      if (isPrivateName) {
+        this.pushClassPrivateMethod(classBody, privateMethod, true, false);
+        return;
+      }
+
+      if (this.isNonstaticConstructor(publicMethod)) {
+        this.raise(publicMethod.key.start, ErrorMessages.ConstructorIsGenerator);
+      }
+
+      this.pushClassMethod(classBody, publicMethod, true, false, false, false);
+      return;
+    }
+
+    const isContextual = tokenIsIdentifier(this.state.type) && !this.state.containsEsc;
+    const isPrivate = this.match(125);
+    const key = this.parseClassElementName(member);
+    const maybeQuestionTokenStart = this.state.start;
+    this.parsePostMemberNameModifiers(publicMember);
+
+    if (this.isClassMethod()) {
+      method.kind = "method";
+
+      if (isPrivate) {
+        this.pushClassPrivateMethod(classBody, privateMethod, false, false);
+        return;
+      }
+
+      const isConstructor = this.isNonstaticConstructor(publicMethod);
+      let allowsDirectSuper = false;
+
+      if (isConstructor) {
+        publicMethod.kind = "constructor";
+
+        if (state.hadConstructor && !this.hasPlugin("typescript")) {
+          this.raise(key.start, ErrorMessages.DuplicateConstructor);
+        }
+
+        if (isConstructor && this.hasPlugin("typescript") && member.override) {
+          this.raise(key.start, ErrorMessages.OverrideOnConstructor);
+        }
+
+        state.hadConstructor = true;
+        allowsDirectSuper = state.hadSuperClass;
+      }
+
+      this.pushClassMethod(classBody, publicMethod, false, false, isConstructor, allowsDirectSuper);
+    } else if (this.isClassProperty()) {
+      if (isPrivate) {
+        this.pushClassPrivateProperty(classBody, privateProp);
+      } else {
+        this.pushClassProperty(classBody, publicProp);
+      }
+    } else if (isContextual && key.name === "async" && !this.isLineTerminator()) {
+      this.resetPreviousNodeTrailingComments(key);
+      const isGenerator = this.eat(46);
+
+      if (publicMember.optional) {
+        this.unexpected(maybeQuestionTokenStart);
+      }
+
+      method.kind = "method";
+      const isPrivate = this.match(125);
+      this.parseClassElementName(method);
+      this.parsePostMemberNameModifiers(publicMember);
+
+      if (isPrivate) {
+        this.pushClassPrivateMethod(classBody, privateMethod, isGenerator, true);
+      } else {
+        if (this.isNonstaticConstructor(publicMethod)) {
+          this.raise(publicMethod.key.start, ErrorMessages.ConstructorIsAsync);
+        }
+
+        this.pushClassMethod(classBody, publicMethod, isGenerator, true, false, false);
+      }
+    } else if (isContextual && (key.name === "get" || key.name === "set") && !(this.match(46) && this.isLineTerminator())) {
+      this.resetPreviousNodeTrailingComments(key);
+      method.kind = key.name;
+      const isPrivate = this.match(125);
+      this.parseClassElementName(publicMethod);
+
+      if (isPrivate) {
+        this.pushClassPrivateMethod(classBody, privateMethod, false, false);
+      } else {
+        if (this.isNonstaticConstructor(publicMethod)) {
+          this.raise(publicMethod.key.start, ErrorMessages.ConstructorIsAccessor);
+        }
+
+        this.pushClassMethod(classBody, publicMethod, false, false, false, false);
+      }
+
+      this.checkGetterSetterParams(publicMethod);
+    } else if (this.isLineTerminator()) {
+      if (isPrivate) {
+        this.pushClassPrivateProperty(classBody, privateProp);
+      } else {
+        this.pushClassProperty(classBody, publicProp);
+      }
+    } else {
+      this.unexpected();
+    }
+  }
+
+  parseClassElementName(member) {
+    const {
+      type,
+      value,
+      start
+    } = this.state;
+
+    if ((type === 119 || type === 120) && member.static && value === "prototype") {
+      this.raise(start, ErrorMessages.StaticPrototype);
+    }
+
+    if (type === 125 && value === "constructor") {
+      this.raise(start, ErrorMessages.ConstructorClassPrivateField);
+    }
+
+    return this.parsePropertyName(member, true);
+  }
+
+  parseClassStaticBlock(classBody, member) {
+    var _member$decorators;
+
+    this.expectPlugin("classStaticBlock", member.start);
+    this.scope.enter(SCOPE_CLASS | SCOPE_STATIC_BLOCK | SCOPE_SUPER);
+    const oldLabels = this.state.labels;
+    this.state.labels = [];
+    this.prodParam.enter(PARAM);
+    const body = member.body = [];
+    this.parseBlockOrModuleBlockBody(body, undefined, false, 8);
+    this.prodParam.exit();
+    this.scope.exit();
+    this.state.labels = oldLabels;
+    classBody.body.push(this.finishNode(member, "StaticBlock"));
+
+    if ((_member$decorators = member.decorators) != null && _member$decorators.length) {
+      this.raise(member.start, ErrorMessages.DecoratorStaticBlock);
+    }
+  }
+
+  pushClassProperty(classBody, prop) {
+    if (!prop.computed && (prop.key.name === "constructor" || prop.key.value === "constructor")) {
+      this.raise(prop.key.start, ErrorMessages.ConstructorClassField);
+    }
+
+    classBody.body.push(this.parseClassProperty(prop));
+  }
+
+  pushClassPrivateProperty(classBody, prop) {
+    const node = this.parseClassPrivateProperty(prop);
+    classBody.body.push(node);
+    this.classScope.declarePrivateName(this.getPrivateNameSV(node.key), CLASS_ELEMENT_OTHER, node.key.start);
+  }
+
+  pushClassMethod(classBody, method, isGenerator, isAsync, isConstructor, allowsDirectSuper) {
+    classBody.body.push(this.parseMethod(method, isGenerator, isAsync, isConstructor, allowsDirectSuper, "ClassMethod", true));
+  }
+
+  pushClassPrivateMethod(classBody, method, isGenerator, isAsync) {
+    const node = this.parseMethod(method, isGenerator, isAsync, false, false, "ClassPrivateMethod", true);
+    classBody.body.push(node);
+    const kind = node.kind === "get" ? node.static ? CLASS_ELEMENT_STATIC_GETTER : CLASS_ELEMENT_INSTANCE_GETTER : node.kind === "set" ? node.static ? CLASS_ELEMENT_STATIC_SETTER : CLASS_ELEMENT_INSTANCE_SETTER : CLASS_ELEMENT_OTHER;
+    this.classScope.declarePrivateName(this.getPrivateNameSV(node.key), kind, node.key.start);
+  }
+
+  parsePostMemberNameModifiers(methodOrProp) {}
+
+  parseClassPrivateProperty(node) {
+    this.parseInitializer(node);
+    this.semicolon();
+    return this.finishNode(node, "ClassPrivateProperty");
+  }
+
+  parseClassProperty(node) {
+    this.parseInitializer(node);
+    this.semicolon();
+    return this.finishNode(node, "ClassProperty");
+  }
+
+  parseInitializer(node) {
+    this.scope.enter(SCOPE_CLASS | SCOPE_SUPER);
+    this.expressionScope.enter(newExpressionScope());
+    this.prodParam.enter(PARAM);
+    node.value = this.eat(27) ? this.parseMaybeAssignAllowIn() : null;
+    this.expressionScope.exit();
+    this.prodParam.exit();
+    this.scope.exit();
+  }
+
+  parseClassId(node, isStatement, optionalId, bindingType = BIND_CLASS) {
+    if (tokenIsIdentifier(this.state.type)) {
+      node.id = this.parseIdentifier();
+
+      if (isStatement) {
+        this.checkLVal(node.id, "class name", bindingType);
+      }
+    } else {
+      if (optionalId || !isStatement) {
+        node.id = null;
+      } else {
+        this.unexpected(null, ErrorMessages.MissingClassName);
+      }
+    }
+  }
+
+  parseClassSuper(node) {
+    node.superClass = this.eat(72) ? this.parseExprSubscripts() : null;
+  }
+
+  parseExport(node) {
+    const hasDefault = this.maybeParseExportDefaultSpecifier(node);
+    const parseAfterDefault = !hasDefault || this.eat(12);
+    const hasStar = parseAfterDefault && this.eatExportStar(node);
+    const hasNamespace = hasStar && this.maybeParseExportNamespaceSpecifier(node);
+    const parseAfterNamespace = parseAfterDefault && (!hasNamespace || this.eat(12));
+    const isFromRequired = hasDefault || hasStar;
+
+    if (hasStar && !hasNamespace) {
+      if (hasDefault) this.unexpected();
+      this.parseExportFrom(node, true);
+      return this.finishNode(node, "ExportAllDeclaration");
+    }
+
+    const hasSpecifiers = this.maybeParseExportNamedSpecifiers(node);
+
+    if (hasDefault && parseAfterDefault && !hasStar && !hasSpecifiers || hasNamespace && parseAfterNamespace && !hasSpecifiers) {
+      throw this.unexpected(null, 5);
+    }
+
+    let hasDeclaration;
+
+    if (isFromRequired || hasSpecifiers) {
+      hasDeclaration = false;
+      this.parseExportFrom(node, isFromRequired);
+    } else {
+      hasDeclaration = this.maybeParseExportDeclaration(node);
+    }
+
+    if (isFromRequired || hasSpecifiers || hasDeclaration) {
+      this.checkExport(node, true, false, !!node.source);
+      return this.finishNode(node, "ExportNamedDeclaration");
+    }
+
+    if (this.eat(56)) {
+      node.declaration = this.parseExportDefaultExpression();
+      this.checkExport(node, true, true);
+      return this.finishNode(node, "ExportDefaultDeclaration");
+    }
+
+    throw this.unexpected(null, 5);
+  }
+
+  eatExportStar(node) {
+    return this.eat(46);
+  }
+
+  maybeParseExportDefaultSpecifier(node) {
+    if (this.isExportDefaultSpecifier()) {
+      this.expectPlugin("exportDefaultFrom");
+      const specifier = this.startNode();
+      specifier.exported = this.parseIdentifier(true);
+      node.specifiers = [this.finishNode(specifier, "ExportDefaultSpecifier")];
+      return true;
+    }
+
+    return false;
+  }
+
+  maybeParseExportNamespaceSpecifier(node) {
+    if (this.isContextual(84)) {
+      if (!node.specifiers) node.specifiers = [];
+      const specifier = this.startNodeAt(this.state.lastTokStart, this.state.lastTokStartLoc);
+      this.next();
+      specifier.exported = this.parseModuleExportName();
+      node.specifiers.push(this.finishNode(specifier, "ExportNamespaceSpecifier"));
+      return true;
+    }
+
+    return false;
+  }
+
+  maybeParseExportNamedSpecifiers(node) {
+    if (this.match(5)) {
+      if (!node.specifiers) node.specifiers = [];
+      node.specifiers.push(...this.parseExportSpecifiers());
+      node.source = null;
+      node.declaration = null;
+      return true;
+    }
+
+    return false;
+  }
+
+  maybeParseExportDeclaration(node) {
+    if (this.shouldParseExportDeclaration()) {
+      node.specifiers = [];
+      node.source = null;
+      node.declaration = this.parseExportDeclaration(node);
+      return true;
+    }
+
+    return false;
+  }
+
+  isAsyncFunction() {
+    if (!this.isContextual(86)) return false;
+    const next = this.nextTokenStart();
+    return !lineBreak.test(this.input.slice(this.state.pos, next)) && this.isUnparsedContextual(next, "function");
+  }
+
+  parseExportDefaultExpression() {
+    const expr = this.startNode();
+    const isAsync = this.isAsyncFunction();
+
+    if (this.match(59) || isAsync) {
+      this.next();
+
+      if (isAsync) {
+        this.next();
+      }
+
+      return this.parseFunction(expr, FUNC_STATEMENT | FUNC_NULLABLE_ID, isAsync);
+    } else if (this.match(71)) {
+      return this.parseClass(expr, true, true);
+    } else if (this.match(24)) {
+      if (this.hasPlugin("decorators") && this.getPluginOption("decorators", "decoratorsBeforeExport")) {
+        this.raise(this.state.start, ErrorMessages.DecoratorBeforeExport);
+      }
+
+      this.parseDecorators(false);
+      return this.parseClass(expr, true, true);
+    } else if (this.match(66) || this.match(65) || this.isLet()) {
+      throw this.raise(this.state.start, ErrorMessages.UnsupportedDefaultExport);
+    } else {
+      const res = this.parseMaybeAssignAllowIn();
+      this.semicolon();
+      return res;
+    }
+  }
+
+  parseExportDeclaration(node) {
+    return this.parseStatement(null);
+  }
+
+  isExportDefaultSpecifier() {
+    const {
+      type
+    } = this.state;
+
+    if (tokenIsIdentifier(type)) {
+      if (type === 86 && !this.state.containsEsc || type === 90) {
+        return false;
+      }
+
+      if ((type === 117 || type === 116) && !this.state.containsEsc) {
+        const {
+          type: nextType
+        } = this.lookahead();
+
+        if (tokenIsIdentifier(nextType) && nextType !== 88 || nextType === 5) {
+          this.expectOnePlugin(["flow", "typescript"]);
+          return false;
+        }
+      }
+    } else if (!this.match(56)) {
+      return false;
+    }
+
+    const next = this.nextTokenStart();
+    const hasFrom = this.isUnparsedContextual(next, "from");
+
+    if (this.input.charCodeAt(next) === 44 || tokenIsIdentifier(this.state.type) && hasFrom) {
+      return true;
+    }
+
+    if (this.match(56) && hasFrom) {
+      const nextAfterFrom = this.input.charCodeAt(this.nextTokenStartSince(next + 4));
+      return nextAfterFrom === 34 || nextAfterFrom === 39;
+    }
+
+    return false;
+  }
+
+  parseExportFrom(node, expect) {
+    if (this.eatContextual(88)) {
+      node.source = this.parseImportSource();
+      this.checkExport(node);
+      const assertions = this.maybeParseImportAssertions();
+
+      if (assertions) {
+        node.assertions = assertions;
+      }
+    } else {
+      if (expect) {
+        this.unexpected();
+      } else {
+        node.source = null;
+      }
+    }
+
+    this.semicolon();
+  }
+
+  shouldParseExportDeclaration() {
+    const {
+      type
+    } = this.state;
+
+    if (type === 24) {
+      this.expectOnePlugin(["decorators", "decorators-legacy"]);
+
+      if (this.hasPlugin("decorators")) {
+        if (this.getPluginOption("decorators", "decoratorsBeforeExport")) {
+          this.unexpected(this.state.start, ErrorMessages.DecoratorBeforeExport);
+        } else {
+          return true;
+        }
+      }
+    }
+
+    return type === 65 || type === 66 || type === 59 || type === 71 || this.isLet() || this.isAsyncFunction();
+  }
+
+  checkExport(node, checkNames, isDefault, isFrom) {
+    if (checkNames) {
+      if (isDefault) {
+        this.checkDuplicateExports(node, "default");
+
+        if (this.hasPlugin("exportDefaultFrom")) {
+          var _declaration$extra;
+
+          const declaration = node.declaration;
+
+          if (declaration.type === "Identifier" && declaration.name === "from" && declaration.end - declaration.start === 4 && !((_declaration$extra = declaration.extra) != null && _declaration$extra.parenthesized)) {
+            this.raise(declaration.start, ErrorMessages.ExportDefaultFromAsIdentifier);
+          }
+        }
+      } else if (node.specifiers && node.specifiers.length) {
+        for (const specifier of node.specifiers) {
+          const {
+            exported
+          } = specifier;
+          const exportedName = exported.type === "Identifier" ? exported.name : exported.value;
+          this.checkDuplicateExports(specifier, exportedName);
+
+          if (!isFrom && specifier.local) {
+            const {
+              local
+            } = specifier;
+
+            if (local.type !== "Identifier") {
+              this.raise(specifier.start, ErrorMessages.ExportBindingIsString, local.value, exportedName);
+            } else {
+              this.checkReservedWord(local.name, local.start, true, false);
+              this.scope.checkLocalExport(local);
+            }
+          }
+        }
+      } else if (node.declaration) {
+        if (node.declaration.type === "FunctionDeclaration" || node.declaration.type === "ClassDeclaration") {
+          const id = node.declaration.id;
+          if (!id) throw new Error("Assertion failure");
+          this.checkDuplicateExports(node, id.name);
+        } else if (node.declaration.type === "VariableDeclaration") {
+          for (const declaration of node.declaration.declarations) {
+            this.checkDeclaration(declaration.id);
+          }
+        }
+      }
+    }
+
+    const currentContextDecorators = this.state.decoratorStack[this.state.decoratorStack.length - 1];
+
+    if (currentContextDecorators.length) {
+      throw this.raise(node.start, ErrorMessages.UnsupportedDecoratorExport);
+    }
+  }
+
+  checkDeclaration(node) {
+    if (node.type === "Identifier") {
+      this.checkDuplicateExports(node, node.name);
+    } else if (node.type === "ObjectPattern") {
+      for (const prop of node.properties) {
+        this.checkDeclaration(prop);
+      }
+    } else if (node.type === "ArrayPattern") {
+      for (const elem of node.elements) {
+        if (elem) {
+          this.checkDeclaration(elem);
+        }
+      }
+    } else if (node.type === "ObjectProperty") {
+      this.checkDeclaration(node.value);
+    } else if (node.type === "RestElement") {
+      this.checkDeclaration(node.argument);
+    } else if (node.type === "AssignmentPattern") {
+      this.checkDeclaration(node.left);
+    }
+  }
+
+  checkDuplicateExports(node, name) {
+    if (this.exportedIdentifiers.has(name)) {
+      this.raise(node.start, name === "default" ? ErrorMessages.DuplicateDefaultExport : ErrorMessages.DuplicateExport, name);
+    }
+
+    this.exportedIdentifiers.add(name);
+  }
+
+  parseExportSpecifiers() {
+    const nodes = [];
+    let first = true;
+    this.expect(5);
+
+    while (!this.eat(8)) {
+      if (first) {
+        first = false;
+      } else {
+        this.expect(12);
+        if (this.eat(8)) break;
+      }
+
+      const node = this.startNode();
+      const isString = this.match(120);
+      const local = this.parseModuleExportName();
+      node.local = local;
+
+      if (this.eatContextual(84)) {
+        node.exported = this.parseModuleExportName();
+      } else if (isString) {
+        node.exported = cloneStringLiteral(local);
+      } else {
+        node.exported = cloneIdentifier(local);
+      }
+
+      nodes.push(this.finishNode(node, "ExportSpecifier"));
+    }
+
+    return nodes;
+  }
+
+  parseModuleExportName() {
+    if (this.match(120)) {
+      const result = this.parseStringLiteral(this.state.value);
+      const surrogate = result.value.match(loneSurrogate);
+
+      if (surrogate) {
+        this.raise(result.start, ErrorMessages.ModuleExportNameHasLoneSurrogate, surrogate[0].charCodeAt(0).toString(16));
+      }
+
+      return result;
+    }
+
+    return this.parseIdentifier(true);
+  }
+
+  parseImport(node) {
+    node.specifiers = [];
+
+    if (!this.match(120)) {
+      const hasDefault = this.maybeParseDefaultImportSpecifier(node);
+      const parseNext = !hasDefault || this.eat(12);
+      const hasStar = parseNext && this.maybeParseStarImportSpecifier(node);
+      if (parseNext && !hasStar) this.parseNamedImportSpecifiers(node);
+      this.expectContextual(88);
+    }
+
+    node.source = this.parseImportSource();
+    const assertions = this.maybeParseImportAssertions();
+
+    if (assertions) {
+      node.assertions = assertions;
+    } else {
+      const attributes = this.maybeParseModuleAttributes();
+
+      if (attributes) {
+        node.attributes = attributes;
+      }
+    }
+
+    this.semicolon();
+    return this.finishNode(node, "ImportDeclaration");
+  }
+
+  parseImportSource() {
+    if (!this.match(120)) this.unexpected();
+    return this.parseExprAtom();
+  }
+
+  shouldParseDefaultImport(node) {
+    return tokenIsIdentifier(this.state.type);
+  }
+
+  parseImportSpecifierLocal(node, specifier, type, contextDescription) {
+    specifier.local = this.parseIdentifier();
+    this.checkLVal(specifier.local, contextDescription, BIND_LEXICAL);
+    node.specifiers.push(this.finishNode(specifier, type));
+  }
+
+  parseAssertEntries() {
+    const attrs = [];
+    const attrNames = new Set();
+
+    do {
+      if (this.match(8)) {
+        break;
+      }
+
+      const node = this.startNode();
+      const keyName = this.state.value;
+
+      if (attrNames.has(keyName)) {
+        this.raise(this.state.start, ErrorMessages.ModuleAttributesWithDuplicateKeys, keyName);
+      }
+
+      attrNames.add(keyName);
+
+      if (this.match(120)) {
+        node.key = this.parseStringLiteral(keyName);
+      } else {
+        node.key = this.parseIdentifier(true);
+      }
+
+      this.expect(14);
+
+      if (!this.match(120)) {
+        throw this.unexpected(this.state.start, ErrorMessages.ModuleAttributeInvalidValue);
+      }
+
+      node.value = this.parseStringLiteral(this.state.value);
+      this.finishNode(node, "ImportAttribute");
+      attrs.push(node);
+    } while (this.eat(12));
+
+    return attrs;
+  }
+
+  maybeParseModuleAttributes() {
+    if (this.match(67) && !this.hasPrecedingLineBreak()) {
+      this.expectPlugin("moduleAttributes");
+      this.next();
+    } else {
+      if (this.hasPlugin("moduleAttributes")) return [];
+      return null;
+    }
+
+    const attrs = [];
+    const attributes = new Set();
+
+    do {
+      const node = this.startNode();
+      node.key = this.parseIdentifier(true);
+
+      if (node.key.name !== "type") {
+        this.raise(node.key.start, ErrorMessages.ModuleAttributeDifferentFromType, node.key.name);
+      }
+
+      if (attributes.has(node.key.name)) {
+        this.raise(node.key.start, ErrorMessages.ModuleAttributesWithDuplicateKeys, node.key.name);
+      }
+
+      attributes.add(node.key.name);
+      this.expect(14);
+
+      if (!this.match(120)) {
+        throw this.unexpected(this.state.start, ErrorMessages.ModuleAttributeInvalidValue);
+      }
+
+      node.value = this.parseStringLiteral(this.state.value);
+      this.finishNode(node, "ImportAttribute");
+      attrs.push(node);
+    } while (this.eat(12));
+
+    return attrs;
+  }
+
+  maybeParseImportAssertions() {
+    if (this.isContextual(85) && !this.hasPrecedingLineBreak()) {
+      this.expectPlugin("importAssertions");
+      this.next();
+    } else {
+      if (this.hasPlugin("importAssertions")) return [];
+      return null;
+    }
+
+    this.eat(5);
+    const attrs = this.parseAssertEntries();
+    this.eat(8);
+    return attrs;
+  }
+
+  maybeParseDefaultImportSpecifier(node) {
+    if (this.shouldParseDefaultImport(node)) {
+      this.parseImportSpecifierLocal(node, this.startNode(), "ImportDefaultSpecifier", "default import specifier");
+      return true;
+    }
+
+    return false;
+  }
+
+  maybeParseStarImportSpecifier(node) {
+    if (this.match(46)) {
+      const specifier = this.startNode();
+      this.next();
+      this.expectContextual(84);
+      this.parseImportSpecifierLocal(node, specifier, "ImportNamespaceSpecifier", "import namespace specifier");
+      return true;
+    }
+
+    return false;
+  }
+
+  parseNamedImportSpecifiers(node) {
+    let first = true;
+    this.expect(5);
+
+    while (!this.eat(8)) {
+      if (first) {
+        first = false;
+      } else {
+        if (this.eat(14)) {
+          throw this.raise(this.state.start, ErrorMessages.DestructureNamedImport);
+        }
+
+        this.expect(12);
+        if (this.eat(8)) break;
+      }
+
+      this.parseImportSpecifier(node);
+    }
+  }
+
+  parseImportSpecifier(node) {
+    const specifier = this.startNode();
+    const importedIsString = this.match(120);
+    specifier.imported = this.parseModuleExportName();
+
+    if (this.eatContextual(84)) {
+      specifier.local = this.parseIdentifier();
+    } else {
+      const {
+        imported
+      } = specifier;
+
+      if (importedIsString) {
+        throw this.raise(specifier.start, ErrorMessages.ImportBindingIsString, imported.value);
+      }
+
+      this.checkReservedWord(imported.name, specifier.start, true, true);
+      specifier.local = cloneIdentifier(imported);
+    }
+
+    this.checkLVal(specifier.local, "import specifier", BIND_LEXICAL);
+    node.specifiers.push(this.finishNode(specifier, "ImportSpecifier"));
+  }
+
+  isThisParam(param) {
+    return param.type === "Identifier" && param.name === "this";
+  }
+
+}
+
+class Parser extends StatementParser {
+  constructor(options, input) {
+    options = getOptions(options);
+    super(options, input);
+    this.options = options;
+    this.initializeScopes();
+    this.plugins = pluginsMap(this.options.plugins);
+    this.filename = options.sourceFilename;
+  }
+
+  getScopeHandler() {
+    return ScopeHandler;
+  }
+
+  parse() {
+    this.enterInitialScopes();
+    const file = this.startNode();
+    const program = this.startNode();
+    this.nextToken();
+    file.errors = null;
+    this.parseTopLevel(file, program);
+    file.errors = this.state.errors;
+    return file;
+  }
+
+}
+
+function pluginsMap(plugins) {
+  const pluginMap = new Map();
+
+  for (const plugin of plugins) {
+    const [name, options] = Array.isArray(plugin) ? plugin : [plugin, {}];
+    if (!pluginMap.has(name)) pluginMap.set(name, options || {});
+  }
+
+  return pluginMap;
+}
+
+function parse(input, options) {
+  var _options;
+
+  if (((_options = options) == null ? void 0 : _options.sourceType) === "unambiguous") {
+    options = Object.assign({}, options);
+
+    try {
+      options.sourceType = "module";
+      const parser = getParser(options, input);
+      const ast = parser.parse();
+
+      if (parser.sawUnambiguousESM) {
+        return ast;
+      }
+
+      if (parser.ambiguousScriptDifferentAst) {
+        try {
+          options.sourceType = "script";
+          return getParser(options, input).parse();
+        } catch (_unused) {}
+      } else {
+        ast.program.sourceType = "script";
+      }
+
+      return ast;
+    } catch (moduleError) {
+      try {
+        options.sourceType = "script";
+        return getParser(options, input).parse();
+      } catch (_unused2) {}
+
+      throw moduleError;
+    }
+  } else {
+    return getParser(options, input).parse();
+  }
+}
+function parseExpression(input, options) {
+  const parser = getParser(options, input);
+
+  if (parser.options.strictMode) {
+    parser.state.strict = true;
+  }
+
+  return parser.getExpression();
+}
+
+function generateExportedTokenTypes(internalTokenTypes) {
+  const tokenTypes = {};
+
+  for (const typeName of Object.keys(internalTokenTypes)) {
+    tokenTypes[typeName] = getExportedToken(internalTokenTypes[typeName]);
+  }
+
+  return tokenTypes;
+}
+
+const tokTypes = generateExportedTokenTypes(tt);
+
+function getParser(options, input) {
+  let cls = Parser;
+
+  if (options != null && options.plugins) {
+    validatePlugins(options.plugins);
+    cls = getParserClass(options.plugins);
+  }
+
+  return new cls(options, input);
+}
+
+const parserClassCache = {};
+
+function getParserClass(pluginsFromOptions) {
+  const pluginList = mixinPluginNames.filter(name => hasPlugin(pluginsFromOptions, name));
+  const key = pluginList.join("/");
+  let cls = parserClassCache[key];
+
+  if (!cls) {
+    cls = Parser;
+
+    for (const plugin of pluginList) {
+      cls = mixinPlugins[plugin](cls);
+    }
+
+    parserClassCache[key] = cls;
+  }
+
+  return cls;
+}
+
+exports.parse = parse;
+exports.parseExpression = parseExpression;
+exports.tokTypes = tokTypes;
+//# sourceMappingURL=index.js.map

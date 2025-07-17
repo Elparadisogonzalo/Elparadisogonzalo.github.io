@@ -1,0 +1,1027 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AddAsset component renders collectible view correctly 1`] = `
+<RCTSafeAreaView
+  style={
+    {
+      "backgroundColor": "#ffffff",
+      "flex": 1,
+    }
+  }
+  testID="add-collectible-screen"
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "marginTop": 10,
+      }
+    }
+  >
+    <View
+      style={
+        {
+          "backgroundColor": "#9a63001a",
+          "borderColor": "#9a6300",
+          "borderLeftWidth": 4,
+          "borderRadius": 4,
+          "flexDirection": "row",
+          "padding": 12,
+          "paddingLeft": 8,
+        }
+      }
+      testID="banneralert"
+      variant="Alert"
+    >
+      <View
+        style={
+          {
+            "marginRight": 8,
+          }
+        }
+      >
+        <SvgMock
+          color="#9a6300"
+          fill="currentColor"
+          height={24}
+          name="Danger"
+          style={
+            {
+              "height": 24,
+              "width": 24,
+            }
+          }
+          width={24}
+        />
+      </View>
+      <View
+        style={
+          {
+            "flex": 1,
+          }
+        }
+      >
+        <Text
+          accessibilityRole="text"
+          style={
+            {
+              "color": "#121314",
+              "fontFamily": "CentraNo1-Book",
+              "fontSize": 16,
+              "fontWeight": "400",
+              "letterSpacing": 0,
+              "lineHeight": 24,
+            }
+          }
+          testID="warning-display-media-enabled-text"
+        >
+          Displaying NFT media and data may expose your IP address to centralized servers. Only import an NFT if you understand the risks involved.
+        </Text>
+      </View>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "backgroundColor": "#ffffff",
+        "flex": 1,
+      }
+    }
+    testID="import-nft-screen"
+  >
+    <View
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    >
+      <RCTScrollView
+        automaticallyAdjustContentInsets={false}
+        contentInset={
+          {
+            "bottom": 0,
+          }
+        }
+        enableAutomaticScroll={true}
+        enableOnAndroid={false}
+        enableResetScrollToCoords={true}
+        extraHeight={75}
+        extraScrollHeight={0}
+        getScrollResponder={[Function]}
+        handleOnScroll={[Function]}
+        keyboardDismissMode="interactive"
+        keyboardOpeningTime={250}
+        keyboardShouldPersistTaps="never"
+        keyboardSpace={0}
+        onScroll={[Function]}
+        resetKeyboardSpace={[Function]}
+        resetScrollToCoords={
+          {
+            "x": 0,
+            "y": 0,
+          }
+        }
+        scrollEventThrottle={1}
+        scrollForExtraHeightOnAndroid={[Function]}
+        scrollIntoView={[Function]}
+        scrollToEnd={[Function]}
+        scrollToFocusedInput={[Function]}
+        scrollToPosition={[Function]}
+        showsVerticalScrollIndicator={true}
+        style={
+          [
+            {
+              "flex": 1,
+            },
+            undefined,
+          ]
+        }
+        update={[Function]}
+        viewIsInsideTabBar={false}
+      >
+        <View>
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessible={true}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+          >
+            <View
+              style={
+                {
+                  "padding": 20,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#121314",
+                    "fontFamily": "CentraNo1-Book",
+                    "fontWeight": "400",
+                    "paddingBottom": 3,
+                  }
+                }
+              >
+                Address
+              </Text>
+              <TextInput
+                keyboardAppearance="light"
+                onBlur={[Function]}
+                onChangeText={[Function]}
+                onSubmitEditing={[Function]}
+                placeholder="0x..."
+                placeholderTextColor="#9ca1af"
+                style={
+                  [
+                    {
+                      "borderColor": "#b7bbc8",
+                      "borderRadius": 4,
+                      "borderWidth": 1,
+                      "color": "#121314",
+                      "fontFamily": "CentraNo1-Book",
+                      "fontWeight": "400",
+                      "padding": 16,
+                    },
+                    {},
+                  ]
+                }
+                testID="input-collectible-address"
+                value=""
+              />
+              <Text
+                style={
+                  {
+                    "color": "#ca3542",
+                    "fontFamily": "CentraNo1-Book",
+                    "fontWeight": "400",
+                    "marginTop": 15,
+                  }
+                }
+                testID="collectible-address-warning"
+              />
+            </View>
+            <View
+              style={
+                {
+                  "padding": 20,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#121314",
+                    "fontFamily": "CentraNo1-Book",
+                    "fontWeight": "400",
+                    "paddingBottom": 3,
+                  }
+                }
+              >
+                ID
+              </Text>
+              <TextInput
+                keyboardAppearance="light"
+                keyboardType="numeric"
+                onBlur={[Function]}
+                onChangeText={[Function]}
+                onSubmitEditing={[Function]}
+                placeholder="Enter the collectible ID"
+                placeholderTextColor="#9ca1af"
+                returnKeyType="done"
+                style={
+                  [
+                    {
+                      "borderColor": "#b7bbc8",
+                      "borderRadius": 4,
+                      "borderWidth": 1,
+                      "color": "#121314",
+                      "fontFamily": "CentraNo1-Book",
+                      "fontWeight": "400",
+                      "padding": 16,
+                    },
+                    {},
+                  ]
+                }
+                testID="input-collectible-identifier"
+                value=""
+              />
+              <Text
+                style={
+                  {
+                    "color": "#ca3542",
+                    "fontFamily": "CentraNo1-Book",
+                    "fontWeight": "400",
+                    "marginTop": 15,
+                  }
+                }
+                testID="collectible-identifier-warning"
+              />
+            </View>
+          </View>
+          <View
+            style={
+              {
+                "flex": 0,
+                "flexDirection": "row",
+                "paddingHorizontal": 24,
+                "paddingVertical": 16,
+              }
+            }
+          >
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessible={true}
+              activeOpacity={0.2}
+              disabled={false}
+              onPress={[Function]}
+              style={
+                [
+                  [
+                    {
+                      "borderRadius": 100,
+                      "justifyContent": "center",
+                      "padding": 15,
+                    },
+                    {
+                      "backgroundColor": "#ffffff",
+                      "borderColor": "#686e7d",
+                      "borderWidth": 1,
+                    },
+                    [
+                      {
+                        "flex": 1,
+                      },
+                      {
+                        "marginRight": 8,
+                      },
+                    ],
+                  ],
+                  null,
+                ]
+              }
+              testID=""
+            >
+              <Text
+                style={
+                  [
+                    {
+                      "color": "#007aff",
+                      "fontSize": 17,
+                      "fontWeight": "500",
+                      "textAlign": "center",
+                    },
+                    null,
+                    [
+                      {
+                        "fontFamily": "CentraNo1-Bold",
+                        "fontSize": 14,
+                        "fontWeight": "600",
+                        "textAlign": "center",
+                      },
+                      {
+                        "color": "#686e7d",
+                      },
+                      undefined,
+                    ],
+                    null,
+                  ]
+                }
+              >
+                CANCEL
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessible={true}
+              activeOpacity={1}
+              disabled={true}
+              style={
+                [
+                  [
+                    {
+                      "borderRadius": 100,
+                      "justifyContent": "center",
+                      "padding": 15,
+                    },
+                    {
+                      "backgroundColor": "#ffffff",
+                      "borderColor": "#4459ff",
+                      "borderWidth": 1,
+                    },
+                    [
+                      {
+                        "flex": 1,
+                      },
+                      {
+                        "marginLeft": 8,
+                      },
+                      {},
+                      {},
+                    ],
+                  ],
+                  {
+                    "opacity": 0.6,
+                  },
+                ]
+              }
+              testID=""
+            >
+              <Text
+                style={
+                  [
+                    {
+                      "color": "#007aff",
+                      "fontSize": 17,
+                      "fontWeight": "500",
+                      "textAlign": "center",
+                    },
+                    {
+                      "color": "#dcdcdc",
+                    },
+                    [
+                      {
+                        "fontFamily": "CentraNo1-Bold",
+                        "fontSize": 14,
+                        "fontWeight": "600",
+                        "textAlign": "center",
+                      },
+                      {
+                        "color": "#4459ff",
+                      },
+                      undefined,
+                    ],
+                    {
+                      "opacity": 0.6,
+                    },
+                  ]
+                }
+              >
+                IMPORT
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </RCTScrollView>
+    </View>
+  </View>
+</RCTSafeAreaView>
+`;
+
+exports[`AddAsset component renders token view correctly 1`] = `
+<RCTSafeAreaView
+  style={
+    {
+      "backgroundColor": "#ffffff",
+      "flex": 1,
+    }
+  }
+  testID="add-token-screen"
+>
+  <View>
+    <RCTScrollView
+      collapsable={false}
+      onGestureHandlerEvent={[Function]}
+      onGestureHandlerStateChange={[Function]}
+      style={
+        {
+          "height": "85%",
+        }
+      }
+    >
+      <View>
+        <View>
+          <TouchableOpacity
+            onLongPress={[Function]}
+            onPress={[Function]}
+            style={
+              {
+                "alignItems": "center",
+                "borderColor": "#b7bbc8",
+                "borderRadius": 2,
+                "borderWidth": 1,
+                "flexDirection": "row",
+                "gap": 10,
+                "justifyContent": "space-between",
+                "marginHorizontal": 16,
+                "marginTop": 16,
+              }
+            }
+            testID="filter-controls-button"
+          >
+            <TouchableOpacity
+              disabled={false}
+              onLongPress={[Function]}
+              onPress={[Function]}
+              style={
+                {
+                  "padding": 16,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#121314",
+                  }
+                }
+              >
+                Ethereum Main Network
+              </Text>
+            </TouchableOpacity>
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "flexDirection": "row",
+                  "paddingRight": 16,
+                }
+              }
+            >
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "backgroundColor": "#ffffff",
+                    "borderRadius": 8,
+                    "height": 24,
+                    "justifyContent": "center",
+                    "overflow": "hidden",
+                    "width": 24,
+                  }
+                }
+                testID="network-avatar-picker"
+              >
+                <Image
+                  onError={[Function]}
+                  resizeMode="contain"
+                  source={1}
+                  style={
+                    {
+                      "height": 24,
+                      "width": 24,
+                    }
+                  }
+                  testID="network-avatar-image"
+                />
+              </View>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessible={true}
+                activeOpacity={1}
+                disabled={false}
+                onPress={[Function]}
+                onPressIn={[Function]}
+                onPressOut={[Function]}
+                style={
+                  {
+                    "alignItems": "center",
+                    "borderRadius": 8,
+                    "height": 24,
+                    "justifyContent": "center",
+                    "opacity": 1,
+                    "width": 24,
+                  }
+                }
+                testID="button-icon-test-id"
+              >
+                <SvgMock
+                  color="#121314"
+                  fill="currentColor"
+                  height={16}
+                  name="ArrowDown"
+                  style={
+                    {
+                      "height": 16,
+                      "width": 16,
+                    }
+                  }
+                  width={16}
+                />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+          <View
+            style={
+              {
+                "paddingBottom": 16,
+              }
+            }
+          >
+            <View
+              style={
+                [
+                  {
+                    "alignItems": "center",
+                    "borderColor": "#b7bbc8",
+                    "borderRadius": 8,
+                    "borderWidth": 1,
+                    "color": "#121314",
+                    "flex": 1,
+                    "flexDirection": "row",
+                    "justifyContent": "center",
+                    "margin": 16,
+                    "marginBottom": 0,
+                  },
+                ]
+              }
+              testID="add-searched-token-screen"
+            >
+              <View
+                style={
+                  {
+                    "color": "#686e7d",
+                    "paddingLeft": 20,
+                  }
+                }
+              >
+                <SvgMock
+                  color="#121314"
+                  fill="currentColor"
+                  height={16}
+                  name="Search"
+                  style={
+                    {
+                      "height": 16,
+                      "width": 16,
+                    }
+                  }
+                  width={16}
+                />
+              </View>
+              <View
+                style={
+                  {
+                    "borderColor": "#2c3dc5",
+                    "color": "#686e7d",
+                    "paddingHorizontal": 12,
+                    "paddingVertical": 12,
+                    "width": "80%",
+                  }
+                }
+              >
+                <TextInput
+                  keyboardAppearance="light"
+                  onBlur={[Function]}
+                  onChangeText={[Function]}
+                  onFocus={[Function]}
+                  placeholder="Search Tokens"
+                  placeholderTextColor="#9ca1af"
+                  style={
+                    [
+                      {
+                        "color": "#121314",
+                        "fontFamily": "CentraNo1-Book",
+                        "fontWeight": "400",
+                      },
+                      {
+                        "height": "85%",
+                        "width": "85%",
+                      },
+                    ]
+                  }
+                  testID="input-search-asset"
+                  value=""
+                />
+              </View>
+              <View
+                style={
+                  {
+                    "color": "#686e7d",
+                    "paddingRight": 20,
+                  }
+                }
+              >
+                <TouchableOpacity
+                  accessible={true}
+                  activeOpacity={1}
+                  disabled={false}
+                  onPress={[Function]}
+                  onPressIn={[Function]}
+                  onPressOut={[Function]}
+                  style={
+                    {
+                      "alignItems": "center",
+                      "borderRadius": 8,
+                      "height": 24,
+                      "justifyContent": "center",
+                      "opacity": 1,
+                      "width": 24,
+                    }
+                  }
+                  testID="clear-search-bar"
+                >
+                  <SvgMock
+                    color="#121314"
+                    fill="currentColor"
+                    height={16}
+                    name="Close"
+                    style={
+                      {
+                        "height": 16,
+                        "width": 16,
+                      }
+                    }
+                    width={16}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+          <View
+            style={
+              {
+                "padding": 0,
+              }
+            }
+          />
+        </View>
+      </View>
+    </RCTScrollView>
+    <View
+      style={
+        {
+          "padding": 16,
+        }
+      }
+    >
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessible={true}
+        activeOpacity={1}
+        disabled={true}
+        onPress={[Function]}
+        onPressIn={[Function]}
+        onPressOut={[Function]}
+        style={
+          {
+            "alignItems": "center",
+            "alignSelf": "stretch",
+            "backgroundColor": "#4459ff",
+            "borderRadius": 12,
+            "flexDirection": "row",
+            "height": 48,
+            "justifyContent": "center",
+            "opacity": 0.5,
+            "paddingHorizontal": 16,
+          }
+        }
+        testID="token-import-next-button"
+      >
+        <Text
+          accessibilityRole="text"
+          style={
+            {
+              "color": "#ffffff",
+              "fontFamily": "CentraNo1-Medium",
+              "fontSize": 16,
+              "fontWeight": "500",
+              "letterSpacing": 0,
+              "lineHeight": 24,
+            }
+          }
+        >
+          Next
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "backgroundColor": "#ffffff",
+        "flex": 1,
+      }
+    }
+  >
+    <RCTScrollView>
+      <View>
+        <View
+          style={
+            {
+              "marginHorizontal": 20,
+              "marginTop": 20,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "backgroundColor": "#9a63001a",
+                "borderColor": "#9a6300",
+                "borderLeftWidth": 4,
+                "borderRadius": 4,
+                "flexDirection": "row",
+                "padding": 12,
+                "paddingLeft": 8,
+              }
+            }
+            testID="banneralert"
+            variant="Alert"
+          >
+            <View
+              style={
+                {
+                  "marginRight": 8,
+                }
+              }
+            >
+              <SvgMock
+                color="#9a6300"
+                fill="currentColor"
+                height={24}
+                name="Danger"
+                style={
+                  {
+                    "height": 24,
+                    "width": 24,
+                  }
+                }
+                width={24}
+              />
+            </View>
+            <View
+              style={
+                {
+                  "flex": 1,
+                }
+              }
+            >
+              <Text
+                accessibilityRole="text"
+                style={
+                  {
+                    "color": "#121314",
+                    "fontFamily": "CentraNo1-Book",
+                    "fontSize": 16,
+                    "fontWeight": "400",
+                    "letterSpacing": 0,
+                    "lineHeight": 24,
+                  }
+                }
+              >
+                Anyone can create a token, including creating fake versions of existing tokens. Learn more about 
+                <Text
+                  accessibilityRole="text"
+                  onPress={[Function]}
+                  style={
+                    {
+                      "color": "#4459ff",
+                      "fontFamily": "CentraNo1-Book",
+                      "fontSize": 16,
+                      "fontWeight": "400",
+                      "letterSpacing": 0,
+                      "lineHeight": 24,
+                    }
+                  }
+                >
+                  scams and security risks.
+                </Text>
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View
+          style={
+            {
+              "paddingHorizontal": 16,
+              "paddingTop": 16,
+            }
+          }
+        >
+          <TouchableOpacity
+            onLongPress={[Function]}
+            onPress={[Function]}
+            style={
+              {
+                "alignItems": "center",
+                "borderColor": "#b7bbc8",
+                "borderRadius": 2,
+                "borderWidth": 1,
+                "flexDirection": "row",
+                "marginBottom": 16,
+                "marginTop": 4,
+                "padding": 16,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#121314",
+                  "fontFamily": "CentraNo1-Book",
+                  "fontSize": 16,
+                  "fontWeight": "400",
+                }
+              }
+            >
+              Select a network
+            </Text>
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "flexDirection": "row",
+                  "paddingHorizontal": 16,
+                  "position": "absolute",
+                  "right": 0,
+                }
+              }
+            >
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessible={true}
+                activeOpacity={1}
+                disabled={false}
+                onPress={[Function]}
+                onPressIn={[Function]}
+                onPressOut={[Function]}
+                style={
+                  {
+                    "alignItems": "center",
+                    "borderRadius": 8,
+                    "height": 24,
+                    "justifyContent": "center",
+                    "opacity": 1,
+                    "width": 24,
+                  }
+                }
+                testID="select-network-button"
+              >
+                <SvgMock
+                  color="#121314"
+                  fill="currentColor"
+                  height={16}
+                  name="ArrowDown"
+                  style={
+                    {
+                      "height": 16,
+                      "width": 16,
+                    }
+                  }
+                  width={16}
+                />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+          <Text
+            style={
+              {
+                "color": "#121314",
+                "fontFamily": "CentraNo1-Book",
+                "fontWeight": "400",
+              }
+            }
+          >
+            Token contract address
+          </Text>
+          <TextInput
+            keyboardAppearance="light"
+            onBlur={[Function]}
+            onChangeText={[Function]}
+            onFocus={[Function]}
+            onSubmitEditing={[Function]}
+            placeholder="0x..."
+            placeholderTextColor="#9ca1af"
+            returnKeyType="next"
+            style={
+              {
+                "borderColor": "#b7bbc8",
+                "borderRadius": 8,
+                "borderWidth": 1,
+                "color": "#121314",
+                "fontFamily": "CentraNo1-Book",
+                "fontWeight": "400",
+                "paddingHorizontal": 16,
+                "paddingVertical": 12,
+              }
+            }
+            testID="input-token-address"
+            value=""
+          />
+          <Text
+            style={
+              {
+                "color": "#ca3542",
+                "fontFamily": "CentraNo1-Book",
+                "fontWeight": "400",
+                "marginTop": 0,
+                "paddingBottom": 8,
+              }
+            }
+            testID="token-address-warning"
+          />
+        </View>
+      </View>
+    </RCTScrollView>
+    <View
+      style={
+        {
+          "paddingVertical": 20,
+        }
+      }
+    >
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessible={true}
+        activeOpacity={1}
+        disabled={true}
+        onPress={[Function]}
+        onPressIn={[Function]}
+        onPressOut={[Function]}
+        style={
+          {
+            "alignItems": "center",
+            "alignSelf": "center",
+            "backgroundColor": "#4459ff",
+            "borderRadius": 12,
+            "color": "#4459ff",
+            "flexDirection": "row",
+            "fontFamily": "CentraNo1-Book",
+            "fontSize": 18,
+            "fontWeight": "400",
+            "height": 48,
+            "justifyContent": "center",
+            "opacity": 0.5,
+            "paddingHorizontal": 16,
+            "position": "relative",
+            "width": "90%",
+          }
+        }
+        testID="token-import-next-button"
+      >
+        <Text
+          accessibilityRole="text"
+          style={
+            {
+              "color": "#ffffff",
+              "fontFamily": "CentraNo1-Medium",
+              "fontSize": 16,
+              "fontWeight": "500",
+              "letterSpacing": 0,
+              "lineHeight": 24,
+            }
+          }
+        >
+          Next
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</RCTSafeAreaView>
+`;

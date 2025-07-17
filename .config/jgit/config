@@ -1,0 +1,3 @@
+[filesystem "Termux|21.0.7|/dev/block/dm-53"]
+	timestampResolution = 9692 nanoseconds
+	minRacyThreshold = 7356 microseconds

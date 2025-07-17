@@ -1,0 +1,362 @@
+$3(2, value)]) : // force singleline
+          isSingleLineNode(node.key.content) && !hasLeadingComments$1(node.key.content) && !hasMiddleComments$1(node.key.content) && !hasTrailingComment$3(node.key.content) && !hasEndComments$1(node.key) && !hasLeadingComments$1(node.value.content) && !hasMiddleComments$1(node.value.content) && !hasEndComments$1(node.value) && isAbsolutelyPrintedAsSingleLineNode(node.value.content, options) ? concat$h([key, needsSpaceInFrontOfMappingValue(node) ? " " : "", ": ", value]) : conditionalGroup$2([concat$h([group$g(concat$h([ifBreak$8("? "), group$g(align$3(2, key), {
+            id: groupId
+          })])), ifBreak$8(concat$h([hardline$d, ": ", align$3(2, value)]), indent(concat$h([needsSpaceInFrontOfMappingValue(node) ? " " : "", ":", hasLeadingComments$1(node.value.content) || hasEndComments$1(node.value) && node.value.content && !isNode$1(node.value.content, ["mapping", "sequence"]) || parentNode.type === "mapping" && hasTrailingComment$3(node.key.content) && isInlineNode$1(node.value.content) || isNode$1(node.value.content, ["mapping", "sequence"]) && node.value.content.tag === null && node.value.content.anchor === null ? hardline$d : !node.value.content ? "" : line$9, value])), {
+            groupId: groupId
+          })])]);
+        }
+
+      case "flowMapping":
+      case "flowSequence":
+        {
+          var openMarker = node.type === "flowMapping" ? "{" : "[";
+          var closeMarker = node.type === "flowMapping" ? "}" : "]";
+          var bracketSpacing = node.type === "flowMapping" && node.children.length !== 0 && options.bracketSpacing ? line$9 : softline$8;
+
+          var isLastItemEmptyMappingItem = node.children.length !== 0 && function (lastItem) {
+            return lastItem.type === "flowMappingItem" && isEmptyNode$1(lastItem.key) && isEmptyNode$1(lastItem.value);
+          }(getLast$5(node.children));
+
+          return concat$h([openMarker, indent(concat$h([bracketSpacing, concat$h(path.map(function (childPath, index) {
+            return concat$h([print(childPath), index === node.children.length - 1 ? "" : concat$h([",", line$9, node.children[index].position.start.line !== node.children[index + 1].position.start.line ? printNextEmptyLine(childPath, options.originalText) : ""])]);
+          }, "children")), ifBreak$8(",", "")])), isLastItemEmptyMappingItem ? "" : bracketSpacing, closeMarker]);
+        }
+
+      case "flowSequenceItem":
+        return path.call(print, "content");
+      // istanbul ignore next
+
+      default:
+        throw new Error("Unexpected node type ".concat(node.type));
+    }
+
+    function indent(doc) {
+      return docBuilders$2.align(" ".repeat(options.tabWidth), doc);
+    }
+  }
+
+  function align$3(n, doc) {
+    return typeof n === "number" && n > 0 ? docBuilders$2.align(" ".repeat(n), doc) : docBuilders$2.align(n, doc);
+  }
+
+  function isInlineNode$1(node) {
+    if (!node) {
+      return true;
+    }
+
+    switch (node.type) {
+      case "plain":
+      case "quoteDouble":
+      case "quoteSingle":
+      case "alias":
+      case "flowMapping":
+      case "flowSequence":
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  function isSingleLineNode(node) {
+    if (!node) {
+      return true;
+    }
+
+    switch (node.type) {
+      case "plain":
+      case "quoteDouble":
+      case "quoteSingle":
+        return node.position.start.line === node.position.end.line;
+
+      case "alias":
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  function shouldPrintDocumentBody(document) {
+    return document.body.children.length !== 0 || hasEndComments$1(document.body);
+  }
+
+  function shouldPrintDocumentEndMarker(document, nextDocument) {
+    return (
+      /**
+       *... # trailingComment
+       */
+      hasTrailingComment$3(document) || nextDocument && (
+      /**
+       * ...
+       * %DIRECTIVE
+       * ---
+       */
+      nextDocument.head.children.length !== 0 ||
+      /**
+       * ...
+       * # endComment
+       * ---
+       */
+      hasEndComments$1(nextDocument.head))
+    );
+  }
+
+  function shouldPrintDocumentHeadEndMarker(document, nextDocument, root, options) {
+    if (
+    /**
+     * ---
+     * preserve the first document head end marker
+     */
+    root.children[0] === document && /---(\s|$)/.test(options.originalText.slice(options.locStart(document), options.locStart(document) + 4)) ||
+    /**
+     * %DIRECTIVE
+     * ---
+     */
+    document.head.children.length !== 0 ||
+    /**
+     * # end comment
+     * ---
+     */
+    hasEndComments$1(document.head) ||
+    /**
+     * --- # trailing comment
+     */
+    hasTrailingComment$3(document.head)) {
+      return "head";
+    }
+
+    if (shouldPrintDocumentEndMarker(document, nextDocument)) {
+      return false;
+    }
+
+    return nextDocument ? "root" : false;
+  }
+
+  function isAbsolutelyPrintedAsSingleLineNode(node, options) {
+    if (!node) {
+      return true;
+    }
+
+    switch (node.type) {
+      case "plain":
+      case "quoteSingle":
+      case "quoteDouble":
+        break;
+
+      case "alias":
+        return true;
+
+      default:
+        return false;
+    }
+
+    if (options.proseWrap === "preserve") {
+      return node.position.start.line === node.position.end.line;
+    }
+
+    if ( // backslash-newline
+    /\\$/m.test(options.originalText.slice(node.position.start.offset, node.position.end.offset))) {
+      return false;
+    }
+
+    switch (options.proseWrap) {
+      case "never":
+        return node.value.indexOf("\n") === -1;
+
+      case "always":
+        return !/[\n ]/.test(node.value);
+      // istanbul ignore next
+
+      default:
+        return false;
+    }
+  }
+
+  function needsSpaceInFrontOfMappingValue(node) {
+    return node.key.content && node.key.content.type === "alias";
+  }
+
+  function printNextEmptyLine(path, originalText) {
+    var node = path.getValue();
+    var root = path.stack[0];
+    root.isNextEmptyLinePrintedChecklist = root.isNextEmptyLinePrintedChecklist || [];
+
+    if (!root.isNextEmptyLinePrintedChecklist[node.position.end.line]) {
+      if (isNextLineEmpty$6(node, originalText)) {
+        root.isNextEmptyLinePrintedChecklist[node.position.end.line] = true;
+        return softline$8;
+      }
+    }
+
+    return "";
+  }
+
+  function printFlowScalarContent(nodeType, content, options) {
+    var lineContents = getFlowScalarLineContents$1(nodeType, content, options);
+    return join$c(hardline$d, lineContents.map(function (lineContentWords) {
+      return fill$6(join$c(line$9, lineContentWords).parts);
+    }));
+  }
+
+  function clean$7(node, newNode
+  /*, parent */
+  ) {
+    if (isNode$1(newNode)) {
+      delete newNode.position;
+
+      switch (newNode.type) {
+        case "comment":
+          // insert pragma
+          if (isPragma$1(newNode.value)) {
+            return null;
+          }
+
+          break;
+
+        case "quoteDouble":
+        case "quoteSingle":
+          newNode.type = "quote";
+          break;
+      }
+    }
+  }
+
+  var printerYaml = {
+    preprocess: preprocess$3,
+    print: genericPrint$6,
+    massageAstNode: clean$7,
+    insertPragma: insertPragma$9
+  };
+
+  var options$7 = {
+    bracketSpacing: commonOptions.bracketSpacing,
+    singleQuote: commonOptions.singleQuote,
+    proseWrap: commonOptions.proseWrap
+  };
+
+  var name$h = "YAML";
+  var type$g = "data";
+  var tmScope$g = "source.yaml";
+  var aliases$6 = [
+  	"yml"
+  ];
+  var extensions$g = [
+  	".yml",
+  	".mir",
+  	".reek",
+  	".rviz",
+  	".sublime-syntax",
+  	".syntax",
+  	".yaml",
+  	".yaml-tmlanguage",
+  	".yml.mysql"
+  ];
+  var filenames$4 = [
+  	".clang-format",
+  	".clang-tidy",
+  	".gemrc",
+  	"glide.lock"
+  ];
+  var aceMode$g = "yaml";
+  var codemirrorMode$c = "yaml";
+  var codemirrorMimeType$c = "text/x-yaml";
+  var languageId$g = 407;
+  var YAML = {
+  	name: name$h,
+  	type: type$g,
+  	tmScope: tmScope$g,
+  	aliases: aliases$6,
+  	extensions: extensions$g,
+  	filenames: filenames$4,
+  	aceMode: aceMode$g,
+  	codemirrorMode: codemirrorMode$c,
+  	codemirrorMimeType: codemirrorMimeType$c,
+  	languageId: languageId$g
+  };
+
+  var YAML$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    name: name$h,
+    type: type$g,
+    tmScope: tmScope$g,
+    aliases: aliases$6,
+    extensions: extensions$g,
+    filenames: filenames$4,
+    aceMode: aceMode$g,
+    codemirrorMode: codemirrorMode$c,
+    codemirrorMimeType: codemirrorMimeType$c,
+    languageId: languageId$g,
+    'default': YAML
+  });
+
+  var require$$0$8 = getCjsExportFromNamespace(YAML$1);
+
+  var languages$6 = [createLanguage(require$$0$8, function (data) {
+    return Object.assign(data, {
+      since: "1.14.0",
+      parsers: ["yaml"],
+      vscodeLanguageIds: ["yaml"]
+    });
+  })];
+  var languageYaml = {
+    languages: languages$6,
+    printers: {
+      yaml: printerYaml
+    },
+    options: options$7
+  };
+
+  var version$2 = require$$0.version;
+  var getSupportInfo$2 = support.getSupportInfo;
+  var internalPlugins = [languageCss, languageGraphql, languageHandlebars, languageHtml, languageJs, languageMarkdown, languageYaml];
+
+  var isArray$1 = Array.isArray || function (arr) {
+    return Object.prototype.toString.call(arr) === "[object Array]";
+  }; // Luckily `opts` is always the 2nd argument
+
+
+  function withPlugins(fn) {
+    return function () {
+      var args = Array.from(arguments);
+      var plugins = args[1] && args[1].plugins || [];
+
+      if (!isArray$1(plugins)) {
+        plugins = Object.values(plugins);
+      }
+
+      args[1] = Object.assign({}, args[1], {
+        plugins: internalPlugins.concat(plugins)
+      });
+      return fn.apply(null, args);
+    };
+  }
+
+  var formatWithCursor = withPlugins(core.formatWithCursor);
+  var standalone = {
+    formatWithCursor: formatWithCursor,
+    format: function format(text, opts) {
+      return formatWithCursor(text, opts).formatted;
+    },
+    check: function check(text, opts) {
+      var formatted = formatWithCursor(text, opts).formatted;
+      return formatted === text;
+    },
+    doc: doc,
+    getSupportInfo: withPlugins(getSupportInfo$2),
+    version: version$2,
+    util: utilShared,
+    __debug: {
+      parse: withPlugins(core.parse),
+      formatAST: withPlugins(core.formatAST),
+      formatDoc: withPlugins(core.formatDoc),
+      printToDoc: withPlugins(core.printToDoc),
+      printDocToString: withPlugins(core.printDocToString)
+    }
+  };
+
+  var standalone$1 = standalone;
+
+  return standalone$1;
+
+})));

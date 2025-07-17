@@ -1,0 +1,300 @@
+0 verbose cli /apex/com.android.runtime/bin/linker64 /data/data/com.termux/files/usr/bin/npm
+1 info using npm@11.4.2
+2 info using node@v24.3.0
+3 silly config load:file:/data/data/com.termux/files/usr/lib/node_modules/npm/npmrc
+4 silly config load:file:/data/data/com.termux/files/home/frontend/.npmrc
+5 silly config load:file:/data/data/com.termux/files/home/.npmrc
+6 silly config load:file:/data/data/com.termux/files/usr/etc/npmrc
+7 verbose title npm install rollup
+8 verbose argv "install" "rollup"
+9 verbose logfile logs-max:10 dir:/data/data/com.termux/files/home/.npm/_logs/2025-07-11T02_16_55_604Z-
+10 verbose logfile /data/data/com.termux/files/home/.npm/_logs/2025-07-11T02_16_55_604Z-debug-0.log
+11 silly logfile start cleaning logs, removing 1 files
+12 silly packumentCache heap:1174405120 maxSize:293601280 maxEntrySize:146800640
+13 silly logfile done cleaning log files
+14 silly idealTree buildDeps
+15 silly fetch manifest rollup@*
+16 silly packumentCache full:https://registry.npmjs.org/rollup cache-miss
+17 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules
+18 http fetch GET 200 https://registry.npmjs.org/rollup 573ms (cache revalidated)
+19 silly packumentCache full:https://registry.npmjs.org/rollup set size:5585786 disposed:false
+20 silly placeDep ROOT rollup@4.44.2 REPLACE for: elparadisogonzalo-dapp@1.0.0 want: *
+21 silly reify mark retired [ '/data/data/com.termux/files/home/frontend/node_modules/esbuild' ]
+22 silly reify moves {
+22 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/esbuild': '/data/data/com.termux/files/home/frontend/node_modules/.esbuild-sdPf6lam'
+22 silly reify }
+23 silly audit bulk request {
+23 silly audit   '@esbuild/aix-ppc64': [ '0.25.6' ],
+23 silly audit   '@esbuild/android-arm': [ '0.25.6' ],
+23 silly audit   '@esbuild/android-arm64': [ '0.25.6' ],
+23 silly audit   '@esbuild/android-x64': [ '0.25.6' ],
+23 silly audit   '@esbuild/darwin-arm64': [ '0.25.6' ],
+23 silly audit   '@esbuild/darwin-x64': [ '0.25.6' ],
+23 silly audit   '@esbuild/freebsd-arm64': [ '0.25.6' ],
+23 silly audit   '@esbuild/freebsd-x64': [ '0.25.6' ],
+23 silly audit   '@esbuild/linux-arm': [ '0.25.6' ],
+23 silly audit   '@esbuild/linux-arm64': [ '0.25.6' ],
+23 silly audit   '@esbuild/linux-ia32': [ '0.25.6' ],
+23 silly audit   '@esbuild/linux-loong64': [ '0.25.6' ],
+23 silly audit   '@esbuild/linux-mips64el': [ '0.25.6' ],
+23 silly audit   '@esbuild/linux-ppc64': [ '0.25.6' ],
+23 silly audit   '@esbuild/linux-riscv64': [ '0.25.6' ],
+23 silly audit   '@esbuild/linux-s390x': [ '0.25.6' ],
+23 silly audit   '@esbuild/linux-x64': [ '0.25.6' ],
+23 silly audit   '@esbuild/netbsd-arm64': [ '0.25.6' ],
+23 silly audit   '@esbuild/netbsd-x64': [ '0.25.6' ],
+23 silly audit   '@esbuild/openbsd-arm64': [ '0.25.6' ],
+23 silly audit   '@esbuild/openbsd-x64': [ '0.25.6' ],
+23 silly audit   '@esbuild/openharmony-arm64': [ '0.25.6' ],
+23 silly audit   '@esbuild/sunos-x64': [ '0.25.6' ],
+23 silly audit   '@esbuild/win32-arm64': [ '0.25.6' ],
+23 silly audit   '@esbuild/win32-ia32': [ '0.25.6' ],
+23 silly audit   '@esbuild/win32-x64': [ '0.25.6' ],
+23 silly audit   '@rollup/rollup-android-arm-eabi': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-android-arm64': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-darwin-arm64': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-darwin-x64': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-freebsd-arm64': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-freebsd-x64': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-arm-gnueabihf': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-arm-musleabihf': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-arm64-gnu': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-arm64-musl': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-loongarch64-gnu': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-powerpc64le-gnu': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-riscv64-gnu': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-riscv64-musl': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-s390x-gnu': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-x64-gnu': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-linux-x64-musl': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-win32-arm64-msvc': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-win32-ia32-msvc': [ '4.44.2' ],
+23 silly audit   '@rollup/rollup-win32-x64-msvc': [ '4.44.2' ],
+23 silly audit   '@types/estree': [ '1.0.8' ],
+23 silly audit   esbuild: [ '0.25.6' ],
+23 silly audit   'esbuild-wasm': [ '0.19.12' ],
+23 silly audit   fdir: [ '6.4.6' ],
+23 silly audit   fsevents: [ '2.3.3' ],
+23 silly audit   nanoid: [ '3.3.11' ],
+23 silly audit   picocolors: [ '1.1.1' ],
+23 silly audit   picomatch: [ '4.0.2' ],
+23 silly audit   postcss: [ '8.5.6' ],
+23 silly audit   'source-map-js': [ '1.2.1' ],
+23 silly audit   tinyglobby: [ '0.2.14' ],
+23 silly audit   vite: [ '7.0.4' ],
+23 silly audit   rollup: [ '4.44.2' ]
+23 silly audit }
+24 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/fsevents
+25 silly reify mark deleted [ '/data/data/com.termux/files/home/frontend/node_modules/fsevents' ]
+26 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-win32-x64-msvc
+27 silly reify mark deleted [
+27 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-win32-x64-msvc'
+27 silly reify ]
+28 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-win32-ia32-msvc
+29 silly reify mark deleted [
+29 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-win32-ia32-msvc'
+29 silly reify ]
+30 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-win32-arm64-msvc
+31 silly reify mark deleted [
+31 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-win32-arm64-msvc'
+31 silly reify ]
+32 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-x64-musl
+33 silly reify mark deleted [
+33 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-x64-musl'
+33 silly reify ]
+34 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-x64-gnu
+35 silly reify mark deleted [
+35 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-x64-gnu'
+35 silly reify ]
+36 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-s390x-gnu
+37 silly reify mark deleted [
+37 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-s390x-gnu'
+37 silly reify ]
+38 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-riscv64-musl
+39 silly reify mark deleted [
+39 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-riscv64-musl'
+39 silly reify ]
+40 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-riscv64-gnu
+41 silly reify mark deleted [
+41 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-riscv64-gnu'
+41 silly reify ]
+42 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-powerpc64le-gnu
+43 silly reify mark deleted [
+43 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-powerpc64le-gnu'
+43 silly reify ]
+44 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-loongarch64-gnu
+45 silly reify mark deleted [
+45 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-loongarch64-gnu'
+45 silly reify ]
+46 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-arm64-musl
+47 silly reify mark deleted [
+47 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-arm64-musl'
+47 silly reify ]
+48 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-arm64-gnu
+49 silly reify mark deleted [
+49 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-arm64-gnu'
+49 silly reify ]
+50 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-arm-musleabihf
+51 silly reify mark deleted [
+51 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-arm-musleabihf'
+51 silly reify ]
+52 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-arm-gnueabihf
+53 silly reify mark deleted [
+53 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-linux-arm-gnueabihf'
+53 silly reify ]
+54 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-freebsd-x64
+55 silly reify mark deleted [
+55 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-freebsd-x64'
+55 silly reify ]
+56 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-freebsd-arm64
+57 silly reify mark deleted [
+57 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-freebsd-arm64'
+57 silly reify ]
+58 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-darwin-x64
+59 silly reify mark deleted [
+59 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-darwin-x64'
+59 silly reify ]
+60 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-darwin-arm64
+61 silly reify mark deleted [
+61 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-darwin-arm64'
+61 silly reify ]
+62 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-android-arm-eabi
+63 silly reify mark deleted [
+63 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@rollup/rollup-android-arm-eabi'
+63 silly reify ]
+64 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/win32-x64
+65 silly reify mark deleted [
+65 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/win32-x64'
+65 silly reify ]
+66 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/win32-ia32
+67 silly reify mark deleted [
+67 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/win32-ia32'
+67 silly reify ]
+68 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/win32-arm64
+69 silly reify mark deleted [
+69 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/win32-arm64'
+69 silly reify ]
+70 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/sunos-x64
+71 silly reify mark deleted [
+71 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/sunos-x64'
+71 silly reify ]
+72 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/openharmony-arm64
+73 silly reify mark deleted [
+73 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/openharmony-arm64'
+73 silly reify ]
+74 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/openbsd-x64
+75 silly reify mark deleted [
+75 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/openbsd-x64'
+75 silly reify ]
+76 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/openbsd-arm64
+77 silly reify mark deleted [
+77 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/openbsd-arm64'
+77 silly reify ]
+78 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/netbsd-x64
+79 silly reify mark deleted [
+79 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/netbsd-x64'
+79 silly reify ]
+80 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/netbsd-arm64
+81 silly reify mark deleted [
+81 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/netbsd-arm64'
+81 silly reify ]
+82 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-x64
+83 silly reify mark deleted [
+83 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-x64'
+83 silly reify ]
+84 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-s390x
+85 silly reify mark deleted [
+85 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-s390x'
+85 silly reify ]
+86 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-riscv64
+87 silly reify mark deleted [
+87 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-riscv64'
+87 silly reify ]
+88 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-ppc64
+89 silly reify mark deleted [
+89 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-ppc64'
+89 silly reify ]
+90 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-mips64el
+91 silly reify mark deleted [
+91 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-mips64el'
+91 silly reify ]
+92 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-loong64
+93 silly reify mark deleted [
+93 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-loong64'
+93 silly reify ]
+94 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-ia32
+95 silly reify mark deleted [
+95 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-ia32'
+95 silly reify ]
+96 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-arm64
+97 silly reify mark deleted [
+97 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-arm64'
+97 silly reify ]
+98 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-arm
+99 silly reify mark deleted [
+99 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/linux-arm'
+99 silly reify ]
+100 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/freebsd-x64
+101 silly reify mark deleted [
+101 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/freebsd-x64'
+101 silly reify ]
+102 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/freebsd-arm64
+103 silly reify mark deleted [
+103 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/freebsd-arm64'
+103 silly reify ]
+104 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/darwin-x64
+105 silly reify mark deleted [
+105 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/darwin-x64'
+105 silly reify ]
+106 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/darwin-arm64
+107 silly reify mark deleted [
+107 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/darwin-arm64'
+107 silly reify ]
+108 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/android-x64
+109 silly reify mark deleted [
+109 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/android-x64'
+109 silly reify ]
+110 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/android-arm
+111 silly reify mark deleted [
+111 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/android-arm'
+111 silly reify ]
+112 verbose reify failed optional dependency /data/data/com.termux/files/home/frontend/node_modules/@esbuild/aix-ppc64
+113 silly reify mark deleted [
+113 silly reify   '/data/data/com.termux/files/home/frontend/node_modules/@esbuild/aix-ppc64'
+113 silly reify ]
+114 http cache @esbuild/android-arm64@https://registry.npmjs.org/@esbuild/android-arm64/-/android-arm64-0.25.6.tgz 0ms (cache hit)
+115 http cache esbuild@https://registry.npmjs.org/esbuild/-/esbuild-0.25.6.tgz 0ms (cache hit)
+116 http cache @rollup/rollup-android-arm64@https://registry.npmjs.org/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.44.2.tgz 0ms (cache hit)
+117 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 363ms
+118 silly audit report {}
+119 info run esbuild@0.25.6 postinstall node_modules/esbuild node install.js
+120 info run esbuild@0.25.6 postinstall { code: 1, signal: null }
+121 verbose stack Error: command failed
+121 verbose stack     at promiseSpawn (/data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/@npmcli/promise-spawn/lib/index.js:22:22)
+121 verbose stack     at spawnWithShell (/data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/@npmcli/promise-spawn/lib/index.js:124:10)
+121 verbose stack     at promiseSpawn (/data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/@npmcli/promise-spawn/lib/index.js:12:12)
+121 verbose stack     at runScriptPkg (/data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/run-script-pkg.js:79:13)
+121 verbose stack     at runScript (/data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/run-script.js:9:12)
+121 verbose stack     at /data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/rebuild.js:331:17
+121 verbose stack     at run (/data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/promise-call-limit/dist/commonjs/index.js:67:22)
+121 verbose stack     at /data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/promise-call-limit/dist/commonjs/index.js:84:9
+121 verbose stack     at new Promise (<anonymous>)
+121 verbose stack     at callLimit (/data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/promise-call-limit/dist/commonjs/index.js:35:69)
+122 verbose pkgid esbuild@0.25.6
+123 error code 1
+124 error path /data/data/com.termux/files/home/frontend/node_modules/esbuild
+125 error command failed
+126 error command sh -c node install.js
+127 silly unfinished npm timer reify 1752200216081
+128 silly unfinished npm timer reify:build 1752200217381
+129 silly unfinished npm timer build 1752200217382
+130 silly unfinished npm timer build:deps 1752200217383
+131 silly unfinished npm timer build:run:postinstall 1752200217396
+132 silly unfinished npm timer build:run:postinstall:node_modules/esbuild 1752200217396
+133 verbose cwd /data/data/com.termux/files/home/frontend
+134 verbose os Linux 5.10.226-android12-9-00047-g4968e29b7f92-ab12786767
+135 verbose node v24.3.0
+136 verbose npm  v11.4.2
+137 verbose exit 1
+138 verbose code 1
+139 error A complete log of this run can be found in: /data/data/com.termux/files/home/.npm/_logs/2025-07-11T02_16_55_604Z-debug-0.log

@@ -1,0 +1,17 @@
+cat > ~/elparadisogonzalo-monorepo/frontend/public/manifest.json <<'EOF'
+{
+  "name": "Elparadisogonzalo dApp",
+  "short_name": "EPG dApp",
+  "start_url": ".",
+  "display": "standalone",7
+  "background_color": "#fff7fff",
+  "description": "Elparadisogonzalo decentralized app",
+  "icons": [
+    {
+      "src": "/1738484946252_1.jpg",
+      "sizes": "512x512",
+      "type": "image/jpg"
+    }
+  ]
+}
+EOF

@@ -1,0 +1,9186 @@
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global = global || self, global.prettier = factory());
+}(this, (function () { 'use strict';
+
+  var name = "prettier";
+  var version = "1.19.1";
+  var description = "Prettier is an opinionated code formatter";
+  var bin = {
+  	prettier: "./bin/prettier.js"
+  };
+  var repository = "prettier/prettier";
+  var homepage = "https://prettier.io";
+  var author = "James Long";
+  var license = "MIT";
+  var main = "./index.js";
+  var engines = {
+  	node: ">=8"
+  };
+  var dependencies = {
+  	"@angular/compiler": "8.2.13",
+  	"@babel/code-frame": "7.5.5",
+  	"@babel/parser": "7.7.3",
+  	"@glimmer/syntax": "0.41.0",
+  	"@iarna/toml": "2.2.3",
+  	"@typescript-eslint/typescript-estree": "2.6.1",
+  	"angular-estree-parser": "1.1.5",
+  	"angular-html-parser": "1.3.0",
+  	camelcase: "5.3.1",
+  	chalk: "2.4.2",
+  	"cjk-regex": "2.0.0",
+  	cosmiconfig: "5.2.1",
+  	dashify: "2.0.0",
+  	dedent: "0.7.0",
+  	diff: "4.0.1",
+  	editorconfig: "0.15.3",
+  	"editorconfig-to-prettier": "0.1.1",
+  	"escape-string-regexp": "1.0.5",
+  	esutils: "2.0.3",
+  	"find-parent-dir": "0.3.0",
+  	"find-project-root": "1.1.1",
+  	"flow-parser": "0.111.3",
+  	"get-stream": "4.1.0",
+  	globby: "6.1.0",
+  	graphql: "14.5.8",
+  	"html-element-attributes": "2.2.0",
+  	"html-styles": "1.0.0",
+  	"html-tag-names": "1.1.4",
+  	ignore: "4.0.6",
+  	"is-ci": "2.0.0",
+  	"jest-docblock": "24.9.0",
+  	"json-stable-stringify": "1.0.1",
+  	leven: "3.1.0",
+  	"lines-and-columns": "1.1.6",
+  	"linguist-languages": "7.6.0",
+  	"lodash.uniqby": "4.7.0",
+  	mem: "5.1.1",
+  	minimatch: "3.0.4",
+  	minimist: "1.2.0",
+  	"n-readlines": "1.0.0",
+  	"normalize-path": "3.0.0",
+  	"parse-srcset": "ikatyang/parse-srcset#54eb9c1cb21db5c62b4d0e275d7249516df6f0ee",
+  	"postcss-less": "2.0.0",
+  	"postcss-media-query-parser": "0.2.3",
+  	"postcss-scss": "2.0.0",
+  	"postcss-selector-parser": "2.2.3",
+  	"postcss-values-parser": "1.5.0",
+  	"regexp-util": "1.2.2",
+  	"remark-math": "1.0.6",
+  	"remark-parse": "5.0.0",
+  	resolve: "1.12.0",
+  	semver: "6.3.0",
+  	"string-width": "4.1.0",
+  	typescript: "3.7.2",
+  	"unicode-regex": "3.0.0",
+  	unified: "8.4.1",
+  	vnopts: "1.0.2",
+  	"yaml-unist-parser": "1.1.1"
+  };
+  var devDependencies = {
+  	"@babel/core": "7.7.2",
+  	"@babel/preset-env": "7.7.1",
+  	"@rollup/plugin-alias": "2.2.0",
+  	"@rollup/plugin-replace": "2.2.1",
+  	"babel-loader": "8.0.6",
+  	benchmark: "2.1.4",
+  	"builtin-modules": "3.1.0",
+  	codecov: "3.6.1",
+  	"cross-env": "6.0.3",
+  	eslint: "6.6.0",
+  	"eslint-config-prettier": "6.5.0",
+  	"eslint-formatter-friendly": "7.0.0",
+  	"eslint-plugin-import": "2.18.2",
+  	"eslint-plugin-prettier": "3.1.1",
+  	"eslint-plugin-react": "7.16.0",
+  	execa: "3.2.0",
+  	jest: "23.3.0",
+  	"jest-junit": "9.0.0",
+  	"jest-snapshot-serializer-ansi": "1.0.0",
+  	"jest-snapshot-serializer-raw": "1.1.0",
+  	"jest-watch-typeahead": "0.4.0",
+  	mkdirp: "0.5.1",
+  	prettier: "1.19.0",
+  	prettylint: "1.0.0",
+  	rimraf: "3.0.0",
+  	rollup: "1.26.3",
+  	"rollup-plugin-babel": "4.3.3",
+  	"rollup-plugin-commonjs": "10.1.0",
+  	"rollup-plugin-json": "4.0.0",
+  	"rollup-plugin-node-globals": "1.4.0",
+  	"rollup-plugin-node-resolve": "5.2.0",
+  	"rollup-plugin-terser": "5.1.2",
+  	shelljs: "0.8.3",
+  	"snapshot-diff": "0.4.0",
+  	"strip-ansi": "5.2.0",
+  	"synchronous-promise": "2.0.10",
+  	tempy: "0.2.1",
+  	"terser-webpack-plugin": "2.2.1",
+  	webpack: "4.41.2"
+  };
+  var scripts = {
+  	prepublishOnly: "echo \"Error: must publish from dist/\" && exit 1",
+  	"prepare-release": "yarn && yarn build && yarn test:dist",
+  	test: "jest",
+  	"test:dist": "node ./scripts/test-dist.js",
+  	"test-integration": "jest tests_integration",
+  	"perf-repeat": "yarn && yarn build && cross-env NODE_ENV=production node ./dist/bin-prettier.js --debug-repeat ${PERF_REPEAT:-1000} --loglevel debug ${PERF_FILE:-./index.js} > /dev/null",
+  	"perf-repeat-inspect": "yarn && yarn build && cross-env NODE_ENV=production node --inspect-brk ./dist/bin-prettier.js --debug-repeat ${PERF_REPEAT:-1000} --loglevel debug ${PERF_FILE:-./index.js} > /dev/null",
+  	"perf-benchmark": "yarn && yarn build && cross-env NODE_ENV=production node ./dist/bin-prettier.js --debug-benchmark --loglevel debug ${PERF_FILE:-./index.js} > /dev/null",
+  	"check-types": "tsc",
+  	lint: "cross-env EFF_NO_LINK_RULES=true eslint . --format friendly",
+  	"lint-docs": "prettylint {.,docs,website,website/blog}/*.md",
+  	"lint-dist": "eslint --no-eslintrc --no-ignore --env=browser \"dist/!(bin-prettier|index|third-party).js\"",
+  	build: "node --max-old-space-size=3072 ./scripts/build/build.js",
+  	"build-docs": "node ./scripts/build-docs.js",
+  	"check-deps": "node ./scripts/check-deps.js",
+  	spellcheck: "npx -p cspell@4.0.31 cspell {bin,scripts,src}/**/*.js {docs,website/blog,changelog_unreleased}/**/*.md"
+  };
+  var _package = {
+  	name: name,
+  	version: version,
+  	description: description,
+  	bin: bin,
+  	repository: repository,
+  	homepage: homepage,
+  	author: author,
+  	license: license,
+  	main: main,
+  	engines: engines,
+  	dependencies: dependencies,
+  	devDependencies: devDependencies,
+  	scripts: scripts
+  };
+
+  var _package$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    name: name,
+    version: version,
+    description: description,
+    bin: bin,
+    repository: repository,
+    homepage: homepage,
+    author: author,
+    license: license,
+    main: main,
+    engines: engines,
+    dependencies: dependencies,
+    devDependencies: devDependencies,
+    scripts: scripts,
+    'default': _package
+  });
+
+  function _typeof(obj) {
+    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+      _typeof = function (obj) {
+        return typeof obj;
+      };
+    } else {
+      _typeof = function (obj) {
+        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+      };
+    }
+
+    return _typeof(obj);
+  }
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  function _defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  function _createClass(Constructor, protoProps, staticProps) {
+    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) _defineProperties(Constructor, staticProps);
+    return Constructor;
+  }
+
+  function _defineProperty(obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  }
+
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function");
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) _setPrototypeOf(subClass, superClass);
+  }
+
+  function _getPrototypeOf(o) {
+    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+      return o.__proto__ || Object.getPrototypeOf(o);
+    };
+    return _getPrototypeOf(o);
+  }
+
+  function _setPrototypeOf(o, p) {
+    _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+      o.__proto__ = p;
+      return o;
+    };
+
+    return _setPrototypeOf(o, p);
+  }
+
+  function isNativeReflectConstruct() {
+    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+    if (Reflect.construct.sham) return false;
+    if (typeof Proxy === "function") return true;
+
+    try {
+      Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function _construct(Parent, args, Class) {
+    if (isNativeReflectConstruct()) {
+      _construct = Reflect.construct;
+    } else {
+      _construct = function _construct(Parent, args, Class) {
+        var a = [null];
+        a.push.apply(a, args);
+        var Constructor = Function.bind.apply(Parent, a);
+        var instance = new Constructor();
+        if (Class) _setPrototypeOf(instance, Class.prototype);
+        return instance;
+      };
+    }
+
+    return _construct.apply(null, arguments);
+  }
+
+  function _isNativeFunction(fn) {
+    return Function.toString.call(fn).indexOf("[native code]") !== -1;
+  }
+
+  function _wrapNativeSuper(Class) {
+    var _cache = typeof Map === "function" ? new Map() : undefined;
+
+    _wrapNativeSuper = function _wrapNativeSuper(Class) {
+      if (Class === null || !_isNativeFunction(Class)) return Class;
+
+      if (typeof Class !== "function") {
+        throw new TypeError("Super expression must either be null or a function");
+      }
+
+      if (typeof _cache !== "undefined") {
+        if (_cache.has(Class)) return _cache.get(Class);
+
+        _cache.set(Class, Wrapper);
+      }
+
+      function Wrapper() {
+        return _construct(Class, arguments, _getPrototypeOf(this).constructor);
+      }
+
+      Wrapper.prototype = Object.create(Class.prototype, {
+        constructor: {
+          value: Wrapper,
+          enumerable: false,
+          writable: true,
+          configurable: true
+        }
+      });
+      return _setPrototypeOf(Wrapper, Class);
+    };
+
+    return _wrapNativeSuper(Class);
+  }
+
+  function _assertThisInitialized(self) {
+    if (self === void 0) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return self;
+  }
+
+  function _possibleConstructorReturn(self, call) {
+    if (call && (typeof call === "object" || typeof call === "function")) {
+      return call;
+    }
+
+    return _assertThisInitialized(self);
+  }
+
+  function _superPropBase(object, property) {
+    while (!Object.prototype.hasOwnProperty.call(object, property)) {
+      object = _getPrototypeOf(object);
+      if (object === null) break;
+    }
+
+    return object;
+  }
+
+  function _get(target, property, receiver) {
+    if (typeof Reflect !== "undefined" && Reflect.get) {
+      _get = Reflect.get;
+    } else {
+      _get = function _get(target, property, receiver) {
+        var base = _superPropBase(target, property);
+
+        if (!base) return;
+        var desc = Object.getOwnPropertyDescriptor(base, property);
+
+        if (desc.get) {
+          return desc.get.call(receiver);
+        }
+
+        return desc.value;
+      };
+    }
+
+    return _get(target, property, receiver || target);
+  }
+
+  function _taggedTemplateLiteral(strings, raw) {
+    if (!raw) {
+      raw = strings.slice(0);
+    }
+
+    return Object.freeze(Object.defineProperties(strings, {
+      raw: {
+        value: Object.freeze(raw)
+      }
+    }));
+  }
+
+  function _slicedToArray(arr, i) {
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
+  }
+
+  function _toConsumableArray(arr) {
+    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+  }
+
+  function _arrayWithoutHoles(arr) {
+    if (Array.isArray(arr)) {
+      for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+      return arr2;
+    }
+  }
+
+  function _arrayWithHoles(arr) {
+    if (Array.isArray(arr)) return arr;
+  }
+
+  function _iterableToArray(iter) {
+    if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+  }
+
+  function _iterableToArrayLimit(arr, i) {
+    if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) {
+      return;
+    }
+
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"] != null) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  function _nonIterableSpread() {
+    throw new TypeError("Invalid attempt to spread non-iterable instance");
+  }
+
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance");
+  }
+
+  function Diff() {}
+
+  Diff.prototype = {
+    diff: function diff(oldString, newString) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      var callback = options.callback;
+
+      if (typeof options === 'function') {
+        callback = options;
+        options = {};
+      }
+
+      this.options = options;
+      var self = this;
+
+      function done(value) {
+        if (callback) {
+          setTimeout(function () {
+            callback(undefined, value);
+          }, 0);
+          return true;
+        } else {
+          return value;
+        }
+      } // Allow subclasses to massage the input prior to running
+
+
+      oldString = this.castInput(oldString);
+      newString = this.castInput(newString);
+      oldString = this.removeEmpty(this.tokenize(oldString));
+      newString = this.removeEmpty(this.tokenize(newString));
+      var newLen = newString.length,
+          oldLen = oldString.length;
+      var editLength = 1;
+      var maxEditLength = newLen + oldLen;
+      var bestPath = [{
+        newPos: -1,
+        components: []
+      }]; // Seed editLength = 0, i.e. the content starts with the same values
+
+      var oldPos = this.extractCommon(bestPath[0], newString, oldString, 0);
+
+      if (bestPath[0].newPos + 1 >= newLen && oldPos + 1 >= oldLen) {
+        // Identity per the equality and tokenizer
+        return done([{
+          value: this.join(newString),
+          count: newString.length
+        }]);
+      } // Main worker method. checks all permutations of a given edit length for acceptance.
+
+
+      function execEditLength() {
+        for (var diagonalPath = -1 * editLength; diagonalPath <= editLength; diagonalPath += 2) {
+          var basePath = void 0;
+
+          var addPath = bestPath[diagonalPath - 1],
+              removePath = bestPath[diagonalPath + 1],
+              _oldPos = (removePath ? removePath.newPos : 0) - diagonalPath;
+
+          if (addPath) {
+            // No one else is going to attempt to use this value, clear it
+            bestPath[diagonalPath - 1] = undefined;
+          }
+
+          var canAdd = addPath && addPath.newPos + 1 < newLen,
+              canRemove = removePath && 0 <= _oldPos && _oldPos < oldLen;
+
+          if (!canAdd && !canRemove) {
+            // If this path is a terminal then prune
+            bestPath[diagonalPath] = undefined;
+            continue;
+          } // Select the diagonal that we want to branch from. We select the prior
+          // path whose position in the new string is the farthest from the origin
+          // and does not pass the bounds of the diff graph
+
+
+          if (!canAdd || canRemove && addPath.newPos < removePath.newPos) {
+            basePath = clonePath(removePath);
+            self.pushComponent(basePath.components, undefined, true);
+          } else {
+            basePath = addPath; // No need to clone, we've pulled it from the list
+
+            basePath.newPos++;
+            self.pushComponent(basePath.components, true, undefined);
+          }
+
+          _oldPos = self.extractCommon(basePath, newString, oldString, diagonalPath); // If we have hit the end of both strings, then we are done
+
+          if (basePath.newPos + 1 >= newLen && _oldPos + 1 >= oldLen) {
+            return done(buildValues(self, basePath.components, newString, oldString, self.useLongestToken));
+          } else {
+            // Otherwise track this path as a potential candidate and continue.
+            bestPath[diagonalPath] = basePath;
+          }
+        }
+
+        editLength++;
+      } // Performs the length of edit iteration. Is a bit fugly as this has to support the
+      // sync and async mode which is never fun. Loops over execEditLength until a value
+      // is produced.
+
+
+      if (callback) {
+        (function exec() {
+          setTimeout(function () {
+            // This should not happen, but we want to be safe.
+
+            /* istanbul ignore next */
+            if (editLength > maxEditLength) {
+              return callback();
+            }
+
+            if (!execEditLength()) {
+              exec();
+            }
+          }, 0);
+        })();
+      } else {
+        while (editLength <= maxEditLength) {
+          var ret = execEditLength();
+
+          if (ret) {
+            return ret;
+          }
+        }
+      }
+    },
+    pushComponent: function pushComponent(components, added, removed) {
+      var last = components[components.length - 1];
+
+      if (last && last.added === added && last.removed === removed) {
+        // We need to clone here as the component clone operation is just
+        // as shallow array clone
+        components[components.length - 1] = {
+          count: last.count + 1,
+          added: added,
+          removed: removed
+        };
+      } else {
+        components.push({
+          count: 1,
+          added: added,
+          removed: removed
+        });
+      }
+    },
+    extractCommon: function extractCommon(basePath, newString, oldString, diagonalPath) {
+      var newLen = newString.length,
+          oldLen = oldString.length,
+          newPos = basePath.newPos,
+          oldPos = newPos - diagonalPath,
+          commonCount = 0;
+
+      while (newPos + 1 < newLen && oldPos + 1 < oldLen && this.equals(newString[newPos + 1], oldString[oldPos + 1])) {
+        newPos++;
+        oldPos++;
+        commonCount++;
+      }
+
+      if (commonCount) {
+        basePath.components.push({
+          count: commonCount
+        });
+      }
+
+      basePath.newPos = newPos;
+      return oldPos;
+    },
+    equals: function equals(left, right) {
+      if (this.options.comparator) {
+        return this.options.comparator(left, right);
+      } else {
+        return left === right || this.options.ignoreCase && left.toLowerCase() === right.toLowerCase();
+      }
+    },
+    removeEmpty: function removeEmpty(array) {
+      var ret = [];
+
+      for (var i = 0; i < array.length; i++) {
+        if (array[i]) {
+          ret.push(array[i]);
+        }
+      }
+
+      return ret;
+    },
+    castInput: function castInput(value) {
+      return value;
+    },
+    tokenize: function tokenize(value) {
+      return value.split('');
+    },
+    join: function join(chars) {
+      return chars.join('');
+    }
+  };
+
+  function buildValues(diff, components, newString, oldString, useLongestToken) {
+    var componentPos = 0,
+        componentLen = components.length,
+        newPos = 0,
+        oldPos = 0;
+
+    for (; componentPos < componentLen; componentPos++) {
+      var component = components[componentPos];
+
+      if (!component.removed) {
+        if (!component.added && useLongestToken) {
+          var value = newString.slice(newPos, newPos + component.count);
+          value = value.map(function (value, i) {
+            var oldValue = oldString[oldPos + i];
+            return oldValue.length > value.length ? oldValue : value;
+          });
+          component.value = diff.join(value);
+        } else {
+          component.value = diff.join(newString.slice(newPos, newPos + component.count));
+        }
+
+        newPos += component.count; // Common case
+
+        if (!component.added) {
+          oldPos += component.count;
+        }
+      } else {
+        component.value = diff.join(oldString.slice(oldPos, oldPos + component.count));
+        oldPos += component.count; // Reverse add and remove so removes are output first to match common convention
+        // The diffing algorithm is tied to add then remove output and this is the simplest
+        // route to get the desired output with minimal overhead.
+
+        if (componentPos && components[componentPos - 1].added) {
+          var tmp = components[componentPos - 1];
+          components[componentPos - 1] = components[componentPos];
+          components[componentPos] = tmp;
+        }
+      }
+    } // Special case handle for when one terminal is ignored (i.e. whitespace).
+    // For this case we merge the terminal into the prior string and drop the change.
+    // This is only available for string mode.
+
+
+    var lastComponent = components[componentLen - 1];
+
+    if (componentLen > 1 && typeof lastComponent.value === 'string' && (lastComponent.added || lastComponent.removed) && diff.equals('', lastComponent.value)) {
+      components[componentLen - 2].value += lastComponent.value;
+      components.pop();
+    }
+
+    return components;
+  }
+
+  function clonePath(path) {
+    return {
+      newPos: path.newPos,
+      components: path.components.slice(0)
+    };
+  }
+
+  var characterDiff = new Diff();
+
+  function diffChars(oldStr, newStr, options) {
+    return characterDiff.diff(oldStr, newStr, options);
+  }
+
+  function generateOptions(options, defaults) {
+    if (typeof options === 'function') {
+      defaults.callback = options;
+    } else if (options) {
+      for (var name in options) {
+        /* istanbul ignore else */
+        if (options.hasOwnProperty(name)) {
+          defaults[name] = options[name];
+        }
+      }
+    }
+
+    return defaults;
+  } //
+  // Ranges and exceptions:
+  // Latin-1 Supplement, 0080–00FF
+  //  - U+00D7  × Multiplication sign
+  //  - U+00F7  ÷ Division sign
+  // Latin Extended-A, 0100–017F
+  // Latin Extended-B, 0180–024F
+  // IPA Extensions, 0250–02AF
+  // Spacing Modifier Letters, 02B0–02FF
+  //  - U+02C7  ˇ &#711;  Caron
+  //  - U+02D8  ˘ &#728;  Breve
+  //  - U+02D9  ˙ &#729;  Dot Above
+  //  - U+02DA  ˚ &#730;  Ring Above
+  //  - U+02DB  ˛ &#731;  Ogonek
+  //  - U+02DC  ˜ &#732;  Small Tilde
+  //  - U+02DD  ˝ &#733;  Double Acute Accent
+  // Latin Extended Additional, 1E00–1EFF
+
+
+  var extendedWordChars = /^[A-Za-z\xC0-\u02C6\u02C8-\u02D7\u02DE-\u02FF\u1E00-\u1EFF]+$/;
+  var reWhitespace = /\S/;
+  var wordDiff = new Diff();
+
+  wordDiff.equals = function (left, right) {
+    if (this.options.ignoreCase) {
+      left = left.toLowerCase();
+      right = right.toLowerCase();
+    }
+
+    return left === right || this.options.ignoreWhitespace && !reWhitespace.test(left) && !reWhitespace.test(right);
+  };
+
+  wordDiff.tokenize = function (value) {
+    var tokens = value.split(/(\s+|[()[\]{}'"]|\b)/); // Join the boundary splits that we do not consider to be boundaries. This is primarily the extended Latin character set.
+
+    for (var i = 0; i < tokens.length - 1; i++) {
+      // If we have an empty string in the next field and we have only word chars before and after, merge
+      if (!tokens[i + 1] && tokens[i + 2] && extendedWordChars.test(tokens[i]) && extendedWordChars.test(tokens[i + 2])) {
+        tokens[i] += tokens[i + 2];
+        tokens.splice(i + 1, 2);
+        i--;
+      }
+    }
+
+    return tokens;
+  };
+
+  function diffWords(oldStr, newStr, options) {
+    options = generateOptions(options, {
+      ignoreWhitespace: true
+    });
+    return wordDiff.diff(oldStr, newStr, options);
+  }
+
+  function diffWordsWithSpace(oldStr, newStr, options) {
+    return wordDiff.diff(oldStr, newStr, options);
+  }
+
+  var lineDiff = new Diff();
+
+  lineDiff.tokenize = function (value) {
+    var retLines = [],
+        linesAndNewlines = value.split(/(\n|\r\n)/); // Ignore the final empty token that occurs if the string ends with a new line
+
+    if (!linesAndNewlines[linesAndNewlines.length - 1]) {
+      linesAndNewlines.pop();
+    } // Merge the content and line separators into single tokens
+
+
+    for (var i = 0; i < linesAndNewlines.length; i++) {
+      var line = linesAndNewlines[i];
+
+      if (i % 2 && !this.options.newlineIsToken) {
+        retLines[retLines.length - 1] += line;
+      } else {
+        if (this.options.ignoreWhitespace) {
+          line = line.trim();
+        }
+
+        retLines.push(line);
+      }
+    }
+
+    return retLines;
+  };
+
+  function diffLines(oldStr, newStr, callback) {
+    return lineDiff.diff(oldStr, newStr, callback);
+  }
+
+  function diffTrimmedLines(oldStr, newStr, callback) {
+    var options = generateOptions(callback, {
+      ignoreWhitespace: true
+    });
+    return lineDiff.diff(oldStr, newStr, options);
+  }
+
+  var sentenceDiff = new Diff();
+
+  sentenceDiff.tokenize = function (value) {
+    return value.split(/(\S.+?[.!?])(?=\s+|$)/);
+  };
+
+  function diffSentences(oldStr, newStr, callback) {
+    return sentenceDiff.diff(oldStr, newStr, callback);
+  }
+
+  var cssDiff = new Diff();
+
+  cssDiff.tokenize = function (value) {
+    return value.split(/([{}:;,]|\s+)/);
+  };
+
+  function diffCss(oldStr, newStr, callback) {
+    return cssDiff.diff(oldStr, newStr, callback);
+  }
+
+  function _typeof$1(obj) {
+    if (typeof Symbol === "function" && _typeof(Symbol.iterator) === "symbol") {
+      _typeof$1 = function _typeof$1(obj) {
+        return _typeof(obj);
+      };
+    } else {
+      _typeof$1 = function _typeof$1(obj) {
+        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : _typeof(obj);
+      };
+    }
+
+    return _typeof$1(obj);
+  }
+
+  function _toConsumableArray$1(arr) {
+    return _arrayWithoutHoles$1(arr) || _iterableToArray$1(arr) || _nonIterableSpread$1();
+  }
+
+  function _arrayWithoutHoles$1(arr) {
+    if (Array.isArray(arr)) {
+      for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) {
+        arr2[i] = arr[i];
+      }
+
+      return arr2;
+    }
+  }
+
+  function _iterableToArray$1(iter) {
+    if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+  }
+
+  function _nonIterableSpread$1() {
+    throw new TypeError("Invalid attempt to spread non-iterable instance");
+  }
+
+  var objectPrototypeToString = Object.prototype.toString;
+  var jsonDiff = new Diff(); // Discriminate between two lines of pretty-printed, serialized JSON where one of them has a
+  // dangling comma and the other doesn't. Turns out including the dangling comma yields the nicest output:
+
+  jsonDiff.useLongestToken = true;
+  jsonDiff.tokenize = lineDiff.tokenize;
+
+  jsonDiff.castInput = function (value) {
+    var _this$options = this.options,
+        undefinedReplacement = _this$options.undefinedReplacement,
+        _this$options$stringi = _this$options.stringifyReplacer,
+        stringifyReplacer = _this$options$stringi === void 0 ? function (k, v) {
+      return typeof v === 'undefined' ? undefinedReplacement : v;
+    } : _this$options$stringi;
+    return typeof value === 'string' ? value : JSON.stringify(canonicalize(value, null, null, stringifyReplacer), stringifyReplacer, '  ');
+  };
+
+  jsonDiff.equals = function (left, right) {
+    return Diff.prototype.equals.call(jsonDiff, left.replace(/,([\r\n])/g, '$1'), right.replace(/,([\r\n])/g, '$1'));
+  };
+
+  function diffJson(oldObj, newObj, options) {
+    return jsonDiff.diff(oldObj, newObj, options);
+  } // This function handles the presence of circular references by bailing out when encountering an
+  // object that is already on the "stack" of items being processed. Accepts an optional replacer
+
+
+  function canonicalize(obj, stack, replacementStack, replacer, key) {
+    stack = stack || [];
+    replacementStack = replacementStack || [];
+
+    if (replacer) {
+      obj = replacer(key, obj);
+    }
+
+    var i;
+
+    for (i = 0; i < stack.length; i += 1) {
+      if (stack[i] === obj) {
+        return replacementStack[i];
+      }
+    }
+
+    var canonicalizedObj;
+
+    if ('[object Array]' === objectPrototypeToString.call(obj)) {
+      stack.push(obj);
+      canonicalizedObj = new Array(obj.length);
+      replacementStack.push(canonicalizedObj);
+
+      for (i = 0; i < obj.length; i += 1) {
+        canonicalizedObj[i] = canonicalize(obj[i], stack, replacementStack, replacer, key);
+      }
+
+      stack.pop();
+      replacementStack.pop();
+      return canonicalizedObj;
+    }
+
+    if (obj && obj.toJSON) {
+      obj = obj.toJSON();
+    }
+
+    if (_typeof$1(obj) === 'object' && obj !== null) {
+      stack.push(obj);
+      canonicalizedObj = {};
+      replacementStack.push(canonicalizedObj);
+
+      var sortedKeys = [],
+          _key;
+
+      for (_key in obj) {
+        /* istanbul ignore else */
+        if (obj.hasOwnProperty(_key)) {
+          sortedKeys.push(_key);
+        }
+      }
+
+      sortedKeys.sort();
+
+      for (i = 0; i < sortedKeys.length; i += 1) {
+        _key = sortedKeys[i];
+        canonicalizedObj[_key] = canonicalize(obj[_key], stack, replacementStack, replacer, _key);
+      }
+
+      stack.pop();
+      replacementStack.pop();
+    } else {
+      canonicalizedObj = obj;
+    }
+
+    return canonicalizedObj;
+  }
+
+  var arrayDiff = new Diff();
+
+  arrayDiff.tokenize = function (value) {
+    return value.slice();
+  };
+
+  arrayDiff.join = arrayDiff.removeEmpty = function (value) {
+    return value;
+  };
+
+  function diffArrays(oldArr, newArr, callback) {
+    return arrayDiff.diff(oldArr, newArr, callback);
+  }
+
+  function parsePatch(uniDiff) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var diffstr = uniDiff.split(/\r\n|[\n\v\f\r\x85]/),
+        delimiters = uniDiff.match(/\r\n|[\n\v\f\r\x85]/g) || [],
+        list = [],
+        i = 0;
+
+    function parseIndex() {
+      var index = {};
+      list.push(index); // Parse diff metadata
+
+      while (i < diffstr.length) {
+        var line = diffstr[i]; // File header found, end parsing diff metadata
+
+        if (/^(\-\-\-|\+\+\+|@@)\s/.test(line)) {
+          break;
+        } // Diff index
+
+
+        var header = /^(?:Index:|diff(?: -r \w+)+)\s+(.+?)\s*$/.exec(line);
+
+        if (header) {
+          index.index = header[1];
+        }
+
+        i++;
+      } // Parse file headers if they are defined. Unified diff requires them, but
+      // there's no technical issues to have an isolated hunk without file header
+
+
+      parseFileHeader(index);
+      parseFileHeader(index); // Parse hunks
+
+      index.hunks = [];
+
+      while (i < diffstr.length) {
+        var _line = diffstr[i];
+
+        if (/^(Index:|diff|\-\-\-|\+\+\+)\s/.test(_line)) {
+          break;
+        } else if (/^@@/.test(_line)) {
+          index.hunks.push(parseHunk());
+        } else if (_line && options.strict) {
+          // Ignore unexpected content unless in strict mode
+          throw new Error('Unknown line ' + (i + 1) + ' ' + JSON.stringify(_line));
+        } else {
+          i++;
+        }
+      }
+    } // Parses the --- and +++ headers, if none are found, no lines
+    // are consumed.
+
+
+    function parseFileHeader(index) {
+      var fileHeader = /^(---|\+\+\+)\s+(.*)$/.exec(diffstr[i]);
+
+      if (fileHeader) {
+        var keyPrefix = fileHeader[1] === '---' ? 'old' : 'new';
+        var data = fileHeader[2].split('\t', 2);
+        var fileName = data[0].replace(/\\\\/g, '\\');
+
+        if (/^".*"$/.test(fileName)) {
+          fileName = fileName.substr(1, fileName.length - 2);
+        }
+
+        index[keyPrefix + 'FileName'] = fileName;
+        index[keyPrefix + 'Header'] = (data[1] || '').trim();
+        i++;
+      }
+    } // Parses a hunk
+    // This assumes that we are at the start of a hunk.
+
+
+    function parseHunk() {
+      var chunkHeaderIndex = i,
+          chunkHeaderLine = diffstr[i++],
+          chunkHeader = chunkHeaderLine.split(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
+      var hunk = {
+        oldStart: +chunkHeader[1],
+        oldLines: +chunkHeader[2] || 1,
+        newStart: +chunkHeader[3],
+        newLines: +chunkHeader[4] || 1,
+        lines: [],
+        linedelimiters: []
+      };
+      var addCount = 0,
+          removeCount = 0;
+
+      for (; i < diffstr.length; i++) {
+        // Lines starting with '---' could be mistaken for the "remove line" operation
+        // But they could be the header for the next file. Therefore prune such cases out.
+        if (diffstr[i].indexOf('--- ') === 0 && i + 2 < diffstr.length && diffstr[i + 1].indexOf('+++ ') === 0 && diffstr[i + 2].indexOf('@@') === 0) {
+          break;
+        }
+
+        var operation = diffstr[i].length == 0 && i != diffstr.length - 1 ? ' ' : diffstr[i][0];
+
+        if (operation === '+' || operation === '-' || operation === ' ' || operation === '\\') {
+          hunk.lines.push(diffstr[i]);
+          hunk.linedelimiters.push(delimiters[i] || '\n');
+
+          if (operation === '+') {
+            addCount++;
+          } else if (operation === '-') {
+            removeCount++;
+          } else if (operation === ' ') {
+            addCount++;
+            removeCount++;
+          }
+        } else {
+          break;
+        }
+      } // Handle the empty block count case
+
+
+      if (!addCount && hunk.newLines === 1) {
+        hunk.newLines = 0;
+      }
+
+      if (!removeCount && hunk.oldLines === 1) {
+        hunk.oldLines = 0;
+      } // Perform optional sanity checking
+
+
+      if (options.strict) {
+        if (addCount !== hunk.newLines) {
+          throw new Error('Added line count did not match for hunk at line ' + (chunkHeaderIndex + 1));
+        }
+
+        if (removeCount !== hunk.oldLines) {
+          throw new Error('Removed line count did not match for hunk at line ' + (chunkHeaderIndex + 1));
+        }
+      }
+
+      return hunk;
+    }
+
+    while (i < diffstr.length) {
+      parseIndex();
+    }
+
+    return list;
+  } // Iterator that traverses in the range of [min, max], stepping
+  // by distance from a given start position. I.e. for [0, 4], with
+  // start of 2, this will iterate 2, 3, 1, 4, 0.
+
+
+  function distanceIterator(start, minLine, maxLine) {
+    var wantForward = true,
+        backwardExhausted = false,
+        forwardExhausted = false,
+        localOffset = 1;
+    return function iterator() {
+      if (wantForward && !forwardExhausted) {
+        if (backwardExhausted) {
+          localOffset++;
+        } else {
+          wantForward = false;
+        } // Check if trying to fit beyond text length, and if not, check it fits
+        // after offset location (or desired location on first iteration)
+
+
+        if (start + localOffset <= maxLine) {
+          return localOffset;
+        }
+
+        forwardExhausted = true;
+      }
+
+      if (!backwardExhausted) {
+        if (!forwardExhausted) {
+          wantForward = true;
+        } // Check if trying to fit before text beginning, and if not, check it fits
+        // before offset location
+
+
+        if (minLine <= start - localOffset) {
+          return -localOffset++;
+        }
+
+        backwardExhausted = true;
+        return iterator();
+      } // We tried to fit hunk before text beginning and beyond text length, then
+      // hunk can't fit on the text. Return undefined
+
+    };
+  }
+
+  function applyPatch(source, uniDiff) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    if (typeof uniDiff === 'string') {
+      uniDiff = parsePatch(uniDiff);
+    }
+
+    if (Array.isArray(uniDiff)) {
+      if (uniDiff.length > 1) {
+        throw new Error('applyPatch only works with a single input.');
+      }
+
+      uniDiff = uniDiff[0];
+    } // Apply the diff to the input
+
+
+    var lines = source.split(/\r\n|[\n\v\f\r\x85]/),
+        delimiters = source.match(/\r\n|[\n\v\f\r\x85]/g) || [],
+        hunks = uniDiff.hunks,
+        compareLine = options.compareLine || function (lineNumber, line, operation, patchContent) {
+      return line === patchContent;
+    },
+        errorCount = 0,
+        fuzzFactor = options.fuzzFactor || 0,
+        minLine = 0,
+        offset = 0,
+        removeEOFNL,
+        addEOFNL;
+    /**
+     * Checks if the hunk exactly fits on the provided location
+     */
+
+
+    function hunkFits(hunk, toPos) {
+      for (var j = 0; j < hunk.lines.length; j++) {
+        var line = hunk.lines[j],
+            operation = line.length > 0 ? line[0] : ' ',
+            content = line.length > 0 ? line.substr(1) : line;
+
+        if (operation === ' ' || operation === '-') {
+          // Context sanity check
+          if (!compareLine(toPos + 1, lines[toPos], operation, content)) {
+            errorCount++;
+
+            if (errorCount > fuzzFactor) {
+              return false;
+            }
+          }
+
+          toPos++;
+        }
+      }
+
+      return true;
+    } // Search best fit offsets for each hunk based on the previous ones
+
+
+    for (var i = 0; i < hunks.length; i++) {
+      var hunk = hunks[i],
+          maxLine = lines.length - hunk.oldLines,
+          localOffset = 0,
+          toPos = offset + hunk.oldStart - 1;
+      var iterator = distanceIterator(toPos, minLine, maxLine);
+
+      for (; localOffset !== undefined; localOffset = iterator()) {
+        if (hunkFits(hunk, toPos + localOffset)) {
+          hunk.offset = offset += localOffset;
+          break;
+        }
+      }
+
+      if (localOffset === undefined) {
+        return false;
+      } // Set lower text limit to end of the current hunk, so next ones don't try
+      // to fit over already patched text
+
+
+      minLine = hunk.offset + hunk.oldStart + hunk.oldLines;
+    } // Apply patch hunks
+
+
+    var diffOffset = 0;
+
+    for (var _i = 0; _i < hunks.length; _i++) {
+      var _hunk = hunks[_i],
+          _toPos = _hunk.oldStart + _hunk.offset + diffOffset - 1;
+
+      diffOffset += _hunk.newLines - _hunk.oldLines;
+
+      if (_toPos < 0) {
+        // Creating a new file
+        _toPos = 0;
+      }
+
+      for (var j = 0; j < _hunk.lines.length; j++) {
+        var line = _hunk.lines[j],
+            operation = line.length > 0 ? line[0] : ' ',
+            content = line.length > 0 ? line.substr(1) : line,
+            delimiter = _hunk.linedelimiters[j];
+
+        if (operation === ' ') {
+          _toPos++;
+        } else if (operation === '-') {
+          lines.splice(_toPos, 1);
+          delimiters.splice(_toPos, 1);
+          /* istanbul ignore else */
+        } else if (operation === '+') {
+          lines.splice(_toPos, 0, content);
+          delimiters.splice(_toPos, 0, delimiter);
+          _toPos++;
+        } else if (operation === '\\') {
+          var previousOperation = _hunk.lines[j - 1] ? _hunk.lines[j - 1][0] : null;
+
+          if (previousOperation === '+') {
+            removeEOFNL = true;
+          } else if (previousOperation === '-') {
+            addEOFNL = true;
+          }
+        }
+      }
+    } // Handle EOFNL insertion/removal
+
+
+    if (removeEOFNL) {
+      while (!lines[lines.length - 1]) {
+        lines.pop();
+        delimiters.pop();
+      }
+    } else if (addEOFNL) {
+      lines.push('');
+      delimiters.push('\n');
+    }
+
+    for (var _k = 0; _k < lines.length - 1; _k++) {
+      lines[_k] = lines[_k] + delimiters[_k];
+    }
+
+    return lines.join('');
+  } // Wrapper that supports multiple file patches via callbacks.
+
+
+  function applyPatches(uniDiff, options) {
+    if (typeof uniDiff === 'string') {
+      uniDiff = parsePatch(uniDiff);
+    }
+
+    var currentIndex = 0;
+
+    function processIndex() {
+      var index = uniDiff[currentIndex++];
+
+      if (!index) {
+        return options.complete();
+      }
+
+      options.loadFile(index, function (err, data) {
+        if (err) {
+          return options.complete(err);
+        }
+
+        var updatedContent = applyPatch(data, index, options);
+        options.patched(index, updatedContent, function (err) {
+          if (err) {
+            return options.complete(err);
+          }
+
+          processIndex();
+        });
+      });
+    }
+
+    processIndex();
+  }
+
+  function structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options) {
+    if (!options) {
+      options = {};
+    }
+
+    if (typeof options.context === 'undefined') {
+      options.context = 4;
+    }
+
+    var diff = diffLines(oldStr, newStr, options);
+    diff.push({
+      value: '',
+      lines: []
+    }); // Append an empty value to make cleanup easier
+
+    function contextLines(lines) {
+      return lines.map(function (entry) {
+        return ' ' + entry;
+      });
+    }
+
+    var hunks = [];
+    var oldRangeStart = 0,
+        newRangeStart = 0,
+        curRange = [],
+        oldLine = 1,
+        newLine = 1;
+
+    var _loop = function _loop(i) {
+      var current = diff[i],
+          lines = current.lines || current.value.replace(/\n$/, '').split('\n');
+      current.lines = lines;
+
+      if (current.added || current.removed) {
+        var _curRange; // If we have previous context, start with that
+
+
+        if (!oldRangeStart) {
+          var prev = diff[i - 1];
+          oldRangeStart = oldLine;
+          newRangeStart = newLine;
+
+          if (prev) {
+            curRange = options.context > 0 ? contextLines(prev.lines.slice(-options.context)) : [];
+            oldRangeStart -= curRange.length;
+            newRangeStart -= curRange.length;
+          }
+        } // Output our changes
+
+
+        (_curRange = curRange).push.apply(_curRange, _toConsumableArray$1(lines.map(function (entry) {
+          return (current.added ? '+' : '-') + entry;
+        }))); // Track the updated file position
+
+
+        if (current.added) {
+          newLine += lines.length;
+        } else {
+          oldLine += lines.length;
+        }
+      } else {
+        // Identical context lines. Track line changes
+        if (oldRangeStart) {
+          // Close out any changes that have been output (or join overlapping)
+          if (lines.length <= options.context * 2 && i < diff.length - 2) {
+            var _curRange2; // Overlapping
+
+
+            (_curRange2 = curRange).push.apply(_curRange2, _toConsumableArray$1(contextLines(lines)));
+          } else {
+            var _curRange3; // end the range and output
+
+
+            var contextSize = Math.min(lines.length, options.context);
+
+            (_curRange3 = curRange).push.apply(_curRange3, _toConsumableArray$1(contextLines(lines.slice(0, contextSize))));
+
+            var hunk = {
+              oldStart: oldRangeStart,
+              oldLines: oldLine - oldRangeStart + contextSize,
+              newStart: newRangeStart,
+              newLines: newLine - newRangeStart + contextSize,
+              lines: curRange
+            };
+
+            if (i >= diff.length - 2 && lines.length <= options.context) {
+              // EOF is inside this hunk
+              var oldEOFNewline = /\n$/.test(oldStr);
+              var newEOFNewline = /\n$/.test(newStr);
+              var noNlBeforeAdds = lines.length == 0 && curRange.length > hunk.oldLines;
+
+              if (!oldEOFNewline && noNlBeforeAdds) {
+                // special case: old has no eol and no trailing context; no-nl can end up before adds
+                curRange.splice(hunk.oldLines, 0, '\\ No newline at end of file');
+              }
+
+              if (!oldEOFNewline && !noNlBeforeAdds || !newEOFNewline) {
+                curRange.push('\\ No newline at end of file');
+              }
+            }
+
+            hunks.push(hunk);
+            oldRangeStart = 0;
+            newRangeStart = 0;
+            curRange = [];
+          }
+        }
+
+        oldLine += lines.length;
+        newLine += lines.length;
+      }
+    };
+
+    for (var i = 0; i < diff.length; i++) {
+      _loop(i);
+    }
+
+    return {
+      oldFileName: oldFileName,
+      newFileName: newFileName,
+      oldHeader: oldHeader,
+      newHeader: newHeader,
+      hunks: hunks
+    };
+  }
+
+  function createTwoFilesPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options) {
+    var diff = structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options);
+    var ret = [];
+
+    if (oldFileName == newFileName) {
+      ret.push('Index: ' + oldFileName);
+    }
+
+    ret.push('===================================================================');
+    ret.push('--- ' + diff.oldFileName + (typeof diff.oldHeader === 'undefined' ? '' : '\t' + diff.oldHeader));
+    ret.push('+++ ' + diff.newFileName + (typeof diff.newHeader === 'undefined' ? '' : '\t' + diff.newHeader));
+
+    for (var i = 0; i < diff.hunks.length; i++) {
+      var hunk = diff.hunks[i];
+      ret.push('@@ -' + hunk.oldStart + ',' + hunk.oldLines + ' +' + hunk.newStart + ',' + hunk.newLines + ' @@');
+      ret.push.apply(ret, hunk.lines);
+    }
+
+    return ret.join('\n') + '\n';
+  }
+
+  function createPatch(fileName, oldStr, newStr, oldHeader, newHeader, options) {
+    return createTwoFilesPatch(fileName, fileName, oldStr, newStr, oldHeader, newHeader, options);
+  }
+
+  function arrayEqual(a, b) {
+    if (a.length !== b.length) {
+      return false;
+    }
+
+    return arrayStartsWith(a, b);
+  }
+
+  function arrayStartsWith(array, start) {
+    if (start.length > array.length) {
+      return false;
+    }
+
+    for (var i = 0; i < start.length; i++) {
+      if (start[i] !== array[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function calcLineCount(hunk) {
+    var _calcOldNewLineCount = calcOldNewLineCount(hunk.lines),
+        oldLines = _calcOldNewLineCount.oldLines,
+        newLines = _calcOldNewLineCount.newLines;
+
+    if (oldLines !== undefined) {
+      hunk.oldLines = oldLines;
+    } else {
+      delete hunk.oldLines;
+    }
+
+    if (newLines !== undefined) {
+      hunk.newLines = newLines;
+    } else {
+      delete hunk.newLines;
+    }
+  }
+
+  function merge(mine, theirs, base) {
+    mine = loadPatch(mine, base);
+    theirs = loadPatch(theirs, base);
+    var ret = {}; // For index we just let it pass through as it doesn't have any necessary meaning.
+    // Leaving sanity checks on this to the API consumer that may know more about the
+    // meaning in their own context.
+
+    if (mine.index || theirs.index) {
+      ret.index = mine.index || theirs.index;
+    }
+
+    if (mine.newFileName || theirs.newFileName) {
+      if (!fileNameChanged(mine)) {
+        // No header or no change in ours, use theirs (and ours if theirs does not exist)
+        ret.oldFileName = theirs.oldFileName || mine.oldFileName;
+        ret.newFileName = theirs.newFileName || mine.newFileName;
+        ret.oldHeader = theirs.oldHeader || mine.oldHeader;
+        ret.newHeader = theirs.newHeader || mine.newHeader;
+      } else if (!fileNameChanged(theirs)) {
+        // No header or no change in theirs, use ours
+        ret.oldFileName = mine.oldFileName;
+        ret.newFileName = mine.newFileName;
+        ret.oldHeader = mine.oldHeader;
+        ret.newHeader = mine.newHeader;
+      } else {
+        // Both changed... figure it out
+        ret.oldFileName = selectField(ret, mine.oldFileName, theirs.oldFileName);
+        ret.newFileName = selectField(ret, mine.newFileName, theirs.newFileName);
+        ret.oldHeader = selectField(ret, mine.oldHeader, theirs.oldHeader);
+        ret.newHeader = selectField(ret, mine.newHeader, theirs.newHeader);
+      }
+    }
+
+    ret.hunks = [];
+    var mineIndex = 0,
+        theirsIndex = 0,
+        mineOffset = 0,
+        theirsOffset = 0;
+
+    while (mineIndex < mine.hunks.length || theirsIndex < theirs.hunks.length) {
+      var mineCurrent = mine.hunks[mineIndex] || {
+        oldStart: Infinity
+      },
+          theirsCurrent = theirs.hunks[theirsIndex] || {
+        oldStart: Infinity
+      };
+
+      if (hunkBefore(mineCurrent, theirsCurrent)) {
+        // This patch does not overlap with any of the others, yay.
+        ret.hunks.push(cloneHunk(mineCurrent, mineOffset));
+        mineIndex++;
+        theirsOffset += mineCurrent.newLines - mineCurrent.oldLines;
+      } else if (hunkBefore(theirsCurrent, mineCurrent)) {
+        // This patch does not overlap with any of the others, yay.
+        ret.hunks.push(cloneHunk(theirsCurrent, theirsOffset));
+        theirsIndex++;
+        mineOffset += theirsCurrent.newLines - theirsCurrent.oldLines;
+      } else {
+        // Overlap, merge as best we can
+        var mergedHunk = {
+          oldStart: Math.min(mineCurrent.oldStart, theirsCurrent.oldStart),
+          oldLines: 0,
+          newStart: Math.min(mineCurrent.newStart + mineOffset, theirsCurrent.oldStart + theirsOffset),
+          newLines: 0,
+          lines: []
+        };
+        mergeLines(mergedHunk, mineCurrent.oldStart, mineCurrent.lines, theirsCurrent.oldStart, theirsCurrent.lines);
+        theirsIndex++;
+        mineIndex++;
+        ret.hunks.push(mergedHunk);
+      }
+    }
+
+    return ret;
+  }
+
+  function loadPatch(param, base) {
+    if (typeof param === 'string') {
+      if (/^@@/m.test(param) || /^Index:/m.test(param)) {
+        return parsePatch(param)[0];
+      }
+
+      if (!base) {
+        throw new Error('Must provide a base reference or pass in a patch');
+      }
+
+      return structuredPatch(undefined, undefined, base, param);
+    }
+
+    return param;
+  }
+
+  function fileNameChanged(patch) {
+    return patch.newFileName && patch.newFileName !== patch.oldFileName;
+  }
+
+  function selectField(index, mine, theirs) {
+    if (mine === theirs) {
+      return mine;
+    } else {
+      index.conflict = true;
+      return {
+        mine: mine,
+        theirs: theirs
+      };
+    }
+  }
+
+  function hunkBefore(test, check) {
+    return test.oldStart < check.oldStart && test.oldStart + test.oldLines < check.oldStart;
+  }
+
+  function cloneHunk(hunk, offset) {
+    return {
+      oldStart: hunk.oldStart,
+      oldLines: hunk.oldLines,
+      newStart: hunk.newStart + offset,
+      newLines: hunk.newLines,
+      lines: hunk.lines
+    };
+  }
+
+  function mergeLines(hunk, mineOffset, mineLines, theirOffset, theirLines) {
+    // This will generally result in a conflicted hunk, but there are cases where the context
+    // is the only overlap where we can successfully merge the content here.
+    var mine = {
+      offset: mineOffset,
+      lines: mineLines,
+      index: 0
+    },
+        their = {
+      offset: theirOffset,
+      lines: theirLines,
+      index: 0
+    }; // Handle any leading content
+
+    insertLeading(hunk, mine, their);
+    insertLeading(hunk, their, mine); // Now in the overlap content. Scan through and select the best changes from each.
+
+    while (mine.index < mine.lines.length && their.index < their.lines.length) {
+      var mineCurrent = mine.lines[mine.index],
+          theirCurrent = their.lines[their.index];
+
+      if ((mineCurrent[0] === '-' || mineCurrent[0] === '+') && (theirCurrent[0] === '-' || theirCurrent[0] === '+')) {
+        // Both modified ...
+        mutualChange(hunk, mine, their);
+      } else if (mineCurrent[0] === '+' && theirCurrent[0] === ' ') {
+        var _hunk$lines; // Mine inserted
+
+
+        (_hunk$lines = hunk.lines).push.apply(_hunk$lines, _toConsumableArray$1(collectChange(mine)));
+      } else if (theirCurrent[0] === '+' && mineCurrent[0] === ' ') {
+        var _hunk$lines2; // Theirs inserted
+
+
+        (_hunk$lines2 = hunk.lines).push.apply(_hunk$lines2, _toConsumableArray$1(collectChange(their)));
+      } else if (mineCurrent[0] === '-' && theirCurrent[0] === ' ') {
+        // Mine removed or edited
+        removal(hunk, mine, their);
+      } else if (theirCurrent[0] === '-' && mineCurrent[0] === ' ') {
+        // Their removed or edited
+        removal(hunk, their, mine, true);
+      } else if (mineCurrent === theirCurrent) {
+        // Context identity
+        hunk.lines.push(mineCurrent);
+        mine.index++;
+        their.index++;
+      } else {
+        // Context mismatch
+        conflict(hunk, collectChange(mine), collectChange(their));
+      }
+    } // Now push anything that may be remaining
+
+
+    insertTrailing(hunk, mine);
+    insertTrailing(hunk, their);
+    calcLineCount(hunk);
+  }
+
+  function mutualChange(hunk, mine, their) {
+    var myChanges = collectChange(mine),
+        theirChanges = collectChange(their);
+
+    if (allRemoves(myChanges) && allRemoves(theirChanges)) {
+      // Special case for remove changes that are supersets of one another
+      if (arrayStartsWith(myChanges, theirChanges) && skipRemoveSuperset(their, myChanges, myChanges.length - theirChanges.length)) {
+        var _hunk$lines3;
+
+        (_hunk$lines3 = hunk.lines).push.apply(_hunk$lines3, _toConsumableArray$1(myChanges));
+
+        return;
+      } else if (arrayStartsWith(theirChanges, myChanges) && skipRemoveSuperset(mine, theirChanges, theirChanges.length - myChanges.length)) {
+        var _hunk$lines4;
+
+        (_hunk$lines4 = hunk.lines).push.apply(_hunk$lines4, _toConsumableArray$1(theirChanges));
+
+        return;
+      }
+    } else if (arrayEqual(myChanges, theirChanges)) {
+      var _hunk$lines5;
+
+      (_hunk$lines5 = hunk.lines).push.apply(_hunk$lines5, _toConsumableArray$1(myChanges));
+
+      return;
+    }
+
+    conflict(hunk, myChanges, theirChanges);
+  }
+
+  function removal(hunk, mine, their, swap) {
+    var myChanges = collectChange(mine),
+        theirChanges = collectContext(their, myChanges);
+
+    if (theirChanges.merged) {
+      var _hunk$lines6;
+
+      (_hunk$lines6 = hunk.lines).push.apply(_hunk$lines6, _toConsumableArray$1(theirChanges.merged));
+    } else {
+      conflict(hunk, swap ? theirChanges : myChanges, swap ? myChanges : theirChanges);
+    }
+  }
+
+  function conflict(hunk, mine, their) {
+    hunk.conflict = true;
+    hunk.lines.push({
+      conflict: true,
+      mine: mine,
+      theirs: their
+    });
+  }
+
+  function insertLeading(hunk, insert, their) {
+    while (insert.offset < their.offset && insert.index < insert.lines.length) {
+      var line = insert.lines[insert.index++];
+      hunk.lines.push(line);
+      insert.offset++;
+    }
+  }
+
+  function insertTrailing(hunk, insert) {
+    while (insert.index < insert.lines.length) {
+      var line = insert.lines[insert.index++];
+      hunk.lines.push(line);
+    }
+  }
+
+  function collectChange(state) {
+    var ret = [],
+        operation = state.lines[state.index][0];
+
+    while (state.index < state.lines.length) {
+      var line = state.lines[state.index]; // Group additions that are immediately after subtractions and treat them as one "atomic" modify change.
+
+      if (operation === '-' && line[0] === '+') {
+        operation = '+';
+      }
+
+      if (operation === line[0]) {
+        ret.push(line);
+        state.index++;
+      } else {
+        break;
+      }
+    }
+
+    return ret;
+  }
+
+  function collectContext(state, matchChanges) {
+    var changes = [],
+        merged = [],
+        matchIndex = 0,
+        contextChanges = false,
+        conflicted = false;
+
+    while (matchIndex < matchChanges.length && state.index < state.lines.length) {
+      var change = state.lines[state.index],
+          match = matchChanges[matchIndex]; // Once we've hit our add, then we are done
+
+      if (match[0] === '+') {
+        break;
+      }
+
+      contextChanges = contextChanges || change[0] !== ' ';
+      merged.push(match);
+      matchIndex++; // Consume any additions in the other block as a conflict to attempt
+      // to pull in the remaining context after this
+
+      if (change[0] === '+') {
+        conflicted = true;
+
+        while (change[0] === '+') {
+          changes.push(change);
+          change = state.lines[++state.index];
+        }
+      }
+
+      if (match.substr(1) === change.substr(1)) {
+        changes.push(change);
+        state.index++;
+      } else {
+        conflicted = true;
+      }
+    }
+
+    if ((matchChanges[matchIndex] || '')[0] === '+' && contextChanges) {
+      conflicted = true;
+    }
+
+    if (conflicted) {
+      return changes;
+    }
+
+    while (matchIndex < matchChanges.length) {
+      merged.push(matchChanges[matchIndex++]);
+    }
+
+    return {
+      merged: merged,
+      changes: changes
+    };
+  }
+
+  function allRemoves(changes) {
+    return changes.reduce(function (prev, change) {
+      return prev && change[0] === '-';
+    }, true);
+  }
+
+  function skipRemoveSuperset(state, removeChanges, delta) {
+    for (var i = 0; i < delta; i++) {
+      var changeContent = removeChanges[removeChanges.length - delta + i].substr(1);
+
+      if (state.lines[state.index + i] !== ' ' + changeContent) {
+        return false;
+      }
+    }
+
+    state.index += delta;
+    return true;
+  }
+
+  function calcOldNewLineCount(lines) {
+    var oldLines = 0;
+    var newLines = 0;
+    lines.forEach(function (line) {
+      if (typeof line !== 'string') {
+        var myCount = calcOldNewLineCount(line.mine);
+        var theirCount = calcOldNewLineCount(line.theirs);
+
+        if (oldLines !== undefined) {
+          if (myCount.oldLines === theirCount.oldLines) {
+            oldLines += myCount.oldLines;
+          } else {
+            oldLines = undefined;
+          }
+        }
+
+        if (newLines !== undefined) {
+          if (myCount.newLines === theirCount.newLines) {
+            newLines += myCount.newLines;
+          } else {
+            newLines = undefined;
+          }
+        }
+      } else {
+        if (newLines !== undefined && (line[0] === '+' || line[0] === ' ')) {
+          newLines++;
+        }
+
+        if (oldLines !== undefined && (line[0] === '-' || line[0] === ' ')) {
+          oldLines++;
+        }
+      }
+    });
+    return {
+      oldLines: oldLines,
+      newLines: newLines
+    };
+  } // See: http://code.google.com/p/google-diff-match-patch/wiki/API
+
+
+  function convertChangesToDMP(changes) {
+    var ret = [],
+        change,
+        operation;
+
+    for (var i = 0; i < changes.length; i++) {
+      change = changes[i];
+
+      if (change.added) {
+        operation = 1;
+      } else if (change.removed) {
+        operation = -1;
+      } else {
+        operation = 0;
+      }
+
+      ret.push([operation, change.value]);
+    }
+
+    return ret;
+  }
+
+  function convertChangesToXML(changes) {
+    var ret = [];
+
+    for (var i = 0; i < changes.length; i++) {
+      var change = changes[i];
+
+      if (change.added) {
+        ret.push('<ins>');
+      } else if (change.removed) {
+        ret.push('<del>');
+      }
+
+      ret.push(escapeHTML(change.value));
+
+      if (change.added) {
+        ret.push('</ins>');
+      } else if (change.removed) {
+        ret.push('</del>');
+      }
+    }
+
+    return ret.join('');
+  }
+
+  function escapeHTML(s) {
+    var n = s;
+    n = n.replace(/&/g, '&amp;');
+    n = n.replace(/</g, '&lt;');
+    n = n.replace(/>/g, '&gt;');
+    n = n.replace(/"/g, '&quot;');
+    return n;
+  }
+
+  var index_es6 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    Diff: Diff,
+    diffChars: diffChars,
+    diffWords: diffWords,
+    diffWordsWithSpace: diffWordsWithSpace,
+    diffLines: diffLines,
+    diffTrimmedLines: diffTrimmedLines,
+    diffSentences: diffSentences,
+    diffCss: diffCss,
+    diffJson: diffJson,
+    diffArrays: diffArrays,
+    structuredPatch: structuredPatch,
+    createTwoFilesPatch: createTwoFilesPatch,
+    createPatch: createPatch,
+    applyPatch: applyPatch,
+    applyPatches: applyPatches,
+    parsePatch: parsePatch,
+    merge: merge,
+    convertChangesToDMP: convertChangesToDMP,
+    convertChangesToXML: convertChangesToXML,
+    canonicalize: canonicalize
+  });
+
+  var _shim_fs = {};
+
+  var _shim_fs$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    'default': _shim_fs
+  });
+
+  /*!
+   * normalize-path <https://github.com/jonschlinkert/normalize-path>
+   *
+   * Copyright (c) 2014-2018, Jon Schlinkert.
+   * Released under the MIT License.
+   */
+  var normalizePath = function normalizePath(path, stripTrailing) {
+    if (typeof path !== 'string') {
+      throw new TypeError('expected path to be a string');
+    }
+
+    if (path === '\\' || path === '/') return '/';
+    var len = path.length;
+    if (len <= 1) return path; // ensure that win32 namespaces has two leading slashes, so that the path is
+    // handled properly by the win32 version of path.parse() after being normalized
+    // https://msdn.microsoft.com/library/windows/desktop/aa365247(v=vs.85).aspx#namespaces
+
+    var prefix = '';
+
+    if (len > 4 && path[3] === '\\') {
+      var ch = path[2];
+
+      if ((ch === '?' || ch === '.') && path.slice(0, 2) === '\\\\') {
+        path = path.slice(2);
+        prefix = '//';
+      }
+    }
+
+    var segs = path.split(/[/\\]+/);
+
+    if (stripTrailing !== false && segs[segs.length - 1] === '') {
+      segs.pop();
+    }
+
+    return prefix + segs.join('/');
+  };
+
+  var global$1 = typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};
+
+  var lookup = [];
+  var revLookup = [];
+  var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
+  var inited = false;
+
+  function init() {
+    inited = true;
+    var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+    for (var i = 0, len = code.length; i < len; ++i) {
+      lookup[i] = code[i];
+      revLookup[code.charCodeAt(i)] = i;
+    }
+
+    revLookup['-'.charCodeAt(0)] = 62;
+    revLookup['_'.charCodeAt(0)] = 63;
+  }
+
+  function toByteArray(b64) {
+    if (!inited) {
+      init();
+    }
+
+    var i, j, l, tmp, placeHolders, arr;
+    var len = b64.length;
+
+    if (len % 4 > 0) {
+      throw new Error('Invalid string. Length must be a multiple of 4');
+    } // the number of equal signs (place holders)
+    // if there are two placeholders, than the two characters before it
+    // represent one byte
+    // if there is only one, then the three characters before it represent 2 bytes
+    // this is just a cheap hack to not do indexOf twice
+
+
+    placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0; // base64 is 4/3 + up to two characters of the original data
+
+    arr = new Arr(len * 3 / 4 - placeHolders); // if there are placeholders, only get up to the last complete 4 chars
+
+    l = placeHolders > 0 ? len - 4 : len;
+    var L = 0;
+
+    for (i = 0, j = 0; i < l; i += 4, j += 3) {
+      tmp = revLookup[b64.charCodeAt(i)] << 18 | revLookup[b64.charCodeAt(i + 1)] << 12 | revLookup[b64.charCodeAt(i + 2)] << 6 | revLookup[b64.charCodeAt(i + 3)];
+      arr[L++] = tmp >> 16 & 0xFF;
+      arr[L++] = tmp >> 8 & 0xFF;
+      arr[L++] = tmp & 0xFF;
+    }
+
+    if (placeHolders === 2) {
+      tmp = revLookup[b64.charCodeAt(i)] << 2 | revLookup[b64.charCodeAt(i + 1)] >> 4;
+      arr[L++] = tmp & 0xFF;
+    } else if (placeHolders === 1) {
+      tmp = revLookup[b64.charCodeAt(i)] << 10 | revLookup[b64.charCodeAt(i + 1)] << 4 | revLookup[b64.charCodeAt(i + 2)] >> 2;
+      arr[L++] = tmp >> 8 & 0xFF;
+      arr[L++] = tmp & 0xFF;
+    }
+
+    return arr;
+  }
+
+  function tripletToBase64(num) {
+    return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F];
+  }
+
+  function encodeChunk(uint8, start, end) {
+    var tmp;
+    var output = [];
+
+    for (var i = start; i < end; i += 3) {
+      tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + uint8[i + 2];
+      output.push(tripletToBase64(tmp));
+    }
+
+    return output.join('');
+  }
+
+  function fromByteArray(uint8) {
+    if (!inited) {
+      init();
+    }
+
+    var tmp;
+    var len = uint8.length;
+    var extraBytes = len % 3; // if we have 1 byte left, pad 2 bytes
+
+    var output = '';
+    var parts = [];
+    var maxChunkLength = 16383; // must be multiple of 3
+    // go through the array every three bytes, we'll deal with trailing stuff later
+
+    for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+      parts.push(encodeChunk(uint8, i, i + maxChunkLength > len2 ? len2 : i + maxChunkLength));
+    } // pad the end with zeros, but make sure to not forget the extra bytes
+
+
+    if (extraBytes === 1) {
+      tmp = uint8[len - 1];
+      output += lookup[tmp >> 2];
+      output += lookup[tmp << 4 & 0x3F];
+      output += '==';
+    } else if (extraBytes === 2) {
+      tmp = (uint8[len - 2] << 8) + uint8[len - 1];
+      output += lookup[tmp >> 10];
+      output += lookup[tmp >> 4 & 0x3F];
+      output += lookup[tmp << 2 & 0x3F];
+      output += '=';
+    }
+
+    parts.push(output);
+    return parts.join('');
+  }
+
+  function read(buffer, offset, isLE, mLen, nBytes) {
+    var e, m;
+    var eLen = nBytes * 8 - mLen - 1;
+    var eMax = (1 << eLen) - 1;
+    var eBias = eMax >> 1;
+    var nBits = -7;
+    var i = isLE ? nBytes - 1 : 0;
+    var d = isLE ? -1 : 1;
+    var s = buffer[offset + i];
+    i += d;
+    e = s & (1 << -nBits) - 1;
+    s >>= -nBits;
+    nBits += eLen;
+
+    for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+    m = e & (1 << -nBits) - 1;
+    e >>= -nBits;
+    nBits += mLen;
+
+    for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+    if (e === 0) {
+      e = 1 - eBias;
+    } else if (e === eMax) {
+      return m ? NaN : (s ? -1 : 1) * Infinity;
+    } else {
+      m = m + Math.pow(2, mLen);
+      e = e - eBias;
+    }
+
+    return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
+  }
+  function write(buffer, value, offset, isLE, mLen, nBytes) {
+    var e, m, c;
+    var eLen = nBytes * 8 - mLen - 1;
+    var eMax = (1 << eLen) - 1;
+    var eBias = eMax >> 1;
+    var rt = mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0;
+    var i = isLE ? 0 : nBytes - 1;
+    var d = isLE ? 1 : -1;
+    var s = value < 0 || value === 0 && 1 / value < 0 ? 1 : 0;
+    value = Math.abs(value);
+
+    if (isNaN(value) || value === Infinity) {
+      m = isNaN(value) ? 1 : 0;
+      e = eMax;
+    } else {
+      e = Math.floor(Math.log(value) / Math.LN2);
+
+      if (value * (c = Math.pow(2, -e)) < 1) {
+        e--;
+        c *= 2;
+      }
+
+      if (e + eBias >= 1) {
+        value += rt / c;
+      } else {
+        value += rt * Math.pow(2, 1 - eBias);
+      }
+
+      if (value * c >= 2) {
+        e++;
+        c /= 2;
+      }
+
+      if (e + eBias >= eMax) {
+        m = 0;
+        e = eMax;
+      } else if (e + eBias >= 1) {
+        m = (value * c - 1) * Math.pow(2, mLen);
+        e = e + eBias;
+      } else {
+        m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
+        e = 0;
+      }
+    }
+
+    for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+    e = e << mLen | m;
+    eLen += mLen;
+
+    for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+    buffer[offset + i - d] |= s * 128;
+  }
+
+  var toString = {}.toString;
+  var isArray = Array.isArray || function (arr) {
+    return toString.call(arr) == '[object Array]';
+  };
+
+  var INSPECT_MAX_BYTES = 50;
+  /**
+   * If `Buffer.TYPED_ARRAY_SUPPORT`:
+   *   === true    Use Uint8Array implementation (fastest)
+   *   === false   Use Object implementation (most compatible, even IE6)
+   *
+   * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+   * Opera 11.6+, iOS 4.2+.
+   *
+   * Due to various browser bugs, sometimes the Object implementation will be used even
+   * when the browser supports typed arrays.
+   *
+   * Note:
+   *
+   *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+   *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+   *
+   *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+   *
+   *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+   *     incorrect length in some situations.
+
+   * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+   * get the Object implementation, which is slower but behaves correctly.
+   */
+
+  Buffer.TYPED_ARRAY_SUPPORT = global$1.TYPED_ARRAY_SUPPORT !== undefined ? global$1.TYPED_ARRAY_SUPPORT : true;
+
+  function kMaxLength() {
+    return Buffer.TYPED_ARRAY_SUPPORT ? 0x7fffffff : 0x3fffffff;
+  }
+
+  function createBuffer(that, length) {
+    if (kMaxLength() < length) {
+      throw new RangeError('Invalid typed array length');
+    }
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      // Return an augmented `Uint8Array` instance, for best performance
+      that = new Uint8Array(length);
+      that.__proto__ = Buffer.prototype;
+    } else {
+      // Fallback: Return an object instance of the Buffer class
+      if (that === null) {
+        that = new Buffer(length);
+      }
+
+      that.length = length;
+    }
+
+    return that;
+  }
+  /**
+   * The Buffer constructor returns instances of `Uint8Array` that have their
+   * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+   * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+   * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+   * returns a single octet.
+   *
+   * The `Uint8Array` prototype remains unmodified.
+   */
+
+
+  function Buffer(arg, encodingOrOffset, length) {
+    if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+      return new Buffer(arg, encodingOrOffset, length);
+    } // Common case.
+
+
+    if (typeof arg === 'number') {
+      if (typeof encodingOrOffset === 'string') {
+        throw new Error('If encoding is specified then the first argument must be a string');
+      }
+
+      return allocUnsafe(this, arg);
+    }
+
+    return from(this, arg, encodingOrOffset, length);
+  }
+  Buffer.poolSize = 8192; // not used by this implementation
+  // TODO: Legacy, not needed anymore. Remove in next major version.
+
+  Buffer._augment = function (arr) {
+    arr.__proto__ = Buffer.prototype;
+    return arr;
+  };
+
+  function from(that, value, encodingOrOffset, length) {
+    if (typeof value === 'number') {
+      throw new TypeError('"value" argument must not be a number');
+    }
+
+    if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+      return fromArrayBuffer(that, value, encodingOrOffset, length);
+    }
+
+    if (typeof value === 'string') {
+      return fromString(that, value, encodingOrOffset);
+    }
+
+    return fromObject(that, value);
+  }
+  /**
+   * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+   * if value is a number.
+   * Buffer.from(str[, encoding])
+   * Buffer.from(array)
+   * Buffer.from(buffer)
+   * Buffer.from(arrayBuffer[, byteOffset[, length]])
+   **/
+
+
+  Buffer.from = function (value, encodingOrOffset, length) {
+    return from(null, value, encodingOrOffset, length);
+  };
+
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    Buffer.prototype.__proto__ = Uint8Array.prototype;
+    Buffer.__proto__ = Uint8Array;
+  }
+
+  function assertSize(size) {
+    if (typeof size !== 'number') {
+      throw new TypeError('"size" argument must be a number');
+    } else if (size < 0) {
+      throw new RangeError('"size" argument must not be negative');
+    }
+  }
+
+  function alloc(that, size, fill, encoding) {
+    assertSize(size);
+
+    if (size <= 0) {
+      return createBuffer(that, size);
+    }
+
+    if (fill !== undefined) {
+      // Only pay attention to encoding if it's a string. This
+      // prevents accidentally sending in a number that would
+      // be interpretted as a start offset.
+      return typeof encoding === 'string' ? createBuffer(that, size).fill(fill, encoding) : createBuffer(that, size).fill(fill);
+    }
+
+    return createBuffer(that, size);
+  }
+  /**
+   * Creates a new filled Buffer instance.
+   * alloc(size[, fill[, encoding]])
+   **/
+
+
+  Buffer.alloc = function (size, fill, encoding) {
+    return alloc(null, size, fill, encoding);
+  };
+
+  function allocUnsafe(that, size) {
+    assertSize(size);
+    that = createBuffer(that, size < 0 ? 0 : checked(size) | 0);
+
+    if (!Buffer.TYPED_ARRAY_SUPPORT) {
+      for (var i = 0; i < size; ++i) {
+        that[i] = 0;
+      }
+    }
+
+    return that;
+  }
+  /**
+   * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+   * */
+
+
+  Buffer.allocUnsafe = function (size) {
+    return allocUnsafe(null, size);
+  };
+  /**
+   * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+   */
+
+
+  Buffer.allocUnsafeSlow = function (size) {
+    return allocUnsafe(null, size);
+  };
+
+  function fromString(that, string, encoding) {
+    if (typeof encoding !== 'string' || encoding === '') {
+      encoding = 'utf8';
+    }
+
+    if (!Buffer.isEncoding(encoding)) {
+      throw new TypeError('"encoding" must be a valid string encoding');
+    }
+
+    var length = byteLength(string, encoding) | 0;
+    that = createBuffer(that, length);
+    var actual = that.write(string, encoding);
+
+    if (actual !== length) {
+      // Writing a hex string, for example, that contains invalid characters will
+      // cause everything after the first invalid character to be ignored. (e.g.
+      // 'abxxcd' will be treated as 'ab')
+      that = that.slice(0, actual);
+    }
+
+    return that;
+  }
+
+  function fromArrayLike(that, array) {
+    var length = array.length < 0 ? 0 : checked(array.length) | 0;
+    that = createBuffer(that, length);
+
+    for (var i = 0; i < length; i += 1) {
+      that[i] = array[i] & 255;
+    }
+
+    return that;
+  }
+
+  function fromArrayBuffer(that, array, byteOffset, length) {
+    array.byteLength; // this throws if `array` is not a valid ArrayBuffer
+
+    if (byteOffset < 0 || array.byteLength < byteOffset) {
+      throw new RangeError('\'offset\' is out of bounds');
+    }
+
+    if (array.byteLength < byteOffset + (length || 0)) {
+      throw new RangeError('\'length\' is out of bounds');
+    }
+
+    if (byteOffset === undefined && length === undefined) {
+      array = new Uint8Array(array);
+    } else if (length === undefined) {
+      array = new Uint8Array(array, byteOffset);
+    } else {
+      array = new Uint8Array(array, byteOffset, length);
+    }
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      // Return an augmented `Uint8Array` instance, for best performance
+      that = array;
+      that.__proto__ = Buffer.prototype;
+    } else {
+      // Fallback: Return an object instance of the Buffer class
+      that = fromArrayLike(that, array);
+    }
+
+    return that;
+  }
+
+  function fromObject(that, obj) {
+    if (internalIsBuffer(obj)) {
+      var len = checked(obj.length) | 0;
+      that = createBuffer(that, len);
+
+      if (that.length === 0) {
+        return that;
+      }
+
+      obj.copy(that, 0, 0, len);
+      return that;
+    }
+
+    if (obj) {
+      if (typeof ArrayBuffer !== 'undefined' && obj.buffer instanceof ArrayBuffer || 'length' in obj) {
+        if (typeof obj.length !== 'number' || isnan(obj.length)) {
+          return createBuffer(that, 0);
+        }
+
+        return fromArrayLike(that, obj);
+      }
+
+      if (obj.type === 'Buffer' && isArray(obj.data)) {
+        return fromArrayLike(that, obj.data);
+      }
+    }
+
+    throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.');
+  }
+
+  function checked(length) {
+    // Note: cannot use `length < kMaxLength()` here because that fails when
+    // length is NaN (which is otherwise coerced to zero.)
+    if (length >= kMaxLength()) {
+      throw new RangeError('Attempt to allocate Buffer larger than maximum ' + 'size: 0x' + kMaxLength().toString(16) + ' bytes');
+    }
+
+    return length | 0;
+  }
+  Buffer.isBuffer = isBuffer;
+
+  function internalIsBuffer(b) {
+    return !!(b != null && b._isBuffer);
+  }
+
+  Buffer.compare = function compare(a, b) {
+    if (!internalIsBuffer(a) || !internalIsBuffer(b)) {
+      throw new TypeError('Arguments must be Buffers');
+    }
+
+    if (a === b) return 0;
+    var x = a.length;
+    var y = b.length;
+
+    for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+      if (a[i] !== b[i]) {
+        x = a[i];
+        y = b[i];
+        break;
+      }
+    }
+
+    if (x < y) return -1;
+    if (y < x) return 1;
+    return 0;
+  };
+
+  Buffer.isEncoding = function isEncoding(encoding) {
+    switch (String(encoding).toLowerCase()) {
+      case 'hex':
+      case 'utf8':
+      case 'utf-8':
+      case 'ascii':
+      case 'latin1':
+      case 'binary':
+      case 'base64':
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return true;
+
+      default:
+        return false;
+    }
+  };
+
+  Buffer.concat = function concat(list, length) {
+    if (!isArray(list)) {
+      throw new TypeError('"list" argument must be an Array of Buffers');
+    }
+
+    if (list.length === 0) {
+      return Buffer.alloc(0);
+    }
+
+    var i;
+
+    if (length === undefined) {
+      length = 0;
+
+      for (i = 0; i < list.length; ++i) {
+        length += list[i].length;
+      }
+    }
+
+    var buffer = Buffer.allocUnsafe(length);
+    var pos = 0;
+
+    for (i = 0; i < list.length; ++i) {
+      var buf = list[i];
+
+      if (!internalIsBuffer(buf)) {
+        throw new TypeError('"list" argument must be an Array of Buffers');
+      }
+
+      buf.copy(buffer, pos);
+      pos += buf.length;
+    }
+
+    return buffer;
+  };
+
+  function byteLength(string, encoding) {
+    if (internalIsBuffer(string)) {
+      return string.length;
+    }
+
+    if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' && (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+      return string.byteLength;
+    }
+
+    if (typeof string !== 'string') {
+      string = '' + string;
+    }
+
+    var len = string.length;
+    if (len === 0) return 0; // Use a for loop to avoid recursion
+
+    var loweredCase = false;
+
+    for (;;) {
+      switch (encoding) {
+        case 'ascii':
+        case 'latin1':
+        case 'binary':
+          return len;
+
+        case 'utf8':
+        case 'utf-8':
+        case undefined:
+          return utf8ToBytes(string).length;
+
+        case 'ucs2':
+        case 'ucs-2':
+        case 'utf16le':
+        case 'utf-16le':
+          return len * 2;
+
+        case 'hex':
+          return len >>> 1;
+
+        case 'base64':
+          return base64ToBytes(string).length;
+
+        default:
+          if (loweredCase) return utf8ToBytes(string).length; // assume utf8
+
+          encoding = ('' + encoding).toLowerCase();
+          loweredCase = true;
+      }
+    }
+  }
+
+  Buffer.byteLength = byteLength;
+
+  function slowToString(encoding, start, end) {
+    var loweredCase = false; // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+    // property of a typed array.
+    // This behaves neither like String nor Uint8Array in that we set start/end
+    // to their upper/lower bounds if the value passed is out of range.
+    // undefined is handled specially as per ECMA-262 6th Edition,
+    // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+
+    if (start === undefined || start < 0) {
+      start = 0;
+    } // Return early if start > this.length. Done here to prevent potential uint32
+    // coercion fail below.
+
+
+    if (start > this.length) {
+      return '';
+    }
+
+    if (end === undefined || end > this.length) {
+      end = this.length;
+    }
+
+    if (end <= 0) {
+      return '';
+    } // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+
+
+    end >>>= 0;
+    start >>>= 0;
+
+    if (end <= start) {
+      return '';
+    }
+
+    if (!encoding) encoding = 'utf8';
+
+    while (true) {
+      switch (encoding) {
+        case 'hex':
+          return hexSlice(this, start, end);
+
+        case 'utf8':
+        case 'utf-8':
+          return utf8Slice(this, start, end);
+
+        case 'ascii':
+          return asciiSlice(this, start, end);
+
+        case 'latin1':
+        case 'binary':
+          return latin1Slice(this, start, end);
+
+        case 'base64':
+          return base64Slice(this, start, end);
+
+        case 'ucs2':
+        case 'ucs-2':
+        case 'utf16le':
+        case 'utf-16le':
+          return utf16leSlice(this, start, end);
+
+        default:
+          if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding);
+          encoding = (encoding + '').toLowerCase();
+          loweredCase = true;
+      }
+    }
+  } // The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+  // Buffer instances.
+
+
+  Buffer.prototype._isBuffer = true;
+
+  function swap(b, n, m) {
+    var i = b[n];
+    b[n] = b[m];
+    b[m] = i;
+  }
+
+  Buffer.prototype.swap16 = function swap16() {
+    var len = this.length;
+
+    if (len % 2 !== 0) {
+      throw new RangeError('Buffer size must be a multiple of 16-bits');
+    }
+
+    for (var i = 0; i < len; i += 2) {
+      swap(this, i, i + 1);
+    }
+
+    return this;
+  };
+
+  Buffer.prototype.swap32 = function swap32() {
+    var len = this.length;
+
+    if (len % 4 !== 0) {
+      throw new RangeError('Buffer size must be a multiple of 32-bits');
+    }
+
+    for (var i = 0; i < len; i += 4) {
+      swap(this, i, i + 3);
+      swap(this, i + 1, i + 2);
+    }
+
+    return this;
+  };
+
+  Buffer.prototype.swap64 = function swap64() {
+    var len = this.length;
+
+    if (len % 8 !== 0) {
+      throw new RangeError('Buffer size must be a multiple of 64-bits');
+    }
+
+    for (var i = 0; i < len; i += 8) {
+      swap(this, i, i + 7);
+      swap(this, i + 1, i + 6);
+      swap(this, i + 2, i + 5);
+      swap(this, i + 3, i + 4);
+    }
+
+    return this;
+  };
+
+  Buffer.prototype.toString = function toString() {
+    var length = this.length | 0;
+    if (length === 0) return '';
+    if (arguments.length === 0) return utf8Slice(this, 0, length);
+    return slowToString.apply(this, arguments);
+  };
+
+  Buffer.prototype.equals = function equals(b) {
+    if (!internalIsBuffer(b)) throw new TypeError('Argument must be a Buffer');
+    if (this === b) return true;
+    return Buffer.compare(this, b) === 0;
+  };
+
+  Buffer.prototype.inspect = function inspect() {
+    var str = '';
+    var max = INSPECT_MAX_BYTES;
+
+    if (this.length > 0) {
+      str = this.toString('hex', 0, max).match(/.{2}/g).join(' ');
+      if (this.length > max) str += ' ... ';
+    }
+
+    return '<Buffer ' + str + '>';
+  };
+
+  Buffer.prototype.compare = function compare(target, start, end, thisStart, thisEnd) {
+    if (!internalIsBuffer(target)) {
+      throw new TypeError('Argument must be a Buffer');
+    }
+
+    if (start === undefined) {
+      start = 0;
+    }
+
+    if (end === undefined) {
+      end = target ? target.length : 0;
+    }
+
+    if (thisStart === undefined) {
+      thisStart = 0;
+    }
+
+    if (thisEnd === undefined) {
+      thisEnd = this.length;
+    }
+
+    if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+      throw new RangeError('out of range index');
+    }
+
+    if (thisStart >= thisEnd && start >= end) {
+      return 0;
+    }
+
+    if (thisStart >= thisEnd) {
+      return -1;
+    }
+
+    if (start >= end) {
+      return 1;
+    }
+
+    start >>>= 0;
+    end >>>= 0;
+    thisStart >>>= 0;
+    thisEnd >>>= 0;
+    if (this === target) return 0;
+    var x = thisEnd - thisStart;
+    var y = end - start;
+    var len = Math.min(x, y);
+    var thisCopy = this.slice(thisStart, thisEnd);
+    var targetCopy = target.slice(start, end);
+
+    for (var i = 0; i < len; ++i) {
+      if (thisCopy[i] !== targetCopy[i]) {
+        x = thisCopy[i];
+        y = targetCopy[i];
+        break;
+      }
+    }
+
+    if (x < y) return -1;
+    if (y < x) return 1;
+    return 0;
+  }; // Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+  // OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+  //
+  // Arguments:
+  // - buffer - a Buffer to search
+  // - val - a string, Buffer, or number
+  // - byteOffset - an index into `buffer`; will be clamped to an int32
+  // - encoding - an optional encoding, relevant is val is a string
+  // - dir - true for indexOf, false for lastIndexOf
+
+
+  function bidirectionalIndexOf(buffer, val, byteOffset, encoding, dir) {
+    // Empty buffer means no match
+    if (buffer.length === 0) return -1; // Normalize byteOffset
+
+    if (typeof byteOffset === 'string') {
+      encoding = byteOffset;
+      byteOffset = 0;
+    } else if (byteOffset > 0x7fffffff) {
+      byteOffset = 0x7fffffff;
+    } else if (byteOffset < -0x80000000) {
+      byteOffset = -0x80000000;
+    }
+
+    byteOffset = +byteOffset; // Coerce to Number.
+
+    if (isNaN(byteOffset)) {
+      // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+      byteOffset = dir ? 0 : buffer.length - 1;
+    } // Normalize byteOffset: negative offsets start from the end of the buffer
+
+
+    if (byteOffset < 0) byteOffset = buffer.length + byteOffset;
+
+    if (byteOffset >= buffer.length) {
+      if (dir) return -1;else byteOffset = buffer.length - 1;
+    } else if (byteOffset < 0) {
+      if (dir) byteOffset = 0;else return -1;
+    } // Normalize val
+
+
+    if (typeof val === 'string') {
+      val = Buffer.from(val, encoding);
+    } // Finally, search either indexOf (if dir is true) or lastIndexOf
+
+
+    if (internalIsBuffer(val)) {
+      // Special case: looking for empty string/buffer always fails
+      if (val.length === 0) {
+        return -1;
+      }
+
+      return arrayIndexOf(buffer, val, byteOffset, encoding, dir);
+    } else if (typeof val === 'number') {
+      val = val & 0xFF; // Search for a byte value [0-255]
+
+      if (Buffer.TYPED_ARRAY_SUPPORT && typeof Uint8Array.prototype.indexOf === 'function') {
+        if (dir) {
+          return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset);
+        } else {
+          return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset);
+        }
+      }
+
+      return arrayIndexOf(buffer, [val], byteOffset, encoding, dir);
+    }
+
+    throw new TypeError('val must be string, number or Buffer');
+  }
+
+  function arrayIndexOf(arr, val, byteOffset, encoding, dir) {
+    var indexSize = 1;
+    var arrLength = arr.length;
+    var valLength = val.length;
+
+    if (encoding !== undefined) {
+      encoding = String(encoding).toLowerCase();
+
+      if (encoding === 'ucs2' || encoding === 'ucs-2' || encoding === 'utf16le' || encoding === 'utf-16le') {
+        if (arr.length < 2 || val.length < 2) {
+          return -1;
+        }
+
+        indexSize = 2;
+        arrLength /= 2;
+        valLength /= 2;
+        byteOffset /= 2;
+      }
+    }
+
+    function read(buf, i) {
+      if (indexSize === 1) {
+        return buf[i];
+      } else {
+        return buf.readUInt16BE(i * indexSize);
+      }
+    }
+
+    var i;
+
+    if (dir) {
+      var foundIndex = -1;
+
+      for (i = byteOffset; i < arrLength; i++) {
+        if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+          if (foundIndex === -1) foundIndex = i;
+          if (i - foundIndex + 1 === valLength) return foundIndex * indexSize;
+        } else {
+          if (foundIndex !== -1) i -= i - foundIndex;
+          foundIndex = -1;
+        }
+      }
+    } else {
+      if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength;
+
+      for (i = byteOffset; i >= 0; i--) {
+        var found = true;
+
+        for (var j = 0; j < valLength; j++) {
+          if (read(arr, i + j) !== read(val, j)) {
+            found = false;
+            break;
+          }
+        }
+
+        if (found) return i;
+      }
+    }
+
+    return -1;
+  }
+
+  Buffer.prototype.includes = function includes(val, byteOffset, encoding) {
+    return this.indexOf(val, byteOffset, encoding) !== -1;
+  };
+
+  Buffer.prototype.indexOf = function indexOf(val, byteOffset, encoding) {
+    return bidirectionalIndexOf(this, val, byteOffset, encoding, true);
+  };
+
+  Buffer.prototype.lastIndexOf = function lastIndexOf(val, byteOffset, encoding) {
+    return bidirectionalIndexOf(this, val, byteOffset, encoding, false);
+  };
+
+  function hexWrite(buf, string, offset, length) {
+    offset = Number(offset) || 0;
+    var remaining = buf.length - offset;
+
+    if (!length) {
+      length = remaining;
+    } else {
+      length = Number(length);
+
+      if (length > remaining) {
+        length = remaining;
+      }
+    } // must be an even number of digits
+
+
+    var strLen = string.length;
+    if (strLen % 2 !== 0) throw new TypeError('Invalid hex string');
+
+    if (length > strLen / 2) {
+      length = strLen / 2;
+    }
+
+    for (var i = 0; i < length; ++i) {
+      var parsed = parseInt(string.substr(i * 2, 2), 16);
+      if (isNaN(parsed)) return i;
+      buf[offset + i] = parsed;
+    }
+
+    return i;
+  }
+
+  function utf8Write(buf, string, offset, length) {
+    return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length);
+  }
+
+  function asciiWrite(buf, string, offset, length) {
+    return blitBuffer(asciiToBytes(string), buf, offset, length);
+  }
+
+  function latin1Write(buf, string, offset, length) {
+    return asciiWrite(buf, string, offset, length);
+  }
+
+  function base64Write(buf, string, offset, length) {
+    return blitBuffer(base64ToBytes(string), buf, offset, length);
+  }
+
+  function ucs2Write(buf, string, offset, length) {
+    return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length);
+  }
+
+  Buffer.prototype.write = function write(string, offset, length, encoding) {
+    // Buffer#write(string)
+    if (offset === undefined) {
+      encoding = 'utf8';
+      length = this.length;
+      offset = 0; // Buffer#write(string, encoding)
+    } else if (length === undefined && typeof offset === 'string') {
+      encoding = offset;
+      length = this.length;
+      offset = 0; // Buffer#write(string, offset[, length][, encoding])
+    } else if (isFinite(offset)) {
+      offset = offset | 0;
+
+      if (isFinite(length)) {
+        length = length | 0;
+        if (encoding === undefined) encoding = 'utf8';
+      } else {
+        encoding = length;
+        length = undefined;
+      } // legacy write(string, encoding, offset, length) - remove in v0.13
+
+    } else {
+      throw new Error('Buffer.write(string, encoding, offset[, length]) is no longer supported');
+    }
+
+    var remaining = this.length - offset;
+    if (length === undefined || length > remaining) length = remaining;
+
+    if (string.length > 0 && (length < 0 || offset < 0) || offset > this.length) {
+      throw new RangeError('Attempt to write outside buffer bounds');
+    }
+
+    if (!encoding) encoding = 'utf8';
+    var loweredCase = false;
+
+    for (;;) {
+      switch (encoding) {
+        case 'hex':
+          return hexWrite(this, string, offset, length);
+
+        case 'utf8':
+        case 'utf-8':
+          return utf8Write(this, string, offset, length);
+
+        case 'ascii':
+          return asciiWrite(this, string, offset, length);
+
+        case 'latin1':
+        case 'binary':
+          return latin1Write(this, string, offset, length);
+
+        case 'base64':
+          // Warning: maxLength not taken into account in base64Write
+          return base64Write(this, string, offset, length);
+
+        case 'ucs2':
+        case 'ucs-2':
+        case 'utf16le':
+        case 'utf-16le':
+          return ucs2Write(this, string, offset, length);
+
+        default:
+          if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding);
+          encoding = ('' + encoding).toLowerCase();
+          loweredCase = true;
+      }
+    }
+  };
+
+  Buffer.prototype.toJSON = function toJSON() {
+    return {
+      type: 'Buffer',
+      data: Array.prototype.slice.call(this._arr || this, 0)
+    };
+  };
+
+  function base64Slice(buf, start, end) {
+    if (start === 0 && end === buf.length) {
+      return fromByteArray(buf);
+    } else {
+      return fromByteArray(buf.slice(start, end));
+    }
+  }
+
+  function utf8Slice(buf, start, end) {
+    end = Math.min(buf.length, end);
+    var res = [];
+    var i = start;
+
+    while (i < end) {
+      var firstByte = buf[i];
+      var codePoint = null;
+      var bytesPerSequence = firstByte > 0xEF ? 4 : firstByte > 0xDF ? 3 : firstByte > 0xBF ? 2 : 1;
+
+      if (i + bytesPerSequence <= end) {
+        var secondByte, thirdByte, fourthByte, tempCodePoint;
+
+        switch (bytesPerSequence) {
+          case 1:
+            if (firstByte < 0x80) {
+              codePoint = firstByte;
+            }
+
+            break;
+
+          case 2:
+            secondByte = buf[i + 1];
+
+            if ((secondByte & 0xC0) === 0x80) {
+              tempCodePoint = (firstByte & 0x1F) << 0x6 | secondByte & 0x3F;
+
+              if (tempCodePoint > 0x7F) {
+                codePoint = tempCodePoint;
+              }
+            }
+
+            break;
+
+          case 3:
+            secondByte = buf[i + 1];
+            thirdByte = buf[i + 2];
+
+            if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+              tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | thirdByte & 0x3F;
+
+              if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+                codePoint = tempCodePoint;
+              }
+            }
+
+            break;
+
+          case 4:
+            secondByte = buf[i + 1];
+            thirdByte = buf[i + 2];
+            fourthByte = buf[i + 3];
+
+            if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+              tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | fourthByte & 0x3F;
+
+              if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+                codePoint = tempCodePoint;
+              }
+            }
+
+        }
+      }
+
+      if (codePoint === null) {
+        // we did not generate a valid codePoint so insert a
+        // replacement char (U+FFFD) and advance only 1 byte
+        codePoint = 0xFFFD;
+        bytesPerSequence = 1;
+      } else if (codePoint > 0xFFFF) {
+        // encode to utf16 (surrogate pair dance)
+        codePoint -= 0x10000;
+        res.push(codePoint >>> 10 & 0x3FF | 0xD800);
+        codePoint = 0xDC00 | codePoint & 0x3FF;
+      }
+
+      res.push(codePoint);
+      i += bytesPerSequence;
+    }
+
+    return decodeCodePointsArray(res);
+  } // Based on http://stackoverflow.com/a/22747272/680742, the browser with
+  // the lowest limit is Chrome, with 0x10000 args.
+  // We go 1 magnitude less, for safety
+
+
+  var MAX_ARGUMENTS_LENGTH = 0x1000;
+
+  function decodeCodePointsArray(codePoints) {
+    var len = codePoints.length;
+
+    if (len <= MAX_ARGUMENTS_LENGTH) {
+      return String.fromCharCode.apply(String, codePoints); // avoid extra slice()
+    } // Decode in chunks to avoid "call stack size exceeded".
+
+
+    var res = '';
+    var i = 0;
+
+    while (i < len) {
+      res += String.fromCharCode.apply(String, codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH));
+    }
+
+    return res;
+  }
+
+  function asciiSlice(buf, start, end) {
+    var ret = '';
+    end = Math.min(buf.length, end);
+
+    for (var i = start; i < end; ++i) {
+      ret += String.fromCharCode(buf[i] & 0x7F);
+    }
+
+    return ret;
+  }
+
+  function latin1Slice(buf, start, end) {
+    var ret = '';
+    end = Math.min(buf.length, end);
+
+    for (var i = start; i < end; ++i) {
+      ret += String.fromCharCode(buf[i]);
+    }
+
+    return ret;
+  }
+
+  function hexSlice(buf, start, end) {
+    var len = buf.length;
+    if (!start || start < 0) start = 0;
+    if (!end || end < 0 || end > len) end = len;
+    var out = '';
+
+    for (var i = start; i < end; ++i) {
+      out += toHex(buf[i]);
+    }
+
+    return out;
+  }
+
+  function utf16leSlice(buf, start, end) {
+    var bytes = buf.slice(start, end);
+    var res = '';
+
+    for (var i = 0; i < bytes.length; i += 2) {
+      res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256);
+    }
+
+    return res;
+  }
+
+  Buffer.prototype.slice = function slice(start, end) {
+    var len = this.length;
+    start = ~~start;
+    end = end === undefined ? len : ~~end;
+
+    if (start < 0) {
+      start += len;
+      if (start < 0) start = 0;
+    } else if (start > len) {
+      start = len;
+    }
+
+    if (end < 0) {
+      end += len;
+      if (end < 0) end = 0;
+    } else if (end > len) {
+      end = len;
+    }
+
+    if (end < start) end = start;
+    var newBuf;
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      newBuf = this.subarray(start, end);
+      newBuf.__proto__ = Buffer.prototype;
+    } else {
+      var sliceLen = end - start;
+      newBuf = new Buffer(sliceLen, undefined);
+
+      for (var i = 0; i < sliceLen; ++i) {
+        newBuf[i] = this[i + start];
+      }
+    }
+
+    return newBuf;
+  };
+  /*
+   * Need to make sure that buffer isn't trying to write out of bounds.
+   */
+
+
+  function checkOffset(offset, ext, length) {
+    if (offset % 1 !== 0 || offset < 0) throw new RangeError('offset is not uint');
+    if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length');
+  }
+
+  Buffer.prototype.readUIntLE = function readUIntLE(offset, byteLength, noAssert) {
+    offset = offset | 0;
+    byteLength = byteLength | 0;
+    if (!noAssert) checkOffset(offset, byteLength, this.length);
+    var val = this[offset];
+    var mul = 1;
+    var i = 0;
+
+    while (++i < byteLength && (mul *= 0x100)) {
+      val += this[offset + i] * mul;
+    }
+
+    return val;
+  };
+
+  Buffer.prototype.readUIntBE = function readUIntBE(offset, byteLength, noAssert) {
+    offset = offset | 0;
+    byteLength = byteLength | 0;
+
+    if (!noAssert) {
+      checkOffset(offset, byteLength, this.length);
+    }
+
+    var val = this[offset + --byteLength];
+    var mul = 1;
+
+    while (byteLength > 0 && (mul *= 0x100)) {
+      val += this[offset + --byteLength] * mul;
+    }
+
+    return val;
+  };
+
+  Buffer.prototype.readUInt8 = function readUInt8(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 1, this.length);
+    return this[offset];
+  };
+
+  Buffer.prototype.readUInt16LE = function readUInt16LE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 2, this.length);
+    return this[offset] | this[offset + 1] << 8;
+  };
+
+  Buffer.prototype.readUInt16BE = function readUInt16BE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 2, this.length);
+    return this[offset] << 8 | this[offset + 1];
+  };
+
+  Buffer.prototype.readUInt32LE = function readUInt32LE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 4, this.length);
+    return (this[offset] | this[offset + 1] << 8 | this[offset + 2] << 16) + this[offset + 3] * 0x1000000;
+  };
+
+  Buffer.prototype.readUInt32BE = function readUInt32BE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 4, this.length);
+    return this[offset] * 0x1000000 + (this[offset + 1] << 16 | this[offset + 2] << 8 | this[offset + 3]);
+  };
+
+  Buffer.prototype.readIntLE = function readIntLE(offset, byteLength, noAssert) {
+    offset = offset | 0;
+    byteLength = byteLength | 0;
+    if (!noAssert) checkOffset(offset, byteLength, this.length);
+    var val = this[offset];
+    var mul = 1;
+    var i = 0;
+
+    while (++i < byteLength && (mul *= 0x100)) {
+      val += this[offset + i] * mul;
+    }
+
+    mul *= 0x80;
+    if (val >= mul) val -= Math.pow(2, 8 * byteLength);
+    return val;
+  };
+
+  Buffer.prototype.readIntBE = function readIntBE(offset, byteLength, noAssert) {
+    offset = offset | 0;
+    byteLength = byteLength | 0;
+    if (!noAssert) checkOffset(offset, byteLength, this.length);
+    var i = byteLength;
+    var mul = 1;
+    var val = this[offset + --i];
+
+    while (i > 0 && (mul *= 0x100)) {
+      val += this[offset + --i] * mul;
+    }
+
+    mul *= 0x80;
+    if (val >= mul) val -= Math.pow(2, 8 * byteLength);
+    return val;
+  };
+
+  Buffer.prototype.readInt8 = function readInt8(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 1, this.length);
+    if (!(this[offset] & 0x80)) return this[offset];
+    return (0xff - this[offset] + 1) * -1;
+  };
+
+  Buffer.prototype.readInt16LE = function readInt16LE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 2, this.length);
+    var val = this[offset] | this[offset + 1] << 8;
+    return val & 0x8000 ? val | 0xFFFF0000 : val;
+  };
+
+  Buffer.prototype.readInt16BE = function readInt16BE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 2, this.length);
+    var val = this[offset + 1] | this[offset] << 8;
+    return val & 0x8000 ? val | 0xFFFF0000 : val;
+  };
+
+  Buffer.prototype.readInt32LE = function readInt32LE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 4, this.length);
+    return this[offset] | this[offset + 1] << 8 | this[offset + 2] << 16 | this[offset + 3] << 24;
+  };
+
+  Buffer.prototype.readInt32BE = function readInt32BE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 4, this.length);
+    return this[offset] << 24 | this[offset + 1] << 16 | this[offset + 2] << 8 | this[offset + 3];
+  };
+
+  Buffer.prototype.readFloatLE = function readFloatLE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 4, this.length);
+    return read(this, offset, true, 23, 4);
+  };
+
+  Buffer.prototype.readFloatBE = function readFloatBE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 4, this.length);
+    return read(this, offset, false, 23, 4);
+  };
+
+  Buffer.prototype.readDoubleLE = function readDoubleLE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 8, this.length);
+    return read(this, offset, true, 52, 8);
+  };
+
+  Buffer.prototype.readDoubleBE = function readDoubleBE(offset, noAssert) {
+    if (!noAssert) checkOffset(offset, 8, this.length);
+    return read(this, offset, false, 52, 8);
+  };
+
+  function checkInt(buf, value, offset, ext, max, min) {
+    if (!internalIsBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance');
+    if (value > max || value < min) throw new RangeError('"value" argument is out of bounds');
+    if (offset + ext > buf.length) throw new RangeError('Index out of range');
+  }
+
+  Buffer.prototype.writeUIntLE = function writeUIntLE(value, offset, byteLength, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    byteLength = byteLength | 0;
+
+    if (!noAssert) {
+      var maxBytes = Math.pow(2, 8 * byteLength) - 1;
+      checkInt(this, value, offset, byteLength, maxBytes, 0);
+    }
+
+    var mul = 1;
+    var i = 0;
+    this[offset] = value & 0xFF;
+
+    while (++i < byteLength && (mul *= 0x100)) {
+      this[offset + i] = value / mul & 0xFF;
+    }
+
+    return offset + byteLength;
+  };
+
+  Buffer.prototype.writeUIntBE = function writeUIntBE(value, offset, byteLength, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    byteLength = byteLength | 0;
+
+    if (!noAssert) {
+      var maxBytes = Math.pow(2, 8 * byteLength) - 1;
+      checkInt(this, value, offset, byteLength, maxBytes, 0);
+    }
+
+    var i = byteLength - 1;
+    var mul = 1;
+    this[offset + i] = value & 0xFF;
+
+    while (--i >= 0 && (mul *= 0x100)) {
+      this[offset + i] = value / mul & 0xFF;
+    }
+
+    return offset + byteLength;
+  };
+
+  Buffer.prototype.writeUInt8 = function writeUInt8(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0);
+    if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value);
+    this[offset] = value & 0xff;
+    return offset + 1;
+  };
+
+  function objectWriteUInt16(buf, value, offset, littleEndian) {
+    if (value < 0) value = 0xffff + value + 1;
+
+    for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
+      buf[offset + i] = (value & 0xff << 8 * (littleEndian ? i : 1 - i)) >>> (littleEndian ? i : 1 - i) * 8;
+    }
+  }
+
+  Buffer.prototype.writeUInt16LE = function writeUInt16LE(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0);
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      this[offset] = value & 0xff;
+      this[offset + 1] = value >>> 8;
+    } else {
+      objectWriteUInt16(this, value, offset, true);
+    }
+
+    return offset + 2;
+  };
+
+  Buffer.prototype.writeUInt16BE = function writeUInt16BE(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0);
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      this[offset] = value >>> 8;
+      this[offset + 1] = value & 0xff;
+    } else {
+      objectWriteUInt16(this, value, offset, false);
+    }
+
+    return offset + 2;
+  };
+
+  function objectWriteUInt32(buf, value, offset, littleEndian) {
+    if (value < 0) value = 0xffffffff + value + 1;
+
+    for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
+      buf[offset + i] = value >>> (littleEndian ? i : 3 - i) * 8 & 0xff;
+    }
+  }
+
+  Buffer.prototype.writeUInt32LE = function writeUInt32LE(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0);
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      this[offset + 3] = value >>> 24;
+      this[offset + 2] = value >>> 16;
+      this[offset + 1] = value >>> 8;
+      this[offset] = value & 0xff;
+    } else {
+      objectWriteUInt32(this, value, offset, true);
+    }
+
+    return offset + 4;
+  };
+
+  Buffer.prototype.writeUInt32BE = function writeUInt32BE(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0);
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      this[offset] = value >>> 24;
+      this[offset + 1] = value >>> 16;
+      this[offset + 2] = value >>> 8;
+      this[offset + 3] = value & 0xff;
+    } else {
+      objectWriteUInt32(this, value, offset, false);
+    }
+
+    return offset + 4;
+  };
+
+  Buffer.prototype.writeIntLE = function writeIntLE(value, offset, byteLength, noAssert) {
+    value = +value;
+    offset = offset | 0;
+
+    if (!noAssert) {
+      var limit = Math.pow(2, 8 * byteLength - 1);
+      checkInt(this, value, offset, byteLength, limit - 1, -limit);
+    }
+
+    var i = 0;
+    var mul = 1;
+    var sub = 0;
+    this[offset] = value & 0xFF;
+
+    while (++i < byteLength && (mul *= 0x100)) {
+      if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+        sub = 1;
+      }
+
+      this[offset + i] = (value / mul >> 0) - sub & 0xFF;
+    }
+
+    return offset + byteLength;
+  };
+
+  Buffer.prototype.writeIntBE = function writeIntBE(value, offset, byteLength, noAssert) {
+    value = +value;
+    offset = offset | 0;
+
+    if (!noAssert) {
+      var limit = Math.pow(2, 8 * byteLength - 1);
+      checkInt(this, value, offset, byteLength, limit - 1, -limit);
+    }
+
+    var i = byteLength - 1;
+    var mul = 1;
+    var sub = 0;
+    this[offset + i] = value & 0xFF;
+
+    while (--i >= 0 && (mul *= 0x100)) {
+      if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+        sub = 1;
+      }
+
+      this[offset + i] = (value / mul >> 0) - sub & 0xFF;
+    }
+
+    return offset + byteLength;
+  };
+
+  Buffer.prototype.writeInt8 = function writeInt8(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80);
+    if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value);
+    if (value < 0) value = 0xff + value + 1;
+    this[offset] = value & 0xff;
+    return offset + 1;
+  };
+
+  Buffer.prototype.writeInt16LE = function writeInt16LE(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000);
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      this[offset] = value & 0xff;
+      this[offset + 1] = value >>> 8;
+    } else {
+      objectWriteUInt16(this, value, offset, true);
+    }
+
+    return offset + 2;
+  };
+
+  Buffer.prototype.writeInt16BE = function writeInt16BE(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000);
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      this[offset] = value >>> 8;
+      this[offset + 1] = value & 0xff;
+    } else {
+      objectWriteUInt16(this, value, offset, false);
+    }
+
+    return offset + 2;
+  };
+
+  Buffer.prototype.writeInt32LE = function writeInt32LE(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000);
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      this[offset] = value & 0xff;
+      this[offset + 1] = value >>> 8;
+      this[offset + 2] = value >>> 16;
+      this[offset + 3] = value >>> 24;
+    } else {
+      objectWriteUInt32(this, value, offset, true);
+    }
+
+    return offset + 4;
+  };
+
+  Buffer.prototype.writeInt32BE = function writeInt32BE(value, offset, noAssert) {
+    value = +value;
+    offset = offset | 0;
+    if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000);
+    if (value < 0) value = 0xffffffff + value + 1;
+
+    if (Buffer.TYPED_ARRAY_SUPPORT) {
+      this[offset] = value >>> 24;
+      this[offset + 1] = value >>> 16;
+      this[offset + 2] = value >>> 8;
+      this[offset + 3] = value & 0xff;
+    } else {
+      objectWriteUInt32(this, value, offset, false);
+    }
+
+    return offset + 4;
+  };
+
+  function checkIEEE754(buf, value, offset, ext, max, min) {
+    if (offset + ext > buf.length) throw new RangeError('Index out of range');
+    if (offset < 0) throw new RangeError('Index out of range');
+  }
+
+  function writeFloat(buf, value, offset, littleEndian, noAssert) {
+    if (!noAssert) {
+      checkIEEE754(buf, value, offset, 4);
+    }
+
+    write(buf, value, offset, littleEndian, 23, 4);
+    return offset + 4;
+  }
+
+  Buffer.prototype.writeFloatLE = function writeFloatLE(value, offset, noAssert) {
+    return writeFloat(this, value, offset, true, noAssert);
+  };
+
+  Buffer.prototype.writeFloatBE = function writeFloatBE(value, offset, noAssert) {
+    return writeFloat(this, value, offset, false, noAssert);
+  };
+
+  function writeDouble(buf, value, offset, littleEndian, noAssert) {
+    if (!noAssert) {
+      checkIEEE754(buf, value, offset, 8);
+    }
+
+    write(buf, value, offset, littleEndian, 52, 8);
+    return offset + 8;
+  }
+
+  Buffer.prototype.writeDoubleLE = function writeDoubleLE(value, offset, noAssert) {
+    return writeDouble(this, value, offset, true, noAssert);
+  };
+
+  Buffer.prototype.writeDoubleBE = function writeDoubleBE(value, offset, noAssert) {
+    return writeDouble(this, value, offset, false, noAssert);
+  }; // copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+
+
+  Buffer.prototype.copy = function copy(target, targetStart, start, end) {
+    if (!start) start = 0;
+    if (!end && end !== 0) end = this.length;
+    if (targetStart >= target.length) targetStart = target.length;
+    if (!targetStart) targetStart = 0;
+    if (end > 0 && end < start) end = start; // Copy 0 bytes; we're done
+
+    if (end === start) return 0;
+    if (target.length === 0 || this.length === 0) return 0; // Fatal error conditions
+
+    if (targetStart < 0) {
+      throw new RangeError('targetStart out of bounds');
+    }
+
+    if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds');
+    if (end < 0) throw new RangeError('sourceEnd out of bounds'); // Are we oob?
+
+    if (end > this.length) end = this.length;
+
+    if (target.length - targetStart < end - start) {
+      end = target.length - targetStart + start;
+    }
+
+    var len = end - start;
+    var i;
+
+    if (this === target && start < targetStart && targetStart < end) {
+      // descending copy from end
+      for (i = len - 1; i >= 0; --i) {
+        target[i + targetStart] = this[i + start];
+      }
+    } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+      // ascending copy from start
+      for (i = 0; i < len; ++i) {
+        target[i + targetStart] = this[i + start];
+      }
+    } else {
+      Uint8Array.prototype.set.call(target, this.subarray(start, start + len), targetStart);
+    }
+
+    return len;
+  }; // Usage:
+  //    buffer.fill(number[, offset[, end]])
+  //    buffer.fill(buffer[, offset[, end]])
+  //    buffer.fill(string[, offset[, end]][, encoding])
+
+
+  Buffer.prototype.fill = function fill(val, start, end, encoding) {
+    // Handle string cases:
+    if (typeof val === 'string') {
+      if (typeof start === 'string') {
+        encoding = start;
+        start = 0;
+        end = this.length;
+      } else if (typeof end === 'string') {
+        encoding = end;
+        end = this.length;
+      }
+
+      if (val.length === 1) {
+        var code = val.charCodeAt(0);
+
+        if (code < 256) {
+          val = code;
+        }
+      }
+
+      if (encoding !== undefined && typeof encoding !== 'string') {
+        throw new TypeError('encoding must be a string');
+      }
+
+      if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+        throw new TypeError('Unknown encoding: ' + encoding);
+      }
+    } else if (typeof val === 'number') {
+      val = val & 255;
+    } // Invalid ranges are not set to a default, so can range check early.
+
+
+    if (start < 0 || this.length < start || this.length < end) {
+      throw new RangeError('Out of range index');
+    }
+
+    if (end <= start) {
+      return this;
+    }
+
+    start = start >>> 0;
+    end = end === undefined ? this.length : end >>> 0;
+    if (!val) val = 0;
+    var i;
+
+    if (typeof val === 'number') {
+      for (i = start; i < end; ++i) {
+        this[i] = val;
+      }
+    } else {
+      var bytes = internalIsBuffer(val) ? val : utf8ToBytes(new Buffer(val, encoding).toString());
+      var len = bytes.length;
+
+      for (i = 0; i < end - start; ++i) {
+        this[i + start] = bytes[i % len];
+      }
+    }
+
+    return this;
+  }; // HELPER FUNCTIONS
+  // ================
+
+
+  var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g;
+
+  function base64clean(str) {
+    // Node strips out invalid characters like \n and \t from the string, base64-js does not
+    str = stringtrim(str).replace(INVALID_BASE64_RE, ''); // Node converts strings with length < 2 to ''
+
+    if (str.length < 2) return ''; // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+
+    while (str.length % 4 !== 0) {
+      str = str + '=';
+    }
+
+    return str;
+  }
+
+  function stringtrim(str) {
+    if (str.trim) return str.trim();
+    return str.replace(/^\s+|\s+$/g, '');
+  }
+
+  function toHex(n) {
+    if (n < 16) return '0' + n.toString(16);
+    return n.toString(16);
+  }
+
+  function utf8ToBytes(string, units) {
+    units = units || Infinity;
+    var codePoint;
+    var length = string.length;
+    var leadSurrogate = null;
+    var bytes = [];
+
+    for (var i = 0; i < length; ++i) {
+      codePoint = string.charCodeAt(i); // is surrogate component
+
+      if (codePoint > 0xD7FF && codePoint < 0xE000) {
+        // last char was a lead
+        if (!leadSurrogate) {
+          // no lead yet
+          if (codePoint > 0xDBFF) {
+            // unexpected trail
+            if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+            continue;
+          } else if (i + 1 === length) {
+            // unpaired lead
+            if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+            continue;
+          } // valid lead
+
+
+          leadSurrogate = codePoint;
+          continue;
+        } // 2 leads in a row
+
+
+        if (codePoint < 0xDC00) {
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+          leadSurrogate = codePoint;
+          continue;
+        } // valid surrogate pair
+
+
+        codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000;
+      } else if (leadSurrogate) {
+        // valid bmp char, but last char was a lead
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+      }
+
+      leadSurrogate = null; // encode utf8
+
+      if (codePoint < 0x80) {
+        if ((units -= 1) < 0) break;
+        bytes.push(codePoint);
+      } else if (codePoint < 0x800) {
+        if ((units -= 2) < 0) break;
+        bytes.push(codePoint >> 0x6 | 0xC0, codePoint & 0x3F | 0x80);
+      } else if (codePoint < 0x10000) {
+        if ((units -= 3) < 0) break;
+        bytes.push(codePoint >> 0xC | 0xE0, codePoint >> 0x6 & 0x3F | 0x80, codePoint & 0x3F | 0x80);
+      } else if (codePoint < 0x110000) {
+        if ((units -= 4) < 0) break;
+        bytes.push(codePoint >> 0x12 | 0xF0, codePoint >> 0xC & 0x3F | 0x80, codePoint >> 0x6 & 0x3F | 0x80, codePoint & 0x3F | 0x80);
+      } else {
+        throw new Error('Invalid code point');
+      }
+    }
+
+    return bytes;
+  }
+
+  function asciiToBytes(str) {
+    var byteArray = [];
+
+    for (var i = 0; i < str.length; ++i) {
+      // Node's code seems to be doing this and not & 0x7F..
+      byteArray.push(str.charCodeAt(i) & 0xFF);
+    }
+
+    return byteArray;
+  }
+
+  function utf16leToBytes(str, units) {
+    var c, hi, lo;
+    var byteArray = [];
+
+    for (var i = 0; i < str.length; ++i) {
+      if ((units -= 2) < 0) break;
+      c = str.charCodeAt(i);
+      hi = c >> 8;
+      lo = c % 256;
+      byteArray.push(lo);
+      byteArray.push(hi);
+    }
+
+    return byteArray;
+  }
+
+  function base64ToBytes(str) {
+    return toByteArray(base64clean(str));
+  }
+
+  function blitBuffer(src, dst, offset, length) {
+    for (var i = 0; i < length; ++i) {
+      if (i + offset >= dst.length || i >= src.length) break;
+      dst[i + offset] = src[i];
+    }
+
+    return i;
+  }
+
+  function isnan(val) {
+    return val !== val; // eslint-disable-line no-self-compare
+  } // the following is from is-buffer, also by Feross Aboukhadijeh and with same lisence
+  // The _isBuffer check is for Safari 5-7 support, because it's missing
+  // Object.prototype.constructor. Remove this eventually
+
+
+  function isBuffer(obj) {
+    return obj != null && (!!obj._isBuffer || isFastBuffer(obj) || isSlowBuffer(obj));
+  }
+
+  function isFastBuffer(obj) {
+    return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj);
+  } // For Node v0.10 support. Remove this eventually.
+
+
+  function isSlowBuffer(obj) {
+    return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isFastBuffer(obj.slice(0, 0));
+  }
+
+  var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+  function unwrapExports (x) {
+  	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+  }
+
+  function createCommonjsModule(fn, module) {
+  	return module = { exports: {} }, fn(module, module.exports), module.exports;
+  }
+
+  function getCjsExportFromNamespace (n) {
+  	return n && n['default'] || n;
+  }
+
+  var fs = getCjsExportFromNamespace(_shim_fs$1);
+
+  /**
+   * @class
+   */
+
+
+  var LineByLine =
+  /*#__PURE__*/
+  function () {
+    function LineByLine(file, options) {
+      _classCallCheck(this, LineByLine);
+
+      options = options || {};
+      if (!options.readChunk) options.readChunk = 1024;
+
+      if (!options.newLineCharacter) {
+        options.newLineCharacter = 0x0a; //linux line ending
+      } else {
+        options.newLineCharacter = options.newLineCharacter.charCodeAt(0);
+      }
+
+      if (typeof file === 'number') {
+        this.fd = file;
+      } else {
+        this.fd = fs.openSync(file, 'r');
+      }
+
+      this.options = options;
+      this.newLineCharacter = options.newLineCharacter;
+      this.reset();
+    }
+
+    _createClass(LineByLine, [{
+      key: "_searchInBuffer",
+      value: function _searchInBuffer(buffer, hexNeedle) {
+        var found = -1;
+
+        for (var i = 0; i <= buffer.length; i++) {
+          var b_byte = buffer[i];
+
+          if (b_byte === hexNeedle) {
+            found = i;
+            break;
+          }
+        }
+
+        return found;
+      }
+    }, {
+      key: "reset",
+      value: function reset() {
+        this.eofReached = false;
+        this.linesCache = [];
+        this.fdPosition = 0;
+      }
+    }, {
+      key: "close",
+      value: function close() {
+        fs.closeSync(this.fd);
+        this.fd = null;
+      }
+    }, {
+      key: "_extractLines",
+      value: function _extractLines(buffer) {
+        var line;
+        var lines = [];
+        var bufferPosition = 0;
+        var lastNewLineBufferPosition = 0;
+
+        while (true) {
+          var bufferPositionValue = buffer[bufferPosition++];
+
+          if (bufferPositionValue === this.newLineCharacter) {
+            line = buffer.slice(lastNewLineBufferPosition, bufferPosition);
+            lines.push(line);
+            lastNewLineBufferPosition = bufferPosition;
+          } else if (!bufferPositionValue) {
+            break;
+          }
+        }
+
+        var leftovers = buffer.slice(lastNewLineBufferPosition, bufferPosition);
+
+        if (leftovers.length) {
+          lines.push(leftovers);
+        }
+
+        return lines;
+      }
+    }, {
+      key: "_readChunk",
+      value: function _readChunk(lineLeftovers) {
+        var totalBytesRead = 0;
+        var bytesRead;
+        var buffers = [];
+
+        do {
+          var readBuffer = new Buffer(this.options.readChunk);
+          bytesRead = fs.readSync(this.fd, readBuffer, 0, this.options.readChunk, this.fdPosition);
+          totalBytesRead = totalBytesRead + bytesRead;
+          this.fdPosition = this.fdPosition + bytesRead;
+          buffers.push(readBuffer);
+        } while (bytesRead && this._searchInBuffer(buffers[buffers.length - 1], this.options.newLineCharacter) === -1);
+
+        var bufferData = Buffer.concat(buffers);
+
+        if (bytesRead < this.options.readChunk) {
+          this.eofReached = true;
+          bufferData = bufferData.slice(0, totalBytesRead);
+        }
+
+        if (totalBytesRead) {
+          this.linesCache = this._extractLines(bufferData);
+
+          if (lineLeftovers) {
+            this.linesCache[0] = Buffer.concat([lineLeftovers, this.linesCache[0]]);
+          }
+        }
+
+        return totalBytesRead;
+      }
+    }, {
+      key: "next",
+      value: function next() {
+        if (!this.fd) return false;
+        var line = false;
+
+        if (this.eofReached && this.linesCache.length === 0) {
+          return line;
+        }
+
+        var bytesRead;
+
+        if (!this.linesCache.length) {
+          bytesRead = this._readChunk();
+        }
+
+        if (this.linesCache.length) {
+          line = this.linesCache.shift();
+          var lastLineCharacter = line[line.length - 1];
+
+          if (lastLineCharacter !== 0x0a) {
+            bytesRead = this._readChunk(line);
+
+            if (bytesRead) {
+              line = this.linesCache.shift();
+            }
+          }
+        }
+
+        if (this.eofReached && this.linesCache.length === 0) {
+          this.close();
+        }
+
+        if (line && line[line.length - 1] === this.newLineCharacter) {
+          line = line.slice(0, line.length - 1);
+        }
+
+        return line;
+      }
+    }]);
+
+    return LineByLine;
+  }();
+
+  var readlines = LineByLine;
+
+  var ConfigError =
+  /*#__PURE__*/
+  function (_Error) {
+    _inherits(ConfigError, _Error);
+
+    function ConfigError() {
+      _classCallCheck(this, ConfigError);
+
+      return _possibleConstructorReturn(this, _getPrototypeOf(ConfigError).apply(this, arguments));
+    }
+
+    return ConfigError;
+  }(_wrapNativeSuper(Error));
+
+  var DebugError =
+  /*#__PURE__*/
+  function (_Error2) {
+    _inherits(DebugError, _Error2);
+
+    function DebugError() {
+      _classCallCheck(this, DebugError);
+
+      return _possibleConstructorReturn(this, _getPrototypeOf(DebugError).apply(this, arguments));
+    }
+
+    return DebugError;
+  }(_wrapNativeSuper(Error));
+
+  var UndefinedParserError =
+  /*#__PURE__*/
+  function (_Error3) {
+    _inherits(UndefinedParserError, _Error3);
+
+    function UndefinedParserError() {
+      _classCallCheck(this, UndefinedParserError);
+
+      return _possibleConstructorReturn(this, _getPrototypeOf(UndefinedParserError).apply(this, arguments));
+    }
+
+    return UndefinedParserError;
+  }(_wrapNativeSuper(Error));
+
+  var errors = {
+    ConfigError: ConfigError,
+    DebugError: DebugError,
+    UndefinedParserError: UndefinedParserError
+  };
+
+  // based off https://github.com/defunctzombie/node-process/blob/master/browser.js
+
+  function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+  }
+
+  function defaultClearTimeout() {
+    throw new Error('clearTimeout has not been defined');
+  }
+
+  var cachedSetTimeout = defaultSetTimout;
+  var cachedClearTimeout = defaultClearTimeout;
+
+  if (typeof global$1.setTimeout === 'function') {
+    cachedSetTimeout = setTimeout;
+  }
+
+  if (typeof global$1.clearTimeout === 'function') {
+    cachedClearTimeout = clearTimeout;
+  }
+
+  function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+      //normal enviroments in sane situations
+      return setTimeout(fun, 0);
+    } // if setTimeout wasn't available but was latter defined
+
+
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+      cachedSetTimeout = setTimeout;
+      return setTimeout(fun, 0);
+    }
+
+    try {
+      // when when somebody has screwed with setTimeout but no I.E. maddness
+      return cachedSetTimeout(fun, 0);
+    } catch (e) {
+      try {
+        // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+        return cachedSetTimeout.call(null, fun, 0);
+      } catch (e) {
+        // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+        return cachedSetTimeout.call(this, fun, 0);
+      }
+    }
+  }
+
+  function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+      //normal enviroments in sane situations
+      return clearTimeout(marker);
+    } // if clearTimeout wasn't available but was latter defined
+
+
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+      cachedClearTimeout = clearTimeout;
+      return clearTimeout(marker);
+    }
+
+    try {
+      // when when somebody has screwed with setTimeout but no I.E. maddness
+      return cachedClearTimeout(marker);
+    } catch (e) {
+      try {
+        // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+        return cachedClearTimeout.call(null, marker);
+      } catch (e) {
+        // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+        // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+        return cachedClearTimeout.call(this, marker);
+      }
+    }
+  }
+
+  var queue = [];
+  var draining = false;
+  var currentQueue;
+  var queueIndex = -1;
+
+  function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+      return;
+    }
+
+    draining = false;
+
+    if (currentQueue.length) {
+      queue = currentQueue.concat(queue);
+    } else {
+      queueIndex = -1;
+    }
+
+    if (queue.length) {
+      drainQueue();
+    }
+  }
+
+  function drainQueue() {
+    if (draining) {
+      return;
+    }
+
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+    var len = queue.length;
+
+    while (len) {
+      currentQueue = queue;
+      queue = [];
+
+      while (++queueIndex < len) {
+        if (currentQueue) {
+          currentQueue[queueIndex].run();
+        }
+      }
+
+      queueIndex = -1;
+      len = queue.length;
+    }
+
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+  }
+
+  function nextTick(fun) {
+    var args = new Array(arguments.length - 1);
+
+    if (arguments.length > 1) {
+      for (var i = 1; i < arguments.length; i++) {
+        args[i - 1] = arguments[i];
+      }
+    }
+
+    queue.push(new Item(fun, args));
+
+    if (queue.length === 1 && !draining) {
+      runTimeout(drainQueue);
+    }
+  } // v8 likes predictible objects
+
+  function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+  }
+
+  Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+  };
+
+  var title = 'browser';
+  var platform = 'browser';
+  var browser = true;
+  var env = {};
+  var argv = [];
+  var version$1 = ''; // empty string to avoid regexp issues
+
+  var versions = {};
+  var release = {};
+  var config = {};
+
+  function noop() {}
+
+  var on = noop;
+  var addListener = noop;
+  var once = noop;
+  var off = noop;
+  var removeListener = noop;
+  var removeAllListeners = noop;
+  var emit = noop;
+  function binding(name) {
+    throw new Error('process.binding is not supported');
+  }
+  function cwd() {
+    return '/';
+  }
+  function chdir(dir) {
+    throw new Error('process.chdir is not supported');
+  }
+  function umask() {
+    return 0;
+  } // from https://github.com/kumavis/browser-process-hrtime/blob/master/index.js
+
+  var performance = global$1.performance || {};
+
+  var performanceNow = performance.now || performance.mozNow || performance.msNow || performance.oNow || performance.webkitNow || function () {
+    return new Date().getTime();
+  }; // generate timestamp or delta
+  // see http://nodejs.org/api/process.html#process_process_hrtime
+
+
+  function hrtime(previousTimestamp) {
+    var clocktime = performanceNow.call(performance) * 1e-3;
+    var seconds = Math.floor(clocktime);
+    var nanoseconds = Math.floor(clocktime % 1 * 1e9);
+
+    if (previousTimestamp) {
+      seconds = seconds - previousTimestamp[0];
+      nanoseconds = nanoseconds - previousTimestamp[1];
+
+      if (nanoseconds < 0) {
+        seconds--;
+        nanoseconds += 1e9;
+      }
+    }
+
+    return [seconds, nanoseconds];
+  }
+  var startTime = new Date();
+  function uptime() {
+    var currentTime = new Date();
+    var dif = currentTime - startTime;
+    return dif / 1000;
+  }
+  var process = {
+    nextTick: nextTick,
+    title: title,
+    browser: browser,
+    env: env,
+    argv: argv,
+    version: version$1,
+    versions: versions,
+    on: on,
+    addListener: addListener,
+    once: once,
+    off: off,
+    removeListener: removeListener,
+    removeAllListeners: removeAllListeners,
+    emit: emit,
+    binding: binding,
+    cwd: cwd,
+    chdir: chdir,
+    umask: umask,
+    hrtime: hrtime,
+    platform: platform,
+    release: release,
+    config: config,
+    uptime: uptime
+  };
+
+  var semver = createCommonjsModule(function (module, exports) {
+    exports = module.exports = SemVer;
+    var debug;
+    /* istanbul ignore next */
+
+    if (_typeof(process) === 'object' && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG)) {
+      debug = function debug() {
+        var args = Array.prototype.slice.call(arguments, 0);
+        args.unshift('SEMVER');
+        console.log.apply(console, args);
+      };
+    } else {
+      debug = function debug() {};
+    } // Note: this is the semver.org version of the spec that it implements
+    // Not necessarily the package version of this code.
+
+
+    exports.SEMVER_SPEC_VERSION = '2.0.0';
+    var MAX_LENGTH = 256;
+    var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER ||
+    /* istanbul ignore next */
+    9007199254740991; // Max safe segment length for coercion.
+
+    var MAX_SAFE_COMPONENT_LENGTH = 16; // The actual regexps go on exports.re
+
+    var re = exports.re = [];
+    var src = exports.src = [];
+    var t = exports.tokens = {};
+    var R = 0;
+
+    function tok(n) {
+      t[n] = R++;
+    } // The following Regular Expressions can be used for tokenizing,
+    // validating, and parsing SemVer version strings.
+    // ## Numeric Identifier
+    // A single `0`, or a non-zero digit followed by zero or more digits.
+
+
+    tok('NUMERICIDENTIFIER');
+    src[t.NUMERICIDENTIFIER] = '0|[1-9]\\d*';
+    tok('NUMERICIDENTIFIERLOOSE');
+    src[t.NUMERICIDENTIFIERLOOSE] = '[0-9]+'; // ## Non-numeric Identifier
+    // Zero or more digits, followed by a letter or hyphen, and then zero or
+    // more letters, digits, or hyphens.
+
+    tok('NONNUMERICIDENTIFIER');
+    src[t.NONNUMERICIDENTIFIER] = '\\d*[a-zA-Z-][a-zA-Z0-9-]*'; // ## Main Version
+    // Three dot-separated numeric identifiers.
+
+    tok('MAINVERSION');
+    src[t.MAINVERSION] = '(' + src[t.NUMERICIDENTIFIER] + ')\\.' + '(' + src[t.NUMERICIDENTIFIER] + ')\\.' + '(' + src[t.NUMERICIDENTIFIER] + ')';
+    tok('MAINVERSIONLOOSE');
+    src[t.MAINVERSIONLOOSE] = '(' + src[t.NUMERICIDENTIFIERLOOSE] + ')\\.' + '(' + src[t.NUMERICIDENTIFIERLOOSE] + ')\\.' + '(' + src[t.NUMERICIDENTIFIERLOOSE] + ')'; // ## Pre-release Version Identifier
+    // A numeric identifier, or a non-numeric identifier.
+
+    tok('PRERELEASEIDENTIFIER');
+    src[t.PRERELEASEIDENTIFIER] = '(?:' + src[t.NUMERICIDENTIFIER] + '|' + src[t.NONNUMERICIDENTIFIER] + ')';
+    tok('PRERELEASEIDENTIFIERLOOSE');
+    src[t.PRERELEASEIDENTIFIERLOOSE] = '(?:' + src[t.NUMERICIDENTIFIERLOOSE] + '|' + src[t.NONNUMERICIDENTIFIER] + ')'; // ## Pre-release Version
+    // Hyphen, followed by one or more dot-separated pre-release version
+    // identifiers.
+
+    tok('PRERELEASE');
+    src[t.PRERELEASE] = '(?:-(' + src[t.PRERELEASEIDENTIFIER] + '(?:\\.' + src[t.PRERELEASEIDENTIFIER] + ')*))';
+    tok('PRERELEASELOOSE');
+    src[t.PRERELEASELOOSE] = '(?:-?(' + src[t.PRERELEASEIDENTIFIERLOOSE] + '(?:\\.' + src[t.PRERELEASEIDENTIFIERLOOSE] + ')*))'; // ## Build Metadata Identifier
+    // Any combination of digits, letters, or hyphens.
+
+    tok('BUILDIDENTIFIER');
+    src[t.BUILDIDENTIFIER] = '[0-9A-Za-z-]+'; // ## Build Metadata
+    // Plus sign, followed by one or more period-separated build metadata
+    // identifiers.
+
+    tok('BUILD');
+    src[t.BUILD] = '(?:\\+(' + src[t.BUILDIDENTIFIER] + '(?:\\.' + src[t.BUILDIDENTIFIER] + ')*))'; // ## Full Version String
+    // A main version, followed optionally by a pre-release version and
+    // build metadata.
+    // Note that the only major, minor, patch, and pre-release sections of
+    // the version string are capturing groups.  The build metadata is not a
+    // capturing group, because it should not ever be used in version
+    // comparison.
+
+    tok('FULL');
+    tok('FULLPLAIN');
+    src[t.FULLPLAIN] = 'v?' + src[t.MAINVERSION] + src[t.PRERELEASE] + '?' + src[t.BUILD] + '?';
+    src[t.FULL] = '^' + src[t.FULLPLAIN] + '$'; // like full, but allows v1.2.3 and =1.2.3, which people do sometimes.
+    // also, 1.0.0alpha1 (prerelease without the hyphen) which is pretty
+    // common in the npm registry.
+
+    tok('LOOSEPLAIN');
+    src[t.LOOSEPLAIN] = '[v=\\s]*' + src[t.MAINVERSIONLOOSE] + src[t.PRERELEASELOOSE] + '?' + src[t.BUILD] + '?';
+    tok('LOOSE');
+    src[t.LOOSE] = '^' + src[t.LOOSEPLAIN] + '$';
+    tok('GTLT');
+    src[t.GTLT] = '((?:<|>)?=?)'; // Something like "2.*" or "1.2.x".
+    // Note that "x.x" is a valid xRange identifer, meaning "any version"
+    // Only the first item is strictly required.
+
+    tok('XRANGEIDENTIFIERLOOSE');
+    src[t.XRANGEIDENTIFIERLOOSE] = src[t.NUMERICIDENTIFIERLOOSE] + '|x|X|\\*';
+    tok('XRANGEIDENTIFIER');
+    src[t.XRANGEIDENTIFIER] = src[t.NUMERICIDENTIFIER] + '|x|X|\\*';
+    tok('XRANGEPLAIN');
+    src[t.XRANGEPLAIN] = '[v=\\s]*(' + src[t.XRANGEIDENTIFIER] + ')' + '(?:\\.(' + src[t.XRANGEIDENTIFIER] + ')' + '(?:\\.(' + src[t.XRANGEIDENTIFIER] + ')' + '(?:' + src[t.PRERELEASE] + ')?' + src[t.BUILD] + '?' + ')?)?';
+    tok('XRANGEPLAINLOOSE');
+    src[t.XRANGEPLAINLOOSE] = '[v=\\s]*(' + src[t.XRANGEIDENTIFIERLOOSE] + ')' + '(?:\\.(' + src[t.XRANGEIDENTIFIERLOOSE] + ')' + '(?:\\.(' + src[t.XRANGEIDENTIFIERLOOSE] + ')' + '(?:' + src[t.PRERELEASELOOSE] + ')?' + src[t.BUILD] + '?' + ')?)?';
+    tok('XRANGE');
+    src[t.XRANGE] = '^' + src[t.GTLT] + '\\s*' + src[t.XRANGEPLAIN] + '$';
+    tok('XRANGELOOSE');
+    src[t.XRANGELOOSE] = '^' + src[t.GTLT] + '\\s*' + src[t.XRANGEPLAINLOOSE] + '$'; // Coercion.
+    // Extract anything that could conceivably be a part of a valid semver
+
+    tok('COERCE');
+    src[t.COERCE] = '(^|[^\\d])' + '(\\d{1,' + MAX_SAFE_COMPONENT_LENGTH + '})' + '(?:\\.(\\d{1,' + MAX_SAFE_COMPONENT_LENGTH + '}))?' + '(?:\\.(\\d{1,' + MAX_SAFE_COMPONENT_LENGTH + '}))?' + '(?:$|[^\\d])';
+    tok('COERCERTL');
+    re[t.COERCERTL] = new RegExp(src[t.COERCE], 'g'); // Tilde ranges.
+    // Meaning is "reasonably at or greater than"
+
+    tok('LONETILDE');
+    src[t.LONETILDE] = '(?:~>?)';
+    tok('TILDETRIM');
+    src[t.TILDETRIM] = '(\\s*)' + src[t.LONETILDE] + '\\s+';
+    re[t.TILDETRIM] = new RegExp(src[t.TILDETRIM], 'g');
+    var tildeTrimReplace = '$1~';
+    tok('TILDE');
+    src[t.TILDE] = '^' + src[t.LONETILDE] + src[t.XRANGEPLAIN] + '$';
+    tok('TILDELOOSE');
+    src[t.TILDELOOSE] = '^' + src[t.LONETILDE] + src[t.XRANGEPLAINLOOSE] + '$'; // Caret ranges.
+    // Meaning is "at least and backwards compatible with"
+
+    tok('LONECARET');
+    src[t.LONECARET] = '(?:\\^)';
+    tok('CARETTRIM');
+    src[t.CARETTRIM] = '(\\s*)' + src[t.LONECARET] + '\\s+';
+    re[t.CARETTRIM] = new RegExp(src[t.CARETTRIM], 'g');
+    var caretTrimReplace = '$1^';
+    tok('CARET');
+    src[t.CARET] = '^' + src[t.LONECARET] + src[t.XRANGEPLAIN] + '$';
+    tok('CARETLOOSE');
+    src[t.CARETLOOSE] = '^' + src[t.LONECARET] + src[t.XRANGEPLAINLOOSE] + '$'; // A simple gt/lt/eq thing, or just "" to indicate "any version"
+
+    tok('COMPARATORLOOSE');
+    src[t.COMPARATORLOOSE] = '^' + src[t.GTLT] + '\\s*(' + src[t.LOOSEPLAIN] + ')$|^$';
+    tok('COMPARATOR');
+    src[t.COMPARATOR] = '^' + src[t.GTLT] + '\\s*(' + src[t.FULLPLAIN] + ')$|^$'; // An expression to strip any whitespace between the gtlt and the thing
+    // it modifies, so that `> 1.2.3` ==> `>1.2.3`
+
+    tok('COMPARATORTRIM');
+    src[t.COMPARATORTRIM] = '(\\s*)' + src[t.GTLT] + '\\s*(' + src[t.LOOSEPLAIN] + '|' + src[t.XRANGEPLAIN] + ')'; // this one has to use the /g flag
+
+    re[t.COMPARATORTRIM] = new RegExp(src[t.COMPARATORTRIM], 'g');
+    var comparatorTrimReplace = '$1$2$3'; // Something like `1.2.3 - 1.2.4`
+    // Note that these all use the loose form, because they'll be
+    // checked against either the strict or loose comparator form
+    // later.
+
+    tok('HYPHENRANGE');
+    src[t.HYPHENRANGE] = '^\\s*(' + src[t.XRANGEPLAIN] + ')' + '\\s+-\\s+' + '(' + src[t.XRANGEPLAIN] + ')' + '\\s*$';
+    tok('HYPHENRANGELOOSE');
+    src[t.HYPHENRANGELOOSE] = '^\\s*(' + src[t.XRANGEPLAINLOOSE] + ')' + '\\s+-\\s+' + '(' + src[t.XRANGEPLAINLOOSE] + ')' + '\\s*$'; // Star ranges basically just allow anything at all.
+
+    tok('STAR');
+    src[t.STAR] = '(<|>)?=?\\s*\\*'; // Compile to actual regexp objects.
+    // All are flag-free, unless they were created above with a flag.
+
+    for (var i = 0; i < R; i++) {
+      debug(i, src[i]);
+
+      if (!re[i]) {
+        re[i] = new RegExp(src[i]);
+      }
+    }
+
+    exports.parse = parse;
+
+    function parse(version, options) {
+      if (!options || _typeof(options) !== 'object') {
+        options = {
+          loose: !!options,
+          includePrerelease: false
+        };
+      }
+
+      if (version instanceof SemVer) {
+        return version;
+      }
+
+      if (typeof version !== 'string') {
+        return null;
+      }
+
+      if (version.length > MAX_LENGTH) {
+        return null;
+      }
+
+      var r = options.loose ? re[t.LOOSE] : re[t.FULL];
+
+      if (!r.test(version)) {
+        return null;
+      }
+
+      try {
+        return new SemVer(version, options);
+      } catch (er) {
+        return null;
+      }
+    }
+
+    exports.valid = valid;
+
+    function valid(version, options) {
+      var v = parse(version, options);
+      return v ? v.version : null;
+    }
+
+    exports.clean = clean;
+
+    function clean(version, options) {
+      var s = parse(version.trim().replace(/^[=v]+/, ''), options);
+      return s ? s.version : null;
+    }
+
+    exports.SemVer = SemVer;
+
+    function SemVer(version, options) {
+      if (!options || _typeof(options) !== 'object') {
+        options = {
+          loose: !!options,
+          includePrerelease: false
+        };
+      }
+
+      if (version instanceof SemVer) {
+        if (version.loose === options.loose) {
+          return version;
+        } else {
+          version = version.version;
+        }
+      } else if (typeof version !== 'string') {
+        throw new TypeError('Invalid Version: ' + version);
+      }
+
+      if (version.length > MAX_LENGTH) {
+        throw new TypeError('version is longer than ' + MAX_LENGTH + ' characters');
+      }
+
+      if (!(this instanceof SemVer)) {
+        return new SemVer(version, options);
+      }
+
+      debug('SemVer', version, options);
+      this.options = options;
+      this.loose = !!options.loose;
+      var m = version.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
+
+      if (!m) {
+        throw new TypeError('Invalid Version: ' + version);
+      }
+
+      this.raw = version; // these are actually numbers
+
+      this.major = +m[1];
+      this.minor = +m[2];
+      this.patch = +m[3];
+
+      if (this.major > MAX_SAFE_INTEGER || this.major < 0) {
+        throw new TypeError('Invalid major version');
+      }
+
+      if (this.minor > MAX_SAFE_INTEGER || this.minor < 0) {
+        throw new TypeError('Invalid minor version');
+      }
+
+      if (this.patch > MAX_SAFE_INTEGER || this.patch < 0) {
+        throw new TypeError('Invalid patch version');
+      } // numberify any prerelease numeric ids
+
+
+      if (!m[4]) {
+        this.prerelease = [];
+      } else {
+        this.prerelease = m[4].split('.').map(function (id) {
+          if (/^[0-9]+$/.test(id)) {
+            var num = +id;
+
+            if (num >= 0 && num < MAX_SAFE_INTEGER) {
+              return num;
+            }
+          }
+
+          return id;
+        });
+      }
+
+      this.build = m[5] ? m[5].split('.') : [];
+      this.format();
+    }
+
+    SemVer.prototype.format = function () {
+      this.version = this.major + '.' + this.minor + '.' + this.patch;
+
+      if (this.prerelease.length) {
+        this.version += '-' + this.prerelease.join('.');
+      }
+
+      return this.version;
+    };
+
+    SemVer.prototype.toString = function () {
+      return this.version;
+    };
+
+    SemVer.prototype.compare = function (other) {
+      debug('SemVer.compare', this.version, this.options, other);
+
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      }
+
+      return this.compareMain(other) || this.comparePre(other);
+    };
+
+    SemVer.prototype.compareMain = function (other) {
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      }
+
+      return compareIdentifiers(this.major, other.major) || compareIdentifiers(this.minor, other.minor) || compareIdentifiers(this.patch, other.patch);
+    };
+
+    SemVer.prototype.comparePre = function (other) {
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      } // NOT having a prerelease is > having one
+
+
+      if (this.prerelease.length && !other.prerelease.length) {
+        return -1;
+      } else if (!this.prerelease.length && other.prerelease.length) {
+        return 1;
+      } else if (!this.prerelease.length && !other.prerelease.length) {
+        return 0;
+      }
+
+      var i = 0;
+
+      do {
+        var a = this.prerelease[i];
+        var b = other.prerelease[i];
+        debug('prerelease compare', i, a, b);
+
+        if (a === undefined && b === undefined) {
+          return 0;
+        } else if (b === undefined) {
+          return 1;
+        } else if (a === undefined) {
+          return -1;
+        } else if (a === b) {
+          continue;
+        } else {
+          return compareIdentifiers(a, b);
+        }
+      } while (++i);
+    };
+
+    SemVer.prototype.compareBuild = function (other) {
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      }
+
+      var i = 0;
+
+      do {
+        var a = this.build[i];
+        var b = other.build[i];
+        debug('prerelease compare', i, a, b);
+
+        if (a === undefined && b === undefined) {
+          return 0;
+        } else if (b === undefined) {
+          return 1;
+        } else if (a === undefined) {
+          return -1;
+        } else if (a === b) {
+          continue;
+        } else {
+          return compareIdentifiers(a, b);
+        }
+      } while (++i);
+    }; // preminor will bump the version up to the next minor release, and immediately
+    // down to pre-release. premajor and prepatch work the same way.
+
+
+    SemVer.prototype.inc = function (release, identifier) {
+      switch (release) {
+        case 'premajor':
+          this.prerelease.length = 0;
+          this.patch = 0;
+          this.minor = 0;
+          this.major++;
+          this.inc('pre', identifier);
+          break;
+
+        case 'preminor':
+          this.prerelease.length = 0;
+          this.patch = 0;
+          this.minor++;
+          this.inc('pre', identifier);
+          break;
+
+        case 'prepatch':
+          // If this is already a prerelease, it will bump to the next version
+          // drop any prereleases that might already exist, since they are not
+          // relevant at this point.
+          this.prerelease.length = 0;
+          this.inc('patch', identifier);
+          this.inc('pre', identifier);
+          break;
+        // If the input is a non-prerelease version, this acts the same as
+        // prepatch.
+
+        case 'prerelease':
+          if (this.prerelease.length === 0) {
+            this.inc('patch', identifier);
+          }
+
+          this.inc('pre', identifier);
+          break;
+
+        case 'major':
+          // If this is a pre-major version, bump up to the same major version.
+          // Otherwise increment major.
+          // 1.0.0-5 bumps to 1.0.0
+          // 1.1.0 bumps to 2.0.0
+          if (this.minor !== 0 || this.patch !== 0 || this.prerelease.length === 0) {
+            this.major++;
+          }
+
+          this.minor = 0;
+          this.patch = 0;
+          this.prerelease = [];
+          break;
+
+        case 'minor':
+          // If this is a pre-minor version, bump up to the same minor version.
+          // Otherwise increment minor.
+          // 1.2.0-5 bumps to 1.2.0
+          // 1.2.1 bumps to 1.3.0
+          if (this.patch !== 0 || this.prerelease.length === 0) {
+            this.minor++;
+          }
+
+          this.patch = 0;
+          this.prerelease = [];
+          break;
+
+        case 'patch':
+          // If this is not a pre-release version, it will increment the patch.
+          // If it is a pre-release it will bump up to the same patch version.
+          // 1.2.0-5 patches to 1.2.0
+          // 1.2.0 patches to 1.2.1
+          if (this.prerelease.length === 0) {
+            this.patch++;
+          }
+
+          this.prerelease = [];
+          break;
+        // This probably shouldn't be used publicly.
+        // 1.0.0 "pre" would become 1.0.0-0 which is the wrong direction.
+
+        case 'pre':
+          if (this.prerelease.length === 0) {
+            this.prerelease = [0];
+          } else {
+            var i = this.prerelease.length;
+
+            while (--i >= 0) {
+              if (typeof this.prerelease[i] === 'number') {
+                this.prerelease[i]++;
+                i = -2;
+              }
+            }
+
+            if (i === -1) {
+              // didn't increment anything
+              this.prerelease.push(0);
+            }
+          }
+
+          if (identifier) {
+            // 1.2.0-beta.1 bumps to 1.2.0-beta.2,
+            // 1.2.0-beta.fooblz or 1.2.0-beta bumps to 1.2.0-beta.0
+            if (this.prerelease[0] === identifier) {
+              if (isNaN(this.prerelease[1])) {
+                this.prerelease = [identifier, 0];
+              }
+            } else {
+              this.prerelease = [identifier, 0];
+            }
+          }
+
+          break;
+
+        default:
+          throw new Error('invalid increment argument: ' + release);
+      }
+
+      this.format();
+      this.raw = this.version;
+      return this;
+    };
+
+    exports.inc = inc;
+
+    function inc(version, release, loose, identifier) {
+      if (typeof loose === 'string') {
+        identifier = loose;
+        loose = undefined;
+      }
+
+      try {
+        return new SemVer(version, loose).inc(release, identifier).version;
+      } catch (er) {
+        return null;
+      }
+    }
+
+    exports.diff = diff;
+
+    function diff(version1, version2) {
+      if (eq(version1, version2)) {
+        return null;
+      } else {
+        var v1 = parse(version1);
+        var v2 = parse(version2);
+        var prefix = '';
+
+        if (v1.prerelease.length || v2.prerelease.length) {
+          prefix = 'pre';
+          var defaultResult = 'prerelease';
+        }
+
+        for (var key in v1) {
+          if (key === 'major' || key === 'minor' || key === 'patch') {
+            if (v1[key] !== v2[key]) {
+              return prefix + key;
+            }
+          }
+        }
+
+        return defaultResult; // may be undefined
+      }
+    }
+
+    exports.compareIdentifiers = compareIdentifiers;
+    var numeric = /^[0-9]+$/;
+
+    function compareIdentifiers(a, b) {
+      var anum = numeric.test(a);
+      var bnum = numeric.test(b);
+
+      if (anum && bnum) {
+        a = +a;
+        b = +b;
+      }
+
+      return a === b ? 0 : anum && !bnum ? -1 : bnum && !anum ? 1 : a < b ? -1 : 1;
+    }
+
+    exports.rcompareIdentifiers = rcompareIdentifiers;
+
+    function rcompareIdentifiers(a, b) {
+      return compareIdentifiers(b, a);
+    }
+
+    exports.major = major;
+
+    function major(a, loose) {
+      return new SemVer(a, loose).major;
+    }
+
+    exports.minor = minor;
+
+    function minor(a, loose) {
+      return new SemVer(a, loose).minor;
+    }
+
+    exports.patch = patch;
+
+    function patch(a, loose) {
+      return new SemVer(a, loose).patch;
+    }
+
+    exports.compare = compare;
+
+    function compare(a, b, loose) {
+      return new SemVer(a, loose).compare(new SemVer(b, loose));
+    }
+
+    exports.compareLoose = compareLoose;
+
+    function compareLoose(a, b) {
+      return compare(a, b, true);
+    }
+
+    exports.compareBuild = compareBuild;
+
+    function compareBuild(a, b, loose) {
+      var versionA = new SemVer(a, loose);
+      var versionB = new SemVer(b, loose);
+      return versionA.compare(versionB) || versionA.compareBuild(versionB);
+    }
+
+    exports.rcompare = rcompare;
+
+    function rcompare(a, b, loose) {
+      return compare(b, a, loose);
+    }
+
+    exports.sort = sort;
+
+    function sort(list, loose) {
+      return list.sort(function (a, b) {
+        return exports.compareBuild(a, b, loose);
+      });
+    }
+
+    exports.rsort = rsort;
+
+    function rsort(list, loose) {
+      return list.sort(function (a, b) {
+        return exports.compareBuild(b, a, loose);
+      });
+    }
+
+    exports.gt = gt;
+
+    function gt(a, b, loose) {
+      return compare(a, b, loose) > 0;
+    }
+
+    exports.lt = lt;
+
+    function lt(a, b, loose) {
+      return compare(a, b, loose) < 0;
+    }
+
+    exports.eq = eq;
+
+    function eq(a, b, loose) {
+      return compare(a, b, loose) === 0;
+    }
+
+    exports.neq = neq;
+
+    function neq(a, b, loose) {
+      return compare(a, b, loose) !== 0;
+    }
+
+    exports.gte = gte;
+
+    function gte(a, b, loose) {
+      return compare(a, b, loose) >= 0;
+    }
+
+    exports.lte = lte;
+
+    function lte(a, b, loose) {
+      return compare(a, b, loose) <= 0;
+    }
+
+    exports.cmp = cmp;
+
+    function cmp(a, op, b, loose) {
+      switch (op) {
+        case '===':
+          if (_typeof(a) === 'object') a = a.version;
+          if (_typeof(b) === 'object') b = b.version;
+          return a === b;
+
+        case '!==':
+          if (_typeof(a) === 'object') a = a.version;
+          if (_typeof(b) === 'object') b = b.version;
+          return a !== b;
+
+        case '':
+        case '=':
+        case '==':
+          return eq(a, b, loose);
+
+        case '!=':
+          return neq(a, b, loose);
+
+        case '>':
+          return gt(a, b, loose);
+
+        case '>=':
+          return gte(a, b, loose);
+
+        case '<':
+          return lt(a, b, loose);
+
+        case '<=':
+          return lte(a, b, loose);
+
+        default:
+          throw new TypeError('Invalid operator: ' + op);
+      }
+    }
+
+    exports.Comparator = Comparator;
+
+    function Comparator(comp, options) {
+      if (!options || _typeof(options) !== 'object') {
+        options = {
+          loose: !!options,
+          includePrerelease: false
+        };
+      }
+
+      if (comp instanceof Comparator) {
+        if (comp.loose === !!options.loose) {
+          return comp;
+        } else {
+          comp = comp.value;
+        }
+      }
+
+      if (!(this instanceof Comparator)) {
+        return new Comparator(comp, options);
+      }
+
+      debug('comparator', comp, options);
+      this.options = options;
+      this.loose = !!options.loose;
+      this.parse(comp);
+
+      if (this.semver === ANY) {
+        this.value = '';
+      } else {
+        this.value = this.operator + this.semver.version;
+      }
+
+      debug('comp', this);
+    }
+
+    var ANY = {};
+
+    Comparator.prototype.parse = function (comp) {
+      var r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR];
+      var m = comp.match(r);
+
+      if (!m) {
+        throw new TypeError('Invalid comparator: ' + comp);
+      }
+
+      this.operator = m[1] !== undefined ? m[1] : '';
+
+      if (this.operator === '=') {
+        this.operator = '';
+      } // if it literally is just '>' or '' then allow anything.
+
+
+      if (!m[2]) {
+        this.semver = ANY;
+      } else {
+        this.semver = new SemVer(m[2], this.options.loose);
+      }
+    };
+
+    Comparator.prototype.toString = function () {
+      return this.value;
+    };
+
+    Comparator.prototype.test = function (version) {
+      debug('Comparator.test', version, this.options.loose);
+
+      if (this.semver === ANY || version === ANY) {
+        return true;
+      }
+
+      if (typeof version === 'string') {
+        try {
+          version = new SemVer(version, this.options);
+        } catch (er) {
+          return false;
+        }
+      }
+
+      return cmp(version, this.operator, this.semver, this.options);
+    };
+
+    Comparator.prototype.intersects = function (comp, options) {
+      if (!(comp instanceof Comparator)) {
+        throw new TypeError('a Comparator is required');
+      }
+
+      if (!options || _typeof(options) !== 'object') {
+        options = {
+          loose: !!options,
+          includePrerelease: false
+        };
+      }
+
+      var rangeTmp;
+
+      if (this.operator === '') {
+        if (this.value === '') {
+          return true;
+        }
+
+        rangeTmp = new Range(comp.value, options);
+        return satisfies(this.value, rangeTmp, options);
+      } else if (comp.operator === '') {
+        if (comp.value === '') {
+          return true;
+        }
+
+        rangeTmp = new Range(this.value, options);
+        return satisfies(comp.semver, rangeTmp, options);
+      }
+
+      var sameDirectionIncreasing = (this.operator === '>=' || this.operator === '>') && (comp.operator === '>=' || comp.operator === '>');
+      var sameDirectionDecreasing = (this.operator === '<=' || this.operator === '<') && (comp.operator === '<=' || comp.operator === '<');
+      var sameSemVer = this.semver.version === comp.semver.version;
+      var differentDirectionsInclusive = (this.operator === '>=' || this.operator === '<=') && (comp.operator === '>=' || comp.operator === '<=');
+      var oppositeDirectionsLessThan = cmp(this.semver, '<', comp.semver, options) && (this.operator === '>=' || this.operator === '>') && (comp.operator === '<=' || comp.operator === '<');
+      var oppositeDirectionsGreaterThan = cmp(this.semver, '>', comp.semver, options) && (this.operator === '<=' || this.operator === '<') && (comp.operator === '>=' || comp.operator === '>');
+      return sameDirectionIncreasing || sameDirectionDecreasing || sameSemVer && differentDirectionsInclusive || oppositeDirectionsLessThan || oppositeDirectionsGreaterThan;
+    };
+
+    exports.Range = Range;
+
+    function Range(range, options) {
+      if (!options || _typeof(options) !== 'object') {
+        options = {
+          loose: !!options,
+          includePrerelease: false
+        };
+      }
+
+      if (range instanceof Range) {
+        if (range.loose === !!options.loose && range.includePrerelease === !!options.includePrerelease) {
+          return range;
+        } else {
+          return new Range(range.raw, options);
+        }
+      }
+
+      if (range instanceof Comparator) {
+        return new Range(range.value, options);
+      }
+
+      if (!(this instanceof Range)) {
+        return new Range(range, options);
+      }
+
+      this.options = options;
+      this.loose = !!options.loose;
+      this.includePrerelease = !!options.includePrerelease; // First, split based on boolean or ||
+
+      this.raw = range;
+      this.set = range.split(/\s*\|\|\s*/).map(function (range) {
+        return this.parseRange(range.trim());
+      }, this).filter(function (c) {
+        // throw out any that are not relevant for whatever reason
+        return c.length;
+      });
+
+      if (!this.set.length) {
+        throw new TypeError('Invalid SemVer Range: ' + range);
+      }
+
+      this.format();
+    }
+
+    Range.prototype.format = function () {
+      this.range = this.set.map(function (comps) {
+        return comps.join(' ').trim();
+      }).join('||').trim();
+      return this.range;
+    };
+
+    Range.prototype.toString = function () {
+      return this.range;
+    };
+
+    Range.prototype.parseRange = function (range) {
+      var loose = this.options.loose;
+      range = range.trim(); // `1.2.3 - 1.2.4` => `>=1.2.3 <=1.2.4`
+
+      var hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE];
+      range = range.replace(hr, hyphenReplace);
+      debug('hyphen replace', range); // `> 1.2.3 < 1.2.5` => `>1.2.3 <1.2.5`
+
+      range = range.replace(re[t.COMPARATORTRIM], comparatorTrimReplace);
+      debug('comparator trim', range, re[t.COMPARATORTRIM]); // `~ 1.2.3` => `~1.2.3`
+
+      range = range.replace(re[t.TILDETRIM], tildeTrimReplace); // `^ 1.2.3` => `^1.2.3`
+
+      range = range.replace(re[t.CARETTRIM], caretTrimReplace); // normalize spaces
+
+      range = range.split(/\s+/).join(' '); // At this point, the range is completely trimmed and
+      // ready to be split into comparators.
+
+      var compRe = loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR];
+      var set = range.split(' ').map(function (comp) {
+        return parseComparator(comp, this.options);
+      }, this).join(' ').split(/\s+/);
+
+      if (this.options.loose) {
+        // in loose mode, throw out any that are not valid comparators
+        set = set.filter(function (comp) {
+          return !!comp.match(compRe);
+        });
+      }
+
+      set = set.map(function (comp) {
+        return new Comparator(comp, this.options);
+      }, this);
+      return set;
+    };
+
+    Range.prototype.intersects = function (range, options) {
+      if (!(range instanceof Range)) {
+        throw new TypeError('a Range is required');
+      }
+
+      return this.set.some(function (thisComparators) {
+        return isSatisfiable(thisComparators, options) && range.set.some(function (rangeComparators) {
+          return isSatisfiable(rangeComparators, options) && thisComparators.every(function (thisComparator) {
+            return rangeComparators.every(function (rangeComparator) {
+              return thisComparator.intersects(rangeComparator, options);
+            });
+          });
+        });
+      });
+    }; // take a set of comparators and determine whether there
+    // exists a version which can satisfy it
+
+
+    function isSatisfiable(comparators, options) {
+      var result = true;
+      var remainingComparators = comparators.slice();
+      var testComparator = remainingComparators.pop();
+
+      while (result && remainingComparators.length) {
+        result = remainingComparators.every(function (otherComparator) {
+          return testComparator.intersects(otherComparator, options);
+        });
+        testComparator = remainingComparators.pop();
+      }
+
+      return result;
+    } // Mostly just for testing and legacy API reasons
+
+
+    exports.toComparators = toComparators;
+
+    function toComparators(range, options) {
+      return new Range(range, options).set.map(function (comp) {
+        return comp.map(function (c) {
+          return c.value;
+        }).join(' ').trim().split(' ');
+      });
+    } // comprised of xranges, tildes, stars, and gtlt's at this point.
+    // already replaced the hyphen ranges
+    // turn into a set of JUST comparators.
+
+
+    function parseComparator(comp, options) {
+      debug('comp', comp, options);
+      comp = replaceCarets(comp, options);
+      debug('caret', comp);
+      comp = replaceTildes(comp, options);
+      debug('tildes', comp);
+      comp = replaceXRanges(comp, options);
+      debug('xrange', comp);
+      comp = replaceStars(comp, options);
+      debug('stars', comp);
+      return comp;
+    }
+
+    function isX(id) {
+      return !id || id.toLowerCase() === 'x' || id === '*';
+    } // ~, ~> --> * (any, kinda silly)
+    // ~2, ~2.x, ~2.x.x, ~>2, ~>2.x ~>2.x.x --> >=2.0.0 <3.0.0
+    // ~2.0, ~2.0.x, ~>2.0, ~>2.0.x --> >=2.0.0 <2.1.0
+    // ~1.2, ~1.2.x, ~>1.2, ~>1.2.x --> >=1.2.0 <1.3.0
+    // ~1.2.3, ~>1.2.3 --> >=1.2.3 <1.3.0
+    // ~1.2.0, ~>1.2.0 --> >=1.2.0 <1.3.0
+
+
+    function replaceTildes(comp, options) {
+      return comp.trim().split(/\s+/).map(function (comp) {
+        return replaceTilde(comp, options);
+      }).join(' ');
+    }
+
+    function replaceTilde(comp, options) {
+      var r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
+      return comp.replace(r, function (_, M, m, p, pr) {
+        debug('tilde', comp, _, M, m, p, pr);
+        var ret;
+
+        if (isX(M)) {
+          ret = '';
+        } else if (isX(m)) {
+          ret = '>=' + M + '.0.0 <' + (+M + 1) + '.0.0';
+        } else if (isX(p)) {
+          // ~1.2 == >=1.2.0 <1.3.0
+          ret = '>=' + M + '.' + m + '.0 <' + M + '.' + (+m + 1) + '.0';
+        } else if (pr) {
+          debug('replaceTilde pr', pr);
+          ret = '>=' + M + '.' + m + '.' + p + '-' + pr + ' <' + M + '.' + (+m + 1) + '.0';
+        } else {
+          // ~1.2.3 == >=1.2.3 <1.3.0
+          ret = '>=' + M + '.' + m + '.' + p + ' <' + M + '.' + (+m + 1) + '.0';
+        }
+
+        debug('tilde return', ret);
+        return ret;
+      });
+    } // ^ --> * (any, kinda silly)
+    // ^2, ^2.x, ^2.x.x --> >=2.0.0 <3.0.0
+    // ^2.0, ^2.0.x --> >=2.0.0 <3.0.0
+    // ^1.2, ^1.2.x --> >=1.2.0 <2.0.0
+    // ^1.2.3 --> >=1.2.3 <2.0.0
+    // ^1.2.0 --> >=1.2.0 <2.0.0
+
+
+    function replaceCarets(comp, options) {
+      return comp.trim().split(/\s+/).map(function (comp) {
+        return replaceCaret(comp, options);
+      }).join(' ');
+    }
+
+    function replaceCaret(comp, options) {
+      debug('caret', comp, options);
+      var r = options.loose ? re[t.CARETLOOSE] : re[t.CARET];
+      return comp.replace(r, function (_, M, m, p, pr) {
+        debug('caret', comp, _, M, m, p, pr);
+        var ret;
+
+        if (isX(M)) {
+          ret = '';
+        } else if (isX(m)) {
+          ret = '>=' + M + '.0.0 <' + (+M + 1) + '.0.0';
+        } else if (isX(p)) {
+          if (M === '0') {
+            ret = '>=' + M + '.' + m + '.0 <' + M + '.' + (+m + 1) + '.0';
+          } else {
+            ret = '>=' + M + '.' + m + '.0 <' + (+M + 1) + '.0.0';
+          }
+        } else if (pr) {
+          debug('replaceCaret pr', pr);
+
+          if (M === '0') {
+            if (m === '0') {
+              ret = '>=' + M + '.' + m + '.' + p + '-' + pr + ' <' + M + '.' + m + '.' + (+p + 1);
+            } else {
+              ret = '>=' + M + '.' + m + '.' + p + '-' + pr + ' <' + M + '.' + (+m + 1) + '.0';
+            }
+          } else {
+            ret = '>=' + M + '.' + m + '.' + p + '-' + pr + ' <' + (+M + 1) + '.0.0';
+          }
+        } else {
+          debug('no pr');
+
+          if (M === '0') {
+            if (m === '0') {
+              ret = '>=' + M + '.' + m + '.' + p + ' <' + M + '.' + m + '.' + (+p + 1);
+            } else {
+              ret = '>=' + M + '.' + m + '.' + p + ' <' + M + '.' + (+m + 1) + '.0';
+            }
+          } else {
+            ret = '>=' + M + '.' + m + '.' + p + ' <' + (+M + 1) + '.0.0';
+          }
+        }
+
+        debug('caret return', ret);
+        return ret;
+      });
+    }
+
+    function replaceXRanges(comp, options) {
+      debug('replaceXRanges', comp, options);
+      return comp.split(/\s+/).map(function (comp) {
+        return replaceXRange(comp, options);
+      }).join(' ');
+    }
+
+    function replaceXRange(comp, options) {
+      comp = comp.trim();
+      var r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
+      return comp.replace(r, function (ret, gtlt, M, m, p, pr) {
+        debug('xRange', comp, ret, gtlt, M, m, p, pr);
+        var xM = isX(M);
+        var xm = xM || isX(m);
+        var xp = xm || isX(p);
+        var anyX = xp;
+
+        if (gtlt === '=' && anyX) {
+          gtlt = '';
+        } // if we're including prereleases in the match, then we need
+        // to fix this to -0, the lowest possible prerelease value
+
+
+        pr = options.includePrerelease ? '-0' : '';
+
+        if (xM) {
+          if (gtlt === '>' || gtlt === '<') {
+            // nothing is allowed
+            ret = '<0.0.0-0';
+          } else {
+            // nothing is forbidden
+            ret = '*';
+          }
+        } else if (gtlt && anyX) {
+          // we know patch is an x, because we have any x at all.
+          // replace X with 0
+          if (xm) {
+            m = 0;
+          }
+
+          p = 0;
+
+          if (gtlt === '>') {
+            // >1 => >=2.0.0
+            // >1.2 => >=1.3.0
+            // >1.2.3 => >= 1.2.4
+            gtlt = '>=';
+
+            if (xm) {
+              M = +M + 1;
+              m = 0;
+              p = 0;
+            } else {
+              m = +m + 1;
+              p = 0;
+            }
+          } else if (gtlt === '<=') {
+            // <=0.7.x is actually <0.8.0, since any 0.7.x should
+            // pass.  Similarly, <=7.x is actually <8.0.0, etc.
+            gtlt = '<';
+
+            if (xm) {
+              M = +M + 1;
+            } else {
+              m = +m + 1;
+            }
+          }
+
+          ret = gtlt + M + '.' + m + '.' + p + pr;
+        } else if (xm) {
+          ret = '>=' + M + '.0.0' + pr + ' <' + (+M + 1) + '.0.0' + pr;
+        } else if (xp) {
+          ret = '>=' + M + '.' + m + '.0' + pr + ' <' + M + '.' + (+m + 1) + '.0' + pr;
+        }
+
+        debug('xRange return', ret);
+        return ret;
+      });
+    } // Because * is AND-ed with everything else in the comparator,
+    // and '' means "any version", just remove the *s entirely.
+
+
+    function replaceStars(comp, options) {
+      debug('replaceStars', comp, options); // Looseness is ignored here.  star is always as loose as it gets!
+
+      return comp.trim().replace(re[t.STAR], '');
+    } // This function is passed to string.replace(re[t.HYPHENRANGE])
+    // M, m, patch, prerelease, build
+    // 1.2 - 3.4.5 => >=1.2.0 <=3.4.5
+    // 1.2.3 - 3.4 => >=1.2.0 <3.5.0 Any 3.4.x will do
+    // 1.2 - 3.4 => >=1.2.0 <3.5.0
+
+
+    function hyphenReplace($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr, tb) {
+      if (isX(fM)) {
+        from = '';
+      } else if (isX(fm)) {
+        from = '>=' + fM + '.0.0';
+      } else if (isX(fp)) {
+        from = '>=' + fM + '.' + fm + '.0';
+      } else {
+        from = '>=' + from;
+      }
+
+      if (isX(tM)) {
+        to = '';
+      } else if (isX(tm)) {
+        to = '<' + (+tM + 1) + '.0.0';
+      } else if (isX(tp)) {
+        to = '<' + tM + '.' + (+tm + 1) + '.0';
+      } else if (tpr) {
+        to = '<=' + tM + '.' + tm + '.' + tp + '-' + tpr;
+      } else {
+        to = '<=' + to;
+      }
+
+      return (from + ' ' + to).trim();
+    } // if ANY of the sets match ALL of its comparators, then pass
+
+
+    Range.prototype.test = function (version) {
+      if (!version) {
+        return false;
+      }
+
+      if (typeof version === 'string') {
+        try {
+          version = new SemVer(version, this.options);
+        } catch (er) {
+          return false;
+        }
+      }
+
+      for (var i = 0; i < this.set.length; i++) {
+        if (testSet(this.set[i], version, this.options)) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    function testSet(set, version, options) {
+      for (var i = 0; i < set.length; i++) {
+        if (!set[i].test(version)) {
+          return false;
+        }
+      }
+
+      if (version.prerelease.length && !options.includePrerelease) {
+        // Find the set of versions that are allowed to have prereleases
+        // For example, ^1.2.3-pr.1 desugars to >=1.2.3-pr.1 <2.0.0
+        // That should allow `1.2.3-pr.2` to pass.
+        // However, `1.2.4-alpha.notready` should NOT be allowed,
+        // even though it's within the range set by the comparators.
+        for (i = 0; i < set.length; i++) {
+          debug(set[i].semver);
+
+          if (set[i].semver === ANY) {
+            continue;
+          }
+
+          if (set[i].semver.prerelease.length > 0) {
+            var allowed = set[i].semver;
+
+            if (allowed.major === version.major && allowed.minor === version.minor && allowed.patch === version.patch) {
+              return true;
+            }
+          }
+        } // Version has a -pre, but it's not one of the ones we like.
+
+
+        return false;
+      }
+
+      return true;
+    }
+
+    exports.satisfies = satisfies;
+
+    function satisfies(version, range, options) {
+      try {
+        range = new Range(range, options);
+      } catch (er) {
+        return false;
+      }
+
+      return range.test(version);
+    }
+
+    exports.maxSatisfying = maxSatisfying;
+
+    function maxSatisfying(versions, range, options) {
+      var max = null;
+      var maxSV = null;
+
+      try {
+        var rangeObj = new Range(range, options);
+      } catch (er) {
+        return null;
+      }
+
+      versions.forEach(function (v) {
+        if (rangeObj.test(v)) {
+          // satisfies(v, range, options)
+          if (!max || maxSV.compare(v) === -1) {
+            // compare(max, v, true)
+            max = v;
+            maxSV = new SemVer(max, options);
+          }
+        }
+      });
+      return max;
+    }
+
+    exports.minSatisfying = minSatisfying;
+
+    function minSatisfying(versions, range, options) {
+      var min = null;
+      var minSV = null;
+
+      try {
+        var rangeObj = new Range(range, options);
+      } catch (er) {
+        return null;
+      }
+
+      versions.forEach(function (v) {
+        if (rangeObj.test(v)) {
+          // satisfies(v, range, options)
+          if (!min || minSV.compare(v) === 1) {
+            // compare(min, v, true)
+            min = v;
+            minSV = new SemVer(min, options);
+          }
+        }
+      });
+      return min;
+    }
+
+    exports.minVersion = minVersion;
+
+    function minVersion(range, loose) {
+      range = new Range(range, loose);
+      var minver = new SemVer('0.0.0');
+
+      if (range.test(minver)) {
+        return minver;
+      }
+
+      minver = new SemVer('0.0.0-0');
+
+      if (range.test(minver)) {
+        return minver;
+      }
+
+      minver = null;
+
+      for (var i = 0; i < range.set.length; ++i) {
+        var comparators = range.set[i];
+        comparators.forEach(function (comparator) {
+          // Clone to avoid manipulating the comparator's semver object.
+          var compver = new SemVer(comparator.semver.version);
+
+          switch (comparator.operator) {
+            case '>':
+              if (compver.prerelease.length === 0) {
+                compver.patch++;
+              } else {
+                compver.prerelease.push(0);
+              }
+
+              compver.raw = compver.format();
+
+            /* fallthrough */
+
+            case '':
+            case '>=':
+              if (!minver || gt(minver, compver)) {
+                minver = compver;
+              }
+
+              break;
+
+            case '<':
+            case '<=':
+              /* Ignore maximum versions */
+              break;
+
+            /* istanbul ignore next */
+
+            default:
+              throw new Error('Unexpected operation: ' + comparator.operator);
+          }
+        });
+      }
+
+      if (minver && range.test(minver)) {
+        return minver;
+      }
+
+      return null;
+    }
+
+    exports.validRange = validRange;
+
+    function validRange(range, options) {
+      try {
+        // Return '*' instead of '' so that truthiness works.
+        // This will throw if it's invalid anyway
+        return new Range(range, options).range || '*';
+      } catch (er) {
+        return null;
+      }
+    } // Determine if version is less than all the versions possible in the range
+
+
+    exports.ltr = ltr;
+
+    function ltr(version, range, options) {
+      return outside(version, range, '<', options);
+    } // Determine if version is greater than all the versions possible in the range.
+
+
+    exports.gtr = gtr;
+
+    function gtr(version, range, options) {
+      return outside(version, range, '>', options);
+    }
+
+    exports.outside = outside;
+
+    function outside(version, range, hilo, options) {
+      version = new SemVer(version, options);
+      range = new Range(range, options);
+      var gtfn, ltefn, ltfn, comp, ecomp;
+
+      switch (hilo) {
+        case '>':
+          gtfn = gt;
+          ltefn = lte;
+          ltfn = lt;
+          comp = '>';
+          ecomp = '>=';
+          break;
+
+        case '<':
+          gtfn = lt;
+          ltefn = gte;
+          ltfn = gt;
+          comp = '<';
+          ecomp = '<=';
+          break;
+
+        default:
+          throw new TypeError('Must provide a hilo val of "<" or ">"');
+      } // If it satisifes the range it is not outside
+
+
+      if (satisfies(version, range, options)) {
+        return false;
+      } // From now on, variable terms are as if we're in "gtr" mode.
+      // but note that everything is flipped for the "ltr" function.
+
+
+      for (var i = 0; i < range.set.length; ++i) {
+        var comparators = range.set[i];
+        var high = null;
+        var low = null;
+        comparators.forEach(function (comparator) {
+          if (comparator.semver === ANY) {
+            comparator = new Comparator('>=0.0.0');
+          }
+
+          high = high || comparator;
+          low = low || comparator;
+
+          if (gtfn(comparator.semver, high.semver, options)) {
+            high = comparator;
+          } else if (ltfn(comparator.semver, low.semver, options)) {
+            low = comparator;
+          }
+        }); // If the edge version comparator has a operator then our version
+        // isn't outside it
+
+        if (high.operator === comp || high.operator === ecomp) {
+          return false;
+        } // If the lowest version comparator has an operator and our version
+        // is less than it then it isn't higher than the range
+
+
+        if ((!low.operator || low.operator === comp) && ltefn(version, low.semver)) {
+          return false;
+        } else if (low.operator === ecomp && ltfn(version, low.semver)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    exports.prerelease = prerelease;
+
+    function prerelease(version, options) {
+      var parsed = parse(version, options);
+      return parsed && parsed.prerelease.length ? parsed.prerelease : null;
+    }
+
+    exports.intersects = intersects;
+
+    function intersects(r1, r2, options) {
+      r1 = new Range(r1, options);
+      r2 = new Range(r2, options);
+      return r1.intersects(r2);
+    }
+
+    exports.coerce = coerce;
+
+    function coerce(version, options) {
+      if (version instanceof SemVer) {
+        return version;
+      }
+
+      if (typeof version === 'number') {
+        version = String(version);
+      }
+
+      if (typeof version !== 'string') {
+        return null;
+      }
+
+      options = options || {};
+      var match = null;
+
+      if (!options.rtl) {
+        match = version.match(re[t.COERCE]);
+      } else {
+        // Find the right-most coercible string that does not share
+        // a terminus with a more left-ward coercible string.
+        // Eg, '1.2.3.4' wants to coerce '2.3.4', not '3.4' or '4'
+        //
+        // Walk through the string checking with a /g regexp
+        // Manually set the index so as to pick up overlapping matches.
+        // Stop when we get a match that ends at the string end, since no
+        // coercible string can be more right-ward without the same terminus.
+        var next;
+
+        while ((next = re[t.COERCERTL].exec(version)) && (!match || match.index + match[0].length !== version.length)) {
+          if (!match || next.index + next[0].length !== match.index + match[0].length) {
+            match = next;
+          }
+
+          re[t.COERCERTL].lastIndex = next.index + next[1].length + next[2].length;
+        } // leave it in a clean state
+
+
+        re[t.COERCERTL].lastIndex = -1;
+      }
+
+      if (match === null) {
+        return null;
+      }
+
+      return parse(match[2] + '.' + (match[3] || '0') + '.' + (match[4] || '0'), options);
+    }
+  });
+  var semver_1 = semver.SEMVER_SPEC_VERSION;
+  var semver_2 = semver.re;
+  var semver_3 = semver.src;
+  var semver_4 = semver.tokens;
+  var semver_5 = semver.parse;
+  var semver_6 = semver.valid;
+  var semver_7 = semver.clean;
+  var semver_8 = semver.SemVer;
+  var semver_9 = semver.inc;
+  var semver_10 = semver.diff;
+  var semver_11 = semver.compareIdentifiers;
+  var semver_12 = semver.rcompareIdentifiers;
+  var semver_13 = semver.major;
+  var semver_14 = semver.minor;
+  var semver_15 = semver.patch;
+  var semver_16 = semver.compare;
+  var semver_17 = semver.compareLoose;
+  var semver_18 = semver.compareBuild;
+  var semver_19 = semver.rcompare;
+  var semver_20 = semver.sort;
+  var semver_21 = semver.rsort;
+  var semver_22 = semver.gt;
+  var semver_23 = semver.lt;
+  var semver_24 = semver.eq;
+  var semver_25 = semver.neq;
+  var semver_26 = semver.gte;
+  var semver_27 = semver.lte;
+  var semver_28 = semver.cmp;
+  var semver_29 = semver.Comparator;
+  var semver_30 = semver.Range;
+  var semver_31 = semver.toComparators;
+  var semver_32 = semver.satisfies;
+  var semver_33 = semver.maxSatisfying;
+  var semver_34 = semver.minSatisfying;
+  var semver_35 = semver.minVersion;
+  var semver_36 = semver.validRange;
+  var semver_37 = semver.ltr;
+  var semver_38 = semver.gtr;
+  var semver_39 = semver.outside;
+  var semver_40 = semver.prerelease;
+  var semver_41 = semver.intersects;
+  var semver_42 = semver.coerce;
+
+  var arrayify = function arrayify(object, keyName) {
+    return Object.keys(object).reduce(function (array, key) {
+      return array.concat(Object.assign(_defineProperty({}, keyName, key), object[key]));
+    }, []);
+  };
+
+  var dedent_1 = createCommonjsModule(function (module) {
+
+    function dedent(strings) {
+      var raw = void 0;
+
+      if (typeof strings === "string") {
+        // dedent can be used as a plain function
+        raw = [strings];
+      } else {
+        raw = strings.raw;
+      } // first, perform interpolation
+
+
+      var result = "";
+
+      for (var i = 0; i < raw.length; i++) {
+        result += raw[i]. // join lines when there is a suppressed newline
+        replace(/\\\n[ \t]*/g, ""). // handle escaped backticks
+        replace(/\\`/g, "`");
+
+        if (i < (arguments.length <= 1 ? 0 : arguments.length - 1)) {
+          result += arguments.length <= i + 1 ? undefined : arguments[i + 1];
+        }
+      } // now strip indentation
+
+
+      var lines = result.split("\n");
+      var mindent = null;
+      lines.forEach(function (l) {
+        var m = l.match(/^(\s+)\S+/);
+
+        if (m) {
+          var indent = m[1].length;
+
+          if (!mindent) {
+            // this is the first indented line
+            mindent = indent;
+          } else {
+            mindent = Math.min(mindent, indent);
+          }
+        }
+      });
+
+      if (mindent !== null) {
+        result = lines.map(function (l) {
+          return l[0] === " " ? l.slice(mindent) : l;
+        }).join("\n");
+      } // dedent eats leading and trailing whitespace too
+
+
+      result = result.trim(); // handle escaped newlines at the end to ensure they don't get stripped too
+
+      return result.replace(/\\n/g, "\n");
+    }
+
+    {
+      module.exports = dedent;
+    }
+  });
+
+  function _templateObject6() {
+    var data = _taggedTemplateLiteral(["\n      Require either '@prettier' or '@format' to be present in the file's first docblock comment\n      in order for it to be formatted.\n    "]);
+
+    _templateObject6 = function _templateObject6() {
+      return data;
+    };
+
+    return data;
+  }
+
+  function _templateObject5() {
+    var data = _taggedTemplateLiteral(["\n      Format code starting at a given character offset.\n      The range will extend backwards to the start of the first line containing the selected statement.\n      This option cannot be used with --cursor-offset.\n    "]);
+
+    _templateObject5 = function _templateObject5() {
+      return data;
+    };
+
+    return data;
+  }
+
+  function _templateObject4() {
+    var data = _taggedTemplateLiteral(["\n      Format code ending at a given character offset (exclusive).\n      The range will extend forwards to the end of the selected statement.\n      This option cannot be used with --cursor-offset.\n    "]);
+
+    _templateObject4 = function _templateObject4() {
+      return data;
+    };
+
+    return data;
+  }
+
+  function _templateObject3() {
+    var data = _taggedTemplateLiteral(["\n      Custom directory that contains prettier plugins in node_modules subdirectory.\n      Overrides default behavior when plugins are searched relatively to the location of Prettier.\n      Multiple values are accepted.\n    "]);
+
+    _templateObject3 = function _templateObject3() {
+      return data;
+    };
+
+    return data;
+  }
+
+  function _templateObject2() {
+    var data = _taggedTemplateLiteral(["\n          Maintain existing\n          (mixed values within one file are normalised by looking at what's used after the first line)\n        "]);
+
+    _templateObject2 = function _templateObject2() {
+      return data;
+    };
+
+    return data;
+  }
+
+  function _templateObject() {
+    var data = _taggedTemplateLiteral(["\n      Print (to stderr) where a cursor at the given position would move to after formatting.\n      This option cannot be used with --range-start and --range-end.\n    "]);
+
+    _templateObject = function _templateObject() {
+      return data;
+    };
+
+    return data;
+  }
+
+  var CATEGORY_CONFIG = "Config";
+  var CATEGORY_EDITOR = "Editor";
+  var CATEGORY_FORMAT = "Format";
+  var CATEGORY_OTHER = "Other";
+  var CATEGORY_OUTPUT = "Output";
+  var CATEGORY_GLOBAL = "Global";
+  var CATEGORY_SPECIAL = "Special";
+  /**
+   * @typedef {Object} OptionInfo
+   * @property {string} [since] - available since version
+   * @property {string} category
+   * @property {'int' | 'boolean' | 'choice' | 'path'} type
+   * @property {boolean} [array] - indicate it's an array of the specified type
+   * @property {OptionValueInfo} [default]
+   * @property {OptionRangeInfo} [range] - for type int
+   * @property {string} description
+   * @property {string} [deprecated] - deprecated since version
+   * @property {OptionRedirectInfo} [redirect] - redirect deprecated option
+   * @property {(value: any) => boolean} [exception]
+   * @property {OptionChoiceInfo[]} [choices] - for type choice
+   * @property {string} [cliName]
+   * @property {string} [cliCategory]
+   * @property {string} [cliDescription]
+   *
+   * @typedef {number | boolean | string} OptionValue
+   * @typedef {OptionValue | [{ value: OptionValue[] }] | Array<{ since: string, value: OptionValue}>} OptionValueInfo
+   *
+   * @typedef {Object} OptionRedirectInfo
+   * @property {string} option
+   * @property {OptionValue} value
+   *
+   * @typedef {Object} OptionRangeInfo
+   * @property {number} start - recommended range start
+   * @property {number} end - recommended range end
+   * @property {number} step - recommended range step
+   *
+   * @typedef {Object} OptionChoiceInfo
+   * @property {boolean | string} value - boolean for the option that is originally boolean type
+   * @property {string} description
+   * @property {string} [since] - undefined if available since the first version of the option
+   * @property {string} [deprecated] - deprecated since version
+   * @property {OptionValueInfo} [redirect] - redirect deprecated value
+   */
+
+  /** @type {{ [name: string]: OptionInfo }} */
+
+  var options = {
+    cursorOffset: {
+      since: "1.4.0",
+      category: CATEGORY_SPECIAL,
+      type: "int",
+      default: -1,
+      range: {
+        start: -1,
+        end: Infinity,
+        step: 1
+      },
+      description: dedent_1(_templateObject()),
+      cliCategory: CATEGORY_EDITOR
+    },
+    endOfLine: {
+      since: "1.15.0",
+      category: CATEGORY_GLOBAL,
+      type: "choice",
+      default: "auto",
+      description: "Which end of line characters to apply.",
+      choices: [{
+        value: "auto",
+        description: dedent_1(_templateObject2())
+      }, {
+        value: "lf",
+        description: "Line Feed only (\\n), common on Linux and macOS as well as inside git repos"
+      }, {
+        value: "crlf",
+        description: "Carriage Return + Line Feed characters (\\r\\n), common on Windows"
+      }, {
+        value: "cr",
+        description: "Carriage Return character only (\\r), used very rarely"
+      }]
+    },
+    filepath: {
+      since: "1.4.0",
+      category: CATEGORY_SPECIAL,
+      type: "path",
+      description: "Specify the input filepath. This will be used to do parser inference.",
+      cliName: "stdin-filepath",
+      cliCategory: CATEGORY_OTHER,
+      cliDescription: "Path to the file to pretend that stdin comes from."
+    },
+    insertPragma: {
+      since: "1.8.0",
+      category: CATEGORY_SPECIAL,
+      type: "boolean",
+      default: false,
+      description: "Insert @format pragma into file's first docblock comment.",
+      cliCategory: CATEGORY_OTHER
+    },
+    parser: {
+      since: "0.0.10",
+      category: CATEGORY_GLOBAL,
+      type: "choice",
+      default: [{
+        since: "0.0.10",
+        value: "babylon"
+      }, {
+        since: "1.13.0",
+        value: undefined
+      }],
+      description: "Which parser to use.",
+      exception: function exception(value) {
+        return typeof value === "string" || typeof value === "function";
+      },
+      choices: [{
+        value: "flow",
+        description: "Flow"
+      }, {
+        value: "babylon",
+        description: "JavaScript",
+        deprecated: "1.16.0",
+        redirect: "babel"
+      }, {
+        value: "babel",
+        since: "1.16.0",
+        description: "JavaScript"
+      }, {
+        value: "babel-flow",
+        since: "1.16.0",
+        description: "Flow"
+      }, {
+        value: "typescript",
+        since: "1.4.0",
+        description: "TypeScript"
+      }, {
+        value: "css",
+        since: "1.7.1",
+        description: "CSS"
+      }, {
+        value: "postcss",
+        since: "1.4.0",
+        description: "CSS/Less/SCSS",
+        deprecated: "1.7.1",
+        redirect: "css"
+      }, {
+        value: "less",
+        since: "1.7.1",
+        description: "Less"
+      }, {
+        value: "scss",
+        since: "1.7.1",
+        description: "SCSS"
+      }, {
+        value: "json",
+        since: "1.5.0",
+        description: "JSON"
+      }, {
+        value: "json5",
+        since: "1.13.0",
+        description: "JSON5"
+      }, {
+        value: "json-stringify",
+        since: "1.13.0",
+        description: "JSON.stringify"
+      }, {
+        value: "graphql",
+        since: "1.5.0",
+        description: "GraphQL"
+      }, {
+        value: "markdown",
+        since: "1.8.0",
+        description: "Markdown"
+      }, {
+        value: "mdx",
+        since: "1.15.0",
+        description: "MDX"
+      }, {
+        value: "vue",
+        since: "1.10.0",
+        description: "Vue"
+      }, {
+        value: "yaml",
+        since: "1.14.0",
+        description: "YAML"
+      }, {
+        value: "glimmer",
+        since: null,
+        description: "Handlebars"
+      }, {
+        value: "html",
+        since: "1.15.0",
+        description: "HTML"
+      }, {
+        value: "angular",
+        since: "1.15.0",
+        description: "Angular"
+      }, {
+        value: "lwc",
+        since: "1.17.0",
+        description: "Lightning Web Components"
+      }]
+    },
+    plugins: {
+      since: "1.10.0",
+      type: "path",
+      array: true,
+      default: [{
+        value: []
+      }],
+      category: CATEGORY_GLOBAL,
+      description: "Add a plugin. Multiple plugins can be passed as separate `--plugin`s.",
+      exception: function exception(value) {
+        return typeof value === "string" || _typeof(value) === "object";
+      },
+      cliName: "plugin",
+      cliCategory: CATEGORY_CONFIG
+    },
+    pluginSearchDirs: {
+      since: "1.13.0",
+      type: "path",
+      array: true,
+      default: [{
+        value: []
+      }],
+      category: CATEGORY_GLOBAL,
+      description: dedent_1(_templateObject3()),
+      exception: function exception(value) {
+        return typeof value === "string" || _typeof(value) === "object";
+      },
+      cliName: "plugin-search-dir",
+      cliCategory: CATEGORY_CONFIG
+    },
+    printWidth: {
+      since: "0.0.0",
+      category: CATEGORY_GLOBAL,
+      type: "int",
+      default: 80,
+      description: "The line length where Prettier will try wrap.",
+      range: {
+        start: 0,
+        end: Infinity,
+        step: 1
+      }
+    },
+    rangeEnd: {
+      since: "1.4.0",
+      category: CATEGORY_SPECIAL,
+      type: "int",
+      default: Infinity,
+      range: {
+        start: 0,
+        end: Infinity,
+        step: 1
+      },
+      description: dedent_1(_templateObject4()),
+      cliCategory: CATEGORY_EDITOR
+    },
+    rangeStart: {
+      since: "1.4.0",
+      category: CATEGORY_SPECIAL,
+      type: "int",
+      default: 0,
+      range: {
+        start: 0,
+        end: Infinity,
+        step: 1
+      },
+      description: dedent_1(_templateObject5()),
+      cliCategory: CATEGORY_EDITOR
+    },
+    requirePragma: {
+      since: "1.7.0",
+      category: CATEGORY_SPECIAL,
+      type: "boolean",
+      default: false,
+      description: dedent_1(_templateObject6()),
+      cliCategory: CATEGORY_OTHER
+    },
+    tabWidth: {
+      type: "int",
+      category: CATEGORY_GLOBAL,
+      default: 2,
+      description: "Number of spaces per indentation level.",
+      range: {
+        start: 0,
+        end: Infinity,
+        step: 1
+      }
+    },
+    useFlowParser: {
+      since: "0.0.0",
+      category: CATEGORY_GLOBAL,
+      type: "boolean",
+      default: [{
+        since: "0.0.0",
+        value: false
+      }, {
+        since: "1.15.0",
+        value: undefined
+      }],
+      deprecated: "0.0.10",
+      description: "Use flow parser.",
+      redirect: {
+        option: "parser",
+        value: "flow"
+      },
+      cliName: "flow-parser"
+    },
+    useTabs: {
+      since: "1.0.0",
+      category: CATEGORY_GLOBAL,
+      type: "boolean",
+      default: false,
+      description: "Indent with tabs instead of spaces."
+    }
+  };
+  var coreOptions = {
+    CATEGORY_CONFIG: CATEGORY_CONFIG,
+    CATEGORY_EDITOR: CATEGORY_EDITOR,
+    CATEGORY_FORMAT: CATEGORY_FORMAT,
+    CATEGORY_OTHER: CATEGORY_OTHER,
+    CATEGORY_OUTPUT: CATEGORY_OUTPUT,
+    CATEGORY_GLOBAL: CATEGORY_GLOBAL,
+    CATEGORY_SPECIAL: CATEGORY_SPECIAL,
+    options: options
+  };
+
+  var require$$0 = getCjsExportFromNamespace(_package$1);
+
+  var currentVersion = require$$0.version;
+  var coreOptions$1 = coreOptions.options;
+
+  function getSupportInfo(version, opts) {
+    opts = Object.assign({
+      plugins: [],
+      showUnreleased: false,
+      showDeprecated: false,
+      showInternal: false
+    }, opts);
+
+    if (!version) {
+      // pre-release version is smaller than the normal version in semver,
+      // we need to treat it as the normal one so as to test new features.
+      version = currentVersion.split("-", 1)[0];
+    }
+
+    var plugins = opts.plugins;
+    var options = arrayify(Object.assign(plugins.reduce(function (currentOptions, plugin) {
+      return Object.assign(currentOptions, plugin.options);
+    }, {}), coreOptions$1), "name").sort(function (a, b) {
+      return a.name === b.name ? 0 : a.name < b.name ? -1 : 1;
+    }).filter(filterSince).filter(filterDeprecated).map(mapDeprecated).map(mapInternal).map(function (option) {
+      var newOption = Object.assign({}, option);
+
+      if (Array.isArray(newOption.default)) {
+        newOption.default = newOption.default.length === 1 ? newOption.default[0].value : newOption.default.filter(filterSince).sort(function (info1, info2) {
+          return semver.compare(info2.since, info1.since);
+        })[0].value;
+      }
+
+      if (Array.isArray(newOption.choices)) {
+        newOption.choices = newOption.choices.filter(filterSince).filter(filterDeprecated).map(mapDeprecated);
+      }
+
+      return newOption;
+    }).map(function (option) {
+      var filteredPlugins = plugins.filter(function (plugin) {
+        return plugin.defaultOptions && plugin.defaultOptions[option.name] !== undefined;
+      });
+      var pluginDefaults = filteredPlugins.reduce(function (reduced, plugin) {
+        reduced[plugin.name] = plugin.defaultOptions[option.name];
+        return reduced;
+      }, {});
+      return Object.assign(option, {
+        pluginDefaults: pluginDefaults
+      });
+    });
+    var usePostCssParser = semver.lt(version, "1.7.1");
+    var useBabylonParser = semver.lt(version, "1.16.0");
+    var languages = plugins.reduce(function (all, plugin) {
+      return all.concat(plugin.languages || []);
+    }, []).filter(filterSince).map(function (language) {
+      // Prevent breaking changes
+      if (language.name === "Markdown") {
+        return Object.assign({}, language, {
+          parsers: ["markdown"]
+        });
+      }
+
+      if (language.name === "TypeScript") {
+        return Object.assign({}, language, {
+          parsers: ["typescript"]
+        });
+      } // "babylon" was renamed to "babel" in 1.16.0
+
+
+      if (useBabylonParser && language.parsers.indexOf("babel") !== -1) {
+        return Object.assign({}, language, {
+          parsers: language.parsers.map(function (parser) {
+            return parser === "babel" ? "babylon" : parser;
+          })
+        });
+      }
+
+      if (usePostCssParser && (language.name === "CSS" || language.group === "CSS")) {
+        return Object.assign({}, language, {
+          parsers: ["postcss"]
+        });
+      }
+
+      return language;
+    });
+    return {
+      languages: languages,
+      options: options
+    };
+
+    function filterSince(object) {
+      return opts.showUnreleased || !("since" in object) || object.since && semver.gte(version, object.since);
+    }
+
+    function filterDeprecated(object) {
+      return opts.showDeprecated || !("deprecated" in object) || object.deprecated && semver.lt(version, object.deprecated);
+    }
+
+    function mapDeprecated(object) {
+      if (!object.deprecated || opts.showDeprecated) {
+        return object;
+      }
+
+      var newObject = Object.assign({}, object);
+      delete newObject.deprecated;
+      delete newObject.redirect;
+      return newObject;
+    }
+
+    function mapInternal(object) {
+      if (opts.showInternal) {
+        return object;
+      }
+
+      var newObject = Object.assign({}, object);
+      delete newObject.cliName;
+      delete newObject.cliCategory;
+      delete newObject.cliDescription;
+      return newObject;
+    }
+  }
+
+  var support = {
+    getSupportInfo: getSupportInfo
+  };
+
+  /*! *****************************************************************************
+  Copyright (c) Microsoft Corporation. All rights reserved.
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+  this file except in compliance with the License. You may obtain a copy of the
+  License at http://www.apache.org/licenses/LICENSE-2.0
+
+  THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+  WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+  MERCHANTABLITY OR NON-INFRINGEMENT.
+
+  See the Apache Version 2.0 License for specific language governing permissions
+  and limitations under the License.
+  ***************************************************************************** */
+
+  /* global Reflect, Promise */
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (b.hasOwnProperty(p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  function __extends(d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  }
+
+  var _assign = function __assign() {
+    _assign = Object.assign || function __assign(t) {
+      for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+
+        for (var p in s) {
+          if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+      }
+
+      return t;
+    };
+
+    return _assign.apply(this, arguments);
+  };
+  function __rest(s, e) {
+    var t = {};
+
+    for (var p in s) {
+      if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0) t[p] = s[p];
+    }
+
+    if (s != null && typeof Object.getOwnPropertySymbols === "function") for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+      if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i])) t[p[i]] = s[p[i]];
+    }
+    return t;
+  }
+  function __decorate(decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+      if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+  }
+  function __param(paramIndex, decorator) {
+    return function (target, key) {
+      decorator(target, key, paramIndex);
+    };
+  }
+  function __metadata(metadataKey, metadataValue) {
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+  }
+  function __awaiter(thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+      function fulfilled(value) {
+        try {
+          step(generator.next(value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+
+      function rejected(value) {
+        try {
+          step(generator["throw"](value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+
+      function step(result) {
+        result.done ? resolve(result.value) : new P(function (resolve) {
+          resolve(result.value);
+        }).then(fulfilled, rejected);
+      }
+
+      step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+  }
+  function __generator(thisArg, body) {
+    var _ = {
+      label: 0,
+      sent: function sent() {
+        if (t[0] & 1) throw t[1];
+        return t[1];
+      },
+      trys: [],
+      ops: []
+    },
+        f,
+        y,
+        t,
+        g;
+    return g = {
+      next: verb(0),
+      "throw": verb(1),
+      "return": verb(2)
+    }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+      return this;
+    }), g;
+
+    function verb(n) {
+      return function (v) {
+        return step([n, v]);
+      };
+    }
+
+    function step(op) {
+      if (f) throw new TypeError("Generator is already executing.");
+
+      while (_) {
+        try {
+          if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+          if (y = 0, t) op = [op[0] & 2, t.value];
+
+          switch (op[0]) {
+            case 0:
+            case 1:
+              t = op;
+              break;
+
+            case 4:
+              _.label++;
+              return {
+                value: op[1],
+                done: false
+              };
+
+            case 5:
+              _.label++;
+              y = op[1];
+              op = [0];
+              continue;
+
+            case 7:
+              op = _.ops.pop();
+
+              _.trys.pop();
+
+              continue;
+
+            default:
+              if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                _ = 0;
+                continue;
+              }
+
+              if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                _.label = op[1];
+                break;
+              }
+
+              if (op[0] === 6 && _.label < t[1]) {
+                _.label = t[1];
+                t = op;
+                break;
+              }
+
+              if (t && _.label < t[2]) {
+                _.label = t[2];
+
+                _.ops.push(op);
+
+                break;
+              }
+
+              if (t[2]) _.ops.pop();
+
+              _.trys.pop();
+
+              continue;
+          }
+
+          op = body.call(thisArg, _);
+        } catch (e) {
+          op = [6, e];
+          y = 0;
+        } finally {
+          f = t = 0;
+        }
+      }
+
+      if (op[0] & 5) throw op[1];
+      return {
+        value: op[0] ? op[1] : void 0,
+        done: true
+      };
+    }
+  }
+  function __exportStar(m, exports) {
+    for (var p in m) {
+      if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+    }
+  }
+  function __values(o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator],
+        i = 0;
+    if (m) return m.call(o);
+    return {
+      next: function next() {
+        if (o && i >= o.length) o = void 0;
+        return {
+          value: o && o[i++],
+          done: !o
+        };
+      }
+    };
+  }
+  function __read(o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o),
+        r,
+        ar = [],
+        e;
+
+    try {
+      while ((n === void 0 || n-- > 0) && !(r = i.next()).done) {
+        ar.push(r.value);
+      }
+    } catch (error) {
+      e = {
+        error: error
+      };
+    } finally {
+      try {
+        if (r && !r.done && (m = i["return"])) m.call(i);
+      } finally {
+        if (e) throw e.error;
+      }
+    }
+
+    return ar;
+  }
+  function __spread() {
+    for (var ar = [], i = 0; i < arguments.length; i++) {
+      ar = ar.concat(__read(arguments[i]));
+    }
+
+    return ar;
+  }
+  function __spreadArrays() {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+      s += arguments[i].length;
+    }
+
+    for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+      for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+        r[k] = a[j];
+      }
+    }
+
+    return r;
+  }
+  function __await(v) {
+    return this instanceof __await ? (this.v = v, this) : new __await(v);
+  }
+  function __asyncGenerator(thisArg, _arguments, generator) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var g = generator.apply(thisArg, _arguments || []),
+        i,
+        q = [];
+    return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () {
+      return this;
+    }, i;
+
+    function verb(n) {
+      if (g[n]) i[n] = function (v) {
+        return new Promise(function (a, b) {
+          q.push([n, v, a, b]) > 1 || resume(n, v);
+        });
+      };
+    }
+
+    function resume(n, v) {
+      try {
+        step(g[n](v));
+      } catch (e) {
+        settle(q[0][3], e);
+      }
+    }
+
+    function step(r) {
+      r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);
+    }
+
+    function fulfill(value) {
+      resume("next", value);
+    }
+
+    function reject(value) {
+      resume("throw", value);
+    }
+
+    function settle(f, v) {
+      if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]);
+    }
+  }
+  function __asyncDelegator(o) {
+    var i, p;
+    return i = {}, verb("next"), verb("throw", function (e) {
+      throw e;
+    }), verb("return"), i[Symbol.iterator] = function () {
+      return this;
+    }, i;
+
+    function verb(n, f) {
+      i[n] = o[n] ? function (v) {
+        return (p = !p) ? {
+          value: __await(o[n](v)),
+          done: n === "return"
+        } : f ? f(v) : v;
+      } : f;
+    }
+  }
+  function __asyncValues(o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator],
+        i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () {
+      return this;
+    }, i);
+
+    function verb(n) {
+      i[n] = o[n] && function (v) {
+        return new Promise(function (resolve, reject) {
+          v = o[n](v), settle(resolve, reject, v.done, v.value);
+        });
+      };
+    }
+
+    function settle(resolve, reject, d, v) {
+      Promise.resolve(v).then(function (v) {
+        resolve({
+          value: v,
+          done: d
+        });
+      }, reject);
+    }
+  }
+  function __makeTemplateObject(cooked, raw) {
+    if (Object.defineProperty) {
+      Object.defineProperty(cooked, "raw", {
+        value: raw
+      });
+    } else {
+      cooked.raw = raw;
+    }
+
+    return cooked;
+  }
+  function __importStar(mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) {
+      if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    }
+    result.default = mod;
+    return result;
+  }
+  function __importDefault(mod) {
+    return mod && mod.__esModule ? mod : {
+      default: mod
+    };
+  }
+
+  var tslib_es6 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    __extends: __extends,
+    get __assign () { return _assign; },
+    __rest: __rest,
+    __decorate: __decorate,
+    __param: __param,
+    __metadata: __metadata,
+    __awaiter: __awaiter,
+    __generator: __generator,
+    __exportStar: __exportStar,
+    __values: __values,
+    __read: __read,
+    __spread: __spread,
+    __spreadArrays: __spreadArrays,
+    __await: __await,
+    __asyncGenerator: __asyncGenerator,
+    __asyncDelegator: __asyncDelegator,
+    __asyncValues: __asyncValues,
+    __makeTemplateObject: __makeTemplateObject,
+    __importStar: __importStar,
+    __importDefault: __importDefault
+  });
+
+  var api = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.apiDescriptor = {
+      key: function key(_key) {
+        return /^[$_a-zA-Z][$_a-zA-Z0-9]*$/.test(_key) ? _key : JSON.stringify(_key);
+      },
+      value: function value(_value) {
+        if (_value === null || _typeof(_value) !== 'object') {
+          return JSON.stringify(_value);
+        }
+
+        if (Array.isArray(_value)) {
+          return "[".concat(_value.map(function (subValue) {
+            return exports.apiDescriptor.value(subValue);
+          }).join(', '), "]");
+        }
+
+        var keys = Object.keys(_value);
+        return keys.length === 0 ? '{}' : "{ ".concat(keys.map(function (key) {
+          return "".concat(exports.apiDescriptor.key(key), ": ").concat(exports.apiDescriptor.value(_value[key]));
+        }).join(', '), " }");
+      },
+      pair: function pair(_ref) {
+        var key = _ref.key,
+            value = _ref.value;
+        return exports.apiDescriptor.value(_defineProperty({}, key, value));
+      }
+    };
+  });
+  unwrapExports(api);
+  var api_1 = api.apiDescriptor;
+
+  var tslib_1 = getCjsExportFromNamespace(tslib_es6);
+
+  var descriptors = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+
+    tslib_1.__exportStar(api, exports);
+  });
+  unwrapExports(descriptors);
+
+  var matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;
+
+  var escapeStringRegexp = function escapeStringRegexp(str) {
+    if (typeof str !== 'string') {
+      throw new TypeError('Expected a string');
+    }
+
+    return str.replace(matchOperatorsRe, '\\$&');
+  };
+
+  var colorName = {
+    "aliceblue": [240, 248, 255],
+    "antiquewhite": [250, 235, 215],
+    "aqua": [0, 255, 255],
+    "aquamarine": [127, 255, 212],
+    "azure": [240, 255, 255],
+    "beige": [245, 245, 220],
+    "bisque": [255, 228, 196],
+    "black": [0, 0, 0],
+    "blanchedalmond": [255, 235, 205],
+    "blue": [0, 0, 255],
+    "blueviolet": [138, 43, 226],
+    "brown": [165, 42, 42],
+    "burlywood": [222, 184, 135],
+    "cadetblue": [95, 158, 160],
+    "chartreuse": [127, 255, 0],
+    "chocolate": [210, 105, 30],
+    "coral": [255, 127, 80],
+    "cornflowerblue": [100, 149, 237],
+    "cornsilk": [255, 248, 220],
+    "crimson": [220, 20, 60],
+    "cyan": [0, 255, 255],
+    "darkblue": [0, 0, 139],
+    "darkcyan": [0, 139, 139],
+    "darkgoldenrod": [184, 134, 11],
+    "darkgray": [169, 169, 169],
+    "darkgreen": [0, 100, 0],
+    "darkgrey": [169, 169, 169],
+    "darkkhaki": [189, 183, 107],
+    "darkmagenta": [139, 0, 139],
+    "darkolivegreen": [85, 107, 47],
+    "darkorange": [255, 140, 0],
+    "darkorchid": [153, 50, 204],
+    "darkred": [139, 0, 0],
+    "darksalmon": [233, 150, 122],
+    "darkseagreen": [143, 188, 143],
+    "darkslateblue": [72, 61, 139],
+    "darkslategray": [47, 79, 79],
+    "darkslategrey": [47, 79, 79],
+    "darkturquoise": [0, 206, 209],
+    "darkviolet": [148, 0, 211],
+    "deeppink": [255, 20, 147],
+    "deepskyblue": [0, 191, 255],
+    "dimgray": [105, 105, 105],
+    "dimgrey": [105, 105, 105],
+    "dodgerblue": [30, 144, 255],
+    "firebrick": [178, 34, 34],
+    "floralwhite": [255, 250, 240],
+    "forestgreen": [34, 139, 34],
+    "fuchsia": [255, 0, 255],
+    "gainsboro": [220, 220, 220],
+    "ghostwhite": [248, 248, 255],
+    "gold": [255, 215, 0],
+    "goldenrod": [218, 165, 32],
+    "gray": [128, 128, 128],
+    "green": [0, 128, 0],
+    "greenyellow": [173, 255, 47],
+    "grey": [128, 128, 128],
+    "honeydew": [240, 255, 240],
+    "hotpink": [255, 105, 180],
+    "indianred": [205, 92, 92],
+    "indigo": [75, 0, 130],
+    "ivory": [255, 255, 240],
+    "khaki": [240, 230, 140],
+    "lavender": [230, 230, 250],
+    "lavenderblush": [255, 240, 245],
+    "lawngreen": [124, 252, 0],
+    "lemonchiffon": [255, 250, 205],
+    "lightblue": [173, 216, 230],
+    "lightcoral": [240, 128, 128],
+    "lightcyan": [224, 255, 255],
+    "lightgoldenrodyellow": [250, 250, 210],
+    "lightgray": [211, 211, 211],
+    "lightgreen": [144, 238, 144],
+    "lightgrey": [211, 211, 211],
+    "lightpink": [255, 182, 193],
+    "lightsalmon": [255, 160, 122],
+    "lightseagreen": [32, 178, 170],
+    "lightskyblue": [135, 206, 250],
+    "lightslategray": [119, 136, 153],
+    "lightslategrey": [119, 136, 153],
+    "lightsteelblue": [176, 196, 222],
+    "lightyellow": [255, 255, 224],
+    "lime": [0, 255, 0],
+    "limegreen": [50, 205, 50],
+    "linen": [250, 240, 230],
+    "magenta": [255, 0, 255],
+    "maroon": [128, 0, 0],
+    "mediumaquamarine": [102, 205, 170],
+    "mediumblue": [0, 0, 205],
+    "mediumorchid": [186, 85, 211],
+    "mediumpurple": [147, 112, 219],
+    "mediumseagreen": [60, 179, 113],
+    "mediumslateblue": [123, 104, 238],
+    "mediumspringgreen": [0, 250, 154],
+    "mediumturquoise": [72, 209, 204],
+    "mediumvioletred": [199, 21, 133],
+    "midnightblue": [25, 25, 112],
+    "mintcream": [245, 255, 250],
+    "mistyrose": [255, 228, 225],
+    "moccasin": [255, 228, 181],
+    "navajowhite": [255, 222, 173],
+    "navy": [0, 0, 128],
+    "oldlace": [253, 245, 230],
+    "olive": [128, 128, 0],
+    "olivedrab": [107, 142, 35],
+    "orange": [255, 165, 0],
+    "orangered": [255, 69, 0],
+    "orchid": [218, 112, 214],
+    "palegoldenrod": [238, 232, 170],
+    "palegreen": [152, 251, 152],
+    "paleturquoise": [175, 238, 238],
+    "palevioletred": [219, 112, 147],
+    "papayawhip": [255, 239, 213],
+    "peachpuff": [255, 218, 185],
+    "peru": [205, 133, 63],
+    "pink": [255, 192, 203],
+    "plum": [221, 160, 221],
+    "powderblue": [176, 224, 230],
+    "purple": [128, 0, 128],
+    "rebeccapurple": [102, 51, 153],
+    "red": [255, 0, 0],
+    "rosybrown": [188, 143, 143],
+    "royalblue": [65, 105, 225],
+    "saddlebrown": [139, 69, 19],
+    "salmon": [250, 128, 114],
+    "sandybrown": [244, 164, 96],
+    "seagreen": [46, 139, 87],
+    "seashell": [255, 245, 238],
+    "sienna": [160, 82, 45],
+    "silver": [192, 192, 192],
+    "skyblue": [135, 206, 235],
+    "slateblue": [106, 90, 205],
+    "slategray": [112, 128, 144],
+    "slategrey": [112, 128, 144],
+    "snow": [255, 250, 250],
+    "springgreen": [0, 255, 127],
+    "steelblue": [70, 130, 180],
+    "tan": [210, 180, 140],
+    "teal": [0, 128, 128],
+    "thistle": [216, 191, 216],
+    "tomato": [255, 99, 71],
+    "turquoise": [64, 224, 208],
+    "violet": [238, 130, 238],
+    "wheat": [245, 222, 179],
+    "white": [255, 255, 255],
+    "whitesmoke": [245, 245, 245],
+    "yellow": [255, 255, 0],
+    "yellowgreen": [154, 205, 50]
+  };
+
+  var conversions = createCommonjsModule(function (module) {
+    /* MIT license */
+    // NOTE: conversions should only return primitive values (i.e. arrays, or
+    //       values that give correct `typeof` results).
+    //       do not use box values types (i.e. Number(), String(), etc.)
+    var reverseKeywords = {};
+
+    for (var key in colorName) {
+      if (colorName.hasOwnProperty(key)) {
+        reverseKeywords[colorName[key]] = key;
+      }
+    }
+
+    var convert = module.exports = {
+      rgb: {
+        channels: 3,
+        labels: 'rgb'
+      },
+      hsl: {
+        channels: 3,
+        labels: 'hsl'
+      },
+      hsv: {
+        channels: 3,
+        labels: 'hsv'
+      },
+      hwb: {
+        channels: 3,
+        labels: 'hwb'
+      },
+      cmyk: {
+        channels: 4,
+        labels: 'cmyk'
+      },
+      xyz: {
+        channels: 3,
+        labels: 'xyz'
+      },
+      lab: {
+        channels: 3,
+        labels: 'lab'
+      },
+      lch: {
+        channels: 3,
+        labels: 'lch'
+      },
+      hex: {
+        channels: 1,
+        labels: ['hex']
+      },
+      keyword: {
+        channels: 1,
+        labels: ['keyword']
+      },
+      ansi16: {
+        channels: 1,
+        labels: ['ansi16']
+      },
+      ansi256: {
+        channels: 1,
+        labels: ['ansi256']
+      },
+      hcg: {
+        channels: 3,
+        labels: ['h', 'c', 'g']
+      },
+      apple: {
+        channels: 3,
+        labels: ['r16', 'g16', 'b16']
+      },
+      gray: {
+        channels: 1,
+        labels: ['gray']
+      }
+    }; // hide .channels and .labels properties
+
+    for (var model in convert) {
+      if (convert.hasOwnProperty(model)) {
+        if (!('channels' in convert[model])) {
+          throw new Error('missing channels property: ' + model);
+        }
+
+        if (!('labels' in convert[model])) {
+          throw new Error('missing channel labels property: ' + model);
+        }
+
+        if (convert[model].labels.length !== convert[model].channels) {
+          throw new Error('channel and label counts mismatch: ' + model);
+        }
+
+        var channels = convert[model].channels;
+        var labels = convert[model].labels;
+        delete convert[model].channels;
+        delete convert[model].labels;
+        Object.defineProperty(convert[model], 'channels', {
+          value: channels
+        });
+        Object.defineProperty(convert[model], 'labels', {
+          value: labels
+        });
+      }
+    }
+
+    convert.rgb.hsl = function (rgb) {
+      var r = rgb[0] / 255;
+      var g = rgb[1] / 255;
+      var b = rgb[2] / 255;
+      var min = Math.min(r, g, b);
+      var max = Math.max(r, g, b);
+      var delta = max - min;
+      var h;
+      var s;
+      var l;
+
+      if (max === min) {
+        h = 0;
+      } else if (r === max) {
+        h = (g - b) / delta;
+      } else if (g === max) {
+        h = 2 + (b - r) / delta;
+      } else if (b === max) {
+        h = 4 + (r - g) / delta;
+      }
+
+      h = Math.min(h * 60, 360);
+
+      if (h < 0) {
+        h += 360;
+      }
+
+      l = (min + max) / 2;
+
+      if (max === min) {
+        s = 0;
+      } else if (l <= 0.5) {
+        s = delta / (max + min);
+      } else {
+        s = delta / (2 - max - min);
+      }
+
+      return [h, s * 100, l * 100];
+    };
+
+    convert.rgb.hsv = function (rgb) {
+      var r = rgb[0];
+      var g = rgb[1];
+      var b = rgb[2];
+      var min = Math.min(r, g, b);
+      var max = Math.max(r, g, b);
+      var delta = max - min;
+      var h;
+      var s;
+      var v;
+
+      if (max === 0) {
+        s = 0;
+      } else {
+        s = delta / max * 1000 / 10;
+      }
+
+      if (max === min) {
+        h = 0;
+      } else if (r === max) {
+        h = (g - b) / delta;
+      } else if (g === max) {
+        h = 2 + (b - r) / delta;
+      } else if (b === max) {
+        h = 4 + (r - g) / delta;
+      }
+
+      h = Math.min(h * 60, 360);
+
+      if (h < 0) {
+        h += 360;
+      }
+
+      v = max / 255 * 1000 / 10;
+      return [h, s, v];
+    };
+
+    convert.rgb.hwb = function (rgb) {
+      var r = rgb[0];
+      var g = rgb[1];
+      var b = rgb[2];
+      var h = convert.rgb.hsl(rgb)[0];
+      var w = 1 / 255 * Math.min(r, Math.min(g, b));
+      b = 1 - 1 / 255 * Math.max(r, Math.max(g, b));
+      return [h, w * 100, b * 100];
+    };
+
+    convert.rgb.cmyk = function (rgb) {
+      var r = rgb[0] / 255;
+      var g = rgb[1] / 255;
+      var b = rgb[2] / 255;
+      var c;
+      var m;
+      var y;
+      var k;
+      k = Math.min(1 - r, 1 - g, 1 - b);
+      c = (1 - r - k) / (1 - k) || 0;
+      m = (1 - g - k) / (1 - k) || 0;
+      y = (1 - b - k) / (1 - k) || 0;
+      return [c * 100, m * 100, y * 100, k * 100];
+    };
+    /**
+     * See https://en.m.wikipedia.org/wiki/Euclidean_distance#Squared_Euclidean_distance
+     * */
+
+
+    function comparativeDistance(x, y) {
+      return Math.pow(x[0] - y[0], 2) + Math.pow(x[1] - y[1], 2) + Math.pow(x[2] - y[2], 2);
+    }
+
+    convert.rgb.keyword = function (rgb) {
+      var reversed = reverseKeywords[rgb];
+
+      if (reversed) {
+        return reversed;
+      }
+
+      var currentClosestDistance = Infinity;
+      var currentClosestKeyword;
+
+      for (var keyword in colorName) {
+        if (colorName.hasOwnProperty(keyword)) {
+          var value = colorName[keyword]; // Compute comparative distance
+
+          var distance = comparativeDistance(rgb, value); // Check if its less, if so set as closest
+
+          if (distance < currentClosestDistance) {
+            currentClosestDistance = distance;
+            currentClosestKeyword = keyword;
+          }
+        }
+      }
+
+      return currentClosestKeyword;
+    };
+
+    convert.keyword.rgb = function (keyword) {
+      return colorName[keyword];
+    };
+
+    convert.rgb.xyz = function (rgb) {
+      var r = rgb[0] / 255;
+      var g = rgb[1] / 255;
+      var b = rgb[2] / 255; // assume sRGB
+
+      r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+      g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+      b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+      var x = r * 0.4124 + g * 0.3576 + b * 0.1805;
+      var y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+      var z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+      return [x * 100, y * 100, z * 100];
+    };
+
+    convert.rgb.lab = function (rgb) {
+      var xyz = convert.rgb.xyz(rgb);
+      var x = xyz[0];
+      var y = xyz[1];
+      var z = xyz[2];
+      var l;
+      var a;
+      var b;
+      x /= 95.047;
+      y /= 100;
+      z /= 108.883;
+      x = x > 0.008856 ? Math.pow(x, 1 / 3) : 7.787 * x + 16 / 116;
+      y = y > 0.008856 ? Math.pow(y, 1 / 3) : 7.787 * y + 16 / 116;
+      z = z > 0.008856 ? Math.pow(z, 1 / 3) : 7.787 * z + 16 / 116;
+      l = 116 * y - 16;
+      a = 500 * (x - y);
+      b = 200 * (y - z);
+      return [l, a, b];
+    };
+
+    convert.hsl.rgb = function (hsl) {
+      var h = hsl[0] / 360;
+      var s = hsl[1] / 100;
+      var l = hsl[2] / 100;
+      var t1;
+      var t2;
+      var t3;
+      var rgb;
+      var val;
+
+      if (s === 0) {
+        val = l * 255;
+        return [val, val, val];
+      }
+
+      if (l < 0.5) {
+        t2 = l * (1 + s);
+      } else {
+        t2 = l + s - l * s;
+      }
+
+      t1 = 2 * l - t2;
+      rgb = [0, 0, 0];
+
+      for (var i = 0; i < 3; i++) {
+        t3 = h + 1 / 3 * -(i - 1);
+
+        if (t3 < 0) {
+          t3++;
+        }
+
+        if (t3 > 1) {
+          t3--;
+        }
+
+        if (6 * t3 < 1) {
+          val = t1 + (t2 - t1) * 6 * t3;
+        } else if (2 * t3 < 1) {
+          val = t2;
+        } else if (3 * t3 < 2) {
+          val = t1 + (t2 - t1) * (2 / 3 - t3) * 6;
+        } else {
+          val = t1;
+        }
+
+        rgb[i] = val * 255;
+      }
+
+      return rgb;
+    };
+
+    convert.hsl.hsv = function (hsl) {
+      var h = hsl[0];
+      var s = hsl[1] / 100;
+      var l = hsl[2] / 100;
+      var smin = s;
+      var lmin = Math.max(l, 0.01);
+      var sv;
+      var v;
+      l *= 2;
+      s *= l <= 1 ? l : 2 - l;
+      smin *= lmin <= 1 ? lmin : 2 - lmin;
+      v = (l + s) / 2;
+      sv = l === 0 ? 2 * smin / (lmin + smin) : 2 * s / (l + s);
+      return [h, sv * 100, v * 100];
+    };
+
+    convert.hsv.rgb = function (hsv) {
+      var h = hsv[0] / 60;
+      var s = hsv[1] / 100;
+      var v = hsv[2] / 100;
+      var hi = Math.floor(h) % 6;
+      var f = h - Math.floor(h);
+      var p = 255 * v * (1 - s);
+      var q = 255 * v * (1 - s * f);
+      var t = 255 * v * (1 - s * (1 - f));
+      v *= 255;
+
+      switch (hi) {
+        case 0:
+          return [v, t, p];
+
+        case 1:
+          return [q, v, p];
+
+        case 2:
+          return [p, v, t];
+
+        case 3:
+          return [p, q, v];
+
+        case 4:
+          return [t, p, v];
+
+        case 5:
+          return [v, p, q];
+      }
+    };
+
+    convert.hsv.hsl = function (hsv) {
+      var h = hsv[0];
+      var s = hsv[1] / 100;
+      var v = hsv[2] / 100;
+      var vmin = Math.max(v, 0.01);
+      var lmin;
+      var sl;
+      var l;
+      l = (2 - s) * v;
+      lmin = (2 - s) * vmin;
+      sl = s * vmin;
+      sl /= lmin <= 1 ? lmin : 2 - lmin;
+      sl = sl || 0;
+      l /= 2;
+      return [h, sl * 100, l * 100];
+    }; // http://dev.w3.org/csswg/css-color/#hwb-to-rgb
+
+
+    convert.hwb.rgb = function (hwb) {
+      var h = hwb[0] / 360;
+      var wh = hwb[1] / 100;
+      var bl = hwb[2] / 100;
+      var ratio = wh + bl;
+      var i;
+      var v;
+      var f;
+      var n; // wh + bl cant be > 1
+
+      if (ratio > 1) {
+        wh /= ratio;
+        bl /= ratio;
+      }
+
+      i = Math.floor(6 * h);
+      v = 1 - bl;
+      f = 6 * h - i;
+
+      if ((i & 0x01) !== 0) {
+        f = 1 - f;
+      }
+
+      n = wh + f * (v - wh); // linear interpolation
+
+      var r;
+      var g;
+      var b;
+
+      switch (i) {
+        default:
+        case 6:
+        case 0:
+          r = v;
+          g = n;
+          b = wh;
+          break;
+
+        case 1:
+          r = n;
+          g = v;
+          b = wh;
+          break;
+
+        case 2:
+          r = wh;
+          g = v;
+          b = n;
+          break;
+
+        case 3:
+          r = wh;
+          g = n;
+          b = v;
+          break;
+
+        case 4:
+          r = n;
+          g = wh;
+          b = v;
+          break;
+
+        case 5:
+          r = v;
+          g = wh;
+          b = n;
+          break;
+      }
+
+      return [r * 255, g * 255, b * 255];
+    };
+
+    convert.cmyk.rgb = function (cmyk) {
+      var c = cmyk[0] / 100;
+      var m = cmyk[1] / 100;
+      var y = cmyk[2] / 100;
+      var k = cmyk[3] / 100;
+      var r;
+      var g;
+      var b;
+      r = 1 - Math.min(1, c * (1 - k) + k);
+      g = 1 - Math.min(1, m * (1 - k) + k);
+      b = 1 - Math.min(1, y * (1 - k) + k);
+      return [r * 255, g * 255, b * 255];
+    };
+
+    convert.xyz.rgb = function (xyz) {
+      var x = xyz[0] / 100;
+      var y = xyz[1] / 100;
+      var z = xyz[2] / 100;
+      var r;
+      var g;
+      var b;
+      r = x * 3.2406 + y * -1.5372 + z * -0.4986;
+      g = x * -0.9689 + y * 1.8758 + z * 0.0415;
+      b = x * 0.0557 + y * -0.2040 + z * 1.0570; // assume sRGB
+
+      r = r > 0.0031308 ? 1.055 * Math.pow(r, 1.0 / 2.4) - 0.055 : r * 12.92;
+      g = g > 0.0031308 ? 1.055 * Math.pow(g, 1.0 / 2.4) - 0.055 : g * 12.92;
+      b = b > 0.0031308 ? 1.055 * Math.pow(b, 1.0 / 2.4) - 0.055 : b * 12.92;
+      r = Math.min(Math.max(0, r), 1);
+      g = Math.min(Math.max(0, g), 1);
+      b = Math.min(Math.max(0, b), 1);
+      return [r * 255, g * 255, b * 255];
+    };
+
+    convert.xyz.lab = function (xyz) {
+      var x = xyz[0];
+      var y = xyz[1];
+      var z = xyz[2];
+      var l;
+      var a;
+      var b;
+      x /= 95.047;
+      y /= 100;
+      z /= 108.883;
+      x = x > 0.008856 ? Math.pow(x, 1 / 3) : 7.787 * x + 16 / 116;
+      y = y > 0.008856 ? Math.pow(y, 1 / 3) : 7.787 * y + 16 / 116;
+      z = z > 0.008856 ? Math.pow(z, 1 / 3) : 7.787 * z + 16 / 116;
+      l = 116 * y - 16;
+      a = 500 * (x - y);
+      b = 200 * (y - z);
+      return [l, a, b];
+    };
+
+    convert.lab.xyz = function (lab) {
+      var l = lab[0];
+      var a = lab[1];
+      var b = lab[2];
+      var x;
+      var y;
+      var z;
+      y = (l + 16) / 116;
+      x = a / 500 + y;
+      z = y - b / 200;
+      var y2 = Math.pow(y, 3);
+      var x2 = Math.pow(x, 3);
+      var z2 = Math.pow(z, 3);
+      y = y2 > 0.008856 ? y2 : (y - 16 / 116) / 7.787;
+      x = x2 > 0.008856 ? x2 : (x - 16 / 116) / 7.787;
+      z = z2 > 0.008856 ? z2 : (z - 16 / 116) / 7.787;
+      x *= 95.047;
+      y *= 100;
+      z *= 108.883;
+      return [x, y, z];
+    };
+
+    convert.lab.lch = function (lab) {
+      var l = lab[0];
+      var a = lab[1];
+      var b = lab[2];
+      var hr;
+      var h;
+      var c;
+      hr = Math.atan2(b, a);
+      h = hr * 360 / 2 / Math.PI;
+
+      if (h < 0) {
+        h += 360;
+      }
+
+      c = Math.sqrt(a * a + b * b);
+      return [l, c, h];
+    };
+
+    convert.lch.lab = function (lch) {
+      var l = lch[0];
+      var c = lch[1];
+      var h = lch[2];
+      var a;
+      var b;
+      var hr;
+      hr = h / 360 * 2 * Math.PI;
+      a = c * Math.cos(hr);
+      b = c * Math.sin(hr);
+      return [l, a, b];
+    };
+
+    convert.rgb.ansi16 = function (args) {
+      var r = args[0];
+      var g = args[1];
+      var b = args[2];
+      var value = 1 in arguments ? arguments[1] : convert.rgb.hsv(args)[2]; // hsv -> ansi16 optimization
+
+      value = Math.round(value / 50);
+
+      if (value === 0) {
+        return 30;
+      }
+
+      var ansi = 30 + (Math.round(b / 255) << 2 | Math.round(g / 255) << 1 | Math.round(r / 255));
+
+      if (value === 2) {
+        ansi += 60;
+      }
+
+      return ansi;
+    };
+
+    convert.hsv.ansi16 = function (args) {
+      // optimization here; we already know the value and don't need to get
+      // it converted for us.
+      return convert.rgb.ansi16(convert.hsv.rgb(args), args[2]);
+    };
+
+    convert.rgb.ansi256 = function (args) {
+      var r = args[0];
+      var g = args[1];
+      var b = args[2]; // we use the extended greyscale palette here, with the exception of
+      // black and white. normal palette only has 4 greyscale shades.
+
+      if (r === g && g === b) {
+        if (r < 8) {
+          return 16;
+        }
+
+        if (r > 248) {
+          return 231;
+        }
+
+        return Math.round((r - 8) / 247 * 24) + 232;
+      }
+
+      var ansi = 16 + 36 * Math.round(r / 255 * 5) + 6 * Math.round(g / 255 * 5) + Math.round(b / 255 * 5);
+      return ansi;
+    };
+
+    convert.ansi16.rgb = function (args) {
+      var color = args % 10; // handle greyscale
+
+      if (color === 0 || color === 7) {
+        if (args > 50) {
+          color += 3.5;
+        }
+
+        color = color / 10.5 * 255;
+        return [color, color, color];
+      }
+
+      var mult = (~~(args > 50) + 1) * 0.5;
+      var r = (color & 1) * mult * 255;
+      var g = (color >> 1 & 1) * mult * 255;
+      var b = (color >> 2 & 1) * mult * 255;
+      return [r, g, b];
+    };
+
+    convert.ansi256.rgb = function (args) {
+      // handle greyscale
+      if (args >= 232) {
+        var c = (args - 232) * 10 + 8;
+        return [c, c, c];
+      }
+
+      args -= 16;
+      var rem;
+      var r = Math.floor(args / 36) / 5 * 255;
+      var g = Math.floor((rem = args % 36) / 6) / 5 * 255;
+      var b = rem % 6 / 5 * 255;
+      return [r, g, b];
+    };
+
+    convert.rgb.hex = function (args) {
+      var integer = ((Math.round(args[0]) & 0xFF) << 16) + ((Math.round(args[1]) & 0xFF) << 8) + (Math.round(args[2]) & 0xFF);
+      var string = integer.toString(16).toUpperCase();
+      return '000000'.substring(string.length) + string;
+    };
+
+    convert.hex.rgb = function (args) {
+      var match = args.toString(16).match(/[a-f0-9]{6}|[a-f0-9]{3}/i);
+
+      if (!match) {
+        return [0, 0, 0];
+      }
+
+      var colorString = match[0];
+
+      if (match[0].length === 3) {
+        colorString = colorString.split('').map(function (char) {
+          return char + char;
+        }).join('');
+      }
+
+      var integer = parseInt(colorString, 16);
+      var r = integer >> 16 & 0xFF;
+      var g = integer >> 8 & 0xFF;
+      var b = integer & 0xFF;
+      return [r, g, b];
+    };
+
+    convert.rgb.hcg = function (rgb) {
+      var r = rgb[0] / 255;
+      var g = rgb[1] / 255;
+      var b = rgb[2] / 255;
+      var max = Math.max(Math.max(r, g), b);
+      var min = Math.min(Math.min(r, g), b);
+      var chroma = max - min;
+      var grayscale;
+      var hue;
+
+      if (chroma < 1) {
+        grayscale = min / (1 - chroma);
+      } else {
+        grayscale = 0;
+      }
+
+      if (chroma <= 0) {
+        hue = 0;
+      } else if (max === r) {
+        hue = (g - b) / chroma % 6;
+      } else if (max === g) {
+        hue = 2 + (b - r) / chroma;
+      } else {
+        hue = 4 + (r - g) / chroma + 4;
+      }
+
+      hue /= 6;
+      hue %= 1;
+      return [hue * 360, chroma * 100, grayscale * 100];
+    };
+
+    convert.hsl.hcg = function (hsl) {
+      var s = hsl[1] / 100;
+      var l = hsl[2] / 100;
+      var c = 1;
+      var f = 0;
+
+      if (l < 0.5) {
+        c = 2.0 * s * l;
+      } else {
+        c = 2.0 * s * (1.0 - l);
+      }
+
+      if (c < 1.0) {
+        f = (l - 0.5 * c) / (1.0 - c);
+      }
+
+      return [hsl[0], c * 100, f * 100];
+    };
+
+    convert.hsv.hcg = function (hsv) {
+      var s = hsv[1] / 100;
+      var v = hsv[2] / 100;
+      var c = s * v;
+      var f = 0;
+
+      if (c < 1.0) {
+        f = (v - c) / (1 - c);
+      }
+
+      return [hsv[0], c * 100, f * 100];
+    };
+
+    convert.hcg.rgb = function (hcg) {
+      var h = hcg[0] / 360;
+      var c = hcg[1] / 100;
+      var g = hcg[2] / 100;
+
+      if (c === 0.0) {
+        return [g * 255, g * 255, g * 255];
+      }
+
+      var pure = [0, 0, 0];
+      var hi = h % 1 * 6;
+      var v = hi % 1;
+      var w = 1 - v;
+      var mg = 0;
+
+      switch (Math.floor(hi)) {
+        case 0:
+          pure[0] = 1;
+          pure[1] = v;
+          pure[2] = 0;
+          break;
+
+        case 1:
+          pure[0] = w;
+          pure[1] = 1;
+          pure[2] = 0;
+          break;
+
+        case 2:
+          pure[0] = 0;
+          pure[1] = 1;
+          pure[2] = v;
+          break;
+
+        case 3:
+          pure[0] = 0;
+          pure[1] = w;
+          pure[2] = 1;
+          break;
+
+        case 4:
+          pure[0] = v;
+          pure[1] = 0;
+          pure[2] = 1;
+          break;
+
+        default:
+          pure[0] = 1;
+          pure[1] = 0;
+          pure[2] = w;
+      }
+
+      mg = (1.0 - c) * g;
+      return [(c * pure[0] + mg) * 255, (c * pure[1] + mg) * 255, (c * pure[2] + mg) * 255];
+    };
+
+    convert.hcg.hsv = function (hcg) {
+      var c = hcg[1] / 100;
+      var g = hcg[2] / 100;
+      var v = c + g * (1.0 - c);
+      var f = 0;
+
+      if (v > 0.0) {
+        f = c / v;
+      }
+
+      return [hcg[0], f * 100, v * 100];
+    };
+
+    convert.hcg.hsl = function (hcg) {
+      var c = hcg[1] / 100;
+      var g = hcg[2] / 100;
+      var l = g * (1.0 - c) + 0.5 * c;
+      var s = 0;
+
+      if (l > 0.0 && l < 0.5) {
+        s = c / (2 * l);
+      } else if (l >= 0.5 && l < 1.0) {
+        s = c / (2 * (1 - l));
+      }
+
+      return [hcg[0], s * 100, l * 100];
+    };
+
+    convert.hcg.hwb = function (hcg) {
+      var c = hcg[1] / 100;
+      var g = hcg[2] / 100;
+      var v = c + g * (1.0 - c);
+      return [hcg[0], (v - c) * 100, (1 - v) * 100];
+    };
+
+    convert.hwb.hcg = function (hwb) {
+      var w = hwb[1] / 100;
+      var b = hwb[2] / 100;
+      var v = 1 - b;
+      var c = v - w;
+      var g = 0;
+
+      if (c < 1) {
+        g = (v - c) / (1 - c);
+      }
+
+      return [hwb[0], c * 100, g * 100];
+    };
+
+    convert.apple.rgb = function (apple) {
+      return [apple[0] / 65535 * 255, apple[1] / 65535 * 255, apple[2] / 65535 * 255];
+    };
+
+    convert.rgb.apple = function (rgb) {
+      return [rgb[0] / 255 * 65535, rgb[1] / 255 * 65535, rgb[2] / 255 * 65535];
+    };
+
+    convert.gray.rgb = function (args) {
+      return [args[0] / 100 * 255, args[0] / 100 * 255, args[0] / 100 * 255];
+    };
+
+    convert.gray.hsl = convert.gray.hsv = function (args) {
+      return [0, 0, args[0]];
+    };
+
+    convert.gray.hwb = function (gray) {
+      return [0, 100, gray[0]];
+    };
+
+    convert.gray.cmyk = function (gray) {
+      return [0, 0, 0, gray[0]];
+    };
+
+    convert.gray.lab = function (gray) {
+      return [gray[0], 0, 0];
+    };
+
+    convert.gray.hex = function (gray) {
+      var val = Math.round(gray[0] / 100 * 255) & 0xFF;
+      var integer = (val << 16) + (val << 8) + val;
+      var string = integer.toString(16).toUpperCase();
+      return '000000'.substring(string.length) + string;
+    };
+
+    convert.rgb.gray = function (rgb) {
+      var val = (rgb[0] + rgb[1] + rgb[2]) / 3;
+      return [val / 255 * 100];
+    };
+  });
+  var conversions_1 = conversions.rgb;
+  var conversions_2 = conversions.hsl;
+  var conversions_3 = conversions.hsv;
+  var conversions_4 = conversions.hwb;
+  var conversions_5 = conversions.cmyk;
+  var conversions_6 = conversions.xyz;
+  var conversions_7 = conversions.lab;
+  var conversions_8 = conversions.lch;
+  var conversions_9 = conversions.hex;
+  var conversions_10 = conversions.keyword;
+  var conversions_11 = conversions.ansi16;
+  var conversions_12 = conversions.ansi256;
+  var conversions_13 = conversions.hcg;
+  var conversions_14 = conversions.apple;
+  var conversions_15 = conversions.gray;
+
+  /*
+  	this function routes a model to all other models.
+
+  	all functions that are routed have a property `.conversion` attached
+  	to the returned synthetic function. This property is an array
+  	of strings, each with the steps in between the 'from' and 'to'
+  	color models (inclusive).
+
+  	conversions that are not possible simply are not included.
+  */
+  // https://jsperf.com/object-keys-vs-for-in-with-closure/3
+
+  var models = Object.keys(conversions);
+
+  function buildGraph() {
+    var graph = {};
+
+    for (var len = models.length, i = 0; i < len; i++) {
+      graph[models[i]] = {
+        // http://jsperf.com/1-vs-infinity
+        // micro-opt, but this is simple.
+        distance: -1,
+        parent: null
+      };
+    }
+
+    return graph;
+  } // https://en.wikipedia.org/wiki/Breadth-first_search
+
+
+  function deriveBFS(fromModel) {
+    var graph = buildGraph();
+    var queue = [fromModel]; // unshift -> queue -> pop
+
+    graph[fromModel].distance = 0;
+
+    while (queue.length) {
+      var current = queue.pop();
+      var adjacents = Object.keys(conversions[current]);
+
+      for (var len = adjacents.length, i = 0; i < len; i++) {
+        var adjacent = adjacents[i];
+        var node = graph[adjacent];
+
+        if (node.distance === -1) {
+          node.distance = graph[current].distance + 1;
+          node.parent = current;
+          queue.unshift(adjacent);
+        }
+      }
+    }
+
+    return graph;
+  }
+
+  function link(from, to) {
+    return function (args) {
+      return to(from(args));
+    };
+  }
+
+  function wrapConversion(toModel, graph) {
+    var path = [graph[toModel].parent, toModel];
+    var fn = conversions[graph[toModel].parent][toModel];
+    var cur = graph[toModel].parent;
+
+    while (graph[cur].parent) {
+      path.unshift(graph[cur].parent);
+      fn = link(conversions[graph[cur].parent][cur], fn);
+      cur = graph[cur].parent;
+    }
+
+    fn.conversion = path;
+    return fn;
+  }
+
+  var route = function route(fromModel) {
+    var graph = deriveBFS(fromModel);
+    var conversion = {};
+    var models = Object.keys(graph);
+
+    for (var len = models.length, i = 0; i < len; i++) {
+      var toModel = models[i];
+      var node = graph[toModel];
+
+      if (node.parent === null) {
+        // no possible conversion, or this node is the source model.
+        continue;
+      }
+
+      conversion[toModel] = wrapConversion(toModel, graph);
+    }
+
+    return conversion;
+  };
+
+  var convert = {};
+  var models$1 = Object.keys(conversions);
+
+  function wrapRaw(fn) {
+    var wrappedFn = function wrappedFn(args) {
+      if (args === undefined || args === null) {
+        return args;
+      }
+
+      if (arguments.length > 1) {
+        args = Array.prototype.slice.call(arguments);
+      }
+
+      return fn(args);
+    }; // preserve .conversion property if there is one
+
+
+    if ('conversion' in fn) {
+      wrappedFn.conversion = fn.conversion;
+    }
+
+    return wrappedFn;
+  }
+
+  function wrapRounded(fn) {
+    var wrappedFn = function wrappedFn(args) {
+      if (args === undefined || args === null) {
+        return args;
+      }
+
+      if (arguments.length > 1) {
+        args = Array.prototype.slice.call(arguments);
+      }
+
+      var result = fn(args); // we're assuming the result is an array here.
+      // see notice in conversions.js; don't use box types
+      // in conversion functions.
+
+      if (_typeof(result) === 'object') {
+        for (var len = result.length, i = 0; i < len; i++) {
+          result[i] = Math.round(result[i]);
+        }
+      }
+
+      return result;
+    }; // preserve .conversion property if there is one
+
+
+    if ('conversion' in fn) {
+      wrappedFn.conversion = fn.conversion;
+    }
+
+    return wrappedFn;
+  }
+
+  models$1.forEach(function (fromModel) {
+    convert[fromModel] = {};
+    Object.defineProperty(convert[fromModel], 'channels', {
+      value: conversions[fromModel].channels
+    });
+    Object.defineProperty(convert[fromModel], 'labels', {
+      value: conversions[fromModel].labels
+    });
+    var routes = route(fromModel);
+    var routeModels = Object.keys(routes);
+    routeModels.forEach(function (toModel) {
+      var fn = routes[toModel];
+      convert[fromModel][toModel] = wrapRounded(fn);
+      convert[fromModel][toModel].raw = wrapRaw(fn);
+    });
+  });
+  var colorConvert = convert;
+
+  var ansiStyles = createCommonjsModule(function (module) {
+
+    var wrapAnsi16 = function wrapAnsi16(fn, offset) {
+      return function () {
+        var code = fn.apply(colorConvert, arguments);
+        return "\x1B[".concat(code + offset, "m");
+      };
+    };
+
+    var wrapAnsi256 = function wrapAnsi256(fn, offset) {
+      return function () {
+        var code = fn.apply(colorConvert, arguments);
+        return "\x1B[".concat(38 + offset, ";5;").concat(code, "m");
+      };
+    };
+
+    var wrapAnsi16m = function wrapAnsi16m(fn, offset) {
+      return function () {
+        var rgb = fn.apply(colorConvert, arguments);
+        return "\x1B[".concat(38 + offset, ";2;").concat(rgb[0], ";").concat(rgb[1], ";").concat(rgb[2], "m");
+      };
+    };
+
+    function assembleStyles() {
+      var codes = new Map();
+      var styles = {
+        modifier: {
+          reset: [0, 0],
+          // 21 isn't widely supported and 22 does the same thing
+          bold: [1, 22],
+          dim: [2, 22],
+          italic: [3, 23],
+          underline: [4, 24],
+          inverse: [7, 27],
+          hidden: [8, 28],
+          strikethrough: [9, 29]
+        },
+        color: {
+          black: [30, 39],
+          red: [31, 39],
+          green: [32, 39],
+          yellow: [33, 39],
+          blue: [34, 39],
+          magenta: [35, 39],
+          cyan: [36, 39],
+          white: [37, 39],
+          gray: [90, 39],
+          // Bright color
+          redBright: [91, 39],
+          greenBright: [92, 39],
+          yellowBright: [93, 39],
+          blueBright: [94, 39],
+          magentaBright: [95, 39],
+          cyanBright: [96, 39],
+          whiteBright: [97, 39]
+        },
+        bgColor: {
+          bgBlack: [40, 49],
+          bgRed: [41, 49],
+          bgGreen: [42, 49],
+          bgYellow: [43, 49],
+          bgBlue: [44, 49],
+          bgMagenta: [45, 49],
+          bgCyan: [46, 49],
+          bgWhite: [47, 49],
+          // Bright color
+          bgBlackBright: [100, 49],
+          bgRedBright: [101, 49],
+          bgGreenBright: [102, 49],
+          bgYellowBright: [103, 49],
+          bgBlueBright: [104, 49],
+          bgMagentaBright: [105, 49],
+          bgCyanBright: [106, 49],
+          bgWhiteBright: [107, 49]
+        }
+      }; // Fix humans
+
+      styles.color.grey = styles.color.gray;
+
+      for (var _i = 0, _Object$keys = Object.keys(styles); _i < _Object$keys.length; _i++) {
+        var groupName = _Object$keys[_i];
+        var group = styles[groupName];
+
+        for (var _i3 = 0, _Object$keys3 = Object.keys(group); _i3 < _Object$keys3.length; _i3++) {
+          var styleName = _Object$keys3[_i3];
+          var style = group[styleName];
+          styles[styleName] = {
+            open: "\x1B[".concat(style[0], "m"),
+            close: "\x1B[".concat(style[1], "m")
+          };
+          group[styleName] = styles[styleName];
+          codes.set(style[0], style[1]);
+        }
+
+        Object.defineProperty(styles, groupName, {
+          value: group,
+          enumerable: false
+        });
+        Object.defineProperty(styles, 'codes', {
+          value: codes,
+          enumerable: false
+        });
+      }
+
+      var ansi2ansi = function ansi2ansi(n) {
+        return n;
+      };
+
+      var rgb2rgb = function rgb2rgb(r, g, b) {
+        return [r, g, b];
+      };
+
+      styles.color.close = "\x1B[39m";
+      styles.bgColor.close = "\x1B[49m";
+      styles.color.ansi = {
+        ansi: wrapAnsi16(ansi2ansi, 0)
+      };
+      styles.color.ansi256 = {
+        ansi256: wrapAnsi256(ansi2ansi, 0)
+      };
+      styles.color.ansi16m = {
+        rgb: wrapAnsi16m(rgb2rgb, 0)
+      };
+      styles.bgColor.ansi = {
+        ansi: wrapAnsi16(ansi2ansi, 10)
+      };
+      styles.bgColor.ansi256 = {
+        ansi256: wrapAnsi256(ansi2ansi, 10)
+      };
+      styles.bgColor.ansi16m = {
+        rgb: wrapAnsi16m(rgb2rgb, 10)
+      };
+
+      for (var _i2 = 0, _Object$keys2 = Object.keys(colorConvert); _i2 < _Object$keys2.length; _i2++) {
+        var key = _Object$keys2[_i2];
+
+        if (_typeof(colorConvert[key]) !== 'object') {
+          continue;
+        }
+
+        var suite = colorConvert[key];
+
+        if (key === 'ansi16') {
+          key = 'ansi';
+        }
+
+        if ('ansi16' in suite) {
+          styles.color.ansi[key] = wrapAnsi16(suite.ansi16, 0);
+          styles.bgColor.ansi[key] = wrapAnsi16(suite.ansi16, 10);
+        }
+
+        if ('ansi256' in suite) {
+          styles.color.ansi256[key] = wrapAnsi256(suite.ansi256, 0);
+          styles.bgColor.ansi256[key] = wrapAnsi256(suite.ansi256, 10);
+        }
+
+        if ('rgb' in suite) {
+          styles.color.ansi16m[key] = wrapAnsi16m(suite.rgb, 0);
+          styles.bgColor.ansi16m[key] = wrapAnsi16m(suite.rgb, 10);
+        }
+      }
+
+      return styles;
+    } // Make the export immutable
+
+
+    Object.defineProperty(module, 'exports', {
+      enumerable: true,
+      get: assembleStyles
+    });
+  });
+
+  var require$$0$1 = {
+    EOL: "\n"
+  };
+
+  var hasFlag = function hasFlag(flag, argv) {
+    argv = argv || process.argv;
+    var prefix = flag.startsWith('-') ? '' : flag.length === 1 ? '-' : '--';
+    var pos = argv.indexOf(prefix + flag);
+    var terminatorPos = argv.indexOf('--');
+    return pos !== -1 && (terminatorPos === -1 ? true : pos < terminatorPos);
+  };
+
+  var env$1 = process.env;
+  var forceColor;
+
+  if (hasFlag('no-color') || hasFlag('no-colors') || hasFlag('color=false')) {
+    forceColor = false;
+  } else if (hasFlag('color') || hasFlag('colors') || hasFlag('color=true') || hasFlag('color=always')) {
+    forceColor = true;
+  }
+
+  if ('FORCE_COLOR' in env$1) {
+    forceColor = env$1.FORCE_COLOR.length === 0 || parseInt(env$1.FORCE_COLOR, 10) !== 0;
+  }
+
+  function translateLevel(level) {
+    if (level === 0) {
+      return false;
+    }
+
+    return {
+      level: level,
+      hasBasic: true,
+      has256: level >= 2,
+      has16m: level >= 3
+    };
+  }
+
+  function supportsColor(stream) {
+    if (forceColor === false) {
+      return 0;
+    }
+
+    if (hasFlag('color=16m') || hasFlag('color=full') || hasFlag('color=truecolor')) {
+      return 3;
+    }
+
+    if (hasFlag('color=256')) {
+      return 2;
+    }
+
+    if (stream && !stream.isTTY && forceColor !== true) {
+      return 0;
+    }
+
+    var min = forceColor ? 1 : 0;
+
+    if (process.platform === 'win32') {
+      // Node.js 7.5.0 is the first version of Node.js to include a patch to
+      // libuv that enables 256 color output on Windows. Anything earlier and it
+      // won't work. However, here we target Node.js 8 at minimum as it is an LTS
+      // release, and Node.js 7 is not. Windows 10 build 10586 is the first Windows
+      // release that supports 256 colors. Windows 10 build 14931 is the first release
+      // that supports 16m/TrueColor.
+      var osRelease = require$$0$1.release().split('.');
+
+      if (Number(process.versions.node.split('.')[0]) >= 8 && Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
+        return Number(osRelease[2]) >= 14931 ? 3 : 2;
+      }
+
+      return 1;
+    }
+
+    if ('CI' in env$1) {
+      if (['TRAVIS', 'CIRCLECI', 'APPVEYOR', 'GITLAB_CI'].some(function (sign) {
+        return sign in env$1;
+      }) || env$1.CI_NAME === 'codeship') {
+        return 1;
+      }
+
+      return min;
+    }
+
+    if ('TEAMCITY_VERSION' in env$1) {
+      return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env$1.TEAMCITY_VERSION) ? 1 : 0;
+    }
+
+    if (env$1.COLORTERM === 'truecolor') {
+      return 3;
+    }
+
+    if ('TERM_PROGRAM' in env$1) {
+      var version = parseInt((env$1.TERM_PROGRAM_VERSION || '').split('.')[0], 10);
+
+      switch (env$1.TERM_PROGRAM) {
+        case 'iTerm.app':
+          return version >= 3 ? 3 : 2;
+
+        case 'Apple_Terminal':
+          return 2;
+        // No default
+      }
+    }
+
+    if (/-256(color)?$/i.test(env$1.TERM)) {
+      return 2;
+    }
+
+    if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env$1.TERM)) {
+      return 1;
+    }
+
+    if ('COLORTERM' in env$1) {
+      return 1;
+    }
+
+    if (env$1.TERM === 'dumb') {
+      return min;
+    }
+
+    return min;
+  }
+
+  function getSupportLevel(stream) {
+    var level = supportsColor(stream);
+    return translateLevel(level);
+  }
+
+  var supportsColor_1 = {
+    supportsColor: getSupportLevel,
+    stdout: getSupportLevel(process.stdout),
+    stderr: getSupportLevel(process.stderr)
+  };
+
+  var TEMPLATE_REGEX = /(?:\\(u[a-f\d]{4}|x[a-f\d]{2}|.))|(?:\{(~)?(\w+(?:\([^)]*\))?(?:\.\w+(?:\([^)]*\))?)*)(?:[ \t]|(?=\r?\n)))|(\})|((?:.|[\r\n\f])+?)/gi;
+  var STYLE_REGEX = /(?:^|\.)(\w+)(?:\(([^)]*)\))?/g;
+  var STRING_REGEX = /^(['"])((?:\\.|(?!\1)[^\\])*)\1$/;
+  var ESCAPE_REGEX = /\\(u[a-f\d]{4}|x[a-f\d]{2}|.)|([^\\])/gi;
+  var ESCAPES = new Map([['n', '\n'], ['r', '\r'], ['t', '\t'], ['b', '\b'], ['f', '\f'], ['v', '\v'], ['0', '\0'], ['\\', '\\'], ['e', "\x1B"], ['a', "\x07"]]);
+
+  function unescape(c) {
+    if (c[0] === 'u' && c.length === 5 || c[0] === 'x' && c.length === 3) {
+      return String.fromCharCode(parseInt(c.slice(1), 16));
+    }
+
+    return ESCAPES.get(c) || c;
+  }
+
+  function parseArguments(name, args) {
+    var results = [];
+    var chunks = args.trim().split(/\s*,\s*/g);
+    var matches;
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = chunks[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var chunk = _step.value;
+
+        if (!isNaN(chunk)) {
+          results.push(Number(chunk));
+        } else if (matches = chunk.match(STRING_REGEX)) {
+          results.push(matches[2].replace(ESCAPE_REGEX, function (m, escape, chr) {
+            return escape ? unescape(escape) : chr;
+          }));
+        } else {
+          throw new Error("Invalid Chalk template style argument: ".concat(chunk, " (in style '").concat(name, "')"));
+        }
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return != null) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
+    return results;
+  }
+
+  function parseStyle(style) {
+    STYLE_REGEX.lastIndex = 0;
+    var results = [];
+    var matches;
+
+    while ((matches = STYLE_REGEX.exec(style)) !== null) {
+      var name = matches[1];
+
+      if (matches[2]) {
+        var args = parseArguments(name, matches[2]);
+        results.push([name].concat(args));
+      } else {
+        results.push([name]);
+      }
+    }
+
+    return results;
+  }
+
+  function buildStyle(chalk, styles) {
+    var enabled = {};
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+      for (var _iterator2 = styles[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        var layer = _step2.value;
+        var _iteratorNormalCompletion3 = true;
+        var _didIteratorError3 = false;
+        var _iteratorError3 = undefined;
+
+        try {
+          for (var _iterator3 = layer.styles[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+            var style = _step3.value;
+            enabled[style[0]] = layer.inverse ? null : style.slice(1);
+          }
+        } catch (err) {
+          _didIteratorError3 = true;
+          _iteratorError3 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion3 && _iterator3.return != null) {
+              _iterator3.return();
+            }
+          } finally {
+            if (_didIteratorError3) {
+              throw _iteratorError3;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      _didIteratorError2 = true;
+      _iteratorError2 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+          _iterator2.return();
+        }
+      } finally {
+        if (_didIteratorError2) {
+          throw _iteratorError2;
+        }
+      }
+    }
+
+    var current = chalk;
+
+    for (var _i = 0, _Object$keys = Object.keys(enabled); _i < _Object$keys.length; _i++) {
+      var styleName = _Object$keys[_i];
+
+      if (Array.isArray(enabled[styleName])) {
+        if (!(styleName in current)) {
+          throw new Error("Unknown Chalk style: ".concat(styleName));
+        }
+
+        if (enabled[styleName].length > 0) {
+          current = current[styleName].apply(current, enabled[styleName]);
+        } else {
+          current = current[styleName];
+        }
+      }
+    }
+
+    return current;
+  }
+
+  var templates = function templates(chalk, tmp) {
+    var styles = [];
+    var chunks = [];
+    var chunk = []; // eslint-disable-next-line max-params
+
+    tmp.replace(TEMPLATE_REGEX, function (m, escapeChar, inverse, style, close, chr) {
+      if (escapeChar) {
+        chunk.push(unescape(escapeChar));
+      } else if (style) {
+        var str = chunk.join('');
+        chunk = [];
+        chunks.push(styles.length === 0 ? str : buildStyle(chalk, styles)(str));
+        styles.push({
+          inverse: inverse,
+          styles: parseStyle(style)
+        });
+      } else if (close) {
+        if (styles.length === 0) {
+          throw new Error('Found extraneous } in Chalk template literal');
+        }
+
+        chunks.push(buildStyle(chalk, styles)(chunk.join('')));
+        chunk = [];
+        styles.pop();
+      } else {
+        chunk.push(chr);
+      }
+    });
+    chunks.push(chunk.join(''));
+
+    if (styles.length > 0) {
+      var errMsg = "Chalk template literal is missing ".concat(styles.length, " closing bracket").concat(styles.length === 1 ? '' : 's', " (`}`)");
+      throw new Error(errMsg);
+    }
+
+    return chunks.join('');
+  };
+
+  var chalk = createCommonjsModule(function (module) {
+
+    var stdoutColor = supportsColor_1.stdout;
+    var isSimpleWindowsTerm = process.platform === 'win32' && !(process.env.TERM || '').toLowerCase().startsWith('xterm'); // `supportsColor.level` → `ansiStyles.color[name]` mapping
+
+    var levelMapping = ['ansi', 'ansi', 'ansi256', 'ansi16m']; // `color-convert` models to exclude from the Chalk API due to conflicts and such
+
+    var skipModels = new Set(['gray']);
+    var styles = Object.create(null);
+
+    function applyOptions(obj, options) {
+      options = options || {}; // Detect level if not set manually
+
+      var scLevel = stdoutColor ? stdoutColor.level : 0;
+      obj.level = options.level === undefined ? scLevel : options.level;
+      obj.enabled = 'enabled' in options ? options.enabled : obj.level > 0;
+    }
+
+    function Chalk(options) {
+      // We check for this.template here since calling `chalk.constructor()`
+      // by itself will have a `this` of a previously constructed chalk object
+      if (!this || !(this instanceof Chalk) || this.template) {
+        var _chalk = {};
+        applyOptions(_chalk, options);
+
+        _chalk.template = function () {
+          var args = [].slice.call(arguments);
+          return chalkTag.apply(null, [_chalk.template].concat(args));
+        };
+
+        Object.setPrototypeOf(_chalk, Chalk.prototype);
+        Object.setPrototypeOf(_chalk.template, _chalk);
+        _chalk.template.constructor = Chalk;
+        return _chalk.template;
+      }
+
+      applyOptions(this, options);
+    } // Use bright blue on Windows as the normal blue color is illegible
+
+
+    if (isSimpleWindowsTerm) {
+      ansiStyles.blue.open = "\x1B[94m";
+    }
+
+    var _loop = function _loop() {
+      var key = _Object$keys[_i];
+      ansiStyles[key].closeRe = new RegExp(escapeStringRegexp(ansiStyles[key].close), 'g');
+      styles[key] = {
+        get: function get() {
+          var codes = ansiStyles[key];
+          return build.call(this, this._styles ? this._styles.concat(codes) : [codes], this._empty, key);
+        }
+      };
+    };
+
+    for (var _i = 0, _Object$keys = Object.keys(ansiStyles); _i < _Object$keys.length; _i++) {
+      _loop();
+    }
+
+    styles.visible = {
+      get: function get() {
+        return build.call(this, this._styles || [], true, 'visible');
+      }
+    };
+    ansiStyles.color.closeRe = new RegExp(escapeStringRegexp(ansiStyles.color.close), 'g');
+
+    var _loop2 = function _loop2() {
+      var model = _Object$keys2[_i2];
+
+      if (skipModels.has(model)) {
+        return "continue";
+      }
+
+      styles[model] = {
+        get: function get() {
+          var level = this.level;
+          return function () {
+            var open = ansiStyles.color[levelMapping[level]][model].apply(null, arguments);
+            var codes = {
+              open: open,
+              close: ansiStyles.color.close,
+              closeRe: ansiStyles.color.closeRe
+            };
+            return build.call(this, this._styles ? this._styles.concat(codes) : [codes], this._empty, model);
+          };
+        }
+      };
+    };
+
+    for (var _i2 = 0, _Object$keys2 = Object.keys(ansiStyles.color.ansi); _i2 < _Object$keys2.length; _i2++) {
+      var _ret = _loop2();
+
+      if (_ret === "continue") continue;
+    }
+
+    ansiStyles.bgColor.closeRe = new RegExp(escapeStringRegexp(ansiStyles.bgColor.close), 'g');
+
+    var _loop3 = function _loop3() {
+      var model = _Object$keys3[_i3];
+
+      if (skipModels.has(model)) {
+        return "continue";
+      }
+
+      var bgModel = 'bg' + model[0].toUpperCase() + model.slice(1);
+      styles[bgModel] = {
+        get: function get() {
+          var level = this.level;
+          return function () {
+            var open = ansiStyles.bgColor[levelMapping[level]][model].apply(null, arguments);
+            var codes = {
+              open: open,
+              close: ansiStyles.bgColor.close,
+              closeRe: ansiStyles.bgColor.closeRe
+            };
+            return build.call(this, this._styles ? this._styles.concat(codes) : [codes], this._empty, model);
+          };
+        }
+      };
+    };
+
+    for (var _i3 = 0, _Object$keys3 = Object.keys(ansiStyles.bgColor.ansi); _i3 < _Object$keys3.length; _i3++) {
+      var _ret2 = _loop3();
+
+      if (_ret2 === "continue") continue;
+    }
+
+    var proto = Object.defineProperties(function () {}, styles);
+
+    function build(_styles, _empty, key) {
+      var builder = function builder() {
+        return applyStyle.apply(builder, arguments);
+      };
+
+      builder._styles = _styles;
+      builder._empty = _empty;
+      var self = this;
+      Object.defineProperty(builder, 'level', {
+        enumerable: true,
+        get: function get() {
+          return self.level;
+        },
+        set: function set(level) {
+          self.level = level;
+        }
+      });
+      Object.defineProperty(builder, 'enabled', {
+        enumerable: true,
+        get: function get() {
+          return self.enabled;
+        },
+        set: function set(enabled) {
+          self.enabled = enabled;
+        }
+      }); // See below for fix regarding invisible grey/dim combination on Windows
+
+      builder.hasGrey = this.hasGrey || key === 'gray' || key === 'grey'; // `__proto__` is used because we must return a function, but there is
+      // no way to create a function with a different prototype
+
+      builder.__proto__ = proto; // eslint-disable-line no-proto
+
+      return builder;
+    }
+
+    function applyStyle() {
+      // Support varags, but simply cast to string in case there's only one arg
+      var args = arguments;
+      var argsLen = args.length;
+      var str = String(arguments[0]);
+
+      if (argsLen === 0) {
+        return '';
+      }
+
+      if (argsLen > 1) {
+        // Don't slice `arguments`, it prevents V8 optimizations
+        for (var a = 1; a < argsLen; a++) {
+          str += ' ' + args[a];
+        }
+      }
+
+      if (!this.enabled || this.level <= 0 || !str) {
+        return this._empty ? '' : str;
+      } // Turns out that on Windows dimmed gray text becomes invisible in cmd.exe,
+      // see https://github.com/chalk/chalk/issues/58
+      // If we're on Windows and we're dealing with a gray color, temporarily make 'dim' a noop.
+
+
+      var originalDim = ansiStyles.dim.open;
+
+      if (isSimpleWindowsTerm && this.hasGrey) {
+        ansiStyles.dim.open = '';
+      }
+
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = this._styles.slice().reverse()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var code = _step.value;
+          // Replace any instances already present with a re-opening code
+          // otherwise only the part of the string until said closing code
+          // will be colored, and the rest will simply be 'plain'.
+          str = code.open + str.replace(code.closeRe, code.open) + code.close; // Close the styling before a linebreak and reopen
+          // after next line to fix a bleed issue on macOS
+          // https://github.com/chalk/chalk/pull/92
+
+          str = str.replace(/\r?\n/g, "".concat(code.close, "$&").concat(code.open));
+        } // Reset the original `dim` if we changed it to work around the Windows dimmed gray issue
+
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return != null) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      ansiStyles.dim.open = originalDim;
+      return str;
+    }
+
+    function chalkTag(chalk, strings) {
+      if (!Array.isArray(strings)) {
+        // If chalk() was called by itself or with a string,
+        // return the string itself as a string.
+        return [].slice.call(arguments, 1).join(' ');
+      }
+
+      var args = [].slice.call(arguments, 2);
+      var parts = [strings.raw[0]];
+
+      for (var i = 1; i < strings.length; i++) {
+        parts.push(String(args[i - 1]).replace(/[{}\\]/g, '\\$&'));
+        parts.push(String(strings.raw[i]));
+      }
+
+      return templates(chalk, parts.join(''));
+    }
+
+    Object.defineProperties(Chalk.prototype, styles);
+    module.exports = Chalk(); // eslint-disable-line new-cap
+
+    module.exports.supportsColor = stdoutColor;
+    module.exports.default = module.exports; // For TypeScript
+  });
+  var chalk_1 = chalk.supportsColor;
+
+  var common = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+
+    exports.commonDeprecatedHandler = function (keyOrPair, redirectTo, _ref) {
+      var descriptor = _ref.descriptor;
+      var messages = ["".concat(chalk.default.yellow(typeof keyOrPair === 'string' ? descriptor.key(keyOrPair) : descriptor.pair(keyOrPair)), " is deprecated")];
+
+      if (redirectTo) {
+        messages.push("we now treat it as ".concat(chalk.default.blue(typeof redirectTo === 'string' ? descriptor.key(redirectTo) : descriptor.pair(redirectTo))));
+      }
+
+      return messages.join('; ') + '.';
+    };
+  });
+  unwrapExports(common);
+  var common_1 = common.commonDeprecatedHandler;
+
+  var deprecated = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+
+    tslib_1.__exportStar(common, exports);
+  });
+  unwrapExports(deprecated);
+
+  var common$1 = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+
+    exports.commonInvalidHandler = function (key, value, utils) {
+      return ["Invalid ".concat(chalk.default.red(utils.descriptor.key(key)), " value."), "Expected ".concat(chalk.default.b

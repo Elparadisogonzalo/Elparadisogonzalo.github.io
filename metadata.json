@@ -1,0 +1,9 @@
+"name": "elparadisogonzalo",
+  "description": "Phoenix rising from chains — the rebirth of elparadisogonzalo on decentralized streets.",
+  "image": "ipfs://<CID>",
+  "attributes": [
+    { "trait_type": "Theme", "value": "Rebirth" },
+    { "trait_type": "Style", "value": "Cyberpunk" },
+    { "trait_type": "Chain", "value": "Ethereum/BSC" }
+  ]
+}

@@ -1,0 +1,363 @@
+se, factoryDeprecation);
+    /** @deprecated Use `factory.createDefaultClause` or the factory supplied by your transformation context instead. */
+    ts.createDefaultClause = ts.Debug.deprecate(ts.factory.createDefaultClause, factoryDeprecation);
+    /** @deprecated Use `factory.updateDefaultClause` or the factory supplied by your transformation context instead. */
+    ts.updateDefaultClause = ts.Debug.deprecate(ts.factory.updateDefaultClause, factoryDeprecation);
+    /** @deprecated Use `factory.createHeritageClause` or the factory supplied by your transformation context instead. */
+    ts.createHeritageClause = ts.Debug.deprecate(ts.factory.createHeritageClause, factoryDeprecation);
+    /** @deprecated Use `factory.updateHeritageClause` or the factory supplied by your transformation context instead. */
+    ts.updateHeritageClause = ts.Debug.deprecate(ts.factory.updateHeritageClause, factoryDeprecation);
+    /** @deprecated Use `factory.createCatchClause` or the factory supplied by your transformation context instead. */
+    ts.createCatchClause = ts.Debug.deprecate(ts.factory.createCatchClause, factoryDeprecation);
+    /** @deprecated Use `factory.updateCatchClause` or the factory supplied by your transformation context instead. */
+    ts.updateCatchClause = ts.Debug.deprecate(ts.factory.updateCatchClause, factoryDeprecation);
+    /** @deprecated Use `factory.createPropertyAssignment` or the factory supplied by your transformation context instead. */
+    ts.createPropertyAssignment = ts.Debug.deprecate(ts.factory.createPropertyAssignment, factoryDeprecation);
+    /** @deprecated Use `factory.updatePropertyAssignment` or the factory supplied by your transformation context instead. */
+    ts.updatePropertyAssignment = ts.Debug.deprecate(ts.factory.updatePropertyAssignment, factoryDeprecation);
+    /** @deprecated Use `factory.createShorthandPropertyAssignment` or the factory supplied by your transformation context instead. */
+    ts.createShorthandPropertyAssignment = ts.Debug.deprecate(ts.factory.createShorthandPropertyAssignment, factoryDeprecation);
+    /** @deprecated Use `factory.updateShorthandPropertyAssignment` or the factory supplied by your transformation context instead. */
+    ts.updateShorthandPropertyAssignment = ts.Debug.deprecate(ts.factory.updateShorthandPropertyAssignment, factoryDeprecation);
+    /** @deprecated Use `factory.createSpreadAssignment` or the factory supplied by your transformation context instead. */
+    ts.createSpreadAssignment = ts.Debug.deprecate(ts.factory.createSpreadAssignment, factoryDeprecation);
+    /** @deprecated Use `factory.updateSpreadAssignment` or the factory supplied by your transformation context instead. */
+    ts.updateSpreadAssignment = ts.Debug.deprecate(ts.factory.updateSpreadAssignment, factoryDeprecation);
+    /** @deprecated Use `factory.createEnumMember` or the factory supplied by your transformation context instead. */
+    ts.createEnumMember = ts.Debug.deprecate(ts.factory.createEnumMember, factoryDeprecation);
+    /** @deprecated Use `factory.updateEnumMember` or the factory supplied by your transformation context instead. */
+    ts.updateEnumMember = ts.Debug.deprecate(ts.factory.updateEnumMember, factoryDeprecation);
+    /** @deprecated Use `factory.updateSourceFile` or the factory supplied by your transformation context instead. */
+    ts.updateSourceFileNode = ts.Debug.deprecate(ts.factory.updateSourceFile, factoryDeprecation);
+    /** @deprecated Use `factory.createNotEmittedStatement` or the factory supplied by your transformation context instead. */
+    ts.createNotEmittedStatement = ts.Debug.deprecate(ts.factory.createNotEmittedStatement, factoryDeprecation);
+    /** @deprecated Use `factory.createPartiallyEmittedExpression` or the factory supplied by your transformation context instead. */
+    ts.createPartiallyEmittedExpression = ts.Debug.deprecate(ts.factory.createPartiallyEmittedExpression, factoryDeprecation);
+    /** @deprecated Use `factory.updatePartiallyEmittedExpression` or the factory supplied by your transformation context instead. */
+    ts.updatePartiallyEmittedExpression = ts.Debug.deprecate(ts.factory.updatePartiallyEmittedExpression, factoryDeprecation);
+    /** @deprecated Use `factory.createCommaListExpression` or the factory supplied by your transformation context instead. */
+    ts.createCommaList = ts.Debug.deprecate(ts.factory.createCommaListExpression, factoryDeprecation);
+    /** @deprecated Use `factory.updateCommaListExpression` or the factory supplied by your transformation context instead. */
+    ts.updateCommaList = ts.Debug.deprecate(ts.factory.updateCommaListExpression, factoryDeprecation);
+    /** @deprecated Use `factory.createBundle` or the factory supplied by your transformation context instead. */
+    ts.createBundle = ts.Debug.deprecate(ts.factory.createBundle, factoryDeprecation);
+    /** @deprecated Use `factory.updateBundle` or the factory supplied by your transformation context instead. */
+    ts.updateBundle = ts.Debug.deprecate(ts.factory.updateBundle, factoryDeprecation);
+    /** @deprecated Use `factory.createImmediatelyInvokedFunctionExpression` or the factory supplied by your transformation context instead. */
+    ts.createImmediatelyInvokedFunctionExpression = ts.Debug.deprecate(ts.factory.createImmediatelyInvokedFunctionExpression, factoryDeprecation);
+    /** @deprecated Use `factory.createImmediatelyInvokedArrowFunction` or the factory supplied by your transformation context instead. */
+    ts.createImmediatelyInvokedArrowFunction = ts.Debug.deprecate(ts.factory.createImmediatelyInvokedArrowFunction, factoryDeprecation);
+    /** @deprecated Use `factory.createVoidZero` or the factory supplied by your transformation context instead. */
+    ts.createVoidZero = ts.Debug.deprecate(ts.factory.createVoidZero, factoryDeprecation);
+    /** @deprecated Use `factory.createExportDefault` or the factory supplied by your transformation context instead. */
+    ts.createExportDefault = ts.Debug.deprecate(ts.factory.createExportDefault, factoryDeprecation);
+    /** @deprecated Use `factory.createExternalModuleExport` or the factory supplied by your transformation context instead. */
+    ts.createExternalModuleExport = ts.Debug.deprecate(ts.factory.createExternalModuleExport, factoryDeprecation);
+    /** @deprecated Use `factory.createNamespaceExport` or the factory supplied by your transformation context instead. */
+    ts.createNamespaceExport = ts.Debug.deprecate(ts.factory.createNamespaceExport, factoryDeprecation);
+    /** @deprecated Use `factory.updateNamespaceExport` or the factory supplied by your transformation context instead. */
+    ts.updateNamespaceExport = ts.Debug.deprecate(ts.factory.updateNamespaceExport, factoryDeprecation);
+    /** @deprecated Use `factory.createToken` or the factory supplied by your transformation context instead. */
+    ts.createToken = ts.Debug.deprecate(function createToken(kind) {
+        return ts.factory.createToken(kind);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createIdentifier` or the factory supplied by your transformation context instead. */
+    ts.createIdentifier = ts.Debug.deprecate(function createIdentifier(text) {
+        return ts.factory.createIdentifier(text, /*typeArguments*/ undefined, /*originalKeywordKind*/ undefined);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createTempVariable` or the factory supplied by your transformation context instead. */
+    ts.createTempVariable = ts.Debug.deprecate(function createTempVariable(recordTempVariable) {
+        return ts.factory.createTempVariable(recordTempVariable, /*reserveInNestedScopes*/ undefined);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.getGeneratedNameForNode` or the factory supplied by your transformation context instead. */
+    ts.getGeneratedNameForNode = ts.Debug.deprecate(function getGeneratedNameForNode(node) {
+        return ts.factory.getGeneratedNameForNode(node, /*flags*/ undefined);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createUniqueName(text, GeneratedIdentifierFlags.Optimistic)` or the factory supplied by your transformation context instead. */
+    ts.createOptimisticUniqueName = ts.Debug.deprecate(function createOptimisticUniqueName(text) {
+        return ts.factory.createUniqueName(text, 16 /* Optimistic */);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createUniqueName(text, GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.FileLevel)` or the factory supplied by your transformation context instead. */
+    ts.createFileLevelUniqueName = ts.Debug.deprecate(function createFileLevelUniqueName(text) {
+        return ts.factory.createUniqueName(text, 16 /* Optimistic */ | 32 /* FileLevel */);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createIndexSignature` or the factory supplied by your transformation context instead. */
+    ts.createIndexSignature = ts.Debug.deprecate(function createIndexSignature(decorators, modifiers, parameters, type) {
+        return ts.factory.createIndexSignature(decorators, modifiers, parameters, type);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createTypePredicateNode` or the factory supplied by your transformation context instead. */
+    ts.createTypePredicateNode = ts.Debug.deprecate(function createTypePredicateNode(parameterName, type) {
+        return ts.factory.createTypePredicateNode(/*assertsModifier*/ undefined, parameterName, type);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateTypePredicateNode` or the factory supplied by your transformation context instead. */
+    ts.updateTypePredicateNode = ts.Debug.deprecate(function updateTypePredicateNode(node, parameterName, type) {
+        return ts.factory.updateTypePredicateNode(node, /*assertsModifier*/ undefined, parameterName, type);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createStringLiteral`, `factory.createStringLiteralFromNode`, `factory.createNumericLiteral`, `factory.createBigIntLiteral`, `factory.createTrue`, `factory.createFalse`, or the factory supplied by your transformation context instead. */
+    ts.createLiteral = ts.Debug.deprecate(function createLiteral(value) {
+        if (typeof value === "number") {
+            return ts.factory.createNumericLiteral(value);
+        }
+        // eslint-disable-next-line no-in-operator
+        if (typeof value === "object" && "base10Value" in value) { // PseudoBigInt
+            return ts.factory.createBigIntLiteral(value);
+        }
+        if (typeof value === "boolean") {
+            return value ? ts.factory.createTrue() : ts.factory.createFalse();
+        }
+        if (typeof value === "string") {
+            return ts.factory.createStringLiteral(value, /*isSingleQuote*/ undefined);
+        }
+        return ts.factory.createStringLiteralFromNode(value);
+    }, { since: "4.0", warnAfter: "4.1", message: "Use `factory.createStringLiteral`, `factory.createStringLiteralFromNode`, `factory.createNumericLiteral`, `factory.createBigIntLiteral`, `factory.createTrue`, `factory.createFalse`, or the factory supplied by your transformation context instead." });
+    /** @deprecated Use `factory.createMethodSignature` or the factory supplied by your transformation context instead. */
+    ts.createMethodSignature = ts.Debug.deprecate(function createMethodSignature(typeParameters, parameters, type, name, questionToken) {
+        return ts.factory.createMethodSignature(/*modifiers*/ undefined, name, questionToken, typeParameters, parameters, type);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateMethodSignature` or the factory supplied by your transformation context instead. */
+    ts.updateMethodSignature = ts.Debug.deprecate(function updateMethodSignature(node, typeParameters, parameters, type, name, questionToken) {
+        return ts.factory.updateMethodSignature(node, node.modifiers, name, questionToken, typeParameters, parameters, type);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createTypeOperatorNode` or the factory supplied by your transformation context instead. */
+    ts.createTypeOperatorNode = ts.Debug.deprecate(function createTypeOperatorNode(operatorOrType, type) {
+        var operator;
+        if (type) {
+            operator = operatorOrType;
+        }
+        else {
+            type = operatorOrType;
+            operator = 139 /* KeyOfKeyword */;
+        }
+        return ts.factory.createTypeOperatorNode(operator, type);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createTaggedTemplate` or the factory supplied by your transformation context instead. */
+    ts.createTaggedTemplate = ts.Debug.deprecate(function createTaggedTemplate(tag, typeArgumentsOrTemplate, template) {
+        var typeArguments;
+        if (template) {
+            typeArguments = typeArgumentsOrTemplate;
+        }
+        else {
+            template = typeArgumentsOrTemplate;
+        }
+        return ts.factory.createTaggedTemplateExpression(tag, typeArguments, template);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateTaggedTemplate` or the factory supplied by your transformation context instead. */
+    ts.updateTaggedTemplate = ts.Debug.deprecate(function updateTaggedTemplate(node, tag, typeArgumentsOrTemplate, template) {
+        var typeArguments;
+        if (template) {
+            typeArguments = typeArgumentsOrTemplate;
+        }
+        else {
+            template = typeArgumentsOrTemplate;
+        }
+        return ts.factory.updateTaggedTemplateExpression(node, tag, typeArguments, template);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateBinary` or the factory supplied by your transformation context instead. */
+    ts.updateBinary = ts.Debug.deprecate(function updateBinary(node, left, right, operator) {
+        if (operator === void 0) { operator = node.operatorToken; }
+        if (typeof operator === "number") {
+            operator = operator === node.operatorToken.kind ? node.operatorToken : ts.factory.createToken(operator);
+        }
+        return ts.factory.updateBinaryExpression(node, left, operator, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createConditional` or the factory supplied by your transformation context instead. */
+    ts.createConditional = ts.Debug.deprecate(function createConditional(condition, questionTokenOrWhenTrue, whenTrueOrWhenFalse, colonToken, whenFalse) {
+        return arguments.length === 5 ? ts.factory.createConditionalExpression(condition, questionTokenOrWhenTrue, whenTrueOrWhenFalse, colonToken, whenFalse) :
+            arguments.length === 3 ? ts.factory.createConditionalExpression(condition, ts.factory.createToken(57 /* QuestionToken */), questionTokenOrWhenTrue, ts.factory.createToken(58 /* ColonToken */), whenTrueOrWhenFalse) :
+                ts.Debug.fail("Argument count mismatch");
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createYield` or the factory supplied by your transformation context instead. */
+    ts.createYield = ts.Debug.deprecate(function createYield(asteriskTokenOrExpression, expression) {
+        var asteriskToken;
+        if (expression) {
+            asteriskToken = asteriskTokenOrExpression;
+        }
+        else {
+            expression = asteriskTokenOrExpression;
+        }
+        return ts.factory.createYieldExpression(asteriskToken, expression);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createClassExpression` or the factory supplied by your transformation context instead. */
+    ts.createClassExpression = ts.Debug.deprecate(function createClassExpression(modifiers, name, typeParameters, heritageClauses, members) {
+        return ts.factory.createClassExpression(/*decorators*/ undefined, modifiers, name, typeParameters, heritageClauses, members);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateClassExpression` or the factory supplied by your transformation context instead. */
+    ts.updateClassExpression = ts.Debug.deprecate(function updateClassExpression(node, modifiers, name, typeParameters, heritageClauses, members) {
+        return ts.factory.updateClassExpression(node, /*decorators*/ undefined, modifiers, name, typeParameters, heritageClauses, members);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createPropertySignature` or the factory supplied by your transformation context instead. */
+    ts.createPropertySignature = ts.Debug.deprecate(function createPropertySignature(modifiers, name, questionToken, type, initializer) {
+        var node = ts.factory.createPropertySignature(modifiers, name, questionToken, type);
+        node.initializer = initializer;
+        return node;
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updatePropertySignature` or the factory supplied by your transformation context instead. */
+    ts.updatePropertySignature = ts.Debug.deprecate(function updatePropertySignature(node, modifiers, name, questionToken, type, initializer) {
+        var updated = ts.factory.updatePropertySignature(node, modifiers, name, questionToken, type);
+        if (node.initializer !== initializer) {
+            if (updated === node) {
+                updated = ts.factory.cloneNode(node);
+            }
+            updated.initializer = initializer;
+        }
+        return updated;
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createExpressionWithTypeArguments` or the factory supplied by your transformation context instead. */
+    ts.createExpressionWithTypeArguments = ts.Debug.deprecate(function createExpressionWithTypeArguments(typeArguments, expression) {
+        return ts.factory.createExpressionWithTypeArguments(expression, typeArguments);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateExpressionWithTypeArguments` or the factory supplied by your transformation context instead. */
+    ts.updateExpressionWithTypeArguments = ts.Debug.deprecate(function updateExpressionWithTypeArguments(node, typeArguments, expression) {
+        return ts.factory.updateExpressionWithTypeArguments(node, expression, typeArguments);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createArrowFunction` or the factory supplied by your transformation context instead. */
+    ts.createArrowFunction = ts.Debug.deprecate(function createArrowFunction(modifiers, typeParameters, parameters, type, equalsGreaterThanTokenOrBody, body) {
+        return arguments.length === 6 ? ts.factory.createArrowFunction(modifiers, typeParameters, parameters, type, equalsGreaterThanTokenOrBody, body) :
+            arguments.length === 5 ? ts.factory.createArrowFunction(modifiers, typeParameters, parameters, type, /*equalsGreaterThanToken*/ undefined, equalsGreaterThanTokenOrBody) :
+                ts.Debug.fail("Argument count mismatch");
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateArrowFunction` or the factory supplied by your transformation context instead. */
+    ts.updateArrowFunction = ts.Debug.deprecate(function updateArrowFunction(node, modifiers, typeParameters, parameters, type, equalsGreaterThanTokenOrBody, body) {
+        return arguments.length === 7 ? ts.factory.updateArrowFunction(node, modifiers, typeParameters, parameters, type, equalsGreaterThanTokenOrBody, body) :
+            arguments.length === 6 ? ts.factory.updateArrowFunction(node, modifiers, typeParameters, parameters, type, node.equalsGreaterThanToken, equalsGreaterThanTokenOrBody) :
+                ts.Debug.fail("Argument count mismatch");
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createVariableDeclaration` or the factory supplied by your transformation context instead. */
+    ts.createVariableDeclaration = ts.Debug.deprecate(function createVariableDeclaration(name, exclamationTokenOrType, typeOrInitializer, initializer) {
+        return arguments.length === 4 ? ts.factory.createVariableDeclaration(name, exclamationTokenOrType, typeOrInitializer, initializer) :
+            arguments.length >= 1 && arguments.length <= 3 ? ts.factory.createVariableDeclaration(name, /*exclamationToken*/ undefined, exclamationTokenOrType, typeOrInitializer) :
+                ts.Debug.fail("Argument count mismatch");
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateVariableDeclaration` or the factory supplied by your transformation context instead. */
+    ts.updateVariableDeclaration = ts.Debug.deprecate(function updateVariableDeclaration(node, name, exclamationTokenOrType, typeOrInitializer, initializer) {
+        return arguments.length === 5 ? ts.factory.updateVariableDeclaration(node, name, exclamationTokenOrType, typeOrInitializer, initializer) :
+            arguments.length === 4 ? ts.factory.updateVariableDeclaration(node, name, node.exclamationToken, exclamationTokenOrType, typeOrInitializer) :
+                ts.Debug.fail("Argument count mismatch");
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createImportClause` or the factory supplied by your transformation context instead. */
+    ts.createImportClause = ts.Debug.deprecate(function createImportClause(name, namedBindings, isTypeOnly) {
+        if (isTypeOnly === void 0) { isTypeOnly = false; }
+        return ts.factory.createImportClause(isTypeOnly, name, namedBindings);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateImportClause` or the factory supplied by your transformation context instead. */
+    ts.updateImportClause = ts.Debug.deprecate(function updateImportClause(node, name, namedBindings, isTypeOnly) {
+        return ts.factory.updateImportClause(node, isTypeOnly, name, namedBindings);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createExportDeclaration` or the factory supplied by your transformation context instead. */
+    ts.createExportDeclaration = ts.Debug.deprecate(function createExportDeclaration(decorators, modifiers, exportClause, moduleSpecifier, isTypeOnly) {
+        if (isTypeOnly === void 0) { isTypeOnly = false; }
+        return ts.factory.createExportDeclaration(decorators, modifiers, isTypeOnly, exportClause, moduleSpecifier);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.updateExportDeclaration` or the factory supplied by your transformation context instead. */
+    ts.updateExportDeclaration = ts.Debug.deprecate(function updateExportDeclaration(node, decorators, modifiers, exportClause, moduleSpecifier, isTypeOnly) {
+        return ts.factory.updateExportDeclaration(node, decorators, modifiers, isTypeOnly, exportClause, moduleSpecifier);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createJSDocParameterTag` or the factory supplied by your transformation context instead. */
+    ts.createJSDocParamTag = ts.Debug.deprecate(function createJSDocParamTag(name, isBracketed, typeExpression, comment) {
+        return ts.factory.createJSDocParameterTag(/*tagName*/ undefined, name, isBracketed, typeExpression, /*isNameFirst*/ false, comment ? ts.factory.createNodeArray([ts.factory.createJSDocText(comment)]) : undefined);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createComma` or the factory supplied by your transformation context instead. */
+    ts.createComma = ts.Debug.deprecate(function createComma(left, right) {
+        return ts.factory.createComma(left, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createLessThan` or the factory supplied by your transformation context instead. */
+    ts.createLessThan = ts.Debug.deprecate(function createLessThan(left, right) {
+        return ts.factory.createLessThan(left, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createAssignment` or the factory supplied by your transformation context instead. */
+    ts.createAssignment = ts.Debug.deprecate(function createAssignment(left, right) {
+        return ts.factory.createAssignment(left, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createStrictEquality` or the factory supplied by your transformation context instead. */
+    ts.createStrictEquality = ts.Debug.deprecate(function createStrictEquality(left, right) {
+        return ts.factory.createStrictEquality(left, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createStrictInequality` or the factory supplied by your transformation context instead. */
+    ts.createStrictInequality = ts.Debug.deprecate(function createStrictInequality(left, right) {
+        return ts.factory.createStrictInequality(left, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createAdd` or the factory supplied by your transformation context instead. */
+    ts.createAdd = ts.Debug.deprecate(function createAdd(left, right) {
+        return ts.factory.createAdd(left, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createSubtract` or the factory supplied by your transformation context instead. */
+    ts.createSubtract = ts.Debug.deprecate(function createSubtract(left, right) {
+        return ts.factory.createSubtract(left, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createLogicalAnd` or the factory supplied by your transformation context instead. */
+    ts.createLogicalAnd = ts.Debug.deprecate(function createLogicalAnd(left, right) {
+        return ts.factory.createLogicalAnd(left, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createLogicalOr` or the factory supplied by your transformation context instead. */
+    ts.createLogicalOr = ts.Debug.deprecate(function createLogicalOr(left, right) {
+        return ts.factory.createLogicalOr(left, right);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createPostfixIncrement` or the factory supplied by your transformation context instead. */
+    ts.createPostfixIncrement = ts.Debug.deprecate(function createPostfixIncrement(operand) {
+        return ts.factory.createPostfixIncrement(operand);
+    }, factoryDeprecation);
+    /** @deprecated Use `factory.createLogicalNot` or the factory supplied by your transformation context instead. */
+    ts.createLogicalNot = ts.Debug.deprecate(function createLogicalNot(operand) {
+        return ts.factory.createLogicalNot(operand);
+    }, factoryDeprecation);
+    /** @deprecated Use an appropriate `factory` method instead. */
+    ts.createNode = ts.Debug.deprecate(function createNode(kind, pos, end) {
+        if (pos === void 0) { pos = 0; }
+        if (end === void 0) { end = 0; }
+        return ts.setTextRangePosEnd(kind === 300 /* SourceFile */ ? ts.parseBaseNodeFactory.createBaseSourceFileNode(kind) :
+            kind === 79 /* Identifier */ ? ts.parseBaseNodeFactory.createBaseIdentifierNode(kind) :
+                kind === 80 /* PrivateIdentifier */ ? ts.parseBaseNodeFactory.createBasePrivateIdentifierNode(kind) :
+                    !ts.isNodeKind(kind) ? ts.parseBaseNodeFactory.createBaseTokenNode(kind) :
+                        ts.parseBaseNodeFactory.createBaseNode(kind), pos, end);
+    }, { since: "4.0", warnAfter: "4.1", message: "Use an appropriate `factory` method instead." });
+    /**
+     * Creates a shallow, memberwise clone of a node ~for mutation~ with its `pos`, `end`, and `parent` set.
+     *
+     * NOTE: It is unsafe to change any properties of a `Node` that relate to its AST children, as those changes won't be
+     * captured with respect to transformations.
+     *
+     * @deprecated Use an appropriate `factory.update...` method instead, use `setCommentRange` or `setSourceMapRange`, and avoid setting `parent`.
+     */
+    ts.getMutableClone = ts.Debug.deprecate(function getMutableClone(node) {
+        var clone = ts.factory.cloneNode(node);
+        ts.setTextRange(clone, node);
+        ts.setParent(clone, node.parent);
+        return clone;
+    }, { since: "4.0", warnAfter: "4.1", message: "Use an appropriate `factory.update...` method instead, use `setCommentRange` or `setSourceMapRange`, and avoid setting `parent`." });
+    // #endregion Node Factory top-level exports
+    // DEPRECATION: Renamed node tests
+    // DEPRECATION PLAN:
+    //     - soft: 4.0
+    //     - warn: 4.1
+    //     - error: TBD
+    // #region Renamed node Tests
+    /** @deprecated Use `isTypeAssertionExpression` instead. */
+    ts.isTypeAssertion = ts.Debug.deprecate(function isTypeAssertion(node) {
+        return node.kind === 209 /* TypeAssertionExpression */;
+    }, {
+        since: "4.0",
+        warnAfter: "4.1",
+        message: "Use `isTypeAssertionExpression` instead."
+    });
+    // #endregion
+    // DEPRECATION: Renamed node tests
+    // DEPRECATION PLAN:
+    //     - soft: 4.2
+    //     - warn: 4.3
+    //     - error: TBD
+    // #region Renamed node Tests
+    /**
+     * @deprecated Use `isMemberName` instead.
+     */
+    ts.isIdentifierOrPrivateIdentifier = ts.Debug.deprecate(function isIdentifierOrPrivateIdentifier(node) {
+        return ts.isMemberName(node);
+    }, {
+        since: "4.2",
+        warnAfter: "4.3",
+        message: "Use `isMemberName` instead."
+    });
+    // #endregion Renamed node Tests
+})(ts || (ts = {}));
+
+
+//# sourceMappingURL=typescript.js.map
