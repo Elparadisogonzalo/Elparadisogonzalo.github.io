@@ -3,3 +3,4 @@
 # <hostname>	<port>	<incl. subdomains>	<created>	<max-age>
 raw.githubusercontent.com	0	0	1750972283	31536000
 jdbc.postgresql.org	0	0	1751273278	31536000
+go.dev	0	1	1753151521	31536000

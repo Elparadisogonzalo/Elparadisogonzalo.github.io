@@ -1,0 +1,33 @@
+0 verbose cli /apex/com.android.runtime/bin/linker64 /data/data/com.termux/files/usr/bin/npm
+1 info using npm@11.4.2
+2 info using node@v24.4.1
+3 silly config load:file:/data/data/com.termux/files/usr/lib/node_modules/npm/npmrc
+4 silly config load:file:/data/data/com.termux/files/home/.npmrc
+5 warn Unknown user config "HEAD". This will stop working in the next major version of npm.
+6 warn Unknown user config "b52c5e01b (Push all project files to main)". This will stop working in the next major version of npm.
+7 silly config load:file:/data/data/com.termux/files/usr/etc/npmrc
+8 verbose title npm run deploy-all mainnet
+9 verbose argv "run" "deploy-all" "mainnet"
+10 verbose logfile logs-max:10 dir:/data/data/com.termux/files/home/.npm/_logs/2025-07-22T02_27_29_984Z-
+11 verbose logfile /data/data/com.termux/files/home/.npm/_logs/2025-07-22T02_27_29_984Z-debug-0.log
+12 silly logfile start cleaning logs, removing 1 files
+13 silly logfile done cleaning log files
+14 verbose stack Error: Missing script: "deploy-all"
+14 verbose stack
+14 verbose stack To see a list of scripts, run:
+14 verbose stack   npm run
+14 verbose stack     at #run (/data/data/com.termux/files/usr/lib/node_modules/npm/lib/commands/run.js:115:13)
+14 verbose stack     at async RunScript.exec (/data/data/com.termux/files/usr/lib/node_modules/npm/lib/commands/run.js:44:7)
+14 verbose stack     at async Npm.exec (/data/data/com.termux/files/usr/lib/node_modules/npm/lib/npm.js:208:9)
+14 verbose stack     at async module.exports (/data/data/com.termux/files/usr/lib/node_modules/npm/lib/cli/entry.js:60:5)
+15 error Missing script: "deploy-all"
+15 error
+15 error To see a list of scripts, run:
+15 error   npm run
+16 verbose cwd /data/data/com.termux/files/home/safe-contracts
+17 verbose os Linux 5.10.226-android12-9-00047-g4968e29b7f92-ab12786767
+18 verbose node v24.4.1
+19 verbose npm  v11.4.2
+20 verbose exit 1
+21 verbose code 1
+22 error A complete log of this run can be found in: /data/data/com.termux/files/home/.npm/_logs/2025-07-22T02_27_29_984Z-debug-0.log
