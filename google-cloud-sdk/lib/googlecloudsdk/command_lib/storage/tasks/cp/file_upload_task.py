@@ -24,11 +24,11 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import os
-import random
 
 from googlecloudsdk.api_lib.storage import api_factory
 from googlecloudsdk.command_lib.storage import gzip_util
 from googlecloudsdk.command_lib.storage import manifest_util
+from googlecloudsdk.command_lib.storage import path_util
 from googlecloudsdk.command_lib.storage import symlink_util
 from googlecloudsdk.command_lib.storage import tracker_file_util
 from googlecloudsdk.command_lib.storage.tasks import task
@@ -39,11 +39,6 @@ from googlecloudsdk.command_lib.storage.tasks.cp import file_part_upload_task
 from googlecloudsdk.command_lib.storage.tasks.cp import finalize_composite_upload_task
 from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
-
-
-def _get_random_prefix():
-  """Returns an ID distinguishing upload components from different machines."""
-  return str(random.randint(1, 10**10))
 
 
 class FileUploadTask(copy_util.ObjectCopyTaskWithExitHandler):
@@ -130,7 +125,7 @@ class FileUploadTask(copy_util.ObjectCopyTaskWithExitHandler):
 
     if self._delete_source:
       # Delete original source file.
-      os.remove(self._source_resource.storage_url.object_name)
+      os.remove(self._source_resource.storage_url.resource_name)
 
   def _perform_composite_upload(
       self,
@@ -153,7 +148,7 @@ class FileUploadTask(copy_util.ObjectCopyTaskWithExitHandler):
     if tracker_data:
       random_prefix = tracker_data.random_prefix
     else:
-      random_prefix = _get_random_prefix()
+      random_prefix = path_util.generate_random_int_for_path()
 
     component_offsets_and_lengths = (
         copy_component_util.get_component_offsets_and_lengths(
@@ -173,7 +168,7 @@ class FileUploadTask(copy_util.ObjectCopyTaskWithExitHandler):
       temporary_component_resources.append(temporary_component_resource)
 
       component_name_length = len(
-          temporary_component_resource.storage_url.object_name.encode()
+          temporary_component_resource.storage_url.resource_name.encode()
       )
 
       if component_name_length > api_client.MAX_OBJECT_NAME_LENGTH:
@@ -259,7 +254,7 @@ class FileUploadTask(copy_util.ObjectCopyTaskWithExitHandler):
     )
     if should_create_symlink_placeholder:
       symlink_path = symlink_util.get_symlink_placeholder_file(
-          self._source_resource.storage_url.object_name
+          self._source_resource.storage_url.resource_name
       )
       temporary_paths_to_clean_up.append(symlink_path)
       return symlink_path
@@ -314,11 +309,11 @@ class FileUploadTask(copy_util.ObjectCopyTaskWithExitHandler):
     source_url = self._source_resource.storage_url
     temporary_paths_to_clean_up = []
     if source_url.is_stream:
-      source_path = source_url.object_name
+      source_path = source_url.resource_name
       size = None
     else:
       symlink_transformed_path = self._handle_symlink_placeholder_transform(
-          source_url.object_name,
+          source_url.resource_name,
           temporary_paths_to_clean_up
       )
       source_path = self._handle_gzip_transform(

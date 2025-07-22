@@ -26,6 +26,7 @@ from googlecloudsdk.core import log
 from googlecloudsdk.core.console import console_io
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(
     base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA
 )
@@ -55,12 +56,36 @@ class Update(base.UpdateCommand):
     parser.add_argument(
         'destination',
         nargs='?',
-        help=('A new destination for the sink. '
-              'If omitted, the sink\'s existing destination is unchanged.'))
+        help=arg_parsers.UniverseHelpText(
+            default=(
+                "A new destination for the sink. If omitted, the sink's"
+                ' existing destination is unchanged.'
+            ),
+            universe_help='Some destination types are not supported\n.',
+        ),
+    )
     parser.add_argument(
         '--log-filter',
         help=('A new filter expression for the sink. '
               'If omitted, the sink\'s existing filter (if any) is unchanged.'))
+    parser.add_argument(
+        '--include-children',
+        required=False,
+        action='store_true',
+        help=(
+            'Whether to export logs from all child projects and folders. '
+            'Only applies to sinks for organizations and folders.'
+        ),
+    )
+    parser.add_argument(
+        '--intercept-children',
+        required=False,
+        action='store_true',
+        help=(
+            'Whether to intercept logs from all child projects and folders. '
+            'Only applies to sinks for organizations and folders.'
+        ),
+    )
     parser.add_argument(
         '--custom-writer-identity',
         metavar='SERVICE_ACCOUNT_EMAIL',
@@ -184,6 +209,25 @@ class Update(base.UpdateCommand):
     if args.IsSpecified('destination'):
       sink_data['destination'] = args.destination
       update_mask.append('destination')
+
+    if args.IsSpecified('include_children'):
+      sink_data['includeChildren'] = args.include_children
+      update_mask.append('include_children')
+      if args.include_children and not (args.organization or args.folder):
+        log.warning(
+            'include-children only has an effect for sinks at the folder '
+            'or organization level'
+        )
+
+    if args.IsSpecified('intercept_children'):
+      sink_data['interceptChildren'] = args.intercept_children
+      update_mask.append('intercept_children')
+      if args.intercept_children and not (args.organization or args.folder):
+        log.warning(
+            'intercept-children only has an effect for sinks at the folder '
+            'or organization level'
+        )
+
     if args.IsSpecified('log_filter'):
       sink_data['filter'] = args.log_filter
       update_mask.append('filter')

@@ -33,12 +33,17 @@ class Collections(enum.Enum):
   )
   ORGANIZATIONS_LOCATIONS = (
       'organizations.locations',
-      '{+name}',
-      {
-          '':
-              'organizations/{organizationsId}/locations/{locationsId}',
-      },
-      ['name'],
+      'organizations/{organizationsId}/locations/{locationsId}',
+      {},
+      ['organizationsId', 'locationsId'],
+      True
+  )
+  ORGANIZATIONS_LOCATIONS_IACVALIDATIONREPORTMETRICS = (
+      'organizations.locations.iacValidationReportMetrics',
+      'organizations/{organizationsId}/locations/{locationsId}/'
+      'iacValidationReportMetrics',
+      {},
+      ['organizationsId', 'locationsId'],
       True
   )
   ORGANIZATIONS_LOCATIONS_OPERATIONS = (
@@ -85,11 +90,37 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  ORGANIZATIONS_LOCATIONS_PREDICTIONS = (
+      'organizations.locations.predictions',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'predictions/{predictionsId}',
+      },
+      ['name'],
+      True
+  )
+  ORGANIZATIONS_LOCATIONS_REMEDIATIONINTENTS = (
+      'organizations.locations.remediationIntents',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'remediationIntents/{remediationIntentsId}',
+      },
+      ['name'],
+      True
+  )
   ORGANIZATIONS_LOCATIONS_REPORTS = (
       'organizations.locations.reports',
-      'organizations/{organizationsId}/locations/{locationsId}/reports',
-      {},
-      ['organizationsId', 'locationsId'],
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'reports/{reportsId}',
+      },
+      ['name'],
       True
   )
 

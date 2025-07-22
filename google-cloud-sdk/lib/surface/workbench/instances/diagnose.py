@@ -26,7 +26,7 @@ from googlecloudsdk.command_lib.workbench import flags
 DETAILED_HELP = {
     'DESCRIPTION':
         """
-        Request for diagnosing workbench instances.
+        Diagnoses a workbench instance.
     """,
     'EXAMPLES':
         """
@@ -45,9 +45,10 @@ DETAILED_HELP = {
 }
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
 class Diagnose(base.Command):
-  """Request for diagnosing instances."""
+  """Diagnoses a workbench instance."""
 
   @staticmethod
   def Args(parser):

@@ -26,6 +26,7 @@ from googlecloudsdk.command_lib.util.args import labels_util
 from googlecloudsdk.core.console import console_io
 import six
 
+# Note that updating config "databases" is not currently supported.
 VALID_REDIS_3_2_CONFIG_KEYS = ('maxmemory-policy',
                                'notify-keyspace-events',
                                'timeout')
@@ -140,3 +141,10 @@ def WarnOnAuthEnabled(auth_enabled):
         cancel_on_no=True)
 
   return auth_enabled
+
+
+# TODO(b/261183749): Remove modify_request_hook when singleton resource args
+# are enabled in declarative.
+def UpdateGetCertificateAuthorityRequestPath(unused_ref, unused_args, req):
+  req.name = req.name + '/certificateAuthority'
+  return req

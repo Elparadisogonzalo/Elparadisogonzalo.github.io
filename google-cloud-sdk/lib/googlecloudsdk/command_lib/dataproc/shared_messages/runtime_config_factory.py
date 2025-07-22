@@ -37,6 +37,7 @@ class RuntimeConfigFactory(object):
       dataproc,
       use_config_property=False,
       include_autotuning=False,
+      include_cohort=False,
       autotuning_config_factory=None,
   ):
     """Factory for RuntimeConfig message.
@@ -45,12 +46,14 @@ class RuntimeConfigFactory(object):
       dataproc: Api_lib.dataproc.Dataproc instance.
       use_config_property: Use --property instead of --properties
       include_autotuning: Add support for autotuning arguments.
+      include_cohort: Add support for cohort argument.
       autotuning_config_factory: Override the standard AutotuningConfigFactory
         instance.
     """
     self.dataproc = dataproc
     self.use_config_property = use_config_property
     self.include_autotuning = include_autotuning
+    self.include_cohort = include_cohort
 
     self.autotuning_config_factory = (
         autotuning_config_factory
@@ -100,13 +103,23 @@ class RuntimeConfigFactory(object):
       if autotuning_config:
         kwargs['autotuningConfig'] = autotuning_config
 
+    if self.include_cohort:
+      cohort_id = args.cohort
+      if cohort_id:
+        kwargs['cohort'] = cohort_id
+
     if not kwargs:
       return None
 
     return self.dataproc.messages.RuntimeConfig(**kwargs)
 
 
-def AddArguments(parser, use_config_property=False, include_autotuning=False):
+def AddArguments(
+    parser,
+    use_config_property=False,
+    include_autotuning=False,
+    include_cohort=False,
+):
   """Adds arguments related to RuntimeConfig message to the given parser."""
   parser.add_argument(
       '--container-image',
@@ -144,6 +157,25 @@ def AddArguments(parser, use_config_property=False, include_autotuning=False):
           'version will be used.'
       ),
   )
+
+  if include_cohort:
+    cohort_group = parser.add_mutually_exclusive_group(hidden=True)
+    cohort_group.add_argument(
+        '--cohort',
+        help=(
+            'Cohort identifier. Identifies families of the workloads having the'
+            ' similar structure and inputs, e.g. daily ETL jobs.'
+        ),
+        hidden=True,
+    )
+    cohort_group.add_argument(
+        '--autotuning-cohort',
+        help=(
+            'Autotuning cohort identifier. Identifies families of the workloads'
+            ' having the similar structure and inputs, e.g. daily ETL jobs.'
+        ),
+        hidden=True,
+    )
 
   _AddDependency(parser, include_autotuning)
 

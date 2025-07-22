@@ -39,9 +39,9 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         default_global_params=default_global_params,
         additional_http_headers=additional_http_headers,
         response_encoding=response_encoding)
-    self.media = self.MediaService(self)
     self.projects_locations_operations = self.ProjectsLocationsOperationsService(self)
     self.projects_locations_repositories_aptArtifacts = self.ProjectsLocationsRepositoriesAptArtifactsService(self)
+    self.projects_locations_repositories_attachments = self.ProjectsLocationsRepositoriesAttachmentsService(self)
     self.projects_locations_repositories_dockerImages = self.ProjectsLocationsRepositoriesDockerImagesService(self)
     self.projects_locations_repositories_files = self.ProjectsLocationsRepositoriesFilesService(self)
     self.projects_locations_repositories_genericArtifacts = self.ProjectsLocationsRepositoriesGenericArtifactsService(self)
@@ -54,50 +54,11 @@ class ArtifactregistryV1(base_api.BaseApiClient):
     self.projects_locations_repositories_packages_versions = self.ProjectsLocationsRepositoriesPackagesVersionsService(self)
     self.projects_locations_repositories_packages = self.ProjectsLocationsRepositoriesPackagesService(self)
     self.projects_locations_repositories_pythonPackages = self.ProjectsLocationsRepositoriesPythonPackagesService(self)
+    self.projects_locations_repositories_rules = self.ProjectsLocationsRepositoriesRulesService(self)
     self.projects_locations_repositories_yumArtifacts = self.ProjectsLocationsRepositoriesYumArtifactsService(self)
     self.projects_locations_repositories = self.ProjectsLocationsRepositoriesService(self)
     self.projects_locations = self.ProjectsLocationsService(self)
     self.projects = self.ProjectsService(self)
-
-  class MediaService(base_api.BaseApiService):
-    """Service class for the media resource."""
-
-    _NAME = 'media'
-
-    def __init__(self, client):
-      super(ArtifactregistryV1.MediaService, self).__init__(client)
-      self._upload_configs = {
-          }
-
-    def Download(self, request, global_params=None, download=None):
-      r"""Download a file.
-
-      Args:
-        request: (ArtifactregistryMediaDownloadRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-        download: (Download, default: None) If present, download
-            data from the request via this stream.
-      Returns:
-        (DownloadFileResponse) The response message.
-      """
-      config = self.GetMethodConfig('Download')
-      return self._RunMethod(
-          config, request, global_params=global_params,
-          download=download)
-
-    Download.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/files/{filesId}:download',
-        http_method='GET',
-        method_id='artifactregistry.media.download',
-        ordered_params=['name'],
-        path_params=['name'],
-        query_params=[],
-        relative_path='v1/{+name}:download',
-        request_field='',
-        request_type_name='ArtifactregistryMediaDownloadRequest',
-        response_type_name='DownloadFileResponse',
-        supports_download=True,
-    )
 
   class ProjectsLocationsOperationsService(base_api.BaseApiService):
     """Service class for the projects_locations_operations resource."""
@@ -212,6 +173,124 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsRepositoriesAttachmentsService(base_api.BaseApiService):
+    """Service class for the projects_locations_repositories_attachments resource."""
+
+    _NAME = 'projects_locations_repositories_attachments'
+
+    def __init__(self, client):
+      super(ArtifactregistryV1.ProjectsLocationsRepositoriesAttachmentsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates an attachment. The returned Operation will finish once the attachment has been created. Its response will be the created attachment.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesAttachmentsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/attachments',
+        http_method='POST',
+        method_id='artifactregistry.projects.locations.repositories.attachments.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['attachmentId'],
+        relative_path='v1/{+parent}/attachments',
+        request_field='attachment',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesAttachmentsCreateRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes an attachment. The returned Operation will finish once the attachments has been deleted. It will not have any Operation metadata and will return a `google.protobuf.Empty` response.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesAttachmentsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/attachments/{attachmentsId}',
+        http_method='DELETE',
+        method_id='artifactregistry.projects.locations.repositories.attachments.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesAttachmentsDeleteRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets an attachment.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesAttachmentsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Attachment) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/attachments/{attachmentsId}',
+        http_method='GET',
+        method_id='artifactregistry.projects.locations.repositories.attachments.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesAttachmentsGetRequest',
+        response_type_name='Attachment',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists attachments.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesAttachmentsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListAttachmentsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/attachments',
+        http_method='GET',
+        method_id='artifactregistry.projects.locations.repositories.attachments.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'pageSize', 'pageToken'],
+        relative_path='v1/{+parent}/attachments',
+        request_field='',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesAttachmentsListRequest',
+        response_type_name='ListAttachmentsResponse',
+        supports_download=False,
+    )
+
   class ProjectsLocationsRepositoriesDockerImagesService(base_api.BaseApiService):
     """Service class for the projects_locations_repositories_dockerImages resource."""
 
@@ -268,7 +347,7 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         method_id='artifactregistry.projects.locations.repositories.dockerImages.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['orderBy', 'pageSize', 'pageToken'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
         relative_path='v1/{+parent}/dockerImages',
         request_field='',
         request_type_name='ArtifactregistryProjectsLocationsRepositoriesDockerImagesListRequest',
@@ -284,6 +363,14 @@ class ArtifactregistryV1(base_api.BaseApiClient):
     def __init__(self, client):
       super(ArtifactregistryV1.ProjectsLocationsRepositoriesFilesService, self).__init__(client)
       self._upload_configs = {
+          'Upload': base_api.ApiUploadInfo(
+              accept=['*/*'],
+              max_size=None,
+              resumable_multipart=True,
+              resumable_path='/resumable/upload/v1/{+parent}/files:upload',
+              simple_multipart=True,
+              simple_path='/upload/v1/{+parent}/files:upload',
+          ),
           }
 
     def Delete(self, request, global_params=None):
@@ -311,6 +398,36 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         request_type_name='ArtifactregistryProjectsLocationsRepositoriesFilesDeleteRequest',
         response_type_name='Operation',
         supports_download=False,
+    )
+
+    def Download(self, request, global_params=None, download=None):
+      r"""Download a file.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesFilesDownloadRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+        download: (Download, default: None) If present, download
+            data from the request via this stream.
+      Returns:
+        (DownloadFileResponse) The response message.
+      """
+      config = self.GetMethodConfig('Download')
+      return self._RunMethod(
+          config, request, global_params=global_params,
+          download=download)
+
+    Download.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/files/{filesId}:download',
+        http_method='GET',
+        method_id='artifactregistry.projects.locations.repositories.files.download',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}:download',
+        request_field='',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesFilesDownloadRequest',
+        response_type_name='DownloadFileResponse',
+        supports_download=True,
     )
 
     def Get(self, request, global_params=None):
@@ -367,6 +484,64 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Patch(self, request, global_params=None):
+      r"""Updates a file.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesFilesPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleDevtoolsArtifactregistryV1File) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/files/{filesId}',
+        http_method='PATCH',
+        method_id='artifactregistry.projects.locations.repositories.files.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1/{+name}',
+        request_field='googleDevtoolsArtifactregistryV1File',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesFilesPatchRequest',
+        response_type_name='GoogleDevtoolsArtifactregistryV1File',
+        supports_download=False,
+    )
+
+    def Upload(self, request, global_params=None, upload=None):
+      r"""Directly uploads a file to a repository. The returned Operation will complete once the resources are uploaded.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesFilesUploadRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+        upload: (Upload, default: None) If present, upload
+            this stream with the request.
+      Returns:
+        (UploadFileMediaResponse) The response message.
+      """
+      config = self.GetMethodConfig('Upload')
+      upload_config = self.GetUploadConfig('Upload')
+      return self._RunMethod(
+          config, request, global_params=global_params,
+          upload=upload, upload_config=upload_config)
+
+    Upload.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/files:upload',
+        http_method='POST',
+        method_id='artifactregistry.projects.locations.repositories.files.upload',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=[],
+        relative_path='v1/{+parent}/files:upload',
+        request_field='uploadFileRequest',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesFilesUploadRequest',
+        response_type_name='UploadFileMediaResponse',
+        supports_download=False,
+    )
+
   class ProjectsLocationsRepositoriesGenericArtifactsService(base_api.BaseApiService):
     """Service class for the projects_locations_repositories_genericArtifacts resource."""
 
@@ -386,7 +561,7 @@ class ArtifactregistryV1(base_api.BaseApiClient):
           }
 
     def Upload(self, request, global_params=None, upload=None):
-      r"""Directly uploads a Generic artifact. The returned Operation will complete once the resources are uploaded. Package, Version, and File resources are created based on the uploaded artifact. Uploaded artifacts that conflict with existing resources will raise an ALREADY_EXISTS error.
+      r"""Directly uploads a Generic artifact. The returned operation will complete once the resources are uploaded. Package, version, and file resources are created based on the uploaded artifact. Uploaded artifacts that conflict with existing resources will raise an `ALREADY_EXISTS` error.
 
       Args:
         request: (ArtifactregistryProjectsLocationsRepositoriesGenericArtifactsUploadRequest) input message
@@ -973,11 +1148,38 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         method_id='artifactregistry.projects.locations.repositories.packages.versions.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['orderBy', 'pageSize', 'pageToken', 'view'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken', 'view'],
         relative_path='v1/{+parent}/versions',
         request_field='',
         request_type_name='ArtifactregistryProjectsLocationsRepositoriesPackagesVersionsListRequest',
         response_type_name='ListVersionsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a version.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesPackagesVersionsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Version) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/packages/{packagesId}/versions/{versionsId}',
+        http_method='PATCH',
+        method_id='artifactregistry.projects.locations.repositories.packages.versions.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1/{+name}',
+        request_field='version',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesPackagesVersionsPatchRequest',
+        response_type_name='Version',
         supports_download=False,
     )
 
@@ -1064,7 +1266,7 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         method_id='artifactregistry.projects.locations.repositories.packages.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['pageSize', 'pageToken'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
         relative_path='v1/{+parent}/packages',
         request_field='',
         request_type_name='ArtifactregistryProjectsLocationsRepositoriesPackagesListRequest',
@@ -1160,6 +1362,151 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         request_field='',
         request_type_name='ArtifactregistryProjectsLocationsRepositoriesPythonPackagesListRequest',
         response_type_name='ListPythonPackagesResponse',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsRepositoriesRulesService(base_api.BaseApiService):
+    """Service class for the projects_locations_repositories_rules resource."""
+
+    _NAME = 'projects_locations_repositories_rules'
+
+    def __init__(self, client):
+      super(ArtifactregistryV1.ProjectsLocationsRepositoriesRulesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a rule.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesRulesCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleDevtoolsArtifactregistryV1Rule) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/rules',
+        http_method='POST',
+        method_id='artifactregistry.projects.locations.repositories.rules.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['ruleId'],
+        relative_path='v1/{+parent}/rules',
+        request_field='googleDevtoolsArtifactregistryV1Rule',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesRulesCreateRequest',
+        response_type_name='GoogleDevtoolsArtifactregistryV1Rule',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a rule.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesRulesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/rules/{rulesId}',
+        http_method='DELETE',
+        method_id='artifactregistry.projects.locations.repositories.rules.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesRulesDeleteRequest',
+        response_type_name='Empty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a rule.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesRulesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleDevtoolsArtifactregistryV1Rule) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/rules/{rulesId}',
+        http_method='GET',
+        method_id='artifactregistry.projects.locations.repositories.rules.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesRulesGetRequest',
+        response_type_name='GoogleDevtoolsArtifactregistryV1Rule',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists rules.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesRulesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListRulesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/rules',
+        http_method='GET',
+        method_id='artifactregistry.projects.locations.repositories.rules.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken'],
+        relative_path='v1/{+parent}/rules',
+        request_field='',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesRulesListRequest',
+        response_type_name='ListRulesResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a rule.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesRulesPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleDevtoolsArtifactregistryV1Rule) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/rules/{rulesId}',
+        http_method='PATCH',
+        method_id='artifactregistry.projects.locations.repositories.rules.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1/{+name}',
+        request_field='googleDevtoolsArtifactregistryV1Rule',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesRulesPatchRequest',
+        response_type_name='GoogleDevtoolsArtifactregistryV1Rule',
         supports_download=False,
     )
 
@@ -1357,6 +1704,33 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def GetPlatformLogsConfig(self, request, global_params=None):
+      r"""Retrieves the platform logs config for the project or repository.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesGetPlatformLogsConfigRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (PlatformLogsConfig) The response message.
+      """
+      config = self.GetMethodConfig('GetPlatformLogsConfig')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetPlatformLogsConfig.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/platformLogsConfig',
+        http_method='GET',
+        method_id='artifactregistry.projects.locations.repositories.getPlatformLogsConfig',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesGetPlatformLogsConfigRequest',
+        response_type_name='PlatformLogsConfig',
+        supports_download=False,
+    )
+
     def List(self, request, global_params=None):
       r"""Lists repositories.
 
@@ -1376,7 +1750,7 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         method_id='artifactregistry.projects.locations.repositories.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['pageSize', 'pageToken'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
         relative_path='v1/{+parent}/repositories',
         request_field='',
         request_type_name='ArtifactregistryProjectsLocationsRepositoriesListRequest',
@@ -1492,6 +1866,33 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def UpdatePlatformLogsConfig(self, request, global_params=None):
+      r"""Updates the platform logs config for the project or repository.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsRepositoriesUpdatePlatformLogsConfigRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (PlatformLogsConfig) The response message.
+      """
+      config = self.GetMethodConfig('UpdatePlatformLogsConfig')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    UpdatePlatformLogsConfig.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/repositories/{repositoriesId}/platformLogsConfig',
+        http_method='PATCH',
+        method_id='artifactregistry.projects.locations.repositories.updatePlatformLogsConfig',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1/{+name}',
+        request_field='platformLogsConfig',
+        request_type_name='ArtifactregistryProjectsLocationsRepositoriesUpdatePlatformLogsConfigRequest',
+        response_type_name='PlatformLogsConfig',
+        supports_download=False,
+    )
+
   class ProjectsLocationsService(base_api.BaseApiService):
     """Service class for the projects_locations resource."""
 
@@ -1526,6 +1927,33 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         request_field='',
         request_type_name='ArtifactregistryProjectsLocationsGetRequest',
         response_type_name='Location',
+        supports_download=False,
+    )
+
+    def GetPlatformLogsConfig(self, request, global_params=None):
+      r"""Retrieves the platform logs config for the project or repository.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsGetPlatformLogsConfigRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (PlatformLogsConfig) The response message.
+      """
+      config = self.GetMethodConfig('GetPlatformLogsConfig')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetPlatformLogsConfig.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/platformLogsConfig',
+        http_method='GET',
+        method_id='artifactregistry.projects.locations.getPlatformLogsConfig',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ArtifactregistryProjectsLocationsGetPlatformLogsConfigRequest',
+        response_type_name='PlatformLogsConfig',
         supports_download=False,
     )
 
@@ -1575,11 +2003,38 @@ class ArtifactregistryV1(base_api.BaseApiClient):
         method_id='artifactregistry.projects.locations.list',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=['filter', 'pageSize', 'pageToken'],
+        query_params=['extraLocationTypes', 'filter', 'pageSize', 'pageToken'],
         relative_path='v1/{+name}/locations',
         request_field='',
         request_type_name='ArtifactregistryProjectsLocationsListRequest',
         response_type_name='ListLocationsResponse',
+        supports_download=False,
+    )
+
+    def UpdatePlatformLogsConfig(self, request, global_params=None):
+      r"""Updates the platform logs config for the project or repository.
+
+      Args:
+        request: (ArtifactregistryProjectsLocationsUpdatePlatformLogsConfigRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (PlatformLogsConfig) The response message.
+      """
+      config = self.GetMethodConfig('UpdatePlatformLogsConfig')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    UpdatePlatformLogsConfig.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/platformLogsConfig',
+        http_method='PATCH',
+        method_id='artifactregistry.projects.locations.updatePlatformLogsConfig',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1/{+name}',
+        request_field='platformLogsConfig',
+        request_type_name='ArtifactregistryProjectsLocationsUpdatePlatformLogsConfigRequest',
+        response_type_name='PlatformLogsConfig',
         supports_download=False,
     )
 

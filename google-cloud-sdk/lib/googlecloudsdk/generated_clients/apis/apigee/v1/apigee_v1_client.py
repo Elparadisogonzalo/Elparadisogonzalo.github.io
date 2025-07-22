@@ -46,6 +46,7 @@ class ApigeeV1(base_api.BaseApiClient):
     self.organizations_apiproducts_attributes = self.OrganizationsApiproductsAttributesService(self)
     self.organizations_apiproducts_rateplans = self.OrganizationsApiproductsRateplansService(self)
     self.organizations_apiproducts = self.OrganizationsApiproductsService(self)
+    self.organizations_apis_debugsessions = self.OrganizationsApisDebugsessionsService(self)
     self.organizations_apis_deployments = self.OrganizationsApisDeploymentsService(self)
     self.organizations_apis_keyvaluemaps_entries = self.OrganizationsApisKeyvaluemapsEntriesService(self)
     self.organizations_apis_keyvaluemaps = self.OrganizationsApisKeyvaluemapsService(self)
@@ -55,6 +56,7 @@ class ApigeeV1(base_api.BaseApiClient):
     self.organizations_appgroups_apps_keys_apiproducts = self.OrganizationsAppgroupsAppsKeysApiproductsService(self)
     self.organizations_appgroups_apps_keys = self.OrganizationsAppgroupsAppsKeysService(self)
     self.organizations_appgroups_apps = self.OrganizationsAppgroupsAppsService(self)
+    self.organizations_appgroups_balance = self.OrganizationsAppgroupsBalanceService(self)
     self.organizations_appgroups = self.OrganizationsAppgroupsService(self)
     self.organizations_apps = self.OrganizationsAppsService(self)
     self.organizations_datacollectors = self.OrganizationsDatacollectorsService(self)
@@ -68,6 +70,7 @@ class ApigeeV1(base_api.BaseApiClient):
     self.organizations_developers_balance = self.OrganizationsDevelopersBalanceService(self)
     self.organizations_developers_subscriptions = self.OrganizationsDevelopersSubscriptionsService(self)
     self.organizations_developers = self.OrganizationsDevelopersService(self)
+    self.organizations_dnsZones = self.OrganizationsDnsZonesService(self)
     self.organizations_endpointAttachments = self.OrganizationsEndpointAttachmentsService(self)
     self.organizations_envgroups_attachments = self.OrganizationsEnvgroupsAttachmentsService(self)
     self.organizations_envgroups = self.OrganizationsEnvgroupsService(self)
@@ -118,7 +121,7 @@ class ApigeeV1(base_api.BaseApiClient):
     self.organizations_optimizedHostStats = self.OrganizationsOptimizedHostStatsService(self)
     self.organizations_reports = self.OrganizationsReportsService(self)
     self.organizations_securityAssessmentResults = self.OrganizationsSecurityAssessmentResultsService(self)
-    self.organizations_securityFeedback = self.OrganizationsSecurityFeedbackService(self)
+    self.organizations_securityMonitoringConditions = self.OrganizationsSecurityMonitoringConditionsService(self)
     self.organizations_securityProfiles_environments = self.OrganizationsSecurityProfilesEnvironmentsService(self)
     self.organizations_securityProfiles = self.OrganizationsSecurityProfilesService(self)
     self.organizations_securityProfilesV2 = self.OrganizationsSecurityProfilesV2Service(self)
@@ -128,7 +131,9 @@ class ApigeeV1(base_api.BaseApiClient):
     self.organizations_sharedflows_revisions = self.OrganizationsSharedflowsRevisionsService(self)
     self.organizations_sharedflows = self.OrganizationsSharedflowsService(self)
     self.organizations_sites_apicategories = self.OrganizationsSitesApicategoriesService(self)
+    self.organizations_sites_apidocs = self.OrganizationsSitesApidocsService(self)
     self.organizations_sites = self.OrganizationsSitesService(self)
+    self.organizations_spaces = self.OrganizationsSpacesService(self)
     self.organizations = self.OrganizationsService(self)
     self.projects = self.ProjectsService(self)
 
@@ -743,7 +748,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists all API product names for an organization. Filter the list by passing an `attributename` and `attibutevalue`. The maximum number of API products returned is 1000. You can paginate the list of API products returned using the `startKey` and `count` query parameters.
+      r"""Lists all API product names for an organization. Filter the list by passing an `attributename` and `attibutevalue`. The maximum number of API products returned is 1000. You can paginate the list of API products returned using the `startKey` and `count` query parameters. If the resource has the `space` attribute set, the response may not return all resources. To learn more, read the [Apigee Spaces Overview](https://cloud.google.com/apigee/docs/api-platform/system-administration/spaces/apigee-spaces-overview).
 
       Args:
         request: (ApigeeOrganizationsApiproductsListRequest) input message
@@ -761,11 +766,38 @@ class ApigeeV1(base_api.BaseApiClient):
         method_id='apigee.organizations.apiproducts.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['attributename', 'attributevalue', 'count', 'expand', 'filter', 'pageSize', 'pageToken', 'startKey'],
+        query_params=['attributename', 'attributevalue', 'count', 'expand', 'filter', 'pageSize', 'pageToken', 'space', 'startKey'],
         relative_path='v1/{+parent}/apiproducts',
         request_field='',
         request_type_name='ApigeeOrganizationsApiproductsListRequest',
         response_type_name='GoogleCloudApigeeV1ListApiProductsResponse',
+        supports_download=False,
+    )
+
+    def Move(self, request, global_params=None):
+      r"""Moves an API product to a different space.
+
+      Args:
+        request: (ApigeeOrganizationsApiproductsMoveRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ApiProduct) The response message.
+      """
+      config = self.GetMethodConfig('Move')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Move.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/apiproducts/{apiproductsId}:move',
+        http_method='POST',
+        method_id='apigee.organizations.apiproducts.move',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}:move',
+        request_field='googleCloudApigeeV1MoveApiProductRequest',
+        request_type_name='ApigeeOrganizationsApiproductsMoveRequest',
+        response_type_name='GoogleCloudApigeeV1ApiProduct',
         supports_download=False,
     )
 
@@ -793,6 +825,43 @@ class ApigeeV1(base_api.BaseApiClient):
         request_field='<request>',
         request_type_name='GoogleCloudApigeeV1ApiProduct',
         response_type_name='GoogleCloudApigeeV1ApiProduct',
+        supports_download=False,
+    )
+
+  class OrganizationsApisDebugsessionsService(base_api.BaseApiService):
+    """Service class for the organizations_apis_debugsessions resource."""
+
+    _NAME = 'organizations_apis_debugsessions'
+
+    def __init__(self, client):
+      super(ApigeeV1.OrganizationsApisDebugsessionsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def List(self, request, global_params=None):
+      r"""Lists debug sessions that are currently active in the given API Proxy.
+
+      Args:
+        request: (ApigeeOrganizationsApisDebugsessionsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ListApiDebugSessionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/apis/{apisId}/debugsessions',
+        http_method='GET',
+        method_id='apigee.organizations.apis.debugsessions.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken'],
+        relative_path='v1/{+parent}/debugsessions',
+        request_field='',
+        request_type_name='ApigeeOrganizationsApisDebugsessionsListRequest',
+        response_type_name='GoogleCloudApigeeV1ListApiDebugSessionsResponse',
         supports_download=False,
     )
 
@@ -1042,6 +1111,60 @@ class ApigeeV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Get(self, request, global_params=None):
+      r"""Get the key value map scoped to an organization, environment, or API proxy.
+
+      Args:
+        request: (ApigeeOrganizationsApisKeyvaluemapsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1KeyValueMap) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/apis/{apisId}/keyvaluemaps/{keyvaluemapsId}',
+        http_method='GET',
+        method_id='apigee.organizations.apis.keyvaluemaps.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsApisKeyvaluemapsGetRequest',
+        response_type_name='GoogleCloudApigeeV1KeyValueMap',
+        supports_download=False,
+    )
+
+    def Update(self, request, global_params=None):
+      r"""Update the key value map scoped to an organization, environment, or API proxy.
+
+      Args:
+        request: (GoogleCloudApigeeV1KeyValueMap) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1KeyValueMap) The response message.
+      """
+      config = self.GetMethodConfig('Update')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Update.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/apis/{apisId}/keyvaluemaps/{keyvaluemapsId}',
+        http_method='PUT',
+        method_id='apigee.organizations.apis.keyvaluemaps.update',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='<request>',
+        request_type_name='GoogleCloudApigeeV1KeyValueMap',
+        response_type_name='GoogleCloudApigeeV1KeyValueMap',
+        supports_download=False,
+    )
+
   class OrganizationsApisRevisionsDeploymentsService(base_api.BaseApiService):
     """Service class for the organizations_apis_revisions_deployments resource."""
 
@@ -1199,7 +1322,7 @@ class ApigeeV1(base_api.BaseApiClient):
         method_id='apigee.organizations.apis.create',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['action', 'name', 'validate'],
+        query_params=['action', 'name', 'space', 'validate'],
         relative_path='v1/{+parent}/apis',
         request_field='googleApiHttpBody',
         request_type_name='ApigeeOrganizationsApisCreateRequest',
@@ -1262,7 +1385,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists the names of all API proxies in an organization. The names returned correspond to the names defined in the configuration files for each API proxy.
+      r"""Lists the names of all API proxies in an organization. The names returned correspond to the names defined in the configuration files for each API proxy. If the resource has the `space` attribute set, the response may not return all resources. To learn more, read the [Apigee Spaces Overview](https://cloud.google.com/apigee/docs/api-platform/system-administration/spaces/apigee-spaces-overview).
 
       Args:
         request: (ApigeeOrganizationsApisListRequest) input message
@@ -1280,11 +1403,38 @@ class ApigeeV1(base_api.BaseApiClient):
         method_id='apigee.organizations.apis.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['includeMetaData', 'includeRevisions'],
+        query_params=['includeMetaData', 'includeRevisions', 'space'],
         relative_path='v1/{+parent}/apis',
         request_field='',
         request_type_name='ApigeeOrganizationsApisListRequest',
         response_type_name='GoogleCloudApigeeV1ListApiProxiesResponse',
+        supports_download=False,
+    )
+
+    def Move(self, request, global_params=None):
+      r"""Moves an API proxy to a different space.
+
+      Args:
+        request: (ApigeeOrganizationsApisMoveRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ApiProxy) The response message.
+      """
+      config = self.GetMethodConfig('Move')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Move.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/apis/{apisId}:move',
+        http_method='POST',
+        method_id='apigee.organizations.apis.move',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}:move',
+        request_field='googleCloudApigeeV1MoveApiProxyRequest',
+        request_type_name='ApigeeOrganizationsApisMoveRequest',
+        response_type_name='GoogleCloudApigeeV1ApiProxy',
         supports_download=False,
     )
 
@@ -1390,7 +1540,7 @@ class ApigeeV1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a custom consumer key and secret for a AppGroup app. This is particularly useful if you want to migrate existing consumer keys and secrets to Apigee from another system. Consumer keys and secrets can contain letters, numbers, underscores, and hyphens. No other special characters are allowed. To avoid service disruptions, a consumer key and secret should not exceed 2 KBs each. **Note**: When creating the consumer key and secret, an association to API products will not be made. Therefore, you should not specify the associated API products in your request. Instead, use the ProductizeAppGroupAppKey API to make the association after the consumer key and secret are created. If a consumer key and secret already exist, you can keep them or delete them using the DeleteAppGroupAppKey API.
+      r"""Creates a custom consumer key and secret for a AppGroup app. This is particularly useful if you want to migrate existing consumer keys and secrets to Apigee from another system. Consumer keys and secrets can contain letters, numbers, underscores, and hyphens. No other special characters are allowed. To avoid service disruptions, a consumer key and secret should not exceed 2 KBs each. **Note**: When creating the consumer key and secret, an association to API products will not be made. Therefore, you should not specify the associated API products in your request. Instead, use the UpdateAppGroupAppKey API to make the association after the consumer key and secret are created. If a consumer key and secret already exist, you can keep them or delete them using the DeleteAppGroupAppKey API.
 
       Args:
         request: (ApigeeOrganizationsAppgroupsAppsKeysCreateRequest) input message
@@ -1471,7 +1621,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def UpdateAppGroupAppKey(self, request, global_params=None):
-      r"""Adds an API product to an AppGroupAppKey, enabling the app that holds the key to access the API resources bundled in the API product. In addition, you can add attributes to the AppGroupAppKey. This API replaces the existing attributes with those specified in the request. Include or exclude any existing attributes that you want to retain or delete, respectively. You can use the same key to access all API products associated with the app.
+      r"""Adds an API product to an AppGroupAppKey, enabling the app that holds the key to access the API resources bundled in the API product. In addition, you can add attributes and scopes to the AppGroupAppKey. This API replaces the existing attributes with those specified in the request. Include or exclude any existing attributes that you want to retain or delete, respectively. You can use the same key to access all API products associated with the app.
 
       Args:
         request: (ApigeeOrganizationsAppgroupsAppsKeysUpdateAppGroupAppKeyRequest) input message
@@ -1642,6 +1792,70 @@ class ApigeeV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class OrganizationsAppgroupsBalanceService(base_api.BaseApiService):
+    """Service class for the organizations_appgroups_balance resource."""
+
+    _NAME = 'organizations_appgroups_balance'
+
+    def __init__(self, client):
+      super(ApigeeV1.OrganizationsAppgroupsBalanceService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Adjust(self, request, global_params=None):
+      r"""Adjust the prepaid balance for the AppGroup. This API will be used in scenarios where the AppGroup has been under-charged or over-charged.
+
+      Args:
+        request: (ApigeeOrganizationsAppgroupsBalanceAdjustRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1AppGroupBalance) The response message.
+      """
+      config = self.GetMethodConfig('Adjust')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Adjust.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/appgroups/{appgroupsId}/balance:adjust',
+        http_method='POST',
+        method_id='apigee.organizations.appgroups.balance.adjust',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}:adjust',
+        request_field='googleCloudApigeeV1AdjustAppGroupBalanceRequest',
+        request_type_name='ApigeeOrganizationsAppgroupsBalanceAdjustRequest',
+        response_type_name='GoogleCloudApigeeV1AppGroupBalance',
+        supports_download=False,
+    )
+
+    def Credit(self, request, global_params=None):
+      r"""Credits the account balance for the AppGroup.
+
+      Args:
+        request: (ApigeeOrganizationsAppgroupsBalanceCreditRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1AppGroupBalance) The response message.
+      """
+      config = self.GetMethodConfig('Credit')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Credit.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/appgroups/{appgroupsId}/balance:credit',
+        http_method='POST',
+        method_id='apigee.organizations.appgroups.balance.credit',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}:credit',
+        request_field='googleCloudApigeeV1CreditAppGroupBalanceRequest',
+        request_type_name='ApigeeOrganizationsAppgroupsBalanceCreditRequest',
+        response_type_name='GoogleCloudApigeeV1AppGroupBalance',
+        supports_download=False,
+    )
+
   class OrganizationsAppgroupsService(base_api.BaseApiService):
     """Service class for the organizations_appgroups resource."""
 
@@ -1680,7 +1894,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes an AppGroup. All app and API keys associations with the AppGroup are also removed. **Warning**: This API will permanently delete the AppGroup and related artifacts. **Note**: The delete operation is asynchronous. The AppGroup app is deleted immediately, but its associated resources, such as apps and API keys, may take anywhere from a few seconds to a few minutes to be deleted.
+      r"""Deletes an AppGroup. All app and API keys associations with the AppGroup are also removed. **Warning**: This API will permanently delete the AppGroup and related artifacts. **Note**: The delete operation is asynchronous. The AppGroup is deleted immediately, but its associated resources, such as apps and API keys, may take anywhere from a few seconds to a few minutes to be deleted.
 
       Args:
         request: (ApigeeOrganizationsAppgroupsDeleteRequest) input message
@@ -1730,6 +1944,60 @@ class ApigeeV1(base_api.BaseApiClient):
         request_field='',
         request_type_name='ApigeeOrganizationsAppgroupsGetRequest',
         response_type_name='GoogleCloudApigeeV1AppGroup',
+        supports_download=False,
+    )
+
+    def GetBalance(self, request, global_params=None):
+      r"""Gets the account balance for the AppGroup.
+
+      Args:
+        request: (ApigeeOrganizationsAppgroupsGetBalanceRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1AppGroupBalance) The response message.
+      """
+      config = self.GetMethodConfig('GetBalance')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetBalance.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/appgroups/{appgroupsId}/balance',
+        http_method='GET',
+        method_id='apigee.organizations.appgroups.getBalance',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsAppgroupsGetBalanceRequest',
+        response_type_name='GoogleCloudApigeeV1AppGroupBalance',
+        supports_download=False,
+    )
+
+    def GetMonetizationConfig(self, request, global_params=None):
+      r"""Gets the monetization configuration for the AppGroup.
+
+      Args:
+        request: (ApigeeOrganizationsAppgroupsGetMonetizationConfigRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1AppGroupMonetizationConfig) The response message.
+      """
+      config = self.GetMethodConfig('GetMonetizationConfig')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetMonetizationConfig.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/appgroups/{appgroupsId}/monetizationConfig',
+        http_method='GET',
+        method_id='apigee.organizations.appgroups.getMonetizationConfig',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsAppgroupsGetMonetizationConfigRequest',
+        response_type_name='GoogleCloudApigeeV1AppGroupMonetizationConfig',
         supports_download=False,
     )
 
@@ -1784,6 +2052,33 @@ class ApigeeV1(base_api.BaseApiClient):
         request_field='googleCloudApigeeV1AppGroup',
         request_type_name='ApigeeOrganizationsAppgroupsUpdateRequest',
         response_type_name='GoogleCloudApigeeV1AppGroup',
+        supports_download=False,
+    )
+
+    def UpdateMonetizationConfig(self, request, global_params=None):
+      r"""Updates the monetization configuration for the AppGroup.
+
+      Args:
+        request: (ApigeeOrganizationsAppgroupsUpdateMonetizationConfigRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1AppGroupMonetizationConfig) The response message.
+      """
+      config = self.GetMethodConfig('UpdateMonetizationConfig')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    UpdateMonetizationConfig.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/appgroups/{appgroupsId}/monetizationConfig',
+        http_method='PUT',
+        method_id='apigee.organizations.appgroups.updateMonetizationConfig',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='googleCloudApigeeV1AppGroupMonetizationConfig',
+        request_type_name='ApigeeOrganizationsAppgroupsUpdateMonetizationConfigRequest',
+        response_type_name='GoogleCloudApigeeV1AppGroupMonetizationConfig',
         supports_download=False,
     )
 
@@ -2371,7 +2666,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def UpdateDeveloperAppKey(self, request, global_params=None):
-      r"""Adds an API product to a developer app key, enabling the app that holds the key to access the API resources bundled in the API product. In addition, you can add attributes to a developer app key. This API replaces the existing attributes with those specified in the request. Include or exclude any existing attributes that you want to retain or delete, respectively. You can use the same key to access all API products associated with the app.
+      r"""Adds an API product to a developer app key, enabling the app that holds the key to access the API resources bundled in the API product. In addition, you can add attributes and scopes associated with the API product to the developer app key. The status of the key can be updated via "action" Query Parameter. None of the other fields can be updated via this API. This API replaces the existing attributes with those specified in the request. Include or exclude any existing attributes that you want to retain or delete, respectively. None of the other fields can be updated. You can use the same key to access all API products associated with the app.
 
       Args:
         request: (ApigeeOrganizationsDevelopersAppsKeysUpdateDeveloperAppKeyRequest) input message
@@ -2961,7 +3256,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a developer. All apps and API keys associated with the developer are also removed. **Warning**: This API will permanently delete the developer and related artifacts. To avoid permanently deleting developers and their artifacts, set the developer status to `inactive` using the SetDeveloperStatus API. **Note**: The delete operation is asynchronous. The developer app is deleted immediately, but its associated resources, such as apps and API keys, may take anywhere from a few seconds to a few minutes to be deleted.
+      r"""Deletes a developer. All apps and API keys associated with the developer are also removed. **Warning**: This API will permanently delete the developer and related artifacts. To avoid permanently deleting developers and their artifacts, set the developer status to `inactive` using the SetDeveloperStatus API. **Note**: The delete operation is asynchronous. The developer is deleted immediately, but its associated resources, such as apps and API keys, may take anywhere from a few seconds to a few minutes to be deleted.
 
       Args:
         request: (ApigeeOrganizationsDevelopersDeleteRequest) input message
@@ -3173,6 +3468,124 @@ class ApigeeV1(base_api.BaseApiClient):
         request_field='googleCloudApigeeV1DeveloperMonetizationConfig',
         request_type_name='ApigeeOrganizationsDevelopersUpdateMonetizationConfigRequest',
         response_type_name='GoogleCloudApigeeV1DeveloperMonetizationConfig',
+        supports_download=False,
+    )
+
+  class OrganizationsDnsZonesService(base_api.BaseApiService):
+    """Service class for the organizations_dnsZones resource."""
+
+    _NAME = 'organizations_dnsZones'
+
+    def __init__(self, client):
+      super(ApigeeV1.OrganizationsDnsZonesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a new DNS zone.
+
+      Args:
+        request: (ApigeeOrganizationsDnsZonesCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleLongrunningOperation) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/dnsZones',
+        http_method='POST',
+        method_id='apigee.organizations.dnsZones.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['dnsZoneId'],
+        relative_path='v1/{+parent}/dnsZones',
+        request_field='googleCloudApigeeV1DnsZone',
+        request_type_name='ApigeeOrganizationsDnsZonesCreateRequest',
+        response_type_name='GoogleLongrunningOperation',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a previously created DNS zone.
+
+      Args:
+        request: (ApigeeOrganizationsDnsZonesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleLongrunningOperation) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/dnsZones/{dnsZonesId}',
+        http_method='DELETE',
+        method_id='apigee.organizations.dnsZones.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsDnsZonesDeleteRequest',
+        response_type_name='GoogleLongrunningOperation',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Fetches the representation of an existing DNS zone.
+
+      Args:
+        request: (ApigeeOrganizationsDnsZonesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1DnsZone) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/dnsZones/{dnsZonesId}',
+        http_method='GET',
+        method_id='apigee.organizations.dnsZones.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsDnsZonesGetRequest',
+        response_type_name='GoogleCloudApigeeV1DnsZone',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Enumerates DNS zones that have been created but not yet deleted.
+
+      Args:
+        request: (ApigeeOrganizationsDnsZonesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ListDnsZonesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/dnsZones',
+        http_method='GET',
+        method_id='apigee.organizations.dnsZones.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken'],
+        relative_path='v1/{+parent}/dnsZones',
+        request_field='',
+        request_type_name='ApigeeOrganizationsDnsZonesListRequest',
+        response_type_name='GoogleCloudApigeeV1ListDnsZonesResponse',
         supports_download=False,
     )
 
@@ -4026,7 +4439,7 @@ class ApigeeV1(base_api.BaseApiClient):
           }
 
     def Deploy(self, request, global_params=None):
-      r"""Deploys a revision of an API proxy. If another revision of the same API proxy revision is currently deployed, set the `override` parameter to `true` to have this revision replace the currently deployed revision. You cannot invoke an API proxy until it has been deployed to an environment. After you deploy an API proxy revision, you cannot edit it. To edit the API proxy, you must create and deploy a new revision. For a request path `organizations/{org}/environments/{env}/apis/{api}/revisions/{rev}/deployments`, two permissions are required: * `apigee.deployments.create` on the resource `organizations/{org}/environments/{env}` * `apigee.proxyrevisions.deploy` on the resource `organizations/{org}/apis/{api}/revisions/{rev}` .
+      r"""Deploys a revision of an API proxy. If another revision of the same API proxy revision is currently deployed, set the `override` parameter to `true` to have this revision replace the currently deployed revision. You cannot invoke an API proxy until it has been deployed to an environment. After you deploy an API proxy revision, you cannot edit it. To edit the API proxy, you must create and deploy a new revision. For a request path `organizations/{org}/environments/{env}/apis/{api}/revisions/{rev}/deployments`, two permissions are required: * `apigee.deployments.create` on the resource `organizations/{org}/environments/{env}` * `apigee.proxyrevisions.deploy` on the resource `organizations/{org}/apis/{api}/revisions/{rev}` All successful API proxy deployments to Apigee are [zero-downtime deployments](https://cloud.google.com/apigee/docs/api-platform/deploy/ui-deploy-overview#zero-downtime-deployment). Apigee hybrid validates the dependencies between shared flows and API proxies at deployment time. For example, if the Flow Callout policy in an API proxy references a shared flow that either doesn't exist or isn't deployed, the API proxy deployment fails.
 
       Args:
         request: (ApigeeOrganizationsEnvironmentsApisRevisionsDeployRequest) input message
@@ -4471,7 +4884,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def TestIamPermissions(self, request, global_params=None):
-      r"""Tests the permissions of a user on an environment, and returns a subset of permissions that the user has on the environment. If the environment does not exist, an empty permission set is returned (a NOT_FOUND error is not returned).
+      r"""Tests the permissions of a user on a deployment, and returns a subset of permissions that the user has on the deployment. If the deployment does not exist, an empty permission set is returned (a NOT_FOUND error is not returned).
 
       Args:
         request: (ApigeeOrganizationsEnvironmentsDeploymentsTestIamPermissionsRequest) input message
@@ -4734,7 +5147,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def Update(self, request, global_params=None):
-      r"""Updates the certificate in an alias.
+      r"""Updates the certificate in an alias. The updated certificate must be in PEM- or DER-encoded X.509 format.
 
       Args:
         request: (ApigeeOrganizationsEnvironmentsKeystoresAliasesUpdateRequest) input message
@@ -5056,6 +5469,60 @@ class ApigeeV1(base_api.BaseApiClient):
         relative_path='v1/{+name}',
         request_field='',
         request_type_name='ApigeeOrganizationsEnvironmentsKeyvaluemapsDeleteRequest',
+        response_type_name='GoogleCloudApigeeV1KeyValueMap',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Get the key value map scoped to an organization, environment, or API proxy.
+
+      Args:
+        request: (ApigeeOrganizationsEnvironmentsKeyvaluemapsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1KeyValueMap) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/environments/{environmentsId}/keyvaluemaps/{keyvaluemapsId}',
+        http_method='GET',
+        method_id='apigee.organizations.environments.keyvaluemaps.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsEnvironmentsKeyvaluemapsGetRequest',
+        response_type_name='GoogleCloudApigeeV1KeyValueMap',
+        supports_download=False,
+    )
+
+    def Update(self, request, global_params=None):
+      r"""Update the key value map scoped to an organization, environment, or API proxy.
+
+      Args:
+        request: (GoogleCloudApigeeV1KeyValueMap) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1KeyValueMap) The response message.
+      """
+      config = self.GetMethodConfig('Update')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Update.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/environments/{environmentsId}/keyvaluemaps/{keyvaluemapsId}',
+        http_method='PUT',
+        method_id='apigee.organizations.environments.keyvaluemaps.update',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='<request>',
+        request_type_name='GoogleCloudApigeeV1KeyValueMap',
         response_type_name='GoogleCloudApigeeV1KeyValueMap',
         supports_download=False,
     )
@@ -5569,6 +6036,33 @@ class ApigeeV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Delete(self, request, global_params=None):
+      r"""Delete a SecurityAction.
+
+      Args:
+        request: (ApigeeOrganizationsEnvironmentsSecurityActionsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleProtobufEmpty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/environments/{environmentsId}/securityActions/{securityActionsId}',
+        http_method='DELETE',
+        method_id='apigee.organizations.environments.securityActions.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsEnvironmentsSecurityActionsDeleteRequest',
+        response_type_name='GoogleProtobufEmpty',
+        supports_download=False,
+    )
+
     def Disable(self, request, global_params=None):
       r"""Disable a SecurityAction. The `state` of the SecurityAction after disabling is `DISABLED`. `DisableSecurityAction` can be called on SecurityActions in the state `ENABLED`; SecurityActions in a different state (including `DISABLED`) return an error.
 
@@ -5674,6 +6168,33 @@ class ApigeeV1(base_api.BaseApiClient):
         request_field='',
         request_type_name='ApigeeOrganizationsEnvironmentsSecurityActionsListRequest',
         response_type_name='GoogleCloudApigeeV1ListSecurityActionsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Update a SecurityAction.
+
+      Args:
+        request: (ApigeeOrganizationsEnvironmentsSecurityActionsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1SecurityAction) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/environments/{environmentsId}/securityActions/{securityActionsId}',
+        http_method='PATCH',
+        method_id='apigee.organizations.environments.securityActions.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1/{+name}',
+        request_field='googleCloudApigeeV1SecurityAction',
+        request_type_name='ApigeeOrganizationsEnvironmentsSecurityActionsPatchRequest',
+        response_type_name='GoogleCloudApigeeV1SecurityAction',
         supports_download=False,
     )
 
@@ -8037,6 +8558,60 @@ class ApigeeV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Get(self, request, global_params=None):
+      r"""Get the key value map scoped to an organization, environment, or API proxy.
+
+      Args:
+        request: (ApigeeOrganizationsKeyvaluemapsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1KeyValueMap) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/keyvaluemaps/{keyvaluemapsId}',
+        http_method='GET',
+        method_id='apigee.organizations.keyvaluemaps.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsKeyvaluemapsGetRequest',
+        response_type_name='GoogleCloudApigeeV1KeyValueMap',
+        supports_download=False,
+    )
+
+    def Update(self, request, global_params=None):
+      r"""Update the key value map scoped to an organization, environment, or API proxy.
+
+      Args:
+        request: (GoogleCloudApigeeV1KeyValueMap) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1KeyValueMap) The response message.
+      """
+      config = self.GetMethodConfig('Update')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Update.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/keyvaluemaps/{keyvaluemapsId}',
+        http_method='PUT',
+        method_id='apigee.organizations.keyvaluemaps.update',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='<request>',
+        request_type_name='GoogleCloudApigeeV1KeyValueMap',
+        response_type_name='GoogleCloudApigeeV1KeyValueMap',
+        supports_download=False,
+    )
+
   class OrganizationsOperationsService(base_api.BaseApiService):
     """Service class for the organizations_operations resource."""
 
@@ -8320,48 +8895,48 @@ class ApigeeV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-  class OrganizationsSecurityFeedbackService(base_api.BaseApiService):
-    """Service class for the organizations_securityFeedback resource."""
+  class OrganizationsSecurityMonitoringConditionsService(base_api.BaseApiService):
+    """Service class for the organizations_securityMonitoringConditions resource."""
 
-    _NAME = 'organizations_securityFeedback'
+    _NAME = 'organizations_securityMonitoringConditions'
 
     def __init__(self, client):
-      super(ApigeeV1.OrganizationsSecurityFeedbackService, self).__init__(client)
+      super(ApigeeV1.OrganizationsSecurityMonitoringConditionsService, self).__init__(client)
       self._upload_configs = {
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a new report containing customer feedback.
+      r"""Create a security monitoring condition.
 
       Args:
-        request: (ApigeeOrganizationsSecurityFeedbackCreateRequest) input message
+        request: (ApigeeOrganizationsSecurityMonitoringConditionsCreateRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (GoogleCloudApigeeV1SecurityFeedback) The response message.
+        (GoogleCloudApigeeV1SecurityMonitoringCondition) The response message.
       """
       config = self.GetMethodConfig('Create')
       return self._RunMethod(
           config, request, global_params=global_params)
 
     Create.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1/organizations/{organizationsId}/securityFeedback',
+        flat_path='v1/organizations/{organizationsId}/securityMonitoringConditions',
         http_method='POST',
-        method_id='apigee.organizations.securityFeedback.create',
+        method_id='apigee.organizations.securityMonitoringConditions.create',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['securityFeedbackId'],
-        relative_path='v1/{+parent}/securityFeedback',
-        request_field='googleCloudApigeeV1SecurityFeedback',
-        request_type_name='ApigeeOrganizationsSecurityFeedbackCreateRequest',
-        response_type_name='GoogleCloudApigeeV1SecurityFeedback',
+        query_params=['securityMonitoringConditionId'],
+        relative_path='v1/{+parent}/securityMonitoringConditions',
+        request_field='googleCloudApigeeV1SecurityMonitoringCondition',
+        request_type_name='ApigeeOrganizationsSecurityMonitoringConditionsCreateRequest',
+        response_type_name='GoogleCloudApigeeV1SecurityMonitoringCondition',
         supports_download=False,
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a specific feedback report. Used for "undo" of a feedback submission.
+      r"""Delete a security monitoring condition.
 
       Args:
-        request: (ApigeeOrganizationsSecurityFeedbackDeleteRequest) input message
+        request: (ApigeeOrganizationsSecurityMonitoringConditionsDeleteRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
         (GoogleProtobufEmpty) The response message.
@@ -8371,70 +8946,97 @@ class ApigeeV1(base_api.BaseApiClient):
           config, request, global_params=global_params)
 
     Delete.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1/organizations/{organizationsId}/securityFeedback/{securityFeedbackId}',
+        flat_path='v1/organizations/{organizationsId}/securityMonitoringConditions/{securityMonitoringConditionsId}',
         http_method='DELETE',
-        method_id='apigee.organizations.securityFeedback.delete',
+        method_id='apigee.organizations.securityMonitoringConditions.delete',
         ordered_params=['name'],
         path_params=['name'],
         query_params=[],
         relative_path='v1/{+name}',
         request_field='',
-        request_type_name='ApigeeOrganizationsSecurityFeedbackDeleteRequest',
+        request_type_name='ApigeeOrganizationsSecurityMonitoringConditionsDeleteRequest',
         response_type_name='GoogleProtobufEmpty',
         supports_download=False,
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a specific customer feedback report.
+      r"""Get a security monitoring condition.
 
       Args:
-        request: (ApigeeOrganizationsSecurityFeedbackGetRequest) input message
+        request: (ApigeeOrganizationsSecurityMonitoringConditionsGetRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (GoogleCloudApigeeV1SecurityFeedback) The response message.
+        (GoogleCloudApigeeV1SecurityMonitoringCondition) The response message.
       """
       config = self.GetMethodConfig('Get')
       return self._RunMethod(
           config, request, global_params=global_params)
 
     Get.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1/organizations/{organizationsId}/securityFeedback/{securityFeedbackId}',
+        flat_path='v1/organizations/{organizationsId}/securityMonitoringConditions/{securityMonitoringConditionsId}',
         http_method='GET',
-        method_id='apigee.organizations.securityFeedback.get',
+        method_id='apigee.organizations.securityMonitoringConditions.get',
         ordered_params=['name'],
         path_params=['name'],
         query_params=[],
         relative_path='v1/{+name}',
         request_field='',
-        request_type_name='ApigeeOrganizationsSecurityFeedbackGetRequest',
-        response_type_name='GoogleCloudApigeeV1SecurityFeedback',
+        request_type_name='ApigeeOrganizationsSecurityMonitoringConditionsGetRequest',
+        response_type_name='GoogleCloudApigeeV1SecurityMonitoringCondition',
         supports_download=False,
     )
 
     def List(self, request, global_params=None):
-      r"""Lists all feedback reports which have already been submitted.
+      r"""List security monitoring conditions.
 
       Args:
-        request: (ApigeeOrganizationsSecurityFeedbackListRequest) input message
+        request: (ApigeeOrganizationsSecurityMonitoringConditionsListRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (GoogleCloudApigeeV1ListSecurityFeedbackResponse) The response message.
+        (GoogleCloudApigeeV1ListSecurityMonitoringConditionsResponse) The response message.
       """
       config = self.GetMethodConfig('List')
       return self._RunMethod(
           config, request, global_params=global_params)
 
     List.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1/organizations/{organizationsId}/securityFeedback',
+        flat_path='v1/organizations/{organizationsId}/securityMonitoringConditions',
         http_method='GET',
-        method_id='apigee.organizations.securityFeedback.list',
+        method_id='apigee.organizations.securityMonitoringConditions.list',
         ordered_params=['parent'],
         path_params=['parent'],
         query_params=['filter', 'pageSize', 'pageToken'],
-        relative_path='v1/{+parent}/securityFeedback',
+        relative_path='v1/{+parent}/securityMonitoringConditions',
         request_field='',
-        request_type_name='ApigeeOrganizationsSecurityFeedbackListRequest',
-        response_type_name='GoogleCloudApigeeV1ListSecurityFeedbackResponse',
+        request_type_name='ApigeeOrganizationsSecurityMonitoringConditionsListRequest',
+        response_type_name='GoogleCloudApigeeV1ListSecurityMonitoringConditionsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Update a security monitoring condition.
+
+      Args:
+        request: (ApigeeOrganizationsSecurityMonitoringConditionsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1SecurityMonitoringCondition) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/securityMonitoringConditions/{securityMonitoringConditionsId}',
+        http_method='PATCH',
+        method_id='apigee.organizations.securityMonitoringConditions.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1/{+name}',
+        request_field='googleCloudApigeeV1SecurityMonitoringCondition',
+        request_type_name='ApigeeOrganizationsSecurityMonitoringConditionsPatchRequest',
+        response_type_name='GoogleCloudApigeeV1SecurityMonitoringCondition',
         supports_download=False,
     )
 
@@ -8735,6 +9337,33 @@ class ApigeeV1(base_api.BaseApiClient):
         request_field='googleCloudApigeeV1SecurityProfileV2',
         request_type_name='ApigeeOrganizationsSecurityProfilesV2CreateRequest',
         response_type_name='GoogleCloudApigeeV1SecurityProfileV2',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Delete a security profile v2.
+
+      Args:
+        request: (ApigeeOrganizationsSecurityProfilesV2DeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleProtobufEmpty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/securityProfilesV2/{securityProfilesV2Id}',
+        http_method='DELETE',
+        method_id='apigee.organizations.securityProfilesV2.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsSecurityProfilesV2DeleteRequest',
+        response_type_name='GoogleProtobufEmpty',
         supports_download=False,
     )
 
@@ -9050,7 +9679,7 @@ class ApigeeV1(base_api.BaseApiClient):
         method_id='apigee.organizations.sharedflows.create',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['action', 'name'],
+        query_params=['action', 'name', 'space'],
         relative_path='v1/{+parent}/sharedflows',
         request_field='googleApiHttpBody',
         request_type_name='ApigeeOrganizationsSharedflowsCreateRequest',
@@ -9113,7 +9742,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists all shared flows in the organization.
+      r"""Lists all shared flows in the organization. If the resource has the `space` attribute set, the response may not return all resources. To learn more, read the [Apigee Spaces Overview](https://cloud.google.com/apigee/docs/api-platform/system-administration/spaces/apigee-spaces-overview).
 
       Args:
         request: (ApigeeOrganizationsSharedflowsListRequest) input message
@@ -9131,11 +9760,38 @@ class ApigeeV1(base_api.BaseApiClient):
         method_id='apigee.organizations.sharedflows.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['includeMetaData', 'includeRevisions'],
+        query_params=['includeMetaData', 'includeRevisions', 'space'],
         relative_path='v1/{+parent}/sharedflows',
         request_field='',
         request_type_name='ApigeeOrganizationsSharedflowsListRequest',
         response_type_name='GoogleCloudApigeeV1ListSharedFlowsResponse',
+        supports_download=False,
+    )
+
+    def Move(self, request, global_params=None):
+      r"""Moves an shared flow to a different space.
+
+      Args:
+        request: (ApigeeOrganizationsSharedflowsMoveRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1SharedFlow) The response message.
+      """
+      config = self.GetMethodConfig('Move')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Move.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/sharedflows/{sharedflowsId}:move',
+        http_method='POST',
+        method_id='apigee.organizations.sharedflows.move',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}:move',
+        request_field='googleCloudApigeeV1MoveSharedFlowRequest',
+        request_type_name='ApigeeOrganizationsSharedflowsMoveRequest',
+        response_type_name='GoogleCloudApigeeV1SharedFlow',
         supports_download=False,
     )
 
@@ -9284,6 +9940,205 @@ class ApigeeV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class OrganizationsSitesApidocsService(base_api.BaseApiService):
+    """Service class for the organizations_sites_apidocs resource."""
+
+    _NAME = 'organizations_sites_apidocs'
+
+    def __init__(self, client):
+      super(ApigeeV1.OrganizationsSitesApidocsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a new catalog item.
+
+      Args:
+        request: (ApigeeOrganizationsSitesApidocsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ApiDocResponse) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/sites/{sitesId}/apidocs',
+        http_method='POST',
+        method_id='apigee.organizations.sites.apidocs.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=[],
+        relative_path='v1/{+parent}/apidocs',
+        request_field='googleCloudApigeeV1ApiDoc',
+        request_type_name='ApigeeOrganizationsSitesApidocsCreateRequest',
+        response_type_name='GoogleCloudApigeeV1ApiDocResponse',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a catalog item.
+
+      Args:
+        request: (ApigeeOrganizationsSitesApidocsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1DeleteResponse) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/sites/{sitesId}/apidocs/{apidocsId}',
+        http_method='DELETE',
+        method_id='apigee.organizations.sites.apidocs.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsSitesApidocsDeleteRequest',
+        response_type_name='GoogleCloudApigeeV1DeleteResponse',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a catalog item.
+
+      Args:
+        request: (ApigeeOrganizationsSitesApidocsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ApiDocResponse) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/sites/{sitesId}/apidocs/{apidocsId}',
+        http_method='GET',
+        method_id='apigee.organizations.sites.apidocs.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsSitesApidocsGetRequest',
+        response_type_name='GoogleCloudApigeeV1ApiDocResponse',
+        supports_download=False,
+    )
+
+    def GetDocumentation(self, request, global_params=None):
+      r"""Gets the documentation for the specified catalog item.
+
+      Args:
+        request: (ApigeeOrganizationsSitesApidocsGetDocumentationRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ApiDocDocumentationResponse) The response message.
+      """
+      config = self.GetMethodConfig('GetDocumentation')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetDocumentation.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/sites/{sitesId}/apidocs/{apidocsId}/documentation',
+        http_method='GET',
+        method_id='apigee.organizations.sites.apidocs.getDocumentation',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsSitesApidocsGetDocumentationRequest',
+        response_type_name='GoogleCloudApigeeV1ApiDocDocumentationResponse',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Returns the catalog items associated with a portal.
+
+      Args:
+        request: (ApigeeOrganizationsSitesApidocsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ListApiDocsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/sites/{sitesId}/apidocs',
+        http_method='GET',
+        method_id='apigee.organizations.sites.apidocs.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken'],
+        relative_path='v1/{+parent}/apidocs',
+        request_field='',
+        request_type_name='ApigeeOrganizationsSitesApidocsListRequest',
+        response_type_name='GoogleCloudApigeeV1ListApiDocsResponse',
+        supports_download=False,
+    )
+
+    def Update(self, request, global_params=None):
+      r"""Updates a catalog item.
+
+      Args:
+        request: (ApigeeOrganizationsSitesApidocsUpdateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ApiDocResponse) The response message.
+      """
+      config = self.GetMethodConfig('Update')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Update.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/sites/{sitesId}/apidocs/{apidocsId}',
+        http_method='PUT',
+        method_id='apigee.organizations.sites.apidocs.update',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='googleCloudApigeeV1ApiDoc',
+        request_type_name='ApigeeOrganizationsSitesApidocsUpdateRequest',
+        response_type_name='GoogleCloudApigeeV1ApiDocResponse',
+        supports_download=False,
+    )
+
+    def UpdateDocumentation(self, request, global_params=None):
+      r"""Updates the documentation for the specified catalog item. Note that the documentation file contents will not be populated in the return message.
+
+      Args:
+        request: (ApigeeOrganizationsSitesApidocsUpdateDocumentationRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ApiDocDocumentationResponse) The response message.
+      """
+      config = self.GetMethodConfig('UpdateDocumentation')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    UpdateDocumentation.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/sites/{sitesId}/apidocs/{apidocsId}/documentation',
+        http_method='PATCH',
+        method_id='apigee.organizations.sites.apidocs.updateDocumentation',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='googleCloudApigeeV1ApiDocDocumentation',
+        request_type_name='ApigeeOrganizationsSitesApidocsUpdateDocumentationRequest',
+        response_type_name='GoogleCloudApigeeV1ApiDocDocumentationResponse',
+        supports_download=False,
+    )
+
   class OrganizationsSitesService(base_api.BaseApiService):
     """Service class for the organizations_sites resource."""
 
@@ -9293,6 +10148,232 @@ class ApigeeV1(base_api.BaseApiClient):
       super(ApigeeV1.OrganizationsSitesService, self).__init__(client)
       self._upload_configs = {
           }
+
+  class OrganizationsSpacesService(base_api.BaseApiService):
+    """Service class for the organizations_spaces resource."""
+
+    _NAME = 'organizations_spaces'
+
+    def __init__(self, client):
+      super(ApigeeV1.OrganizationsSpacesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Create a space under an organization.
+
+      Args:
+        request: (ApigeeOrganizationsSpacesCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1Space) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/spaces',
+        http_method='POST',
+        method_id='apigee.organizations.spaces.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['spaceId'],
+        relative_path='v1/{+parent}/spaces',
+        request_field='googleCloudApigeeV1Space',
+        request_type_name='ApigeeOrganizationsSpacesCreateRequest',
+        response_type_name='GoogleCloudApigeeV1Space',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes an organization space.
+
+      Args:
+        request: (ApigeeOrganizationsSpacesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleProtobufEmpty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/spaces/{spacesId}',
+        http_method='DELETE',
+        method_id='apigee.organizations.spaces.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsSpacesDeleteRequest',
+        response_type_name='GoogleProtobufEmpty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Get a space under an Organization.
+
+      Args:
+        request: (ApigeeOrganizationsSpacesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1Space) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/spaces/{spacesId}',
+        http_method='GET',
+        method_id='apigee.organizations.spaces.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='ApigeeOrganizationsSpacesGetRequest',
+        response_type_name='GoogleCloudApigeeV1Space',
+        supports_download=False,
+    )
+
+    def GetIamPolicy(self, request, global_params=None):
+      r"""Callers must have apigee.spaces.getIamPolicy.
+
+      Args:
+        request: (ApigeeOrganizationsSpacesGetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleIamV1Policy) The response message.
+      """
+      config = self.GetMethodConfig('GetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/spaces/{spacesId}:getIamPolicy',
+        http_method='GET',
+        method_id='apigee.organizations.spaces.getIamPolicy',
+        ordered_params=['resource'],
+        path_params=['resource'],
+        query_params=['options_requestedPolicyVersion'],
+        relative_path='v1/{+resource}:getIamPolicy',
+        request_field='',
+        request_type_name='ApigeeOrganizationsSpacesGetIamPolicyRequest',
+        response_type_name='GoogleIamV1Policy',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists spaces under an organization.
+
+      Args:
+        request: (ApigeeOrganizationsSpacesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1ListSpacesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/spaces',
+        http_method='GET',
+        method_id='apigee.organizations.spaces.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken'],
+        relative_path='v1/{+parent}/spaces',
+        request_field='',
+        request_type_name='ApigeeOrganizationsSpacesListRequest',
+        response_type_name='GoogleCloudApigeeV1ListSpacesResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a space.
+
+      Args:
+        request: (ApigeeOrganizationsSpacesPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudApigeeV1Space) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/spaces/{spacesId}',
+        http_method='PATCH',
+        method_id='apigee.organizations.spaces.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1/{+name}',
+        request_field='googleCloudApigeeV1Space',
+        request_type_name='ApigeeOrganizationsSpacesPatchRequest',
+        response_type_name='GoogleCloudApigeeV1Space',
+        supports_download=False,
+    )
+
+    def SetIamPolicy(self, request, global_params=None):
+      r"""IAM META APIs Callers must have apigee.spaces.setIamPolicy.
+
+      Args:
+        request: (ApigeeOrganizationsSpacesSetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleIamV1Policy) The response message.
+      """
+      config = self.GetMethodConfig('SetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/spaces/{spacesId}:setIamPolicy',
+        http_method='POST',
+        method_id='apigee.organizations.spaces.setIamPolicy',
+        ordered_params=['resource'],
+        path_params=['resource'],
+        query_params=[],
+        relative_path='v1/{+resource}:setIamPolicy',
+        request_field='googleIamV1SetIamPolicyRequest',
+        request_type_name='ApigeeOrganizationsSpacesSetIamPolicyRequest',
+        response_type_name='GoogleIamV1Policy',
+        supports_download=False,
+    )
+
+    def TestIamPermissions(self, request, global_params=None):
+      r"""Callers don't need any permissions.
+
+      Args:
+        request: (ApigeeOrganizationsSpacesTestIamPermissionsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleIamV1TestIamPermissionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('TestIamPermissions')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/spaces/{spacesId}:testIamPermissions',
+        http_method='POST',
+        method_id='apigee.organizations.spaces.testIamPermissions',
+        ordered_params=['resource'],
+        path_params=['resource'],
+        query_params=[],
+        relative_path='v1/{+resource}:testIamPermissions',
+        request_field='googleIamV1TestIamPermissionsRequest',
+        request_type_name='ApigeeOrganizationsSpacesTestIamPermissionsRequest',
+        response_type_name='GoogleIamV1TestIamPermissionsResponse',
+        supports_download=False,
+    )
 
   class OrganizationsService(base_api.BaseApiService):
     """Service class for the organizations resource."""
@@ -9385,7 +10466,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def GetControlPlaneAccess(self, request, global_params=None):
-      r"""Lists the service accounts with the permissions required to allow Apigee runtime-plane components access to control plane resources. Currently, the permissions required are to: 1. Allow Synchronizer to download environment data from the control plane. 2. Allow the UDCA to upload analytics data. 3. Allow the Logger component to write logs to the control plane. For more information regarding the Synchronizer, see [Configure the Synchronizer](https://cloud.google.com/apigee/docs/hybrid/latest/synchronizer-access). **Note**: Available to Apigee hybrid only.
+      r"""Lists the service accounts allowed to access Apigee control plane directly for limited functionality. **Note**: Available to Apigee hybrid only.
 
       Args:
         request: (ApigeeOrganizationsGetControlPlaneAccessRequest) input message
@@ -9736,7 +10817,7 @@ class ApigeeV1(base_api.BaseApiClient):
     )
 
     def UpdateControlPlaneAccess(self, request, global_params=None):
-      r"""Updates the permissions required to allow Apigee runtime-plane components access to the control plane. Currently, the permissions required are to: 1. Allow Synchronizer to download environment data from the control plane. 2. Allow the UDCA to upload analytics data. 3. Allow the Logger component to write logs to the control plane. You must call this API to enable proper functioning of hybrid. For more information regarding the Synchronizer, see [Configure the Synchronizer](https://cloud.google.com/apigee/docs/hybrid/latest/synchronizer-access). **Note**: Available to Apigee hybrid only.
+      r"""Updates the permissions required to allow Apigee runtime-plane components access to the control plane. Currently, the permissions required are to: 1. Allow runtime components to publish analytics data to the control plane. **Note**: Available to Apigee hybrid only.
 
       Args:
         request: (ApigeeOrganizationsUpdateControlPlaneAccessRequest) input message

@@ -26,7 +26,6 @@ from surface.container.clusters import create
 auto_flags = [
     'args',
     'clusterversion',
-    'ipalias_additional',
     'masterauth',
     'nodeidentity',
     'privatecluster',
@@ -45,15 +44,30 @@ auto_flags = [
     'autoprovisioningEnableKubeletReadonlyPort',
     'dataplanev2obs',
     'enableK8sBetaApis',
+    'compliance',
+    'complianceStandards',
     'securityPosture',
     'workloadVulnerabilityScanning',
     'enableRuntimeVulnerabilityInsight',
     'masterglobalaccess',
-    'enableDnsEndpoint',
+    'enableDnsAccess',
     'workloadPolicies',
     'containerdConfig',
     'labels',
     'secretManagerConfig',
+    'secretManagerRotationConfig',
+    'secretManagerRotationPeriod',
+    'enableCiliumClusterwideNetworkPolicy',
+    'cpDiskEncryptionKey',
+    'disableL4LbFirewallReconciliation',
+    'hpaprofile',
+    'enableIpAccess',
+    'enableAuthorizedNetworksOnPrivateEndpoint',
+    'enableAutoIpam',
+    'enableK8sTokensViaDns',
+    'enableDefaultComputeClass',
+    'enableK8sCertsViaDns',
+    'membershipType',
 ]
 
 # Change default flag values in create-auto
@@ -80,10 +94,25 @@ def AddAutoFlags(parser, release_track):
   flags.AddReleaseChannelFlag(parser, autopilot=True)
   flags.AddEnableBackupRestoreFlag(parser)
   flags.AddAutoprovisioningResourceManagerTagsCreate(parser)
-  flags.AddAdditiveVPCScopeFlags(parser, release_track=release_track)
+  flags.AddAdditiveVPCScopeFlags(parser)
+  flags.AddIPAliasRelatedFlags(parser, autopilot=True)
+  flags.AddEnableConfidentialNodesFlag(parser)
+  flags.AddEnableLustreCSIDriverFlag(parser, hidden=False)
+  flags.AddEnableRayOperatorFlag(parser, hidden=False)
+  flags.AddEnableRayClusterMonitoring(parser, hidden=False)
+  flags.AddEnableRayClusterLogging(parser, hidden=False)
+  flags.AddInsecureRBACBindingFlags(parser, hidden=False)
+  flags.AddEnableMultiNetworkingFlag(parser, hidden=False)
+  flags.AddControlPlaneKeysFlags(parser)
+  flags.AddAutoMonitoringScopeFlags(parser, hidden=False)
+  flags.AddClusterTierFlag(parser)
+  flags.AddKubecontextOverrideFlag(parser)
+  flags.AddAnonymousAuthenticationConfigFlag(parser)
+  flags.AddEnableLegacyLustrePortFlag(parser, hidden=False)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.DefaultUniverseOnly
 class Create(create.Create):
   """Create an Autopilot cluster for running containers."""
 
@@ -97,6 +126,7 @@ class Create(create.Create):
 
 
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
+@base.DefaultUniverseOnly
 class CreateBeta(create.CreateBeta):
   """Create an Autopilot cluster for running containers."""
 
@@ -110,6 +140,7 @@ class CreateBeta(create.CreateBeta):
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+@base.DefaultUniverseOnly
 class CreateAlpha(create.CreateAlpha):
   """Create an Autopilot cluster for running containers."""
 

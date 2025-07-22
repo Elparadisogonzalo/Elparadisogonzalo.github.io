@@ -78,6 +78,27 @@ class DiscoveryDoc(object):
   def docs_url(self):
     return self._discovery_doc_dict['documentationLink']
 
+  @property
+  def is_interface_versioned(self):
+    """Whether the discovery doc is using interface-based versioning.
+
+    Interface-based versioned APIs are distinguished by the use of the
+    $apiVersion / X-Goog-Api-Version system parameter
+    (https://cloud.google.com/apis/docs/system-parameters#google_private_system_parameters),
+    which appears under the "apiVersion" key for the method configs in the
+    discovery doc.
+    """
+    return any(
+        'apiVersion' in m
+        for m in self._ExtractMethods(self._discovery_doc_dict)
+    )
+
+  def _ExtractMethods(self, infos):
+    """Extracts method definitions from discovery doc."""
+    yield from infos.get('methods', {}).values()
+    for collection_param in infos.get('resources', {}):
+      yield from self._ExtractMethods(infos['resources'][collection_param])
+
   def GetResourceCollections(self, custom_resources, api_version):
     """Returns all resources collections found in this discovery doc.
 
@@ -88,9 +109,26 @@ class DiscoveryDoc(object):
 
     Returns:
       list(resource_util.CollectionInfo).
+
+    Raises:
+      UnsupportedDiscoveryDoc: if collections have different base URLs.
     """
     collections = self._ExtractResources(
         api_version, self._discovery_doc_dict)
+    if collections:
+      url_api_version = resource_util.SplitEndpointUrl(
+          collections[0].base_url)[1]
+      for c in collections:
+        if url_api_version != resource_util.SplitEndpointUrl(c.base_url)[1]:
+          raise UnsupportedDiscoveryDoc(
+              'In client {0}/{1}, collection {2} is using url {3}, but '
+              'collection {4} is using url {5}'.format(
+                  c.api_name,
+                  api_version,
+                  collections[0].name,
+                  collections[0].base_url,
+                  c.name,
+                  c.base_url))
     collections.extend(
         self._GenerateMissingParentCollections(
             collections, custom_resources, api_version))
@@ -133,21 +171,14 @@ class DiscoveryDoc(object):
       flat_path = None
     # Normalize base url so it includes api_version.
     url = self.base_url + path
-    url_api_name, url_api_version, path = resource_util.SplitEndpointUrl(url)
-    if url_api_version != api_version:
-      raise UnsupportedDiscoveryDoc(
-          'Collection {0} for version {1}/{2} is using url {3} '
-          'with version {4}'.format(
-              collection_name, self.api_name, api_version, url, url_api_version
-          )
-      )
+    url_api_name, _, path = resource_util.SplitEndpointUrl(url)
     if flat_path:
       _, _, flat_path = resource_util.SplitEndpointUrl(
           self.base_url + flat_path
       )
     # Use url_api_name instead as it is assumed to be source of truth.
-    # Also note that api_version not always equal to url_api_version,
-    # this is the case where api_version is an alias.
+    # Also note that the client api_version identifier may differ from the API
+    # version in the URL for interface-based versioned APIs (as of 2024).
     url = url[:-len(path)]
     return resource_util.CollectionInfo(
         url_api_name,

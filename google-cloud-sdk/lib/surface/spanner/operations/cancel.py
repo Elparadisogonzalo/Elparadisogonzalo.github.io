@@ -24,19 +24,12 @@ from googlecloudsdk.api_lib.spanner import backup_operations
 from googlecloudsdk.api_lib.spanner import database_operations
 from googlecloudsdk.api_lib.spanner import instance_config_operations
 from googlecloudsdk.api_lib.spanner import instance_operations
+from googlecloudsdk.api_lib.spanner import instance_partition_operations
 from googlecloudsdk.calliope import base
-from googlecloudsdk.calliope import exceptions as c_exceptions
 from googlecloudsdk.command_lib.spanner import flags
 
-
-@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA,
-                    base.ReleaseTrack.ALPHA)
-class Cancel(base.Command):
-  """Cancel a Cloud Spanner operation."""
-
-  detailed_help = {
-      'EXAMPLES':
-          textwrap.dedent("""\
+DETAILED_HELP = {
+    'EXAMPLES': textwrap.dedent("""\
         To cancel an instance operation with ID _auto_12345, run:
 
           $ {command} _auto_12345 --instance=my-instance-id
@@ -50,8 +43,20 @@ class Cancel(base.Command):
 
           $ {command}  _auto_12345 --instance=my-instance-id
               --backup=my-backup-id
+
+        To cancel an instance partition operation with ID auto_12345, run:
+
+          $ {command} auto_12345 --instance=my-instance-id --instance-partition=my-partition-id
         """),
-  }
+}
+
+
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class Cancel(base.Command):
+  """Cancel a Cloud Spanner operation."""
+
+  detailed_help = DETAILED_HELP
 
   @staticmethod
   def Args(parser):
@@ -91,11 +96,9 @@ class Cancel(base.Command):
       return instance_config_operations.Cancel(args.instance_config,
                                                args.operation)
 
-    # Checks that user only specified either database or backup flag.
-    if (args.IsSpecified('database') and args.IsSpecified('backup')):
-      raise c_exceptions.InvalidArgumentException(
-          '--database or --backup',
-          'Must specify either --database or --backup.')
+    # Checks that user only specified database or backup or instance partition
+    # flag.
+    flags.CheckExclusiveLROFlagsUnderInstance(args)
 
     if args.backup:
       return backup_operations.Cancel(args.instance, args.backup,
@@ -104,5 +107,32 @@ class Cancel(base.Command):
     if args.database:
       return database_operations.Cancel(args.instance, args.database,
                                         args.operation)
-    else:
-      return instance_operations.Cancel(args.instance, args.operation)
+    if args.instance_partition:
+      return instance_partition_operations.Cancel(
+          args.instance, args.instance_partition, args.operation
+      )
+
+    return instance_operations.Cancel(args.instance, args.operation)
+
+
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+class BetaAndAlphaCancel(Cancel):
+  """Cancel a Cloud Spanner operation."""
+
+  detailed_help = {
+      'EXAMPLES': DETAILED_HELP['EXAMPLES'] + textwrap.dedent("""\
+        """),
+  }
+
+  @staticmethod
+  def Args(parser):
+    """Args is called by calliope to gather arguments for this command.
+
+    Please add arguments in alphabetical order except for no- or a clear-
+    pair for that argument which can follow the argument itself.
+    Args:
+      parser: An argparse parser that you can use to add arguments that go on
+        the command line after this command. Positional arguments are allowed.
+    """
+    super(BetaAndAlphaCancel, BetaAndAlphaCancel).Args(parser)

@@ -1,0 +1,31 @@
+diff --git a/httplib2/__init__.py b/httplib2/__init__.py
+--- a/httplib2/__init__.py
++++ b/httplib2/__init__.py
+@@ -1035,6 +1035,13 @@ class HTTPConnectionWithTimeout(http.cli
+                 else:
+                     self.sock = socket.socket(af, socktype, proto)
+                     self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
++                    # go/secure-protocols - HTTP_PY_HTTPLIB2
++                    try:
++                        self.sock.setsockopt(socket.SOL_SOCKET, 0x1600BD62, 102)
++                    except OSError:
++                        # Non-production kernels (e.g. desktops) will return
++                        # ENOPROTOOPT for this, so should be ignored.
++                        pass
+                 if has_timeout(self.timeout):
+                     self.sock.settimeout(self.timeout)
+                 if self.debuglevel > 0:
+@@ -1151,6 +1158,13 @@ class HTTPSConnectionWithTimeout(http.cl
+                 else:
+                     sock = socket.socket(family, socktype, proto)
+                     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
++                    # go/secure-protocols - HTTPS_PY_HTTPLIB2
++                    try:
++                        sock.setsockopt(socket.SOL_SOCKET, 0x1600BD62, 103)
++                    except OSError:
++                        # Non-production kernels (e.g. desktops) will return
++                        # ENOPROTOOPT for this, so should be ignored.
++                        pass
+                 if has_timeout(self.timeout):
+                     sock.settimeout(self.timeout)
+                 sock.connect((self.host, self.port))

@@ -110,16 +110,18 @@ def _CommonArgs(
     support_network_queue_count=False,
     support_instance_kms=False,
     support_max_run_duration=False,
-    support_network_attachments=False,
     support_local_ssd_recovery_timeout=True,
     support_local_ssd_size=False,
     support_vlan_nic=False,
-    support_storage_pool=False,
     support_source_instant_snapshot=False,
     support_enable_confidential_compute=False,
     support_specific_then_x_affinity=False,
     support_ipv6_only=False,
     support_graceful_shutdown=False,
+    support_igmp_query=False,
+    support_watchdog_timer=False,
+    support_disk_labels=False,
+    support_source_snapshot_region=False,
 ):
   """Register parser args common to all tracks."""
   metadata_utils.AddMetadataArgs(parser)
@@ -133,9 +135,10 @@ def _CommonArgs(
       support_boot=True,
       support_multi_writer=support_multi_writer,
       support_replica_zones=support_replica_zones,
-      support_storage_pool=support_storage_pool,
       enable_source_instant_snapshots=support_source_instant_snapshot,
       enable_confidential_compute=support_enable_confidential_compute,
+      support_disk_labels=support_disk_labels,
+      support_source_snapshot_region=support_source_snapshot_region,
   )
   instances_flags.AddCanIpForwardArgs(parser)
   instances_flags.AddAddressArgs(
@@ -144,9 +147,9 @@ def _CommonArgs(
       support_subinterface=support_subinterface,
       instance_create=True,
       support_network_queue_count=support_network_queue_count,
-      support_network_attachments=support_network_attachments,
       support_vlan_nic=support_vlan_nic,
-      support_ipv6_only=support_ipv6_only)
+      support_ipv6_only=support_ipv6_only,
+      support_igmp_query=support_igmp_query)
   instances_flags.AddAcceleratorArgs(parser)
   instances_flags.AddMachineTypeArgs(parser)
   instances_flags.AddMaintenancePolicyArgs(
@@ -174,6 +177,7 @@ def _CommonArgs(
       enable_snapshots=True,
       support_image_family_scope=True,
       enable_instant_snapshots=support_source_instant_snapshot,
+      support_source_snapshot_region=support_source_snapshot_region,
   )
   instances_flags.AddDeletionProtectionFlag(parser)
   instances_flags.AddPublicPtrArgs(parser, instance=True)
@@ -191,7 +195,6 @@ def _CommonArgs(
   instances_flags.AddStackTypeArgs(parser, support_ipv6_only=support_ipv6_only)
   instances_flags.AddIpv6NetworkTierArgs(parser)
   instances_flags.AddNetworkPerformanceConfigsArgs(parser)
-  instances_flags.AddProvisioningModelVmArgs(parser)
   instances_flags.AddInstanceTerminationActionVmArgs(parser)
   instances_flags.AddIPv6AddressArgs(parser)
   instances_flags.AddIPv6PrefixLengthArgs(parser)
@@ -226,7 +229,15 @@ def _CommonArgs(
   csek_utils.AddCsekKeyArgs(parser)
 
   base.ASYNC_FLAG.AddToParser(parser)
-  parser.display_info.AddFormat(instances_flags.DEFAULT_LIST_FORMAT)
+  if support_ipv6_only:
+    parser.display_info.AddFormat(instances_flags.DEFAULT_LIST_FORMAT_WITH_IPV6)
+    parser.display_info.AddTransforms({
+        'external_ip': instances_flags.TransformInstanceExternalIp,
+        'internal_ip': instances_flags.TransformInstanceInternalIp,
+    })
+  else:
+    parser.display_info.AddFormat(instances_flags.DEFAULT_LIST_FORMAT)
+
   parser.display_info.AddCacheUpdater(completers.InstancesCompleter)
 
   instances_flags.AddNodeProjectArgs(parser)
@@ -245,13 +256,20 @@ def _CommonArgs(
 
   if support_max_run_duration:
     instances_flags.AddMaxRunDurationVmArgs(parser)
+    instances_flags.AddDiscardLocalSsdVmArgs(parser)
 
   if support_local_ssd_size:
     instances_flags.AddLocalSsdArgsWithSize(parser)
   else:
     instances_flags.AddLocalSsdArgs(parser)
 
+  if support_watchdog_timer:
+    instances_flags.AddWatchdogTimerArg(parser)
 
+  instances_flags.AddTurboModeArgs(parser)
+
+
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create Compute Engine virtual machine instances."""
@@ -274,28 +292,32 @@ class Create(base.CreateCommand):
   _support_multi_writer = False
   _support_subinterface = False
   _support_secure_tag = False
-  _support_host_error_timeout_seconds = False
+  _support_host_error_timeout_seconds = True
   _support_numa_node_count = False
   _support_visible_core_count = True
   _support_network_queue_count = True
   _support_instance_kms = True
-  _support_max_run_duration = False
+  _support_max_run_duration = True
   _support_ipv6_assignment = False
-  _support_confidential_compute_type = False
-  _support_confidential_compute_type_tdx = False
-  _support_network_attachments = False
+  _support_confidential_compute_type = True
+  _support_confidential_compute_type_tdx = True
+  _support_snp_svsm = False
   _support_local_ssd_recovery_timeout = True
   _support_internal_ipv6_reservation = True
   _support_local_ssd_size = True
   _support_vlan_nic = False
-  _support_performance_monitoring_unit = False
-  _support_storage_pool = False
+  _support_performance_monitoring_unit = True
   _support_source_instant_snapshot = False
   _support_boot_instant_snapshot_uri = False
   _support_partner_metadata = False
   _support_enable_confidential_compute = True
   _support_specific_then_x_affinity = False
   _support_graceful_shutdown = False
+  _support_igmp_query = False
+  _support_watchdog_timer = False
+  _support_disk_labels = False
+  _support_ipv6_only = True
+  _support_source_snapshot_region = False
 
   @classmethod
   def Args(cls, parser):
@@ -311,15 +333,18 @@ class Create(base.CreateCommand):
         support_instance_kms=cls._support_instance_kms,
         support_max_run_duration=cls._support_max_run_duration,
         supports_erase_vss=cls._support_erase_vss,
-        support_network_attachments=cls._support_network_attachments,
         support_local_ssd_recovery_timeout=cls._support_local_ssd_recovery_timeout,
         support_local_ssd_size=cls._support_local_ssd_size,
         support_network_queue_count=cls._support_network_queue_count,
         support_vlan_nic=cls._support_vlan_nic,
-        support_storage_pool=cls._support_storage_pool,
         support_enable_confidential_compute=cls._support_enable_confidential_compute,
         support_specific_then_x_affinity=cls._support_specific_then_x_affinity,
         support_graceful_shutdown=cls._support_graceful_shutdown,
+        support_igmp_query=cls._support_igmp_query,
+        support_watchdog_timer=cls._support_watchdog_timer,
+        support_disk_labels=cls._support_disk_labels,
+        support_ipv6_only=cls._support_ipv6_only,
+        support_source_snapshot_region=cls._support_source_snapshot_region,
     )
     cls.SOURCE_INSTANCE_TEMPLATE = (
         instances_flags.MakeSourceInstanceTemplateArg()
@@ -336,9 +361,16 @@ class Create(base.CreateCommand):
         support_confidential_compute_type=cls
         ._support_confidential_compute_type,
         support_confidential_compute_type_tdx=cls
-        ._support_confidential_compute_type_tdx)
+        ._support_confidential_compute_type_tdx,
+        support_snp_svsm=cls._support_snp_svsm)
     instances_flags.AddKeyRevocationActionTypeArgs(parser)
     instances_flags.AddVisibleCoreCountArgs(parser)
+    instances_flags.AddAvailabilityDomainAgrs(parser)
+    instances_flags.AddPerformanceMonitoringUnitArgs(parser)
+    instances_flags.AddProvisioningModelVmArgs(
+        parser,
+        support_flex_start=False,
+    )
 
   def Collection(self):
     return 'compute.instances'
@@ -433,7 +465,8 @@ class Create(base.CreateCommand):
             support_confidential_compute_type=self
             ._support_confidential_compute_type,
             support_confidential_compute_type_tdx=self
-            ._support_confidential_compute_type_tdx))
+            ._support_confidential_compute_type_tdx,
+            support_snp_svsm=self._support_snp_svsm))
 
     csek_keys = csek_utils.CsekKeyStore.FromArgs(args,
                                                  self._support_rsa_encrypted)
@@ -469,10 +502,11 @@ class Create(base.CreateCommand):
             support_create_disk_snapshots=self._support_create_disk_snapshots,
             support_replica_zones=self._support_replica_zones,
             support_multi_writer=self._support_multi_writer,
-            support_storage_pool=self._support_storage_pool,
             support_source_instant_snapshot=self._support_source_instant_snapshot,
             support_boot_instant_snapshot_uri=self._support_boot_instant_snapshot_uri,
             support_enable_confidential_compute=self._support_enable_confidential_compute,
+            support_disk_labels=self._support_disk_labels,
+            support_source_snapshot_region=self._support_source_snapshot_region,
         )
 
       machine_type_uri = None
@@ -527,7 +561,7 @@ class Create(base.CreateCommand):
               compute_client.messages.Instance.PartnerMetadataValue.AdditionalProperty(
                   key=namespace,
                   value=partner_metadata_utils.ConvertStructuredEntries(
-                      structured_entries
+                      structured_entries, compute_client.messages
                   ),
               )
           )
@@ -568,23 +602,44 @@ class Create(base.CreateCommand):
       has_visible_core_count = (
           self._support_visible_core_count and
           args.visible_core_count is not None)
-      if (args.enable_nested_virtualization is not None or
-          args.threads_per_core is not None or
-          (self._support_numa_node_count and args.numa_node_count is not None)
-          or has_visible_core_count or args.enable_uefi_networking is not None
-          or (self._support_performance_monitoring_unit
-              and args.performance_monitoring_unit)):
+      if (
+          args.enable_nested_virtualization is not None
+          or args.threads_per_core is not None
+          or (
+              self._support_numa_node_count and args.numa_node_count is not None
+          )
+          or has_visible_core_count
+          or args.enable_uefi_networking is not None
+          or (
+              self._support_performance_monitoring_unit
+              and args.performance_monitoring_unit
+          )
+          or (
+              self._support_watchdog_timer
+              and args.enable_watchdog_timer is not None
+          )
+          or (args.turbo_mode is not None)
+      ):
         visible_core_count = (
             args.visible_core_count if has_visible_core_count else None
         )
         instance.advancedMachineFeatures = (
             instance_utils.CreateAdvancedMachineFeaturesMessage(
-                compute_client.messages, args.enable_nested_virtualization,
+                compute_client.messages,
+                args.enable_nested_virtualization,
                 args.threads_per_core,
                 args.numa_node_count if self._support_numa_node_count else None,
-                visible_core_count, args.enable_uefi_networking,
+                visible_core_count,
+                args.enable_uefi_networking,
                 args.performance_monitoring_unit
-                if self._support_performance_monitoring_unit else None))
+                if self._support_performance_monitoring_unit
+                else None,
+                args.enable_watchdog_timer
+                if self._support_watchdog_timer
+                else None,
+                args.turbo_mode,
+            )
+        )
 
       resource_policies = getattr(args, 'resource_policies', None)
       if resource_policies:
@@ -770,18 +825,22 @@ class CreateBeta(Create):
   _support_ipv6_assignment = False
   _support_confidential_compute_type = True
   _support_confidential_compute_type_tdx = True
-  _support_network_attachments = False
+  _support_snp_svsm = False
   _support_local_ssd_recovery_timeout = True
   _support_local_ssd_size = True
-  _support_vlan_nic = False
-  _support_performance_monitoring_unit = False
-  _support_storage_pool = False
+  _support_vlan_nic = True
+  _support_performance_monitoring_unit = True
   _support_source_instant_snapshot = False
   _support_boot_instant_snapshot_uri = False
-  _support_partner_metadata = False
+  _support_partner_metadata = True
   _support_enable_confidential_compute = True
   _support_specific_then_x_affinity = True
-  _support_graceful_shutdown = False
+  _support_graceful_shutdown = True
+  _support_igmp_query = True
+  _support_watchdog_timer = False
+  _support_disk_labels = True
+  _support_ipv6_only = True
+  _support_source_snapshot_region = True
 
   def GetSourceMachineImage(self, args, resources):
     """Retrieves the specified source machine image's selflink.
@@ -813,15 +872,18 @@ class CreateBeta(Create):
         support_numa_node_count=cls._support_numa_node_count,
         support_instance_kms=cls._support_instance_kms,
         support_max_run_duration=cls._support_max_run_duration,
-        support_network_attachments=cls._support_network_attachments,
         support_network_queue_count=cls._support_network_queue_count,
         support_local_ssd_recovery_timeout=cls._support_local_ssd_recovery_timeout,
         support_local_ssd_size=cls._support_local_ssd_size,
         support_vlan_nic=cls._support_vlan_nic,
-        support_storage_pool=cls._support_storage_pool,
         support_enable_confidential_compute=cls._support_enable_confidential_compute,
         support_specific_then_x_affinity=cls._support_specific_then_x_affinity,
         support_graceful_shutdown=cls._support_graceful_shutdown,
+        support_igmp_query=cls._support_igmp_query,
+        support_watchdog_timer=cls._support_watchdog_timer,
+        support_disk_labels=cls._support_disk_labels,
+        support_ipv6_only=cls._support_ipv6_only,
+        support_source_snapshot_region=cls._support_source_snapshot_region,
     )
     cls.SOURCE_INSTANCE_TEMPLATE = (
         instances_flags.MakeSourceInstanceTemplateArg()
@@ -838,10 +900,18 @@ class CreateBeta(Create):
         support_confidential_compute_type=cls
         ._support_confidential_compute_type,
         support_confidential_compute_type_tdx=cls
-        ._support_confidential_compute_type_tdx)
+        ._support_confidential_compute_type_tdx,
+        support_snp_svsm=cls._support_snp_svsm)
     instances_flags.AddPostKeyRevocationActionTypeArgs(parser)
     instances_flags.AddKeyRevocationActionTypeArgs(parser)
     instances_flags.AddVisibleCoreCountArgs(parser)
+    instances_flags.AddAvailabilityDomainAgrs(parser)
+    instances_flags.AddPerformanceMonitoringUnitArgs(parser)
+    instances_flags.AddProvisioningModelVmArgs(
+        parser,
+        support_flex_start=False,
+    )
+    partner_metadata_utils.AddPartnerMetadataArgs(parser)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
@@ -875,12 +945,11 @@ class CreateAlpha(CreateBeta):
   _support_ipv6_assignment = True
   _support_confidential_compute_type = True
   _support_confidential_compute_type_tdx = True
-  _support_network_attachments = True
+  _support_snp_svsm = True
   _support_local_ssd_recovery_timeout = True
   _support_local_ssd_size = True
   _support_vlan_nic = True
   _support_performance_monitoring_unit = True
-  _support_storage_pool = True
   _support_source_instant_snapshot = True
   _support_boot_instant_snapshot_uri = True
   _support_partner_metadata = True
@@ -888,6 +957,10 @@ class CreateAlpha(CreateBeta):
   _support_specific_then_x_affinity = True
   _support_ipv6_only = True
   _support_graceful_shutdown = True
+  _support_igmp_query = True
+  _support_watchdog_timer = True
+  _support_disk_labels = True
+  _support_source_snapshot_region = True
 
   @classmethod
   def Args(cls, parser):
@@ -907,16 +980,18 @@ class CreateAlpha(CreateBeta):
         support_network_queue_count=cls._support_network_queue_count,
         support_instance_kms=cls._support_instance_kms,
         support_max_run_duration=cls._support_max_run_duration,
-        support_network_attachments=cls._support_network_attachments,
         support_local_ssd_recovery_timeout=cls._support_local_ssd_recovery_timeout,
         support_local_ssd_size=cls._support_local_ssd_size,
         support_vlan_nic=cls._support_vlan_nic,
-        support_storage_pool=cls._support_storage_pool,
         support_source_instant_snapshot=cls._support_source_instant_snapshot,
         support_enable_confidential_compute=cls._support_enable_confidential_compute,
         support_specific_then_x_affinity=cls._support_specific_then_x_affinity,
         support_ipv6_only=cls._support_ipv6_only,
         support_graceful_shutdown=cls._support_graceful_shutdown,
+        support_igmp_query=cls._support_igmp_query,
+        support_watchdog_timer=cls._support_watchdog_timer,
+        support_disk_labels=cls._support_disk_labels,
+        support_source_snapshot_region=cls._support_source_snapshot_region,
     )
 
     CreateAlpha.SOURCE_INSTANCE_TEMPLATE = (
@@ -934,7 +1009,8 @@ class CreateAlpha(CreateBeta):
         support_confidential_compute_type=cls
         ._support_confidential_compute_type,
         support_confidential_compute_type_tdx=cls
-        ._support_confidential_compute_type_tdx)
+        ._support_confidential_compute_type_tdx,
+        support_snp_svsm=cls._support_snp_svsm)
     instances_flags.AddPostKeyRevocationActionTypeArgs(parser)
     instances_flags.AddPrivateIpv6GoogleAccessArg(
         parser, utils.COMPUTE_ALPHA_API_VERSION)
@@ -944,8 +1020,12 @@ class CreateAlpha(CreateBeta):
     instances_flags.AddKeyRevocationActionTypeArgs(parser)
     instances_flags.AddIPv6AddressAlphaArgs(parser)
     instances_flags.AddIPv6PrefixLengthAlphaArgs(parser)
-    instances_flags.AddPerformanceMonitoringUnitArgs(parser)
     instances_flags.AddAvailabilityDomainAgrs(parser)
+    instances_flags.AddPerformanceMonitoringUnitArgs(parser)
+    instances_flags.AddProvisioningModelVmArgs(
+        parser,
+        support_flex_start=True,
+    )
     partner_metadata_utils.AddPartnerMetadataArgs(parser)
 
 

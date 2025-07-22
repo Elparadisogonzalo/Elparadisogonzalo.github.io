@@ -182,8 +182,18 @@ class ObjectMeta(_messages.Message):
       will be different depending on the resource type. *
       `autoscaling.knative.dev/maxScale`: Revision. *
       `autoscaling.knative.dev/minScale`: Revision. *
+      `run.googleapis.com/base-images`: Service, Revision. *
       `run.googleapis.com/binary-authorization-breakglass`: Service, Job, *
       `run.googleapis.com/binary-authorization`: Service, Job, Execution. *
+      `run.googleapis.com/build-base-image`: Service. *
+      `run.googleapis.com/build-enable-automatic-updates`: Service. *
+      `run.googleapis.com/build-environment-variables`: Service. *
+      `run.googleapis.com/build-function-target`: Service. *
+      `run.googleapis.com/build-id`: Service. * `run.googleapis.com/build-
+      image-uri`: Service. * `run.googleapis.com/build-name`: Service. *
+      `run.googleapis.com/build-service-account`: Service. *
+      `run.googleapis.com/build-source-location`: Service. *
+      `run.googleapis.com/build-worker-pool`: Service. *
       `run.googleapis.com/client-name`: All resources. *
       `run.googleapis.com/cloudsql-instances`: Revision, Execution. *
       `run.googleapis.com/container-dependencies`: Revision . *
@@ -195,8 +205,10 @@ class ObjectMeta(_messages.Message):
       `run.googleapis.com/encryption-key`: Revision, Execution. *
       `run.googleapis.com/execution-environment`: Revision, Execution. *
       `run.googleapis.com/gc-traffic-tags`: Service. *
+      `run.googleapis.com/gpu-zonal-redundancy-disabled`: Revision. *
+      `run.googleapis.com/health-check-disabled`: Revision. *
       `run.googleapis.com/ingress`: Service. * `run.googleapis.com/launch-
-      stage`: Service, Job. * `run.googleapis.com/minScale`: Service (ALPHA) *
+      stage`: Service, Job. * `run.googleapis.com/minScale`: Service *
       `run.googleapis.com/network-interfaces`: Revision, Execution. *
       `run.googleapis.com/post-key-revocation-action-type`: Revision. *
       `run.googleapis.com/secrets`: Revision, Execution. *
@@ -218,8 +230,18 @@ class ObjectMeta(_messages.Message):
       will be different depending on the resource type. *
       `autoscaling.knative.dev/maxScale`: Revision. *
       `autoscaling.knative.dev/minScale`: Revision. *
+      `run.googleapis.com/base-images`: Service, Revision. *
       `run.googleapis.com/binary-authorization-breakglass`: Service, Job, *
       `run.googleapis.com/binary-authorization`: Service, Job, Execution. *
+      `run.googleapis.com/build-base-image`: Service. *
+      `run.googleapis.com/build-enable-automatic-updates`: Service. *
+      `run.googleapis.com/build-environment-variables`: Service. *
+      `run.googleapis.com/build-function-target`: Service. *
+      `run.googleapis.com/build-id`: Service. * `run.googleapis.com/build-
+      image-uri`: Service. * `run.googleapis.com/build-name`: Service. *
+      `run.googleapis.com/build-service-account`: Service. *
+      `run.googleapis.com/build-source-location`: Service. *
+      `run.googleapis.com/build-worker-pool`: Service. *
       `run.googleapis.com/client-name`: All resources. *
       `run.googleapis.com/cloudsql-instances`: Revision, Execution. *
       `run.googleapis.com/container-dependencies`: Revision . *
@@ -231,8 +253,10 @@ class ObjectMeta(_messages.Message):
       `run.googleapis.com/encryption-key`: Revision, Execution. *
       `run.googleapis.com/execution-environment`: Revision, Execution. *
       `run.googleapis.com/gc-traffic-tags`: Service. *
+      `run.googleapis.com/gpu-zonal-redundancy-disabled`: Revision. *
+      `run.googleapis.com/health-check-disabled`: Revision. *
       `run.googleapis.com/ingress`: Service. * `run.googleapis.com/launch-
-      stage`: Service, Job. * `run.googleapis.com/minScale`: Service (ALPHA) *
+      stage`: Service, Job. * `run.googleapis.com/minScale`: Service *
       `run.googleapis.com/network-interfaces`: Revision, Execution. *
       `run.googleapis.com/post-key-revocation-action-type`: Revision. *
       `run.googleapis.com/secrets`: Revision, Execution. *
@@ -281,9 +305,18 @@ class ObjectMeta(_messages.Message):
     annotations with 'run.googleapis.com/' and 'autoscaling.knative.dev' are
     restricted, and the accepted annotations will be different depending on
     the resource type. * `autoscaling.knative.dev/maxScale`: Revision. *
-    `autoscaling.knative.dev/minScale`: Revision. *
-    `run.googleapis.com/binary-authorization-breakglass`: Service, Job, *
-    `run.googleapis.com/binary-authorization`: Service, Job, Execution. *
+    `autoscaling.knative.dev/minScale`: Revision. * `run.googleapis.com/base-
+    images`: Service, Revision. * `run.googleapis.com/binary-authorization-
+    breakglass`: Service, Job, * `run.googleapis.com/binary-authorization`:
+    Service, Job, Execution. * `run.googleapis.com/build-base-image`: Service.
+    * `run.googleapis.com/build-enable-automatic-updates`: Service. *
+    `run.googleapis.com/build-environment-variables`: Service. *
+    `run.googleapis.com/build-function-target`: Service. *
+    `run.googleapis.com/build-id`: Service. * `run.googleapis.com/build-image-
+    uri`: Service. * `run.googleapis.com/build-name`: Service. *
+    `run.googleapis.com/build-service-account`: Service. *
+    `run.googleapis.com/build-source-location`: Service. *
+    `run.googleapis.com/build-worker-pool`: Service. *
     `run.googleapis.com/client-name`: All resources. *
     `run.googleapis.com/cloudsql-instances`: Revision, Execution. *
     `run.googleapis.com/container-dependencies`: Revision . *
@@ -294,14 +327,15 @@ class ObjectMeta(_messages.Message):
     `run.googleapis.com/encryption-key-shutdown-hours`: Revision *
     `run.googleapis.com/encryption-key`: Revision, Execution. *
     `run.googleapis.com/execution-environment`: Revision, Execution. *
-    `run.googleapis.com/gc-traffic-tags`: Service. *
-    `run.googleapis.com/ingress`: Service. * `run.googleapis.com/launch-
-    stage`: Service, Job. * `run.googleapis.com/minScale`: Service (ALPHA) *
-    `run.googleapis.com/network-interfaces`: Revision, Execution. *
-    `run.googleapis.com/post-key-revocation-action-type`: Revision. *
-    `run.googleapis.com/secrets`: Revision, Execution. *
-    `run.googleapis.com/secure-session-agent`: Revision. *
-    `run.googleapis.com/sessionAffinity`: Revision. *
+    `run.googleapis.com/gc-traffic-tags`: Service. * `run.googleapis.com/gpu-
+    zonal-redundancy-disabled`: Revision. * `run.googleapis.com/health-check-
+    disabled`: Revision. * `run.googleapis.com/ingress`: Service. *
+    `run.googleapis.com/launch-stage`: Service, Job. *
+    `run.googleapis.com/minScale`: Service * `run.googleapis.com/network-
+    interfaces`: Revision, Execution. * `run.googleapis.com/post-key-
+    revocation-action-type`: Revision. * `run.googleapis.com/secrets`:
+    Revision, Execution. * `run.googleapis.com/secure-session-agent`:
+    Revision. * `run.googleapis.com/sessionAffinity`: Revision. *
     `run.googleapis.com/startup-cpu-boost`: Revision. *
     `run.googleapis.com/vpc-access-connector`: Revision, Execution. *
     `run.googleapis.com/vpc-access-egress`: Revision, Execution.
@@ -670,3 +704,7 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesDomainmappingsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunProjectsLocationsDomainmappingsListRequest, 'continue_', 'continue')

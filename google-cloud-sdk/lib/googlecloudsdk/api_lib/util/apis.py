@@ -21,14 +21,11 @@ from __future__ import unicode_literals
 
 from apitools.base.py import exceptions as apitools_exceptions
 
-from google.api_core import exceptions as api_core_exceptions
-
 from googlecloudsdk.api_lib.util import api_enablement
 from googlecloudsdk.api_lib.util import apis_internal
 from googlecloudsdk.api_lib.util import apis_util
 from googlecloudsdk.api_lib.util import exceptions as api_exceptions
 from googlecloudsdk.core import exceptions
-from googlecloudsdk.core import gapic_util
 from googlecloudsdk.core import properties
 from googlecloudsdk.generated_clients.apis import apis_map
 
@@ -78,18 +75,6 @@ def _AddToApisMap(api_name, api_version, api_def):
 
   api_versions[api_version] = api_def
   apis_map.MAP[api_name] = api_versions
-
-
-def SetDefaultVersion(api_name, api_version):
-  """Resets default version for given api."""
-  # pylint:disable=protected-access
-  api_def = apis_internal.GetApiDef(api_name, api_version)
-  # pylint:disable=protected-access
-  default_version = apis_internal._GetDefaultVersion(api_name)
-  # pylint:disable=protected-access
-  default_api_def = apis_internal.GetApiDef(api_name, default_version)
-  default_api_def.default_version = False
-  api_def.default_version = True
 
 
 def GetVersions(api_name):
@@ -142,7 +127,7 @@ def ResolveVersion(api_name, api_version=None):
 
 
 API_ENABLEMENT_ERROR_EXPECTED_STATUS_CODE = 403  # retry status code
-RESOURCE_EXHAUSTED_STATUS_CODE = api_core_exceptions.ResourceExhausted.code
+RESOURCE_EXHAUSTED_STATUS_CODE = 429
 
 
 def GetApiEnablementInfo(exception):
@@ -315,10 +300,14 @@ def GetGapicClientClass(api_name,
       api_name, api_version, transport_choice=transport)
 
 
-def GetGapicClientInstance(api_name,
-                           api_version,
-                           address_override_func=None,
-                           transport=apis_util.GapicTransport.GRPC):
+def GetGapicClientInstance(
+    api_name,
+    api_version,
+    address_override_func=None,
+    transport=apis_util.GapicTransport.GRPC,
+    attempt_direct_path=False,
+    redact_request_body_reason=None,
+):
   """Returns an instance of the GAPIC API client specified in the args.
 
   Args:
@@ -327,6 +316,10 @@ def GetGapicClientInstance(api_name,
     address_override_func: function, function to call to override the client
       host. It takes a single argument which is the original host.
     transport: apis_util.GapicTransport, The transport to be used by the client.
+    attempt_direct_path: bool, True if we want to attempt direct path gRPC where
+      possible.
+    redact_request_body_reason: str, the reason why the request body must be
+      redacted if --log-http is used. If None, the body is not redacted.
 
   Raises:
     GapicRestUnsupportedError: If transport is REST.
@@ -334,6 +327,9 @@ def GetGapicClientInstance(api_name,
   Returns:
     An instance of the specified GAPIC API client.
   """
+  # pylint: disable=g-import-not-at-top
+  from googlecloudsdk.core import gapic_util
+  # pylint: enable=g-import-not-at-top
   if transport == apis_util.GapicTransport.REST:
     raise GapicRestUnsupportedError()
   credentials = gapic_util.GetGapicCredentials()
@@ -343,7 +339,10 @@ def GetGapicClientInstance(api_name,
       api_version,
       credentials,
       address_override_func=address_override_func,
-      transport_choice=transport)
+      transport_choice=transport,
+      attempt_direct_path=attempt_direct_path,
+      redact_request_body_reason=redact_request_body_reason,
+  )
 
 
 def GetEffectiveApiEndpoint(api_name, api_version, client_class=None):
@@ -370,3 +369,7 @@ def GetMessagesModule(api_name, api_version):
   # http://stackoverflow.com/questions/2724260/why-does-pythons-import-require-fromlist.
   return __import__(api_def.apitools.messages_full_modulepath,
                     fromlist=['something'])
+
+
+def UniversifyAddress(address):
+  return apis_internal.UniversifyAddress(address)

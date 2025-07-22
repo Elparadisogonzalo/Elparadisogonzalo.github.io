@@ -30,6 +30,10 @@ from googlecloudsdk.core import properties
 from googlecloudsdk.core import resources
 
 
+# TODO(b/312466999): Change @base.DefaultUniverseOnly to
+# @base.UniverseCompatible once b/312466999 is fixed.
+# See go/gcloud-cli-running-tpc-tests.
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Creates a new AlloyDB instance within a given cluster."""
@@ -62,7 +66,8 @@ class Create(base.CreateCommand):
     flags.AddDatabaseFlags(parser)
     flags.AddInstance(parser)
     flags.AddInstanceType(parser)
-    flags.AddCPUCount(parser)
+    flags.AddCPUCount(parser, required=False)
+    flags.AddMachineType(parser)
     flags.AddReadPoolNodeCount(parser)
     flags.AddRegion(parser)
     flags.AddInsightsConfigQueryStringLength(parser)
@@ -73,8 +78,15 @@ class Create(base.CreateCommand):
     flags.AddInsightsConfigRecordClientAddress(
         parser, show_negated_in_help=True
     )
-    flags.AddSSLMode(parser, update=False)
+    flags.AddSSLMode(parser)
     flags.AddRequireConnectors(parser)
+    flags.AddAssignInboundPublicIp(parser)
+    flags.AddAuthorizedExternalNetworks(parser)
+    flags.AddOutboundPublicIp(parser, show_negated_in_help=True)
+    flags.AddAllowedPSCProjects(parser)
+    flags.AddPSCNetworkAttachmentUri(parser)
+    flags.AddPSCAutoConnections(parser)
+    flags.AddAllocatedIPRangeOverride(parser)
     # TODO(b/185795425): Add --ssl-required and --labels later once we
     # understand the use cases
 
@@ -123,7 +135,23 @@ class CreateBeta(Create):
   @classmethod
   def Args(cls, parser):
     super(CreateBeta, CreateBeta).Args(parser)
-    flags.AddAssignInboundPublicIp(parser, False)
+    flags.AddObservabilityConfigEnabled(
+        parser, show_negated_in_help=True
+    )
+    flags.AddObservabilityConfigPreserveComments(
+        parser, show_negated_in_help=True
+    )
+    flags.AddObservabilityConfigTrackWaitEvents(
+        parser, show_negated_in_help=False
+    )
+    flags.AddObservabilityConfigMaxQueryStringLength(parser)
+    flags.AddObservabilityConfigRecordApplicationTags(
+        parser, show_negated_in_help=True
+    )
+    flags.AddObservabilityConfigQueryPlansPerMinute(parser)
+    flags.AddObservabilityConfigTrackActiveQueries(
+        parser, show_negated_in_help=True
+    )
 
   def ConstructCreateRequestFromArgs(
       self, client, alloydb_messages, cluster_ref, args
@@ -140,6 +168,17 @@ class CreateAlpha(CreateBeta):
   @classmethod
   def Args(cls, parser):
     super(CreateAlpha, CreateAlpha).Args(parser)
+
+    # Connection pooling flags.
+    flags.AddEnableConnectionPooling(parser)
+    flags.AddConnectionPoolingPoolMode(parser)
+    flags.AddConnectionPoolingMinPoolSize(parser)
+    flags.AddConnectionPoolingMaxPoolSize(parser)
+    flags.AddConnectionPoolingMaxClientConnections(parser)
+    flags.AddConnectionPoolingServerIdleTimeout(parser)
+    flags.AddConnectionPoolingQueryWaitTimeout(parser)
+    flags.AddConnectionPoolingStatsUsers(parser)
+    flags.AddConnectionPoolingIgnoreStartupParameters(parser)
 
   def ConstructCreateRequestFromArgs(
       self, client, alloydb_messages, cluster_ref, args

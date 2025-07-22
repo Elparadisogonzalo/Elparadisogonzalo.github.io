@@ -41,14 +41,78 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
-  PROJECTS_LOCATIONS_CUSTOMHARDWARELINKATTACHMENTS = (
-      'projects.locations.customHardwareLinkAttachments',
+  PROJECTS_LOCATIONS_GLOBAL_HUBS = (
+      'projects.locations.global.hubs',
       '{+name}',
       {
           '':
-              'projects/{projectsId}/locations/{locationsId}/'
-              'customHardwareLinkAttachments/'
-              '{customHardwareLinkAttachmentsId}',
+              'projects/{projectsId}/locations/global/hubs/{hubsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_GLOBAL_HUBS_GROUPS = (
+      'projects.locations.global.hubs.groups',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/global/hubs/{hubsId}/groups/'
+              '{groupsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_GLOBAL_HUBS_ROUTETABLES = (
+      'projects.locations.global.hubs.routeTables',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/global/hubs/{hubsId}/'
+              'routeTables/{routeTablesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_GLOBAL_HUBS_ROUTETABLES_ROUTES = (
+      'projects.locations.global.hubs.routeTables.routes',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/global/hubs/{hubsId}/'
+              'routeTables/{routeTablesId}/routes/{routesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_GLOBAL_POLICYBASEDROUTES = (
+      'projects.locations.global.policyBasedRoutes',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/global/policyBasedRoutes/'
+              '{policyBasedRoutesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MIATAS = (
+      'projects.locations.miatas',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/miatas/'
+              '{miatasId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MIATAS_MIATADESTINATIONS = (
+      'projects.locations.miatas.miataDestinations',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/miatas/'
+              '{miatasId}/miataDestinations/{miataDestinationsId}',
       },
       ['name'],
       True
@@ -71,6 +135,28 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/'
               'regionalEndpoints/{regionalEndpointsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_SPOKES = (
+      'projects.locations.spokes',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/spokes/'
+              '{spokesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_SPOKES_GATEWAYADVERTISEDROUTES = (
+      'projects.locations.spokes.gatewayAdvertisedRoutes',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/spokes/'
+              '{spokesId}/gatewayAdvertisedRoutes/{gatewayAdvertisedRoutesId}',
       },
       ['name'],
       True

@@ -46,10 +46,18 @@ class ServicePrinter(cp.CustomPrinterBase):
 
   def _RevisionPrinters(self, record):
     """Adds printers for the revision."""
+    manual_scaling_enabled = False
+    if (
+        record.annotations.get(service.SERVICE_SCALING_MODE_ANNOTATION, '')
+        == 'manual'
+    ):
+      manual_scaling_enabled = True
     return cp.Lines([
         self._GetRevisionHeader(record),
         k8s_util.GetLabels(record.template.labels),
-        revision_printer.RevisionPrinter.TransformSpec(record.template),
+        revision_printer.RevisionPrinter.TransformSpec(
+            record.template, manual_scaling_enabled
+        ),
     ])
 
   def _GetServiceSettings(self, record):
@@ -57,9 +65,15 @@ class ServicePrinter(cp.CustomPrinterBase):
     labels = [
         cp.Labeled([
             ('Binary Authorization', k8s_util.GetBinAuthzPolicy(record)),
-            ('Service-level Min Instances', GetServiceMinInstances(record)),
         ])
     ]
+
+    scaling_mode = self._GetScalingMode(record)
+    if scaling_mode:
+      scaling_mode_label = cp.Labeled([
+          ('Scaling', scaling_mode),
+      ])
+      labels.append(scaling_mode_label)
 
     breakglass_value = k8s_util.GetBinAuthzBreakglass(record)
     if breakglass_value is not None:
@@ -76,13 +90,45 @@ class ServicePrinter(cp.CustomPrinterBase):
           ('Description', description),
       ])
       labels.append(description_label)
+
+    labels.append(cp.Labeled([
+        ('Threat Detection', k8s_util.GetThreatDetectionEnabled(record)),
+    ]))
     return cp.Section(labels)
+
+  def BuildHeader(self, record):
+    return k8s_util.BuildHeader(record)
+
+  def _GetScalingMode(self, record):
+    """Returns the scaling mode of the service."""
+    scaling_mode = record.annotations.get(
+        service.SERVICE_SCALING_MODE_ANNOTATION, ''
+    )
+
+    if scaling_mode == 'manual':
+      instance_count = record.annotations.get(
+          service.MANUAL_INSTANCE_COUNT_ANNOTATION, ''
+      )
+      return 'Manual (Instances: %s)' % instance_count
+    else:
+      min_instance_count = record.annotations.get(
+          service.SERVICE_MIN_SCALE_ANNOTATION, '0'
+      )
+      max_instance_count = record.annotations.get(
+          service.SERVICE_MAX_SCALE_ANNOTATION, ''
+      )
+      if max_instance_count:
+        return 'Auto (Min: %s, Max: %s)' % (
+            min_instance_count,
+            max_instance_count,
+        )
+      return 'Auto (Min: %s)' % min_instance_count
 
   def Transform(self, record):
     """Transform a service into the output structure of marker classes."""
     service_settings = self._GetServiceSettings(record)
     fmt = cp.Lines([
-        k8s_util.BuildHeader(record),
+        self.BuildHeader(record),
         k8s_util.GetLabels(record.labels), ' ',
         traffic_printer.TransformRouteFields(record), ' ', service_settings,
         (' ' if service_settings.WillPrintOutput() else ''),
@@ -93,5 +139,8 @@ class ServicePrinter(cp.CustomPrinterBase):
     return fmt
 
 
-def GetServiceMinInstances(record):
-  return record.annotations.get(service.SERVICE_MIN_SCALE_ANNOTATION, '')
+class MultiRegionServicePrinter(ServicePrinter):
+  """Prints the run MultiRegionService in a custom human-readable format."""
+
+  def BuildHeader(self, record):
+    return k8s_util.BuildHeader(record, is_multi_region=True)

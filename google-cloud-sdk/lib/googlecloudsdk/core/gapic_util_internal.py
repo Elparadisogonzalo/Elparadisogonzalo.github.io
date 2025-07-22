@@ -568,8 +568,9 @@ class LoggingInterceptor(grpc.UnaryUnaryClientInterceptor,
   Logging is enabled if the --log-http flag is provided on any command.
   """
 
-  def __init__(self, credentials):
+  def __init__(self, credentials, redact_request_body_reason=None):
     self._credentials = credentials
+    self._redact_request_body_reason = redact_request_body_reason
 
   def log_metadata(self, metadata):
     """Logs the metadata.
@@ -606,7 +607,15 @@ class LoggingInterceptor(grpc.UnaryUnaryClientInterceptor,
     self.log_metadata(client_call_details.metadata)
     log.status.Print('== headers end ==')
     log.status.Print('== body start ==')
-    log.status.Print('{}'.format(request))
+    show_request_body = (
+        properties.VALUES.core.log_http_show_request_body.GetBool()
+    )
+    if (self._redact_request_body_reason is None) or show_request_body:
+      log.status.Print('{}'.format(request))
+    else:
+      log.status.Print(
+          'Body redacted: {}'.format(self._redact_request_body_reason)
+      )
     log.status.Print('== body end ==')
     log.status.Print('==== request end ====')
 
@@ -769,9 +778,18 @@ def GetSSLCredentials(mtls_enabled):
 
   ca_config = context_aware.Config()
   if mtls_enabled and ca_config:
-    log.debug('Using client certificate...')
-    certificate_chain, private_key = (ca_config.client_cert_bytes,
-                                      ca_config.client_key_bytes)
+    if ca_config.config_type == context_aware.ConfigType.ON_DISK_CERTIFICATE:
+      log.debug('Using On Disk Certificate for mTLS...')
+      certificate_chain, private_key = (
+          ca_config.client_cert_bytes,
+          ca_config.client_key_bytes,
+      )
+    else:
+      log.debug(
+          'Not using On Disk Certificate for mTLS, config type: %s',
+          ca_config.config_type,
+      )
+      return None
 
   if ca_certs_file or certificate_chain or private_key:
     if ca_certs_file:
@@ -860,8 +878,14 @@ def _GetAddress(client_class, address_override_func, mtls_enabled):
   return address
 
 
-def MakeTransport(client_class, credentials, address_override_func,
-                  mtls_enabled=False):
+def MakeTransport(
+    client_class,
+    credentials,
+    address_override_func,
+    mtls_enabled=False,
+    attempt_direct_path=False,
+    redact_request_body_reason=None,
+):
   """Instantiates a grpc transport."""
   transport_class = client_class.get_transport_class()
   address = _GetAddress(client_class, address_override_func, mtls_enabled)
@@ -870,7 +894,9 @@ def MakeTransport(client_class, credentials, address_override_func,
       host=address,
       credentials=credentials,
       ssl_credentials=GetSSLCredentials(mtls_enabled),
-      options=MakeChannelOptions())
+      options=MakeChannelOptions(),
+      attempt_direct_path=attempt_direct_path,
+  )
 
   interceptors = []
   interceptors.append(RequestReasonInterceptor())
@@ -882,16 +908,24 @@ def MakeTransport(client_class, credentials, address_override_func,
   interceptors.append(APIEnablementInterceptor())
   interceptors.append(RequestOrgRestrictionInterceptor())
   if properties.VALUES.core.log_http.GetBool():
-    interceptors.append(LoggingInterceptor(credentials))
+    interceptors.append(
+        LoggingInterceptor(
+            credentials,
+            redact_request_body_reason=redact_request_body_reason,
+        )
+    )
 
   channel = grpc.intercept_channel(channel, *interceptors)
-  return transport_class(
-      channel=channel,
-      host=address)
+  return transport_class(channel=channel, host=address)
 
 
-def MakeAsyncTransport(client_class, credentials, address_override_func,
-                       mtls_enabled=False):
+def MakeAsyncTransport(
+    client_class,
+    credentials,
+    address_override_func,
+    mtls_enabled=False,
+    attempt_direct_path=False,
+):
   """Instantiates a grpc transport."""
   transport_class = client_class.get_transport_class('grpc_asyncio')
   address = _GetAddress(client_class, address_override_func, mtls_enabled)
@@ -908,7 +942,9 @@ def MakeAsyncTransport(client_class, credentials, address_override_func,
       credentials=credentials,
       ssl_credentials=GetSSLCredentials(mtls_enabled),
       options=MakeChannelOptions(),
-      interceptors=interceptors)
+      attempt_direct_path=attempt_direct_path,
+      interceptors=interceptors,
+  )
 
   return transport_class(
       channel=channel,

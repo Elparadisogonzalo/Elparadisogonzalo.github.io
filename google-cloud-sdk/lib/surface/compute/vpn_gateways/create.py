@@ -31,6 +31,7 @@ _NETWORK_ARG = network_flags.NetworkArgumentForOtherResource("""\
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.UniverseCompatible
 class Create(base.CreateCommand):
   """Create a new Compute Engine Highly Available VPN gateway.
 
@@ -43,16 +44,12 @@ class Create(base.CreateCommand):
   A VPN Gateway can reference one or more VPN tunnels that connect it to
   external VPN gateways or Cloud VPN Gateways.
   """
-  detailed_help = {
-      'EXAMPLES':
-          """\
+
+  detailed_help = {'EXAMPLES': """\
           To create a VPN gateway, run:
 
               $ {command} my-vpn-gateway --region=us-central1 --network=default
-          """
-  }
-
-  _ipv6_only_vpn_enabled = False
+          """}
 
   @classmethod
   def Args(cls, parser):
@@ -62,10 +59,11 @@ class Create(base.CreateCommand):
     _VPN_GATEWAY_ARG.AddArgument(parser, operation_type='create')
     flags.GetDescriptionFlag().AddToParser(parser)
     flags.GetInterconnectAttachmentsFlag().AddToParser(parser)
-    flags.GetStackType(cls._ipv6_only_vpn_enabled).AddToParser(parser)
+    flags.GetStackType().AddToParser(parser)
+    flags.GetGatewayIpVersion().AddToParser(parser)
     parser.display_info.AddCacheUpdater(flags.VpnGatewaysCompleter)
 
-  def _Run(self, args, support_outer_vpn_ipv6=None):
+  def _Run(self, args):
     """Issues the request to create a new VPN gateway."""
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
     helper = vpn_gateways_utils.VpnGatewayHelper(holder)
@@ -81,26 +79,18 @@ class Create(base.CreateCommand):
               vpn_gateway_ref.project,
           )
       )
-    if support_outer_vpn_ipv6:
-      vpn_gateway_to_insert = helper.GetVpnGatewayForInsert(
-          name=vpn_gateway_ref.Name(),
-          description=args.description,
-          network=network_ref.SelfLink(),
-          vpn_interfaces_with_interconnect_attachments=vpn_interfaces_with_interconnect_attachments,
-          stack_type=args.stack_type,
-          gateway_ip_version=args.gateway_ip_version,
-      )
-    else:
-      vpn_gateway_to_insert = helper.GetVpnGatewayForInsert(
-          name=vpn_gateway_ref.Name(),
-          description=args.description,
-          network=network_ref.SelfLink(),
-          vpn_interfaces_with_interconnect_attachments=vpn_interfaces_with_interconnect_attachments,
-          stack_type=args.stack_type,
-      )
+    vpn_gateway_to_insert = helper.GetVpnGatewayForInsert(
+        name=vpn_gateway_ref.Name(),
+        description=args.description,
+        network=network_ref.SelfLink(),
+        vpn_interfaces_with_interconnect_attachments=vpn_interfaces_with_interconnect_attachments,
+        stack_type=args.stack_type,
+        gateway_ip_version=args.gateway_ip_version,
+    )
     operation_ref = helper.Create(vpn_gateway_ref, vpn_gateway_to_insert)
-    return helper.WaitForOperation(vpn_gateway_ref, operation_ref,
-                                   'Creating VPN Gateway')
+    return helper.WaitForOperation(
+        vpn_gateway_ref, operation_ref, 'Creating VPN Gateway'
+    )
 
   def _mapInterconnectAttachments(self, args, resources, region, project):
     """Returns dict {interfaceId : interconnectAttachmentUrl} based on initial order of names in input interconnectAttachmentName and region and project of VPN Gateway.
@@ -112,15 +102,21 @@ class Create(base.CreateCommand):
       project: VPN Gateway project.
     """
     attachment_refs = args.interconnect_attachments
-    result = {
-        0:
-            flags.GetInterconnectAttachmentRef(resources, attachment_refs[0],
-                                               region, project).SelfLink(),
-        1:
-            flags.GetInterconnectAttachmentRef(resources, attachment_refs[1],
-                                               region, project).SelfLink()
-    }
-    return result
+    if len(attachment_refs) == 1:
+      return {
+          0: flags.GetInterconnectAttachmentRef(
+              resources, attachment_refs[0], region, project
+          ).SelfLink()
+      }
+    else:
+      return {
+          0: flags.GetInterconnectAttachmentRef(
+              resources, attachment_refs[0], region, project
+          ).SelfLink(),
+          1: flags.GetInterconnectAttachmentRef(
+              resources, attachment_refs[1], region, project
+          ).SelfLink(),
+      }
 
   def Run(self, args):
     """See base.CreateCommand."""
@@ -145,17 +141,15 @@ class CreateBeta(Create):
   INSTANCE_ARG = None
 
   _support_outer_vpn_ipv6 = True
-  _ipv6_only_vpn_enabled = True
 
   @classmethod
   def Args(cls, parser):
     """Set up arguments for this command."""
     super(CreateBeta, cls).Args(parser)
-    flags.GetGatewayIpVersion().AddToParser(parser)
 
   def Run(self, args):
     """See base.CreateCommand."""
-    return self._Run(args, support_outer_vpn_ipv6=True)
+    return self._Run(args)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
@@ -175,15 +169,11 @@ class CreateAlpha(Create):
   ROUTER_ARG = None
   INSTANCE_ARG = None
 
-  _support_outer_vpn_ipv6 = True
-  _ipv6_only_vpn_enabled = True
-
   @classmethod
   def Args(cls, parser):
     """Set up arguments for this command."""
     super(CreateAlpha, cls).Args(parser)
-    flags.GetGatewayIpVersion().AddToParser(parser)
 
   def Run(self, args):
     """See base.CreateCommand."""
-    return self._Run(args, support_outer_vpn_ipv6=True)
+    return self._Run(args)

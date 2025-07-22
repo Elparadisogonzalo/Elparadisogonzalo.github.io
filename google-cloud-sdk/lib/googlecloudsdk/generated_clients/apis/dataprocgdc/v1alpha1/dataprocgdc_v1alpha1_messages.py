@@ -13,6 +13,102 @@ from apitools.base.py import extra_types
 package = 'dataprocgdc'
 
 
+class ApplicationEnvironment(_messages.Message):
+  r"""Represents the ApplicationEnvironment resource.
+
+  Messages:
+    AnnotationsValue: Optional. The annotations to associate with this
+      application environment. Annotations may be used to store client
+      information, but are not used by the server.
+    LabelsValue: Optional. The labels to associate with this application
+      environment. Labels may be used for filtering and billing tracking.
+
+  Fields:
+    annotations: Optional. The annotations to associate with this application
+      environment. Annotations may be used to store client information, but
+      are not used by the server.
+    createTime: Output only. The timestamp when the resource was created.
+    displayName: Optional. User-provided human-readable name to be used in
+      user interfaces.
+    labels: Optional. The labels to associate with this application
+      environment. Labels may be used for filtering and billing tracking.
+    name: Identifier. Fields 1-6 should exist for all declarative friendly
+      resources per aip.dev/148 The name of the application environment.
+      Format: projects/{project}/locations/{location}/serviceInstances/{servic
+      e_instance}/applicationEnvironments/{application_environment_id}
+    namespace: Optional. The name of the namespace in which to create this
+      ApplicationEnvironment. This namespace must already exist in the cluster
+    sparkApplicationEnvironmentConfig: Optional. The engine-specific
+      configurations for this ApplicationEnvironment.
+    uid: Output only. System generated unique identifier for this application
+      environment, formatted as UUID4.
+    updateTime: Output only. The timestamp when the resource was most recently
+      updated.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class AnnotationsValue(_messages.Message):
+    r"""Optional. The annotations to associate with this application
+    environment. Annotations may be used to store client information, but are
+    not used by the server.
+
+    Messages:
+      AdditionalProperty: An additional property for a AnnotationsValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type AnnotationsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a AnnotationsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class LabelsValue(_messages.Message):
+    r"""Optional. The labels to associate with this application environment.
+    Labels may be used for filtering and billing tracking.
+
+    Messages:
+      AdditionalProperty: An additional property for a LabelsValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type LabelsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a LabelsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  annotations = _messages.MessageField('AnnotationsValue', 1)
+  createTime = _messages.StringField(2)
+  displayName = _messages.StringField(3)
+  labels = _messages.MessageField('LabelsValue', 4)
+  name = _messages.StringField(5)
+  namespace = _messages.StringField(6)
+  sparkApplicationEnvironmentConfig = _messages.MessageField('SparkApplicationEnvironmentConfig', 7)
+  uid = _messages.StringField(8)
+  updateTime = _messages.StringField(9)
+
+
 class AuxiliaryServicesConfig(_messages.Message):
   r"""Auxiliary Service Configs.
 
@@ -41,6 +137,8 @@ class DataprocgdcProjectsLocationsListRequest(_messages.Message):
   r"""A DataprocgdcProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -51,10 +149,11 @@ class DataprocgdcProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class DataprocgdcProjectsLocationsOperationsCancelRequest(_messages.Message):
@@ -104,6 +203,130 @@ class DataprocgdcProjectsLocationsOperationsListRequest(_messages.Message):
   name = _messages.StringField(2, required=True)
   pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
   pageToken = _messages.StringField(4)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsCreateRequest(_messages.Message):
+  r"""A DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsCre
+  ateRequest object.
+
+  Fields:
+    applicationEnvironment: A ApplicationEnvironment resource to be passed as
+      the request body.
+    applicationEnvironmentId: Optional. The id of the application environment
+    parent: Required. The parent location resource where this application
+      environment will be created
+    requestId: Optional. An optional request ID to identify requests. Specify
+      a unique request ID so that if you must retry your request, the server
+      will know to ignore the request if it has already been completed. The
+      server will guarantee that for at least 60 minutes since the first
+      request. For example, consider a situation where you make an initial
+      request and the request times out. If you make the request again with
+      the same request ID, the server can check if original operation with the
+      same request ID was received, and if so, will ignore the second request.
+      This prevents clients from accidentally creating duplicate commitments.
+      The request ID must be a valid UUID with the exception that zero UUID is
+      not supported (00000000-0000-0000-0000-000000000000).
+  """
+
+  applicationEnvironment = _messages.MessageField('ApplicationEnvironment', 1)
+  applicationEnvironmentId = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+  requestId = _messages.StringField(4)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsDeleteRequest(_messages.Message):
+  r"""A DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsDel
+  eteRequest object.
+
+  Fields:
+    allowMissing: Optional. If set to true, and the application is not found,
+      the request will succeed but no action will be taken on the server
+    etag: Optional. The etag of the application. If this is provided, it must
+      match the server etag.
+    name: Required. The name of the application to delete.
+    requestId: Optional. An optional request ID to identify requests. Specify
+      a unique request ID so that if you must retry your request, the server
+      will know to ignore the request if it has already been completed. The
+      server will guarantee that for at least 60 minutes since the first
+      request. For example, consider a situation where you make an initial
+      request and the request times out. If you make the request again with
+      the same request ID, the server can check if original operation with the
+      same request ID was received, and if so, will ignore the second request.
+      This prevents clients from accidentally creating duplicate commitments.
+      The request ID must be a valid UUID with the exception that zero UUID is
+      not supported (00000000-0000-0000-0000-000000000000).
+  """
+
+  allowMissing = _messages.BooleanField(1)
+  etag = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  requestId = _messages.StringField(4)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsGetRequest(_messages.Message):
+  r"""A DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsGet
+  Request object.
+
+  Fields:
+    name: Required. Name of the resource
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsListRequest(_messages.Message):
+  r"""A DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsLis
+  tRequest object.
+
+  Fields:
+    filter: Optional. Filtering results
+    orderBy: Optional. Hint for how to order the results
+    pageSize: Optional. Requested page size. Server may return fewer items
+      than requested. If unspecified, server will pick an appropriate default.
+    pageToken: Optional. A token identifying a page of results the server
+      should return.
+    parent: Required. Parent value for ListSparkApplicationsRequest
+  """
+
+  filter = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsPatchRequest(_messages.Message):
+  r"""A DataprocgdcProjectsLocationsServiceInstancesApplicationEnvironmentsPat
+  chRequest object.
+
+  Fields:
+    allowMissing: Optional. Whether to upsert this application if it does not
+      exist already In this situation, `update_mask` is ignored.
+    applicationEnvironment: A ApplicationEnvironment resource to be passed as
+      the request body.
+    name: Identifier. Fields 1-6 should exist for all declarative friendly
+      resources per aip.dev/148 The name of the application environment.
+      Format: projects/{project}/locations/{location}/serviceInstances/{servic
+      e_instance}/applicationEnvironments/{application_environment_id}
+    requestId: Optional. An optional request ID to identify requests. Specify
+      a unique request ID so that if you must retry your request, the server
+      will know to ignore the request if it has already been completed. The
+      server will guarantee that for at least 60 minutes since the first
+      request. For example, consider a situation where you make an initial
+      request and the request times out. If you make the request again with
+      the same request ID, the server can check if original operation with the
+      same request ID was received, and if so, will ignore the second request.
+      This prevents clients from accidentally creating duplicate commitments.
+      The request ID must be a valid UUID with the exception that zero UUID is
+      not supported (00000000-0000-0000-0000-000000000000).
+    updateMask: Required. The list of fields to update.
+  """
+
+  allowMissing = _messages.BooleanField(1)
+  applicationEnvironment = _messages.MessageField('ApplicationEnvironment', 2)
+  name = _messages.StringField(3, required=True)
+  requestId = _messages.StringField(4)
+  updateMask = _messages.StringField(5)
 
 
 class DataprocgdcProjectsLocationsServiceInstancesCreateRequest(_messages.Message):
@@ -183,11 +406,11 @@ class DataprocgdcProjectsLocationsServiceInstancesListRequest(_messages.Message)
   r"""A DataprocgdcProjectsLocationsServiceInstancesListRequest object.
 
   Fields:
-    filter: Output only. Filtering results
-    orderBy: Output only. Hint for how to order the results
-    pageSize: Output only. Requested page size. Server may return fewer items
+    filter: Optional. Filtering results
+    orderBy: Optional. Hint for how to order the results
+    pageSize: Optional. Requested page size. Server may return fewer items
       than requested. If unspecified, server will pick an appropriate default.
-    pageToken: Output only. A token identifying a page of results the server
+    pageToken: Optional. A token identifying a page of results the server
       should return.
     parent: Required. Parent value for ListServiceInstancesRequest
   """
@@ -197,6 +420,135 @@ class DataprocgdcProjectsLocationsServiceInstancesListRequest(_messages.Message)
   pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
   pageToken = _messages.StringField(4)
   parent = _messages.StringField(5, required=True)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsCreateRequest(_messages.Message):
+  r"""A
+  DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsCreateRequest
+  object.
+
+  Fields:
+    parent: Required. The parent location resource where this application will
+      be created
+    requestId: Optional. An optional request ID to identify requests. Specify
+      a unique request ID so that if you must retry your request, the server
+      will know to ignore the request if it has already been completed. The
+      server will guarantee that for at least 60 minutes since the first
+      request. For example, consider a situation where you make an initial
+      request and the request times out. If you make the request again with
+      the same request ID, the server can check if original operation with the
+      same request ID was received, and if so, will ignore the second request.
+      This prevents clients from accidentally creating duplicate commitments.
+      The request ID must be a valid UUID with the exception that zero UUID is
+      not supported (00000000-0000-0000-0000-000000000000).
+    sparkApplication: A SparkApplication resource to be passed as the request
+      body.
+    sparkApplicationId: Required. The id of the application
+  """
+
+  parent = _messages.StringField(1, required=True)
+  requestId = _messages.StringField(2)
+  sparkApplication = _messages.MessageField('SparkApplication', 3)
+  sparkApplicationId = _messages.StringField(4)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsDeleteRequest(_messages.Message):
+  r"""A
+  DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsDeleteRequest
+  object.
+
+  Fields:
+    allowMissing: Optional. If set to true, and the application is not found,
+      the request will succeed but no action will be taken on the server
+    etag: Optional. The etag of the application. If this is provided, it must
+      match the server etag.
+    name: Required. The name of the application to delete.
+    requestId: Optional. An optional request ID to identify requests. Specify
+      a unique request ID so that if you must retry your request, the server
+      will know to ignore the request if it has already been completed. The
+      server will guarantee that for at least 60 minutes since the first
+      request. For example, consider a situation where you make an initial
+      request and the request times out. If you make the request again with
+      the same request ID, the server can check if original operation with the
+      same request ID was received, and if so, will ignore the second request.
+      This prevents clients from accidentally creating duplicate commitments.
+      The request ID must be a valid UUID with the exception that zero UUID is
+      not supported (00000000-0000-0000-0000-000000000000).
+  """
+
+  allowMissing = _messages.BooleanField(1)
+  etag = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  requestId = _messages.StringField(4)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsGetRequest(_messages.Message):
+  r"""A
+  DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsGetRequest
+  object.
+
+  Fields:
+    name: Required. Name of the resource
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsListRequest(_messages.Message):
+  r"""A
+  DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsListRequest
+  object.
+
+  Fields:
+    filter: Optional. Filtering results
+    orderBy: Optional. Hint for how to order the results
+    pageSize: Optional. Requested page size. Server may return fewer items
+      than requested. If unspecified, server will pick an appropriate default.
+    pageToken: Optional. A token identifying a page of results the server
+      should return.
+    parent: Required. Parent value for ListSparkApplicationsRequest
+  """
+
+  filter = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
+class DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsPatchRequest(_messages.Message):
+  r"""A
+  DataprocgdcProjectsLocationsServiceInstancesSparkApplicationsPatchRequest
+  object.
+
+  Fields:
+    allowMissing: Optional. Whether to upsert this application if it does not
+      exist already In this situation, `update_mask` is ignored.
+    name: Identifier. Fields 1-6 should exist for all declarative friendly
+      resources per aip.dev/148 The name of the application. Format: projects/
+      {project}/locations/{location}/serviceInstances/{service_instance}/spark
+      Applications/{application}
+    requestId: Optional. An optional request ID to identify requests. Specify
+      a unique request ID so that if you must retry your request, the server
+      will know to ignore the request if it has already been completed. The
+      server will guarantee that for at least 60 minutes since the first
+      request. For example, consider a situation where you make an initial
+      request and the request times out. If you make the request again with
+      the same request ID, the server can check if original operation with the
+      same request ID was received, and if so, will ignore the second request.
+      This prevents clients from accidentally creating duplicate commitments.
+      The request ID must be a valid UUID with the exception that zero UUID is
+      not supported (00000000-0000-0000-0000-000000000000).
+    sparkApplication: A SparkApplication resource to be passed as the request
+      body.
+    updateMask: Required. The list of fields to update.
+  """
+
+  allowMissing = _messages.BooleanField(1)
+  name = _messages.StringField(2, required=True)
+  requestId = _messages.StringField(3)
+  sparkApplication = _messages.MessageField('SparkApplication', 4)
+  updateMask = _messages.StringField(5)
 
 
 class Empty(_messages.Message):
@@ -216,6 +568,21 @@ class GdceCluster(_messages.Message):
   """
 
   gdceCluster = _messages.StringField(1)
+
+
+class ListApplicationEnvironmentsResponse(_messages.Message):
+  r"""Message for response to listing ApplicationEnvironments
+
+  Fields:
+    applicationEnvironments: The list of ApplicationEnvironment
+    nextPageToken: Output only. A token identifying a page of results the
+      server should return.
+    unreachable: Output only. Locations that could not be reached.
+  """
+
+  applicationEnvironments = _messages.MessageField('ApplicationEnvironment', 1, repeated=True)
+  nextPageToken = _messages.StringField(2)
+  unreachable = _messages.StringField(3, repeated=True)
 
 
 class ListLocationsResponse(_messages.Message):
@@ -256,6 +623,21 @@ class ListServiceInstancesResponse(_messages.Message):
 
   nextPageToken = _messages.StringField(1)
   serviceInstances = _messages.MessageField('ServiceInstance', 2, repeated=True)
+  unreachable = _messages.StringField(3, repeated=True)
+
+
+class ListSparkApplicationsResponse(_messages.Message):
+  r"""Message for response to listing SparkApplications
+
+  Fields:
+    nextPageToken: A token identifying a page of results the server should
+      return.
+    sparkApplications: The list of SparkApplication
+    unreachable: Locations that could not be reached.
+  """
+
+  nextPageToken = _messages.StringField(1)
+  sparkApplications = _messages.MessageField('SparkApplication', 2, repeated=True)
   unreachable = _messages.StringField(3, repeated=True)
 
 
@@ -337,6 +719,57 @@ class Location(_messages.Message):
   locationId = _messages.StringField(3)
   metadata = _messages.MessageField('MetadataValue', 4)
   name = _messages.StringField(5)
+
+
+class MaintenancePolicy(_messages.Message):
+  r"""Maintenance policy for a service instance.
+
+  Fields:
+    maintenanceWindow: Optional. The maintenance window for the service
+      instance.
+  """
+
+  maintenanceWindow = _messages.MessageField('MaintenanceWindow', 1)
+
+
+class MaintenanceWindow(_messages.Message):
+  r"""Maintenance window for a service instance.
+
+  Enums:
+    DayOfWeekValueValuesEnum: Optional. The day of the week when maintenance
+      is scheduled.
+
+  Fields:
+    dayOfWeek: Optional. The day of the week when maintenance is scheduled.
+    duration: Required. Duration of the time window, set by service producer.
+    startTime: Optional. Time within the window to start the operations.
+  """
+
+  class DayOfWeekValueValuesEnum(_messages.Enum):
+    r"""Optional. The day of the week when maintenance is scheduled.
+
+    Values:
+      DAY_OF_WEEK_UNSPECIFIED: The day of the week is unspecified.
+      MONDAY: Monday
+      TUESDAY: Tuesday
+      WEDNESDAY: Wednesday
+      THURSDAY: Thursday
+      FRIDAY: Friday
+      SATURDAY: Saturday
+      SUNDAY: Sunday
+    """
+    DAY_OF_WEEK_UNSPECIFIED = 0
+    MONDAY = 1
+    TUESDAY = 2
+    WEDNESDAY = 3
+    THURSDAY = 4
+    FRIDAY = 5
+    SATURDAY = 6
+    SUNDAY = 7
+
+  dayOfWeek = _messages.EnumField('DayOfWeekValueValuesEnum', 1)
+  duration = _messages.StringField(2)
+  startTime = _messages.MessageField('TimeOfDay', 3)
 
 
 class Operation(_messages.Message):
@@ -474,6 +907,44 @@ class OperationMetadata(_messages.Message):
   verb = _messages.StringField(7)
 
 
+class PySparkApplicationConfig(_messages.Message):
+  r"""Represents the PySparkApplicationConfig.
+
+  Fields:
+    archiveUris: Optional. HCFS URIs of archives to be extracted into the
+      working directory of each executor. Supported file types: .jar, .tar,
+      .tar.gz, .tgz, and .zip.
+    args: Optional. The arguments to pass to the driver. Do not include
+      arguments, such as `--conf`, that can be set as job properties, since a
+      collision may occur that causes an incorrect job submission.
+    fileUris: Optional. HCFS URIs of files to be placed in the working
+      directory of each executor. Useful for naively parallel tasks.
+    jarFileUris: Optional. HCFS URIs of jar files to add to the CLASSPATHs of
+      the Python driver and tasks.
+    mainPythonFileUri: Required. The HCFS URI of the main Python file to use
+      as the driver. Must be a .py file.
+    pythonFileUris: Optional. HCFS file URIs of Python files to pass to the
+      PySpark framework. Supported file types: .py, .egg, and .zip.
+  """
+
+  archiveUris = _messages.StringField(1, repeated=True)
+  args = _messages.StringField(2, repeated=True)
+  fileUris = _messages.StringField(3, repeated=True)
+  jarFileUris = _messages.StringField(4, repeated=True)
+  mainPythonFileUri = _messages.StringField(5)
+  pythonFileUris = _messages.StringField(6, repeated=True)
+
+
+class QueryList(_messages.Message):
+  r"""Represents a list of queries.
+
+  Fields:
+    queries: Required. The queries to run.
+  """
+
+  queries = _messages.StringField(1, repeated=True)
+
+
 class ServiceInstance(_messages.Message):
   r"""Message describing ServiceInstance object TODO(user) add appropriate
   visibility tags to the fields of this proto.
@@ -494,18 +965,20 @@ class ServiceInstance(_messages.Message):
     annotations: Optional. The annotations to associate with this service
       instance. Annotations may be used to store client information, but are
       not used by the server.
-    auxiliaryServicesConfig: Optional. Maintenance policy for this service
-      instance. TODO this might end up being a separate API instead of
-      inlined. Not in scope for private GA MaintenancePolicy
-      maintenance_policy = 19; Configuration of auxiliary services used by
-      this instance.
+    auxiliaryServicesConfig: Optional. Configuration of auxiliary services
+      used by this instance.
     createTime: Output only. The timestamp when the resource was created.
     displayName: Optional. User-provided human-readable name to be used in
       user interfaces.
+    effectiveServiceAccount: Output only. Effective service account associated
+      with ServiceInstance. This will be the service_account if specified.
+      Otherwise, it will be an automatically created per-resource P4SA that
+      also automatically has Fleet Workload Identity bindings applied.
     gdceCluster: Optional. A GDCE cluster.
     labels: Optional. The labels to associate with this service instance.
       Labels may be used for filtering and billing tracking.
-    name: The name of the service instance.
+    maintenancePolicy: Optional. Maintenance policy for this service instance.
+    name: Identifier. The name of the service instance.
     reconciling: Output only. Whether the service instance is currently
       reconciling. True if the current state of the resource does not match
       the intended state, and the system is working to reconcile them, whether
@@ -513,6 +986,8 @@ class ServiceInstance(_messages.Message):
       aip.dev/128#reconciliation
     requestedState: Output only. The intended state to which the service
       instance is reconciling.
+    serviceAccount: Optional. Requested service account to associate with
+      ServiceInstance.
     sparkServiceInstanceConfig: Optional. Spark-specific service instance
       configuration.
     state: Output only. The current state.
@@ -640,27 +1115,337 @@ class ServiceInstance(_messages.Message):
   auxiliaryServicesConfig = _messages.MessageField('AuxiliaryServicesConfig', 2)
   createTime = _messages.StringField(3)
   displayName = _messages.StringField(4)
-  gdceCluster = _messages.MessageField('GdceCluster', 5)
+  effectiveServiceAccount = _messages.StringField(5)
+  gdceCluster = _messages.MessageField('GdceCluster', 6)
+  labels = _messages.MessageField('LabelsValue', 7)
+  maintenancePolicy = _messages.MessageField('MaintenancePolicy', 8)
+  name = _messages.StringField(9)
+  reconciling = _messages.BooleanField(10)
+  requestedState = _messages.EnumField('RequestedStateValueValuesEnum', 11)
+  serviceAccount = _messages.StringField(12)
+  sparkServiceInstanceConfig = _messages.MessageField('SparkServiceInstanceConfig', 13)
+  state = _messages.EnumField('StateValueValuesEnum', 14)
+  stateMessage = _messages.StringField(15)
+  uid = _messages.StringField(16)
+  updateTime = _messages.StringField(17)
+
+
+class SparkApplication(_messages.Message):
+  r"""Represents the SparkApplication resource.
+
+  Enums:
+    RequestedStateValueValuesEnum: Optional. The intended state to which the
+      application is reconciling.
+    StateValueValuesEnum: Output only. The current state.
+
+  Messages:
+    AnnotationsValue: Optional. The annotations to associate with this
+      application. Annotations may be used to store client information, but
+      are not used by the server.
+    LabelsValue: Optional. The labels to associate with this application.
+      Labels may be used for filtering and billing tracking.
+    PropertiesValue: Optional. application-specific properties.
+
+  Fields:
+    annotations: Optional. The annotations to associate with this application.
+      Annotations may be used to store client information, but are not used by
+      the server.
+    applicationEnvironment: Optional. An ApplicationEnvironment from which to
+      inherit configuration properties.
+    createTime: Output only. The timestamp when the resource was created.
+    dependencyImages: Optional. List of container image uris for additional
+      file dependencies. Dependent files are sequentially copied from each
+      image. If a file with the same name exists in 2 images then the file
+      from later image is used.
+    displayName: Optional. User-provided human-readable name to be used in
+      user interfaces.
+    labels: Optional. The labels to associate with this application. Labels
+      may be used for filtering and billing tracking.
+    monitoringEndpoint: Output only. URL for a monitoring UI for this
+      application (for eventual Spark PHS/UI support) Out of scope for private
+      GA
+    name: Identifier. Fields 1-6 should exist for all declarative friendly
+      resources per aip.dev/148 The name of the application. Format: projects/
+      {project}/locations/{location}/serviceInstances/{service_instance}/spark
+      Applications/{application}
+    namespace: Optional. The Kubernetes namespace in which to create the
+      application. This namespace must already exist on the cluster.
+    outputUri: Output only. An HCFS URI pointing to the location of stdout and
+      stdout of the application Mainly useful for Pantheon and gcloud Not in
+      scope for private GA
+    properties: Optional. application-specific properties.
+    pysparkApplicationConfig: PySpark application config.
+    reconciling: Output only. Whether the application is currently
+      reconciling. True if the current state of the resource does not match
+      the intended state, and the system is working to reconcile them, whether
+      or not the change was user initiated. Required by
+      aip.dev/128#reconciliation
+    requestedState: Optional. The intended state to which the application is
+      reconciling.
+    sparkApplicationConfig: Spark application config.
+    sparkRApplicationConfig: SparkR application config.
+    sparkSqlApplicationConfig: SparkSql application config.
+    state: Output only. The current state.
+    stateMessage: Output only. A message explaining the current state.
+    uid: Output only. System generated unique identifier for this application,
+      formatted as UUID4.
+    updateTime: Output only. The timestamp when the resource was most recently
+      updated.
+    version: Optional. The Dataproc version of this application.
+  """
+
+  class RequestedStateValueValuesEnum(_messages.Enum):
+    r"""Optional. The intended state to which the application is reconciling.
+
+    Values:
+      STATE_UNSPECIFIED: The application state is unknown.
+      PENDING: The application is setting up and has not yet begun to execute
+      RUNNING: The application is running.
+      CANCELLING: The application is being cancelled.
+      CANCELLED: The application was successfully cancelled
+      SUCCEEDED: The application completed successfully.
+      FAILED: The application exited with an error.
+    """
+    STATE_UNSPECIFIED = 0
+    PENDING = 1
+    RUNNING = 2
+    CANCELLING = 3
+    CANCELLED = 4
+    SUCCEEDED = 5
+    FAILED = 6
+
+  class StateValueValuesEnum(_messages.Enum):
+    r"""Output only. The current state.
+
+    Values:
+      STATE_UNSPECIFIED: The application state is unknown.
+      PENDING: The application is setting up and has not yet begun to execute
+      RUNNING: The application is running.
+      CANCELLING: The application is being cancelled.
+      CANCELLED: The application was successfully cancelled
+      SUCCEEDED: The application completed successfully.
+      FAILED: The application exited with an error.
+    """
+    STATE_UNSPECIFIED = 0
+    PENDING = 1
+    RUNNING = 2
+    CANCELLING = 3
+    CANCELLED = 4
+    SUCCEEDED = 5
+    FAILED = 6
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class AnnotationsValue(_messages.Message):
+    r"""Optional. The annotations to associate with this application.
+    Annotations may be used to store client information, but are not used by
+    the server.
+
+    Messages:
+      AdditionalProperty: An additional property for a AnnotationsValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type AnnotationsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a AnnotationsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class LabelsValue(_messages.Message):
+    r"""Optional. The labels to associate with this application. Labels may be
+    used for filtering and billing tracking.
+
+    Messages:
+      AdditionalProperty: An additional property for a LabelsValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type LabelsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a LabelsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class PropertiesValue(_messages.Message):
+    r"""Optional. application-specific properties.
+
+    Messages:
+      AdditionalProperty: An additional property for a PropertiesValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type PropertiesValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a PropertiesValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  annotations = _messages.MessageField('AnnotationsValue', 1)
+  applicationEnvironment = _messages.StringField(2)
+  createTime = _messages.StringField(3)
+  dependencyImages = _messages.StringField(4, repeated=True)
+  displayName = _messages.StringField(5)
   labels = _messages.MessageField('LabelsValue', 6)
-  name = _messages.StringField(7)
-  reconciling = _messages.BooleanField(8)
-  requestedState = _messages.EnumField('RequestedStateValueValuesEnum', 9)
-  sparkServiceInstanceConfig = _messages.MessageField('SparkServiceInstanceConfig', 10)
-  state = _messages.EnumField('StateValueValuesEnum', 11)
-  stateMessage = _messages.StringField(12)
-  uid = _messages.StringField(13)
-  updateTime = _messages.StringField(14)
+  monitoringEndpoint = _messages.StringField(7)
+  name = _messages.StringField(8)
+  namespace = _messages.StringField(9)
+  outputUri = _messages.StringField(10)
+  properties = _messages.MessageField('PropertiesValue', 11)
+  pysparkApplicationConfig = _messages.MessageField('PySparkApplicationConfig', 12)
+  reconciling = _messages.BooleanField(13)
+  requestedState = _messages.EnumField('RequestedStateValueValuesEnum', 14)
+  sparkApplicationConfig = _messages.MessageField('SparkApplicationConfig', 15)
+  sparkRApplicationConfig = _messages.MessageField('SparkRApplicationConfig', 16)
+  sparkSqlApplicationConfig = _messages.MessageField('SparkSqlApplicationConfig', 17)
+  state = _messages.EnumField('StateValueValuesEnum', 18)
+  stateMessage = _messages.StringField(19)
+  uid = _messages.StringField(20)
+  updateTime = _messages.StringField(21)
+  version = _messages.StringField(22)
+
+
+class SparkApplicationConfig(_messages.Message):
+  r"""Represents the SparkApplicationConfig.
+
+  Fields:
+    archiveUris: Optional. HCFS URIs of archives to be extracted into the
+      working directory of each executor. Supported file types: `.jar`,
+      `.tar`, `.tar.gz`, `.tgz`, and `.zip`.
+    args: Optional. The arguments to pass to the driver. Do not include
+      arguments that can be set as application properties, such as `--conf`,
+      since a collision can occur that causes an incorrect application
+      submission.
+    fileUris: Optional. HCFS URIs of files to be placed in the working
+      directory of each executor.
+    jarFileUris: Optional. HCFS URIs of jar files to add to the classpath of
+      the Spark driver and tasks.
+    mainClass: The name of the driver main class. The jar file that contains
+      the class must be in the classpath or specified in `jar_file_uris`.
+    mainJarFileUri: The HCFS URI of the jar file that contains the main class.
+  """
+
+  archiveUris = _messages.StringField(1, repeated=True)
+  args = _messages.StringField(2, repeated=True)
+  fileUris = _messages.StringField(3, repeated=True)
+  jarFileUris = _messages.StringField(4, repeated=True)
+  mainClass = _messages.StringField(5)
+  mainJarFileUri = _messages.StringField(6)
+
+
+class SparkApplicationEnvironmentConfig(_messages.Message):
+  r"""Represents the SparkApplicationEnvironmentConfig.
+
+  Messages:
+    DefaultPropertiesValue: Optional. A map of default Spark properties to
+      apply to workloads in this application environment. These defaults may
+      be overridden by per-application properties.
+
+  Fields:
+    defaultProperties: Optional. A map of default Spark properties to apply to
+      workloads in this application environment. These defaults may be
+      overridden by per-application properties.
+    defaultVersion: Optional. The default Dataproc version to use for
+      applications submitted to this application environment
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class DefaultPropertiesValue(_messages.Message):
+    r"""Optional. A map of default Spark properties to apply to workloads in
+    this application environment. These defaults may be overridden by per-
+    application properties.
+
+    Messages:
+      AdditionalProperty: An additional property for a DefaultPropertiesValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type
+        DefaultPropertiesValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a DefaultPropertiesValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  defaultProperties = _messages.MessageField('DefaultPropertiesValue', 1)
+  defaultVersion = _messages.StringField(2)
+
+
+class SparkApplicationOperationMetadata(_messages.Message):
+  r"""Represents the metadata of the long-running operation.
+
+  Fields:
+    apiVersion: Output only. API version used to start the operation.
+    createTime: Output only. The time the operation was created.
+    endTime: Output only. The time the operation finished running.
+    requestedCancellation: Output only. Identifies whether the user has
+      requested cancellation of the operation. Operations that have been
+      cancelled successfully have Operation.error value with a
+      google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
+    statusMessage: Output only. Human-readable status of the operation, if
+      any.
+    target: Output only. Server-defined resource path for the target of the
+      operation.
+    verb: Output only. Name of the verb executed by the operation.
+  """
+
+  apiVersion = _messages.StringField(1)
+  createTime = _messages.StringField(2)
+  endTime = _messages.StringField(3)
+  requestedCancellation = _messages.BooleanField(4)
+  statusMessage = _messages.StringField(5)
+  target = _messages.StringField(6)
+  verb = _messages.StringField(7)
 
 
 class SparkHistoryServer(_messages.Message):
   r"""Spark History Server.
 
   Fields:
-    sparkThreeOneConfig: Optional. Spark History Server configurations for a
-      given version.
+    sparkHistoryServerConfig: Optional. Spark History Server configurations
+      for a given version.
   """
 
-  sparkThreeOneConfig = _messages.MessageField('SparkHistoryServerConfig', 1)
+  sparkHistoryServerConfig = _messages.MessageField('SparkHistoryServerConfig', 1)
 
 
 class SparkHistoryServerConfig(_messages.Message):
@@ -701,8 +1486,78 @@ class SparkHistoryServerConfig(_messages.Message):
   configurations = _messages.MessageField('ConfigurationsValue', 1)
 
 
+class SparkRApplicationConfig(_messages.Message):
+  r"""Represents the SparkRApplicationConfig.
+
+  Fields:
+    archiveUris: Optional. HCFS URIs of archives to be extracted into the
+      working directory of each executor. Supported file types: .jar, .tar,
+      .tar.gz, .tgz, and .zip.
+    args: Optional. The arguments to pass to the driver. Do not include
+      arguments, such as `--conf`, that can be set as job properties, since a
+      collision may occur that causes an incorrect job submission.
+    fileUris: Optional. HCFS URIs of files to be placed in the working
+      directory of each executor. Useful for naively parallel tasks.
+    mainRFileUri: Required. The HCFS URI of the main R file to use as the
+      driver. Must be a .R file.
+  """
+
+  archiveUris = _messages.StringField(1, repeated=True)
+  args = _messages.StringField(2, repeated=True)
+  fileUris = _messages.StringField(3, repeated=True)
+  mainRFileUri = _messages.StringField(4)
+
+
 class SparkServiceInstanceConfig(_messages.Message):
   r"""Spark-specific service instance configuration."""
+
+
+class SparkSqlApplicationConfig(_messages.Message):
+  r"""Represents the SparkRApplicationConfig.
+
+  Messages:
+    ScriptVariablesValue: Optional. Mapping of query variable names to values
+      (equivalent to the Spark SQL command: SET `name="value";`).
+
+  Fields:
+    jarFileUris: Optional. HCFS URIs of jar files to be added to the Spark
+      CLASSPATH.
+    queryFileUri: The HCFS URI of the script that contains SQL queries.
+    queryList: A list of queries.
+    scriptVariables: Optional. Mapping of query variable names to values
+      (equivalent to the Spark SQL command: SET `name="value";`).
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class ScriptVariablesValue(_messages.Message):
+    r"""Optional. Mapping of query variable names to values (equivalent to the
+    Spark SQL command: SET `name="value";`).
+
+    Messages:
+      AdditionalProperty: An additional property for a ScriptVariablesValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type ScriptVariablesValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a ScriptVariablesValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  jarFileUris = _messages.StringField(1, repeated=True)
+  queryFileUri = _messages.StringField(2)
+  queryList = _messages.MessageField('QueryList', 3)
+  scriptVariables = _messages.MessageField('ScriptVariablesValue', 4)
 
 
 class StandardQueryParameters(_messages.Message):
@@ -817,6 +1672,30 @@ class Status(_messages.Message):
   code = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   details = _messages.MessageField('DetailsValueListEntry', 2, repeated=True)
   message = _messages.StringField(3)
+
+
+class TimeOfDay(_messages.Message):
+  r"""Represents a time of day. The date and time zone are either not
+  significant or are specified elsewhere. An API may choose to allow leap
+  seconds. Related types are google.type.Date and `google.protobuf.Timestamp`.
+
+  Fields:
+    hours: Hours of a day in 24 hour format. Must be greater than or equal to
+      0 and typically must be less than or equal to 23. An API may choose to
+      allow the value "24:00:00" for scenarios like business closing time.
+    minutes: Minutes of an hour. Must be greater than or equal to 0 and less
+      than or equal to 59.
+    nanos: Fractions of seconds, in nanoseconds. Must be greater than or equal
+      to 0 and less than or equal to 999,999,999.
+    seconds: Seconds of a minute. Must be greater than or equal to 0 and
+      typically must be less than or equal to 59. An API may allow the value
+      60 if it allows leap-seconds.
+  """
+
+  hours = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  minutes = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  nanos = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  seconds = _messages.IntegerField(4, variant=_messages.Variant.INT32)
 
 
 encoding.AddCustomJsonFieldMapping(

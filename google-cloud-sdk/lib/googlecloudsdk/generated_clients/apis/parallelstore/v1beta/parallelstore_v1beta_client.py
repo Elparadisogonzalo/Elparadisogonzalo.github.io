@@ -82,7 +82,7 @@ class ParallelstoreV1beta(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a single Instance.
+      r"""Deletes a single instance.
 
       Args:
         request: (ParallelstoreProjectsLocationsInstancesDeleteRequest) input message
@@ -108,8 +108,35 @@ class ParallelstoreV1beta(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def ExportData(self, request, global_params=None):
+      r"""Copies data from Parallelstore to Cloud Storage.
+
+      Args:
+        request: (ParallelstoreProjectsLocationsInstancesExportDataRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('ExportData')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    ExportData.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1beta/projects/{projectsId}/locations/{locationsId}/instances/{instancesId}:exportData',
+        http_method='POST',
+        method_id='parallelstore.projects.locations.instances.exportData',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1beta/{+name}:exportData',
+        request_field='exportDataRequest',
+        request_type_name='ParallelstoreProjectsLocationsInstancesExportDataRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
     def Get(self, request, global_params=None):
-      r"""Gets details of a single Instance.
+      r"""Gets details of a single instance.
 
       Args:
         request: (ParallelstoreProjectsLocationsInstancesGetRequest) input message
@@ -135,8 +162,35 @@ class ParallelstoreV1beta(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def ImportData(self, request, global_params=None):
+      r"""Copies data from Cloud Storage to Parallelstore.
+
+      Args:
+        request: (ParallelstoreProjectsLocationsInstancesImportDataRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('ImportData')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    ImportData.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1beta/projects/{projectsId}/locations/{locationsId}/instances/{instancesId}:importData',
+        http_method='POST',
+        method_id='parallelstore.projects.locations.instances.importData',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1beta/{+name}:importData',
+        request_field='importDataRequest',
+        request_type_name='ParallelstoreProjectsLocationsInstancesImportDataRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
     def List(self, request, global_params=None):
-      r"""Lists Instances in a given project and location.
+      r"""Lists all instances in a given project and location.
 
       Args:
         request: (ParallelstoreProjectsLocationsInstancesListRequest) input message
@@ -163,7 +217,7 @@ class ParallelstoreV1beta(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the parameters of a single Instance.
+      r"""Updates the parameters of a single instance.
 
       Args:
         request: (ParallelstoreProjectsLocationsInstancesPatchRequest) input message
@@ -200,13 +254,13 @@ class ParallelstoreV1beta(base_api.BaseApiClient):
           }
 
     def Cancel(self, request, global_params=None):
-      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
+      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
 
       Args:
         request: (ParallelstoreProjectsLocationsOperationsCancelRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (Empty) The response message.
+        (GoogleProtobufEmpty) The response message.
       """
       config = self.GetMethodConfig('Cancel')
       return self._RunMethod(
@@ -220,9 +274,9 @@ class ParallelstoreV1beta(base_api.BaseApiClient):
         path_params=['name'],
         query_params=[],
         relative_path='v1beta/{+name}:cancel',
-        request_field='cancelOperationRequest',
+        request_field='',
         request_type_name='ParallelstoreProjectsLocationsOperationsCancelRequest',
-        response_type_name='Empty',
+        response_type_name='GoogleProtobufEmpty',
         supports_download=False,
     )
 
@@ -233,7 +287,7 @@ class ParallelstoreV1beta(base_api.BaseApiClient):
         request: (ParallelstoreProjectsLocationsOperationsDeleteRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (Empty) The response message.
+        (GoogleProtobufEmpty) The response message.
       """
       config = self.GetMethodConfig('Delete')
       return self._RunMethod(
@@ -249,7 +303,7 @@ class ParallelstoreV1beta(base_api.BaseApiClient):
         relative_path='v1beta/{+name}',
         request_field='',
         request_type_name='ParallelstoreProjectsLocationsOperationsDeleteRequest',
-        response_type_name='Empty',
+        response_type_name='GoogleProtobufEmpty',
         supports_download=False,
     )
 
@@ -363,7 +417,7 @@ class ParallelstoreV1beta(base_api.BaseApiClient):
         method_id='parallelstore.projects.locations.list',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=['filter', 'pageSize', 'pageToken'],
+        query_params=['extraLocationTypes', 'filter', 'pageSize', 'pageToken'],
         relative_path='v1beta/{+name}/locations',
         request_field='',
         request_type_name='ParallelstoreProjectsLocationsListRequest',

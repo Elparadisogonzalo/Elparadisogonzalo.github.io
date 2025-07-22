@@ -30,6 +30,7 @@ import subprocess
 import tempfile
 import textwrap
 
+from apitools.base.py import exceptions
 from googlecloudsdk.api_lib.oslogin import client as oslogin_client
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.oslogin import oslogin_utils
@@ -56,6 +57,7 @@ CERTIFICATE_DIR = os.path.join('~', '.ssh', 'google_compute_engine_cert')
 OSLOGIN_ENABLE_METADATA_KEY = 'enable-oslogin'
 OSLOGIN_ENABLE_2FA_METADATA_KEY = 'enable-oslogin-2fa'
 OSLOGIN_ENABLE_SK_METADATA_KEY = 'enable-oslogin-sk'
+OSLOGIN_ENABLE_CERTIFICATES_METADATA_KEY = 'enable-oslogin-certificates'
 
 
 class InvalidKeyError(core_exceptions.Error):
@@ -520,7 +522,7 @@ class Keys(object):
 
     Args:
       overwrite: bool or None, overwrite key files if they are broken.
-      allow_passphrase: bool, if keygeneration occurs, let the user specfiy a
+      allow_passphrase: bool, if keygeneration occurs, let the user specify a
         passphrase for private key encryption. See `ssh.KeygenCommand` for
         details on when this is possible.
 
@@ -577,34 +579,55 @@ class Keys(object):
           log.debug('Failed to create sentinel file: [{}]'.format(e))
 
 
-def CertFileFromRegion(region):
+def CertFileFromInstance(project_id, zone, instance_id):
   cert_dir = os.path.realpath(files.ExpandHomeDir(CERTIFICATE_DIR))
-  return os.path.join(cert_dir, '{}-cert.pub'.format(region))
+  return os.path.join(
+      cert_dir, '{}_{}_{}-cert.pub'.format(project_id, zone, instance_id)
+  )
 
 
-def WriteCertificate(region, cert):
+def WriteCertificate(cert, project_id, zone, instance_id):
   """Writes a certificate associated with the key pair.
 
   Args:
-    region: string, The region where the SSH certificate may be used.
     cert: string, The SSH certificate data.
+    project_id: string, The project ID of the instance.
+    zone: string, The zone of the instance.
+    instance_id: string, The instance ID.
   """
   cert_dir = os.path.realpath(files.ExpandHomeDir(CERTIFICATE_DIR))
   files.MakeDir(cert_dir, mode=0o700)
 
-  filepath = CertFileFromRegion(region)
+  filepath = CertFileFromInstance(project_id, zone, instance_id)
   try:
     files.WriteFileContents(filepath, cert)
   except files.Error as e:
     log.debug('Failed to update the certificate {}: [{}]'.format(filepath, e))
 
 
-def ValidateCertificate(oslogin_state, region):
-  """Checks if the certificate is currently valid.
+def DeleteCertificateFile(project_id, zone, instance_id):
+  """Deletes an OS Login certificate file.
+
+  Args:
+    project_id: string, The project ID of the instance.
+    zone: string, The zone of the instance.
+    instance_id: string, The instance ID.
+  """
+  filepath = CertFileFromInstance(project_id, zone, instance_id)
+  if os.path.exists(filepath):
+    os.remove(filepath)
+
+
+def ValidateCertificate(
+    oslogin_state, project_id, zone, instance_id
+):
+  """Checks if the certificate is currently valid for a given instance.
 
   Args:
     oslogin_state: An OsloginState object.
-    region: string, The region where the SSH certificate may be used.
+    project_id: string, The project ID of the instance.
+    zone: string, The zone of the instance.
+    instance_id: string, The instance ID.
   """
   def IsCertValid(cert):
     time_format = '%Y-%m-%dT%H:%M:%S'
@@ -615,16 +638,13 @@ def ValidateCertificate(oslogin_state, region):
     end = datetime.datetime.strptime(match[1], time_format)
     now = datetime.datetime.now()
     oslogin_state.signed_ssh_key = now > start and now < end
-
-  cmd = KeygenCommand(CertFileFromRegion(region), print_cert=True)
+  cert_file = CertFileFromInstance(project_id, zone, instance_id)
+  cmd = KeygenCommand(cert_file, print_cert=True)
   try:
-    cmd.Run(out_func=IsCertValid)
+    if os.path.exists(cert_file):
+      cmd.Run(out_func=IsCertValid)
   except CommandError as e:
-    log.debug(
-        'Cert File [{0}] could not be opened: {1}'.format(
-            CertFileFromRegion(region), e
-        )
-    )
+    log.debug('Cert File [{0}] could not be opened: {1}'.format(cert_file, e))
 
 
 def WriteSecurityKeys(oslogin_state):
@@ -950,10 +970,11 @@ class OsloginState(object):
       account user.
     ssh_security_key_support: bool, True if the SSH client supports security
       keys.
-    environment: str, A hint about the current enviornment. ('ssh' or 'putty')
+    environment: str, A hint about the current environment. ('ssh' or 'putty')
     security_keys: list, A list of 'private' keys associated with the security
       keys configured in the user's account.
     signed_ssh_key: bool, True if a valid signed ssh key exists.
+    require_certificates: bool, True if passing a certificate is required.
   """
 
   def __init__(
@@ -967,6 +988,7 @@ class OsloginState(object):
       environment=None,
       security_keys=None,
       signed_ssh_key=False,
+      require_certificates=False,
   ):
     self.oslogin_enabled = oslogin_enabled
     self.oslogin_2fa_enabled = oslogin_2fa_enabled
@@ -980,6 +1002,7 @@ class OsloginState(object):
     else:
       self.security_keys = security_keys
     self.signed_ssh_key = signed_ssh_key
+    self.require_certificates = require_certificates
 
   def __str__(self):
     return textwrap.dedent("""\
@@ -993,6 +1016,7 @@ class OsloginState(object):
         Security Keys:
         {7}
         Signed SSH Key: {8}
+        Require Certificates: {9}
         """).format(
         self.oslogin_enabled,
         self.oslogin_2fa_enabled,
@@ -1003,6 +1027,7 @@ class OsloginState(object):
         self.environment,
         '\n'.join(self.security_keys),
         self.signed_ssh_key,
+        self.require_certificates,
     )
 
   def __repr__(self):
@@ -1010,7 +1035,8 @@ class OsloginState(object):
         'OsloginState(oslogin_enabled={0}, oslogin_2fa_enabled={1}, '
         'security_keys_enabled={2}, user={3}, third_party_user={4}'
         'ssh_security_key_support={5}, environment={6}, '
-        'security_keys={7}, signed_ssh_key={8})'.format(
+        'security_keys={7}, signed_ssh_key={8}, '
+        'require_certificates={9})'.format(
             self.oslogin_enabled,
             self.oslogin_2fa_enabled,
             self.security_keys_enabled,
@@ -1020,6 +1046,7 @@ class OsloginState(object):
             self.environment,
             self.security_keys,
             self.signed_ssh_key,
+            self.require_certificates,
         )
     )
 
@@ -1048,6 +1075,7 @@ def GetOsloginState(
     instance_enable_oslogin=None,
     instance_enable_2fa=None,
     instance_enable_security_keys=None,
+    instance_require_certificates=None,
     messages=None,
 ):
   """Check instance/project metadata for oslogin and return updated username.
@@ -1078,6 +1106,10 @@ def GetOsloginState(
       that OS Login security keys are enabled, and False if not enabled. Used
       when the instance cannot be passed through the instance argument. None if
       not specified.
+    instance_require_certificates: True if the instance's metadata indicates
+      that OS Login SSH certificates are to be used exclusively, False
+      otherwise. An override to be used when the instance cannot be passed
+      through the "instance" argument. None if not specified.
     messages: API messages class, The compute API messages.
 
   Returns:
@@ -1118,6 +1150,12 @@ def GetOsloginState(
       instance_override=instance_enable_security_keys,
   )
   oslogin_state.third_party_user = IsThirdPartyUser()
+  oslogin_state.require_certificates = FeatureEnabledInMetadata(
+      instance,
+      project,
+      OSLOGIN_ENABLE_CERTIFICATES_METADATA_KEY,
+      instance_override=instance_require_certificates,
+  )
 
   env = Environment.Current()
   if env.suite == Suite.PUTTY:
@@ -1133,23 +1171,57 @@ def GetOsloginState(
       or properties.VALUES.core.account.Get()
   )
 
-  if oslogin_state.third_party_user and release_track in [
-      base.ReleaseTrack.ALPHA,
-      base.ReleaseTrack.BETA,
-  ]:
-    user_email = quote(user_email, safe=':')
+  if instance and instance.zone:
     zone = instance.zone.split('/').pop()
     # Inclusively trim suffix from last '-' to convert a zone into a region.
-    region = zone[:zone.rindex('-')]
-    ValidateCertificate(oslogin_state, region)
+    region = zone[: zone.rindex('-')]
+  else:
+    zone = None
+    region = None
+
+  if (
+      release_track
+      in [
+          base.ReleaseTrack.ALPHA,
+          base.ReleaseTrack.BETA,
+      ]
+      and (oslogin_state.third_party_user or oslogin_state.require_certificates)
+  ):
+    user_email = quote(user_email, safe=':@')
+    ValidateCertificate(oslogin_state, project.name, zone, instance.id)
     if not oslogin_state.signed_ssh_key:
-      sign_response = oslogin.SignSshPublicKey(
-          user_email,
-          public_key,
-          project.name,
-          region,
+      try:
+        sign_response = oslogin.SignSshPublicKeyForInstance(
+            public_key,
+            project.name,
+            region,
+            service_account=instance.serviceAccounts[0].email
+            if instance.serviceAccounts
+            else '',
+            compute_instance=(
+                f'projects/{project.name}/zones/{zone}/instances/{instance.id}'
+            ),
+        )
+      except exceptions.HttpNotFoundError:
+        log.status.Print(
+            'No OS Login profile found for user [{0}] for project [{1}].'
+            ' Creating POSIX account.'.format(user_email, project.name)
+        )
+        oslogin.ProvisionPosixAccount(user_email, project.name, region)
+        sign_response = oslogin.SignSshPublicKeyForInstance(
+            public_key,
+            project.name,
+            region,
+            service_account=instance.serviceAccounts[0].email
+            if instance.serviceAccounts
+            else '',
+            compute_instance=(
+                f'projects/{project.name}/zones/{zone}/instances/{instance.id}'
+            ),
+        )
+      WriteCertificate(
+          sign_response.signedSshPublicKey, project.name, zone, instance.id
       )
-      WriteCertificate(region, sign_response.signedSshPublicKey)
     login_profile = oslogin.GetLoginProfile(
         user_email,
         project.name,
@@ -1159,6 +1231,18 @@ def GetOsloginState(
   # exists associated with the project. If either are not set, import an SSH
   # public key. Otherwise update the expiration time if needed.
   else:
+    if oslogin_state.third_party_user:
+      raise NotImplementedError(
+          'SSH using federated workforce identities is not yet generally '
+          'available (GA). Please use `gcloud beta compute ssh` to SSH using '
+          'a third-party identity.'
+      )
+    if oslogin_state.require_certificates:
+      raise NotImplementedError(
+          'SSH using certificates is not yet generally available (GA). Please'
+          ' use `gcloud beta compute ssh` to SSH to VMs that require'
+          ' certificate authentication.'
+      )
     login_profile = oslogin.GetLoginProfile(
         user_email,
         project.name,
@@ -1178,7 +1262,11 @@ def GetOsloginState(
       fingerprint = oslogin_utils.FindKeyInKeyList(public_key, keys)
       if not fingerprint or not login_profile.posixAccounts:
         import_response = oslogin.ImportSshPublicKey(
-            user_email, public_key, expiration_time
+            user_email,
+            public_key,
+            expiration_time=expiration_time,
+            include_security_keys=False,
+            region=region,
         )
         login_profile = import_response.loginProfile
       elif expiration_time:
@@ -1242,7 +1330,7 @@ def ParseAndSubstituteSSHFlags(
   extra_flags = []
   if args.ssh_flag:
     for flag in args.ssh_flag:
-      if flag:  # Skip any empty flags.
+      if flag and flag != '--':  # Skip any empty flags.
         for flag_part in flag.split():  # We want grouping here
           deref_flag = flag_part
 
@@ -1843,6 +1931,7 @@ class SCPCommand(object):
       compress=False,
       port=None,
       identity_file=None,
+      cert_file=None,
       options=None,
       extra_flags=None,
       iap_tunnel_args=None,
@@ -1860,6 +1949,7 @@ class SCPCommand(object):
       compress: bool, enable compression.
       port: str, port.
       identity_file: str, path to private key file.
+      cert_file: str, path to OpenSSH certificate file.
       options: {str: str}, options (`-o`) for OpenSSH, see `ssh_config(5)`.
       extra_flags: [str], extra flags to append to scp invocation. Both binary
         style flags `['-b']` and flags with values `['-k', 'v']` are accepted.
@@ -1874,6 +1964,7 @@ class SCPCommand(object):
     self.compress = compress
     self.port = port
     self.identity_file = identity_file
+    self.cert_file = cert_file
     self.identity_list = identity_list
     self.options = options or {}
     self.extra_flags = extra_flags or []
@@ -1964,6 +2055,9 @@ class SCPCommand(object):
 
     if self.port:
       args.extend(['-P', self.port])
+
+    if self.cert_file and env.suite is Suite.OPENSSH:
+      self.options['CertificateFile'] = self.cert_file
 
     if self.identity_list:
       for identity_file in self.identity_list:
@@ -2087,9 +2181,23 @@ class SSHPoller(object):
         timeout. There is no way to distinguish between a timeout error and a
         misconfigured connection.
     """
+    env = env or Environment.Current()
+    run_args = {
+        'env': env,
+        'putty_force_connect': putty_force_connect,
+    }
+
+    # Ideally we don't want the poller to consume data on stdin that should be
+    # piped to the remote command. With OpenSSH we can pass /dev/null as stdin,
+    # since it reads prompt responses (host key confirmations, passwords, etc.)
+    # directly from /dev/tty.
+    # We can't do the same with PuTTY, as it reads prompt responses from stdin.
+    if env.suite is Suite.OPENSSH:
+      run_args['explicit_input_file'] = subprocess.DEVNULL
+
     self._retryer.RetryOnException(
         self.ssh_command.Run,
-        kwargs={'env': env, 'putty_force_connect': putty_force_connect},
+        kwargs=run_args,
         should_retry_if=lambda exc_type, *args: exc_type is CommandError,
         sleep_ms=self._sleep_ms,
     )

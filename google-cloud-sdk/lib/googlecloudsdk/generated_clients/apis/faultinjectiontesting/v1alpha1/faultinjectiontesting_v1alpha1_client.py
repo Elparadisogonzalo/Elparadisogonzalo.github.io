@@ -454,6 +454,33 @@ class FaultinjectiontestingV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Stop(self, request, global_params=None):
+      r"""Deletes a single Job.
+
+      Args:
+        request: (FaultinjectiontestingProjectsLocationsJobsStopRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Stop')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Stop.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/jobs/{jobsId}:stop',
+        http_method='POST',
+        method_id='faultinjectiontesting.projects.locations.jobs.stop',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha1/{+name}:stop',
+        request_field='stopJobRequest',
+        request_type_name='FaultinjectiontestingProjectsLocationsJobsStopRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
   class ProjectsLocationsOperationsService(base_api.BaseApiService):
     """Service class for the projects_locations_operations resource."""
 
@@ -465,7 +492,7 @@ class FaultinjectiontestingV1alpha1(base_api.BaseApiClient):
           }
 
     def Cancel(self, request, global_params=None):
-      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
+      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
 
       Args:
         request: (FaultinjectiontestingProjectsLocationsOperationsCancelRequest) input message
@@ -628,7 +655,7 @@ class FaultinjectiontestingV1alpha1(base_api.BaseApiClient):
         method_id='faultinjectiontesting.projects.locations.list',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=['filter', 'pageSize', 'pageToken'],
+        query_params=['extraLocationTypes', 'filter', 'pageSize', 'pageToken'],
         relative_path='v1alpha1/{+name}/locations',
         request_field='',
         request_type_name='FaultinjectiontestingProjectsLocationsListRequest',

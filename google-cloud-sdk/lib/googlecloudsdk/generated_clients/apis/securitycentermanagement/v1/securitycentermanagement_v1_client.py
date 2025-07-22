@@ -42,18 +42,21 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     self.folders_locations_effectiveEventThreatDetectionCustomModules = self.FoldersLocationsEffectiveEventThreatDetectionCustomModulesService(self)
     self.folders_locations_effectiveSecurityHealthAnalyticsCustomModules = self.FoldersLocationsEffectiveSecurityHealthAnalyticsCustomModulesService(self)
     self.folders_locations_eventThreatDetectionCustomModules = self.FoldersLocationsEventThreatDetectionCustomModulesService(self)
+    self.folders_locations_securityCenterServices = self.FoldersLocationsSecurityCenterServicesService(self)
     self.folders_locations_securityHealthAnalyticsCustomModules = self.FoldersLocationsSecurityHealthAnalyticsCustomModulesService(self)
     self.folders_locations = self.FoldersLocationsService(self)
     self.folders = self.FoldersService(self)
     self.organizations_locations_effectiveEventThreatDetectionCustomModules = self.OrganizationsLocationsEffectiveEventThreatDetectionCustomModulesService(self)
     self.organizations_locations_effectiveSecurityHealthAnalyticsCustomModules = self.OrganizationsLocationsEffectiveSecurityHealthAnalyticsCustomModulesService(self)
     self.organizations_locations_eventThreatDetectionCustomModules = self.OrganizationsLocationsEventThreatDetectionCustomModulesService(self)
+    self.organizations_locations_securityCenterServices = self.OrganizationsLocationsSecurityCenterServicesService(self)
     self.organizations_locations_securityHealthAnalyticsCustomModules = self.OrganizationsLocationsSecurityHealthAnalyticsCustomModulesService(self)
     self.organizations_locations = self.OrganizationsLocationsService(self)
     self.organizations = self.OrganizationsService(self)
     self.projects_locations_effectiveEventThreatDetectionCustomModules = self.ProjectsLocationsEffectiveEventThreatDetectionCustomModulesService(self)
     self.projects_locations_effectiveSecurityHealthAnalyticsCustomModules = self.ProjectsLocationsEffectiveSecurityHealthAnalyticsCustomModulesService(self)
     self.projects_locations_eventThreatDetectionCustomModules = self.ProjectsLocationsEventThreatDetectionCustomModulesService(self)
+    self.projects_locations_securityCenterServices = self.ProjectsLocationsSecurityCenterServicesService(self)
     self.projects_locations_securityHealthAnalyticsCustomModules = self.ProjectsLocationsSecurityHealthAnalyticsCustomModulesService(self)
     self.projects_locations = self.ProjectsLocationsService(self)
     self.projects = self.ProjectsService(self)
@@ -69,7 +72,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
           }
 
     def Get(self, request, global_params=None):
-      r"""Gets an effective ETD custom module. Retrieves the effective module at the given level. The difference between an EffectiveCustomModule and a CustomModule is that the fields for an EffectiveCustomModule are computed from ancestors if needed. For example, the enablement_state for a CustomModule can be either ENABLED, DISABLED, or INHERITED. Where as the enablement_state for an EffectiveCustomModule is always computed to ENABLED or DISABLED (the effective enablement_state).
+      r"""Gets the effective Event Threat Detection custom module at the given level. The difference between an EffectiveEventThreatDetectionCustomModule and an EventThreatDetectionCustomModule is that the fields for an `EffectiveEventThreatDetectionCustomModule` are computed from ancestors if needed. For example, the enablement state for an `EventThreatDetectionCustomModule` can be `ENABLED`, `DISABLED`, or `INHERITED`. In contrast, the enablement state for an `EffectiveEventThreatDetectionCustomModule` is always computed as `ENABLED` or `DISABLED`.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsEffectiveEventThreatDetectionCustomModulesGetRequest) input message
@@ -160,7 +163,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Returns a list of all EffectiveSecurityHealthAnalyticsCustomModules for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from CRM ancestors (no descendants).
+      r"""Returns a list of all EffectiveSecurityHealthAnalyticsCustomModule resources for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from ancestor organizations, folders, and projects (no descendants).
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsEffectiveSecurityHealthAnalyticsCustomModulesListRequest) input message
@@ -197,7 +200,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a resident Event Threat Detection custom module at the scope of the given Resource Manager parent, and also creates inherited custom modules for all descendants of the given parent. These modules are enabled by default.
+      r"""Creates a resident Event Threat Detection custom module at the scope of the given organization, folder, or project, and creates inherited custom modules for all descendants of the given parent. These modules are enabled by default.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsEventThreatDetectionCustomModulesCreateRequest) input message
@@ -224,7 +227,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes the specified Event Threat Detection custom module and all of its descendants in the Resource Manager hierarchy. This method is only supported for resident custom modules.
+      r"""Deletes the specified Event Threat Detection custom module and all of its descendants in the resource hierarchy. This method is only supported for resident custom modules.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsEventThreatDetectionCustomModulesDeleteRequest) input message
@@ -278,7 +281,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists all Event Threat Detection custom modules for the given Resource Manager parent. This includes resident modules defined at the scope of the parent along with modules inherited from ancestors.
+      r"""Lists all Event Threat Detection custom modules for the given organization, folder, or project. This includes resident modules defined at the scope of the parent along with modules inherited from ancestors.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsEventThreatDetectionCustomModulesListRequest) input message
@@ -305,7 +308,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def ListDescendant(self, request, global_params=None):
-      r"""Lists all resident Event Threat Detection custom modules under the given Resource Manager parent and its descendants.
+      r"""Lists all resident Event Threat Detection custom modules for the given organization, folder, or project and its descendants.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsEventThreatDetectionCustomModulesListDescendantRequest) input message
@@ -385,6 +388,97 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class FoldersLocationsSecurityCenterServicesService(base_api.BaseApiService):
+    """Service class for the folders_locations_securityCenterServices resource."""
+
+    _NAME = 'folders_locations_securityCenterServices'
+
+    def __init__(self, client):
+      super(SecuritycentermanagementV1.FoldersLocationsSecurityCenterServicesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets service settings for the specified Security Command Center service.
+
+      Args:
+        request: (SecuritycentermanagementFoldersLocationsSecurityCenterServicesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (SecurityCenterService) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/folders/{foldersId}/locations/{locationsId}/securityCenterServices/{securityCenterServicesId}',
+        http_method='GET',
+        method_id='securitycentermanagement.folders.locations.securityCenterServices.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['showEligibleModulesOnly'],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='SecuritycentermanagementFoldersLocationsSecurityCenterServicesGetRequest',
+        response_type_name='SecurityCenterService',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Returns a list of all Security Command Center services for the given parent.
+
+      Args:
+        request: (SecuritycentermanagementFoldersLocationsSecurityCenterServicesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListSecurityCenterServicesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/folders/{foldersId}/locations/{locationsId}/securityCenterServices',
+        http_method='GET',
+        method_id='securitycentermanagement.folders.locations.securityCenterServices.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken', 'showEligibleModulesOnly'],
+        relative_path='v1/{+parent}/securityCenterServices',
+        request_field='',
+        request_type_name='SecuritycentermanagementFoldersLocationsSecurityCenterServicesListRequest',
+        response_type_name='ListSecurityCenterServicesResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a Security Command Center service using the given update mask.
+
+      Args:
+        request: (SecuritycentermanagementFoldersLocationsSecurityCenterServicesPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (SecurityCenterService) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/folders/{foldersId}/locations/{locationsId}/securityCenterServices/{securityCenterServicesId}',
+        http_method='PATCH',
+        method_id='securitycentermanagement.folders.locations.securityCenterServices.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask', 'validateOnly'],
+        relative_path='v1/{+name}',
+        request_field='securityCenterService',
+        request_type_name='SecuritycentermanagementFoldersLocationsSecurityCenterServicesPatchRequest',
+        response_type_name='SecurityCenterService',
+        supports_download=False,
+    )
+
   class FoldersLocationsSecurityHealthAnalyticsCustomModulesService(base_api.BaseApiService):
     """Service class for the folders_locations_securityHealthAnalyticsCustomModules resource."""
 
@@ -396,7 +490,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a resident SecurityHealthAnalyticsCustomModule at the scope of the given CRM parent, and also creates inherited SecurityHealthAnalyticsCustomModules for all CRM descendants of the given parent. These modules are enabled by default.
+      r"""Creates a resident SecurityHealthAnalyticsCustomModule at the scope of the given organization, folder, or project, and also creates inherited `SecurityHealthAnalyticsCustomModule` resources for all folders and projects that are descendants of the given parent. These modules are enabled by default.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsSecurityHealthAnalyticsCustomModulesCreateRequest) input message
@@ -423,7 +517,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes the specified SecurityHealthAnalyticsCustomModule and all of its descendants in the CRM hierarchy. This method is only supported for resident custom modules.
+      r"""Deletes the specified SecurityHealthAnalyticsCustomModule and all of its descendants in the resource hierarchy. This method is only supported for resident custom modules.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsSecurityHealthAnalyticsCustomModulesDeleteRequest) input message
@@ -477,7 +571,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Returns a list of all SecurityHealthAnalyticsCustomModules for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from CRM ancestors (no descendants).
+      r"""Returns a list of all SecurityHealthAnalyticsCustomModule resources for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from ancestor organizations, folders, and projects (no descendants).
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsSecurityHealthAnalyticsCustomModulesListRequest) input message
@@ -504,7 +598,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def ListDescendant(self, request, global_params=None):
-      r"""Returns a list of all resident SecurityHealthAnalyticsCustomModules under the given CRM parent and all of the parent's CRM descendants.
+      r"""Returns a list of all resident SecurityHealthAnalyticsCustomModule resources under the given organization, folder, or project and all of its descendants.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsSecurityHealthAnalyticsCustomModulesListDescendantRequest) input message
@@ -531,7 +625,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the SecurityHealthAnalyticsCustomModule under the given name based on the given update mask. Updating the enablement state is supported on both resident and inherited modules (though resident modules cannot have an enablement state of "inherited"). Updating the display name and custom config of a module is supported on resident modules only.
+      r"""Updates the SecurityHealthAnalyticsCustomModule under the given name based on the given update mask. Updating the enablement state is supported on both resident and inherited modules (though resident modules cannot have an enablement state of "inherited"). Updating the display name and custom configuration of a module is supported on resident modules only.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsSecurityHealthAnalyticsCustomModulesPatchRequest) input message
@@ -558,7 +652,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Simulate(self, request, global_params=None):
-      r"""Simulates a given SecurityHealthAnalyticsCustomModule and Resource.
+      r"""Simulates the result of using a SecurityHealthAnalyticsCustomModule to check a resource.
 
       Args:
         request: (SecuritycentermanagementFoldersLocationsSecurityHealthAnalyticsCustomModulesSimulateRequest) input message
@@ -615,7 +709,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
           }
 
     def Get(self, request, global_params=None):
-      r"""Gets an effective ETD custom module. Retrieves the effective module at the given level. The difference between an EffectiveCustomModule and a CustomModule is that the fields for an EffectiveCustomModule are computed from ancestors if needed. For example, the enablement_state for a CustomModule can be either ENABLED, DISABLED, or INHERITED. Where as the enablement_state for an EffectiveCustomModule is always computed to ENABLED or DISABLED (the effective enablement_state).
+      r"""Gets the effective Event Threat Detection custom module at the given level. The difference between an EffectiveEventThreatDetectionCustomModule and an EventThreatDetectionCustomModule is that the fields for an `EffectiveEventThreatDetectionCustomModule` are computed from ancestors if needed. For example, the enablement state for an `EventThreatDetectionCustomModule` can be `ENABLED`, `DISABLED`, or `INHERITED`. In contrast, the enablement state for an `EffectiveEventThreatDetectionCustomModule` is always computed as `ENABLED` or `DISABLED`.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsEffectiveEventThreatDetectionCustomModulesGetRequest) input message
@@ -706,7 +800,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Returns a list of all EffectiveSecurityHealthAnalyticsCustomModules for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from CRM ancestors (no descendants).
+      r"""Returns a list of all EffectiveSecurityHealthAnalyticsCustomModule resources for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from ancestor organizations, folders, and projects (no descendants).
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsEffectiveSecurityHealthAnalyticsCustomModulesListRequest) input message
@@ -743,7 +837,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a resident Event Threat Detection custom module at the scope of the given Resource Manager parent, and also creates inherited custom modules for all descendants of the given parent. These modules are enabled by default.
+      r"""Creates a resident Event Threat Detection custom module at the scope of the given organization, folder, or project, and creates inherited custom modules for all descendants of the given parent. These modules are enabled by default.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsEventThreatDetectionCustomModulesCreateRequest) input message
@@ -770,7 +864,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes the specified Event Threat Detection custom module and all of its descendants in the Resource Manager hierarchy. This method is only supported for resident custom modules.
+      r"""Deletes the specified Event Threat Detection custom module and all of its descendants in the resource hierarchy. This method is only supported for resident custom modules.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsEventThreatDetectionCustomModulesDeleteRequest) input message
@@ -824,7 +918,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists all Event Threat Detection custom modules for the given Resource Manager parent. This includes resident modules defined at the scope of the parent along with modules inherited from ancestors.
+      r"""Lists all Event Threat Detection custom modules for the given organization, folder, or project. This includes resident modules defined at the scope of the parent along with modules inherited from ancestors.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsEventThreatDetectionCustomModulesListRequest) input message
@@ -851,7 +945,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def ListDescendant(self, request, global_params=None):
-      r"""Lists all resident Event Threat Detection custom modules under the given Resource Manager parent and its descendants.
+      r"""Lists all resident Event Threat Detection custom modules for the given organization, folder, or project and its descendants.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsEventThreatDetectionCustomModulesListDescendantRequest) input message
@@ -931,6 +1025,97 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class OrganizationsLocationsSecurityCenterServicesService(base_api.BaseApiService):
+    """Service class for the organizations_locations_securityCenterServices resource."""
+
+    _NAME = 'organizations_locations_securityCenterServices'
+
+    def __init__(self, client):
+      super(SecuritycentermanagementV1.OrganizationsLocationsSecurityCenterServicesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets service settings for the specified Security Command Center service.
+
+      Args:
+        request: (SecuritycentermanagementOrganizationsLocationsSecurityCenterServicesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (SecurityCenterService) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/locations/{locationsId}/securityCenterServices/{securityCenterServicesId}',
+        http_method='GET',
+        method_id='securitycentermanagement.organizations.locations.securityCenterServices.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['showEligibleModulesOnly'],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='SecuritycentermanagementOrganizationsLocationsSecurityCenterServicesGetRequest',
+        response_type_name='SecurityCenterService',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Returns a list of all Security Command Center services for the given parent.
+
+      Args:
+        request: (SecuritycentermanagementOrganizationsLocationsSecurityCenterServicesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListSecurityCenterServicesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/locations/{locationsId}/securityCenterServices',
+        http_method='GET',
+        method_id='securitycentermanagement.organizations.locations.securityCenterServices.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken', 'showEligibleModulesOnly'],
+        relative_path='v1/{+parent}/securityCenterServices',
+        request_field='',
+        request_type_name='SecuritycentermanagementOrganizationsLocationsSecurityCenterServicesListRequest',
+        response_type_name='ListSecurityCenterServicesResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a Security Command Center service using the given update mask.
+
+      Args:
+        request: (SecuritycentermanagementOrganizationsLocationsSecurityCenterServicesPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (SecurityCenterService) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/locations/{locationsId}/securityCenterServices/{securityCenterServicesId}',
+        http_method='PATCH',
+        method_id='securitycentermanagement.organizations.locations.securityCenterServices.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask', 'validateOnly'],
+        relative_path='v1/{+name}',
+        request_field='securityCenterService',
+        request_type_name='SecuritycentermanagementOrganizationsLocationsSecurityCenterServicesPatchRequest',
+        response_type_name='SecurityCenterService',
+        supports_download=False,
+    )
+
   class OrganizationsLocationsSecurityHealthAnalyticsCustomModulesService(base_api.BaseApiService):
     """Service class for the organizations_locations_securityHealthAnalyticsCustomModules resource."""
 
@@ -942,7 +1127,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a resident SecurityHealthAnalyticsCustomModule at the scope of the given CRM parent, and also creates inherited SecurityHealthAnalyticsCustomModules for all CRM descendants of the given parent. These modules are enabled by default.
+      r"""Creates a resident SecurityHealthAnalyticsCustomModule at the scope of the given organization, folder, or project, and also creates inherited `SecurityHealthAnalyticsCustomModule` resources for all folders and projects that are descendants of the given parent. These modules are enabled by default.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsSecurityHealthAnalyticsCustomModulesCreateRequest) input message
@@ -969,7 +1154,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes the specified SecurityHealthAnalyticsCustomModule and all of its descendants in the CRM hierarchy. This method is only supported for resident custom modules.
+      r"""Deletes the specified SecurityHealthAnalyticsCustomModule and all of its descendants in the resource hierarchy. This method is only supported for resident custom modules.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsSecurityHealthAnalyticsCustomModulesDeleteRequest) input message
@@ -1023,7 +1208,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Returns a list of all SecurityHealthAnalyticsCustomModules for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from CRM ancestors (no descendants).
+      r"""Returns a list of all SecurityHealthAnalyticsCustomModule resources for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from ancestor organizations, folders, and projects (no descendants).
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsSecurityHealthAnalyticsCustomModulesListRequest) input message
@@ -1050,7 +1235,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def ListDescendant(self, request, global_params=None):
-      r"""Returns a list of all resident SecurityHealthAnalyticsCustomModules under the given CRM parent and all of the parent's CRM descendants.
+      r"""Returns a list of all resident SecurityHealthAnalyticsCustomModule resources under the given organization, folder, or project and all of its descendants.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsSecurityHealthAnalyticsCustomModulesListDescendantRequest) input message
@@ -1077,7 +1262,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the SecurityHealthAnalyticsCustomModule under the given name based on the given update mask. Updating the enablement state is supported on both resident and inherited modules (though resident modules cannot have an enablement state of "inherited"). Updating the display name and custom config of a module is supported on resident modules only.
+      r"""Updates the SecurityHealthAnalyticsCustomModule under the given name based on the given update mask. Updating the enablement state is supported on both resident and inherited modules (though resident modules cannot have an enablement state of "inherited"). Updating the display name and custom configuration of a module is supported on resident modules only.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsSecurityHealthAnalyticsCustomModulesPatchRequest) input message
@@ -1104,7 +1289,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Simulate(self, request, global_params=None):
-      r"""Simulates a given SecurityHealthAnalyticsCustomModule and Resource.
+      r"""Simulates the result of using a SecurityHealthAnalyticsCustomModule to check a resource.
 
       Args:
         request: (SecuritycentermanagementOrganizationsLocationsSecurityHealthAnalyticsCustomModulesSimulateRequest) input message
@@ -1140,6 +1325,33 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
       self._upload_configs = {
           }
 
+    def GetBillingMetadata(self, request, global_params=None):
+      r"""Retrieve the billing metadata explicitly set on a specific Resource.
+
+      Args:
+        request: (SecuritycentermanagementOrganizationsLocationsGetBillingMetadataRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (BillingMetadata) The response message.
+      """
+      config = self.GetMethodConfig('GetBillingMetadata')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetBillingMetadata.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/organizations/{organizationsId}/locations/{locationsId}/billingMetadata',
+        http_method='GET',
+        method_id='securitycentermanagement.organizations.locations.getBillingMetadata',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='SecuritycentermanagementOrganizationsLocationsGetBillingMetadataRequest',
+        response_type_name='BillingMetadata',
+        supports_download=False,
+    )
+
   class OrganizationsService(base_api.BaseApiService):
     """Service class for the organizations resource."""
 
@@ -1161,7 +1373,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
           }
 
     def Get(self, request, global_params=None):
-      r"""Gets an effective ETD custom module. Retrieves the effective module at the given level. The difference between an EffectiveCustomModule and a CustomModule is that the fields for an EffectiveCustomModule are computed from ancestors if needed. For example, the enablement_state for a CustomModule can be either ENABLED, DISABLED, or INHERITED. Where as the enablement_state for an EffectiveCustomModule is always computed to ENABLED or DISABLED (the effective enablement_state).
+      r"""Gets the effective Event Threat Detection custom module at the given level. The difference between an EffectiveEventThreatDetectionCustomModule and an EventThreatDetectionCustomModule is that the fields for an `EffectiveEventThreatDetectionCustomModule` are computed from ancestors if needed. For example, the enablement state for an `EventThreatDetectionCustomModule` can be `ENABLED`, `DISABLED`, or `INHERITED`. In contrast, the enablement state for an `EffectiveEventThreatDetectionCustomModule` is always computed as `ENABLED` or `DISABLED`.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsEffectiveEventThreatDetectionCustomModulesGetRequest) input message
@@ -1252,7 +1464,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Returns a list of all EffectiveSecurityHealthAnalyticsCustomModules for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from CRM ancestors (no descendants).
+      r"""Returns a list of all EffectiveSecurityHealthAnalyticsCustomModule resources for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from ancestor organizations, folders, and projects (no descendants).
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsEffectiveSecurityHealthAnalyticsCustomModulesListRequest) input message
@@ -1289,7 +1501,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a resident Event Threat Detection custom module at the scope of the given Resource Manager parent, and also creates inherited custom modules for all descendants of the given parent. These modules are enabled by default.
+      r"""Creates a resident Event Threat Detection custom module at the scope of the given organization, folder, or project, and creates inherited custom modules for all descendants of the given parent. These modules are enabled by default.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsEventThreatDetectionCustomModulesCreateRequest) input message
@@ -1316,7 +1528,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes the specified Event Threat Detection custom module and all of its descendants in the Resource Manager hierarchy. This method is only supported for resident custom modules.
+      r"""Deletes the specified Event Threat Detection custom module and all of its descendants in the resource hierarchy. This method is only supported for resident custom modules.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsEventThreatDetectionCustomModulesDeleteRequest) input message
@@ -1370,7 +1582,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists all Event Threat Detection custom modules for the given Resource Manager parent. This includes resident modules defined at the scope of the parent along with modules inherited from ancestors.
+      r"""Lists all Event Threat Detection custom modules for the given organization, folder, or project. This includes resident modules defined at the scope of the parent along with modules inherited from ancestors.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsEventThreatDetectionCustomModulesListRequest) input message
@@ -1397,7 +1609,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def ListDescendant(self, request, global_params=None):
-      r"""Lists all resident Event Threat Detection custom modules under the given Resource Manager parent and its descendants.
+      r"""Lists all resident Event Threat Detection custom modules for the given organization, folder, or project and its descendants.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsEventThreatDetectionCustomModulesListDescendantRequest) input message
@@ -1477,6 +1689,97 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsSecurityCenterServicesService(base_api.BaseApiService):
+    """Service class for the projects_locations_securityCenterServices resource."""
+
+    _NAME = 'projects_locations_securityCenterServices'
+
+    def __init__(self, client):
+      super(SecuritycentermanagementV1.ProjectsLocationsSecurityCenterServicesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets service settings for the specified Security Command Center service.
+
+      Args:
+        request: (SecuritycentermanagementProjectsLocationsSecurityCenterServicesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (SecurityCenterService) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/securityCenterServices/{securityCenterServicesId}',
+        http_method='GET',
+        method_id='securitycentermanagement.projects.locations.securityCenterServices.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['showEligibleModulesOnly'],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='SecuritycentermanagementProjectsLocationsSecurityCenterServicesGetRequest',
+        response_type_name='SecurityCenterService',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Returns a list of all Security Command Center services for the given parent.
+
+      Args:
+        request: (SecuritycentermanagementProjectsLocationsSecurityCenterServicesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListSecurityCenterServicesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/securityCenterServices',
+        http_method='GET',
+        method_id='securitycentermanagement.projects.locations.securityCenterServices.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken', 'showEligibleModulesOnly'],
+        relative_path='v1/{+parent}/securityCenterServices',
+        request_field='',
+        request_type_name='SecuritycentermanagementProjectsLocationsSecurityCenterServicesListRequest',
+        response_type_name='ListSecurityCenterServicesResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a Security Command Center service using the given update mask.
+
+      Args:
+        request: (SecuritycentermanagementProjectsLocationsSecurityCenterServicesPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (SecurityCenterService) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/securityCenterServices/{securityCenterServicesId}',
+        http_method='PATCH',
+        method_id='securitycentermanagement.projects.locations.securityCenterServices.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask', 'validateOnly'],
+        relative_path='v1/{+name}',
+        request_field='securityCenterService',
+        request_type_name='SecuritycentermanagementProjectsLocationsSecurityCenterServicesPatchRequest',
+        response_type_name='SecurityCenterService',
+        supports_download=False,
+    )
+
   class ProjectsLocationsSecurityHealthAnalyticsCustomModulesService(base_api.BaseApiService):
     """Service class for the projects_locations_securityHealthAnalyticsCustomModules resource."""
 
@@ -1488,7 +1791,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a resident SecurityHealthAnalyticsCustomModule at the scope of the given CRM parent, and also creates inherited SecurityHealthAnalyticsCustomModules for all CRM descendants of the given parent. These modules are enabled by default.
+      r"""Creates a resident SecurityHealthAnalyticsCustomModule at the scope of the given organization, folder, or project, and also creates inherited `SecurityHealthAnalyticsCustomModule` resources for all folders and projects that are descendants of the given parent. These modules are enabled by default.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsSecurityHealthAnalyticsCustomModulesCreateRequest) input message
@@ -1515,7 +1818,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes the specified SecurityHealthAnalyticsCustomModule and all of its descendants in the CRM hierarchy. This method is only supported for resident custom modules.
+      r"""Deletes the specified SecurityHealthAnalyticsCustomModule and all of its descendants in the resource hierarchy. This method is only supported for resident custom modules.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsSecurityHealthAnalyticsCustomModulesDeleteRequest) input message
@@ -1569,7 +1872,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Returns a list of all SecurityHealthAnalyticsCustomModules for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from CRM ancestors (no descendants).
+      r"""Returns a list of all SecurityHealthAnalyticsCustomModule resources for the given parent. This includes resident modules defined at the scope of the parent, and inherited modules, inherited from ancestor organizations, folders, and projects (no descendants).
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsSecurityHealthAnalyticsCustomModulesListRequest) input message
@@ -1596,7 +1899,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def ListDescendant(self, request, global_params=None):
-      r"""Returns a list of all resident SecurityHealthAnalyticsCustomModules under the given CRM parent and all of the parent's CRM descendants.
+      r"""Returns a list of all resident SecurityHealthAnalyticsCustomModule resources under the given organization, folder, or project and all of its descendants.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsSecurityHealthAnalyticsCustomModulesListDescendantRequest) input message
@@ -1623,7 +1926,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the SecurityHealthAnalyticsCustomModule under the given name based on the given update mask. Updating the enablement state is supported on both resident and inherited modules (though resident modules cannot have an enablement state of "inherited"). Updating the display name and custom config of a module is supported on resident modules only.
+      r"""Updates the SecurityHealthAnalyticsCustomModule under the given name based on the given update mask. Updating the enablement state is supported on both resident and inherited modules (though resident modules cannot have an enablement state of "inherited"). Updating the display name and custom configuration of a module is supported on resident modules only.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsSecurityHealthAnalyticsCustomModulesPatchRequest) input message
@@ -1650,7 +1953,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
     )
 
     def Simulate(self, request, global_params=None):
-      r"""Simulates a given SecurityHealthAnalyticsCustomModule and Resource.
+      r"""Simulates the result of using a SecurityHealthAnalyticsCustomModule to check a resource.
 
       Args:
         request: (SecuritycentermanagementProjectsLocationsSecurityHealthAnalyticsCustomModulesSimulateRequest) input message
@@ -1713,6 +2016,33 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def GetBillingMetadata(self, request, global_params=None):
+      r"""Retrieve the billing metadata explicitly set on a specific Resource.
+
+      Args:
+        request: (SecuritycentermanagementProjectsLocationsGetBillingMetadataRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (BillingMetadata) The response message.
+      """
+      config = self.GetMethodConfig('GetBillingMetadata')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetBillingMetadata.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/{locationsId}/billingMetadata',
+        http_method='GET',
+        method_id='securitycentermanagement.projects.locations.getBillingMetadata',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='SecuritycentermanagementProjectsLocationsGetBillingMetadataRequest',
+        response_type_name='BillingMetadata',
+        supports_download=False,
+    )
+
     def List(self, request, global_params=None):
       r"""Lists information about the supported locations for this service.
 
@@ -1732,7 +2062,7 @@ class SecuritycentermanagementV1(base_api.BaseApiClient):
         method_id='securitycentermanagement.projects.locations.list',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=['filter', 'pageSize', 'pageToken'],
+        query_params=['extraLocationTypes', 'filter', 'pageSize', 'pageToken'],
         relative_path='v1/{+name}/locations',
         request_field='',
         request_type_name='SecuritycentermanagementProjectsLocationsListRequest',

@@ -25,11 +25,12 @@ from googlecloudsdk.command_lib.util.args import labels_util
 from googlecloudsdk.core import log
 
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA)
-class CreateBeta(base.CreateCommand):
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.DefaultUniverseOnly
+class Create(base.CreateCommand):
   """Create a Cloud NetApp Backup Vault."""
 
-  _RELEASE_TRACK = base.ReleaseTrack.BETA
+  _RELEASE_TRACK = base.ReleaseTrack.GA
 
   detailed_help = {
       'DESCRIPTION': """\
@@ -44,7 +45,7 @@ class CreateBeta(base.CreateCommand):
 
   @staticmethod
   def Args(parser):
-    backupvaults_flags.AddBackupVaultCreateArgs(parser)
+    backupvaults_flags.AddBackupVaultCreateArgs(parser, Create._RELEASE_TRACK)
 
   def Run(self, args):
     """Create a Cloud NetApp Backup Vault in the current project."""
@@ -53,10 +54,21 @@ class CreateBeta(base.CreateCommand):
     labels = labels_util.ParseCreateArgs(
         args, client.messages.BackupVault.LabelsValue
     )
+    backup_vault_type = None
+    backup_region = None
+    if self._RELEASE_TRACK == base.ReleaseTrack.BETA:
+      backup_vault_type = backupvaults_flags.GetBackupVaultTypeEnumFromArg(
+          args.backup_vault_type, client.messages
+      )
+      backup_region = args.backup_region
+
     backup_vault = client.ParseBackupVault(
         name=backupvault_ref.RelativeName(),
         description=args.description,
         labels=labels,
+        backup_retention_policy=args.backup_retention_policy,
+        backup_vault_type=backup_vault_type,
+        backup_region=backup_region,
     )
     result = client.CreateBackupVault(
         backupvault_ref, args.async_, backup_vault
@@ -70,3 +82,16 @@ class CreateBeta(base.CreateCommand):
           ' vaults:\n  $ {} '.format(command)
       )
     return result
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class CreateBeta(Create):
+  """Create a Cloud NetApp Backup Vault."""
+
+  _RELEASE_TRACK = base.ReleaseTrack.BETA
+
+  @staticmethod
+  def Args(parser):
+    backupvaults_flags.AddBackupVaultCreateArgs(
+        parser, CreateBeta._RELEASE_TRACK
+    )

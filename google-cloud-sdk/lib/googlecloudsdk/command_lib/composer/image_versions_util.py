@@ -37,6 +37,9 @@ COMPOSER_LATEST_VERSION_PLACEHOLDER = '2.1.12'
 UpgradeValidator = collections.namedtuple('UpgradeValidator',
                                           ['upgrade_valid', 'error'])
 
+# Major version that is used as a replacement for the 'latest' alias.
+COMPOSER_LATEST_MAJOR_VERSION = 2
+
 
 class InvalidImageVersionError(command_util.Error):
   """Class for errors raised when an invalid image version is encountered."""
@@ -90,7 +93,6 @@ def IsValidImageVersionUpgrade(cur_image_version_str,
   # been requested.
   cur_image_ver = _ImageVersionItem(
       image_ver=cur_image_version_str)
-  cand_image_ver = _ImageVersionItem(image_ver=image_version_id)
 
   is_composer3 = IsVersionComposer3Compatible(
       cur_image_version_str
@@ -102,8 +104,8 @@ def IsValidImageVersionUpgrade(cur_image_version_str,
     raise InvalidImageVersionError(
         'This environment does not support upgrades.')
   return _ValidateCandidateImageVersionId(
-      cur_image_ver.GetImageVersionString(),
-      cand_image_ver.GetImageVersionString())
+      cur_image_version_str,
+      image_version_id)
 
 
 def ImageVersionFromAirflowVersion(new_airflow_version, cur_image_version=None):
@@ -253,6 +255,9 @@ def IsVersionTriggererCompatible(image_version):
 
   if image_version:
     version_item = _ImageVersionItem(image_version)
+    # Triggerer is supported in Composer 3.
+    if IsVersionComposer3Compatible(image_version):
+      return True
     if version_item and version_item.airflow_ver and version_item.composer_ver:
       airflow_version = version_item.airflow_ver
       composer_version = version_item.composer_ver
@@ -294,8 +299,13 @@ def _BuildUpgradeCandidateList(location_ref,
 
   available_upgrades = []
   # Checks if current composer version meets minimum threshold.
-  if (CompareVersions(MIN_UPGRADEABLE_COMPOSER_VER,
-                      image_version_item.composer_ver) <= 0):
+  if (
+      IsVersionComposer3Compatible(image_version_id)
+      or CompareVersions(
+          MIN_UPGRADEABLE_COMPOSER_VER, image_version_item.composer_ver
+      )
+      <= 0
+  ):
     # If so, builds list of eligible upgrades.
     for version in image_version_service.List(location_ref):
       if _ValidateCandidateImageVersionId(
@@ -312,8 +322,39 @@ def _BuildUpgradeCandidateList(location_ref,
   return available_upgrades
 
 
-def _ValidateCandidateImageVersionId(current_image_version_id,
-                                     candidate_image_version_id):
+def _GetComposerMajorVersion(composer_ver_alias):
+  if composer_ver_alias == 'latest':
+    return COMPOSER_LATEST_MAJOR_VERSION
+  return int(composer_ver_alias)
+
+
+def _IsComposerMajorOnlyVersionUpgradeCompatible(parsed_curr, parsed_cand):
+  """Validates whether Composer major only version upgrade is compatible."""
+
+  if parsed_curr.composer_contains_alias:
+    major_version_curr = _GetComposerMajorVersion(
+        parsed_curr.composer_contains_alias[0]
+    )
+  else:
+    major_version_curr = semver.SemVer(parsed_curr.composer_ver).major
+  if parsed_cand.composer_contains_alias:
+    major_version_cand = _GetComposerMajorVersion(
+        parsed_cand.composer_contains_alias[0]
+    )
+  else:
+    major_version_cand = semver.SemVer(parsed_cand.composer_ver).major
+
+  # Allow major version upgrades only between Composer 2 and Composer 3.
+  return UpgradeValidator(
+      major_version_curr == major_version_cand
+      or (major_version_curr == 2 and major_version_cand == 3),
+      None,
+  )
+
+
+def _ValidateCandidateImageVersionId(
+    current_image_version_id, candidate_image_version_id
+):
   """Determines if candidate version is a valid upgrade from current version.
 
   Args:
@@ -335,11 +376,22 @@ def _ValidateCandidateImageVersionId(current_image_version_id,
   parsed_curr = _ImageVersionItem(image_ver=current_image_version_id)
   parsed_cand = _ImageVersionItem(image_ver=candidate_image_version_id)
 
+  has_alias_or_major_only_composer_ver = (
+      parsed_cand.composer_contains_alias
+      or parsed_curr.composer_contains_alias
+  )
+
   # Checks Composer versions.
-  if upgrade_validator.upgrade_valid and not parsed_cand.composer_contains_alias:
-    upgrade_validator = _IsVersionUpgradeCompatible(parsed_curr.composer_ver,
-                                                    parsed_cand.composer_ver,
-                                                    'Composer')
+  if has_alias_or_major_only_composer_ver:
+    upgrade_validator = _IsComposerMajorOnlyVersionUpgradeCompatible(
+        parsed_curr, parsed_cand
+    )
+  elif (
+      upgrade_validator.upgrade_valid
+  ):
+    upgrade_validator = _IsVersionUpgradeCompatible(
+        parsed_curr.composer_ver, parsed_cand.composer_ver, 'Composer'
+    )
 
   # Checks Airflow versions.
   if upgrade_validator.upgrade_valid and not parsed_cand.airflow_contains_alias:
@@ -395,12 +447,20 @@ def _IsVersionUpgradeCompatible(cur_version, candidate_version,
                          req_version=candidate_version)
     return UpgradeValidator(False, error_message)
 
-  if curr_semantic_version.major != cand_semantic_version.major:
-    error_message = ('Upgrades between different {}\'s major versions are not'
-                     ' supported. Current major version {}, requested major '
-                     'version {}.').format(image_version_part,
-                                           curr_semantic_version.major,
-                                           cand_semantic_version.major)
+  # Allow only version upgrades only between Composer 2 and Composer 3.
+  if (
+      (curr_semantic_version.major != 2 or cand_semantic_version.major != 3)
+      and curr_semantic_version.major != cand_semantic_version.major
+  ):
+    error_message = (
+        "Upgrades between different {}'s major versions are not"
+        ' supported. Current major version {}, requested major '
+        'version {}.'
+    ).format(
+        image_version_part,
+        curr_semantic_version.major,
+        cand_semantic_version.major,
+    )
     return UpgradeValidator(False, error_message)
 
   return UpgradeValidator(True, None)

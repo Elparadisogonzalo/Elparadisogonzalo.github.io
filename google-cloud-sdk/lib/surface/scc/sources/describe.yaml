@@ -3,12 +3,15 @@
   # This command calls a list operation behind the scenes but we can't make command_type as list
   # since it doesn't support any of the list-flags.
   command_type: GENERIC
+  generic:
+    disable_paging_flags: true
+
 
   help_text:
     brief: Describe a source given its display name or source id.
     description: Describe a source given its display name or source id.
     examples: |
-      Describe source with display name 'Security Scanner':
+      Describe source with display name `Security Scanner`:
 
         $ {command} 123456 --source-display-name="Security Scanner"
 
@@ -18,13 +21,13 @@
 
   request:
     collection: securitycenter.organizations.sources
-    api_version: v1
+    api_version: v2
     method: list
     modify_request_hooks:
     - googlecloudsdk.command_lib.scc.sources.request_hooks:DescribeSourceReqHook
 
   arguments:
-    additional_arguments_hook: googlecloudsdk.command_lib.scc.hooks:AppendOrgArg
+    additional_arguments_hook: googlecloudsdk.command_lib.scc.hooks:AppendParentArg
 
     params:
     - group:

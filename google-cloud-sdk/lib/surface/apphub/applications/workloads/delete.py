@@ -17,9 +17,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from googlecloudsdk.api_lib.apphub import utils as api_lib_utils
 from googlecloudsdk.api_lib.apphub.applications import workloads as apis
 from googlecloudsdk.calliope import base
-from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.apphub import flags
 
 _DETAILED_HELP = {
@@ -33,8 +33,8 @@ _DETAILED_HELP = {
 }
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class Delete(base.DeleteCommand):
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class DeleteGA(base.DeleteCommand):
   """Delete an Apphub application workload."""
 
   detailed_help = _DETAILED_HELP
@@ -45,12 +45,27 @@ class Delete(base.DeleteCommand):
 
   def Run(self, args):
     """Run the delete command."""
-    client = apis.WorkloadsClient()
-    workload_ref = args.CONCEPTS.workload.Parse()
-    if not workload_ref.Name():
-      raise exceptions.InvalidArgumentException(
-          'workload', 'workload id must be non-empty.'
-      )
+    client = apis.WorkloadsClient(release_track=base.ReleaseTrack.GA)
+    workload_ref = api_lib_utils.GetApplicationWorkloadRef(args)
+    return client.Delete(
+        workload=workload_ref.RelativeName(), async_flag=args.async_
+    )
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class DeleteAlpha(base.DeleteCommand):
+  """Delete an Apphub application workload."""
+
+  detailed_help = _DETAILED_HELP
+
+  @staticmethod
+  def Args(parser):
+    flags.AddDeleteApplicationWorkloadFlags(parser)
+
+  def Run(self, args):
+    """Run the delete command."""
+    client = apis.WorkloadsClient(release_track=base.ReleaseTrack.ALPHA)
+    workload_ref = api_lib_utils.GetApplicationWorkloadRef(args)
     return client.Delete(
         workload=workload_ref.RelativeName(), async_flag=args.async_
     )

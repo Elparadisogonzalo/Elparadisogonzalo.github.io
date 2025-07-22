@@ -1,0 +1,85 @@
+2025-07-22 02:49:31,512 DEBUG    root            Loaded Command Group: ['gcloud', 'services']
+2025-07-22 02:49:31,520 DEBUG    root            Loaded Command Group: ['gcloud', 'services', 'enable']
+2025-07-22 02:49:31,523 DEBUG    root            Running [gcloud.services.enable] with arguments: [SERVICE:4: "['compute.googleapis.com', 'storage.googleapis.com', 'cloudbuild.googleapis.com', 'iam.googleapis.com']"]
+2025-07-22 02:49:31,563 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): serviceusage.googleapis.com:443
+2025-07-22 02:49:33,703 DEBUG    urllib3.connectionpool https://serviceusage.googleapis.com:443 "POST /v1/projects/elparadisogonzalo-dev/services:batchEnable?alt=json HTTP/11" 400 None
+2025-07-22 02:49:33,710 DEBUG    root            Chosen display Format:default
+2025-07-22 02:49:33,749 DEBUG    root            Chosen display Format:default
+2025-07-22 02:49:33,752 DEBUG    root            Chosen display Format:default
+2025-07-22 02:49:33,754 DEBUG    root            (gcloud.services.enable) FAILED_PRECONDITION: Billing account for project '958787376532' is not open. Billing must be enabled for activation of service(s) 'compute.googleapis.com,cloudbuild.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com' to proceed.
+Help Token: AeNz4PgxqsknuMhpjJt5hicrRyQcXlfRX_IvOepGmPQDiAWzY0ZrrN5ZaPN06dy-7-lHU81dnPwfJHwvxwWQ1QPsmXxgqQRNdMeT7kFQ2YRTCNGt
+- '@type': type.googleapis.com/google.rpc.PreconditionFailure
+  violations:
+  - subject: ?error_code=390002&project=958787376532&services=compute.googleapis.com&services=cloudbuild.googleapis.com&services=artifactregistry.googleapis.com&services=containerregistry.googleapis.com
+    type: googleapis.com/billing-enabled
+- '@type': type.googleapis.com/google.rpc.ErrorInfo
+  domain: serviceusage.googleapis.com/billing-enabled
+  metadata:
+    project: '958787376532'
+    services: compute.googleapis.com,cloudbuild.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com
+  reason: UREQ_PROJECT_BILLING_NOT_OPEN
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 985, in Execute
+    resources = calliope_command.Run(cli=self, args=args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 945, in Run
+    resources = command_instance.Run(args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/surface/services/enable.py", line 203, in Run
+    op = serviceusage.BatchEnableApiCall(project, args.service)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/services/serviceusage.py", line 903, in BatchEnableApiCall
+    return client.services.BatchEnable(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/generated_clients/apis/serviceusage/v1/serviceusage_v1_client.py", line 182, in BatchEnable
+    return self._RunMethod(
+           ^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 747, in _RunMethod
+    return self.ProcessHttpResponse(method_config, http_response, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 753, in ProcessHttpResponse
+    self.__ProcessHttpResponse(method_config, http_response, request))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 612, in __ProcessHttpResponse
+    raise exceptions.HttpError.FromResponse(
+apitools.base.py.exceptions.HttpBadRequestError: HttpError accessing <https://serviceusage.googleapis.com/v1/projects/elparadisogonzalo-dev/services:batchEnable?alt=json>: response: <{'vary': 'Origin, X-Origin, Referer', 'content-type': 'application/json; charset=UTF-8', 'content-encoding': 'gzip', 'date': 'Tue, 22 Jul 2025 01:49:33 GMT', 'server': 'ESF', 'x-xss-protection': '0', 'x-frame-options': 'SAMEORIGIN', 'x-content-type-options': 'nosniff', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000', 'transfer-encoding': 'chunked', 'status': 400}>, content <{
+  "error": {
+    "code": 400,
+    "message": "Billing account for project '958787376532' is not open. Billing must be enabled for activation of service(s) 'compute.googleapis.com,cloudbuild.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com' to proceed.\nHelp Token: AeNz4PgxqsknuMhpjJt5hicrRyQcXlfRX_IvOepGmPQDiAWzY0ZrrN5ZaPN06dy-7-lHU81dnPwfJHwvxwWQ1QPsmXxgqQRNdMeT7kFQ2YRTCNGt",
+    "status": "FAILED_PRECONDITION",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.PreconditionFailure",
+        "violations": [
+          {
+            "type": "googleapis.com/billing-enabled",
+            "subject": "?error_code=390002&project=958787376532&services=compute.googleapis.com&services=cloudbuild.googleapis.com&services=artifactregistry.googleapis.com&services=containerregistry.googleapis.com"
+          }
+        ]
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "UREQ_PROJECT_BILLING_NOT_OPEN",
+        "domain": "serviceusage.googleapis.com/billing-enabled",
+        "metadata": {
+          "project": "958787376532",
+          "services": "compute.googleapis.com,cloudbuild.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+>
+2025-07-22 02:49:33,757 ERROR    root            (gcloud.services.enable) FAILED_PRECONDITION: Billing account for project '958787376532' is not open. Billing must be enabled for activation of service(s) 'compute.googleapis.com,cloudbuild.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com' to proceed.
+Help Token: AeNz4PgxqsknuMhpjJt5hicrRyQcXlfRX_IvOepGmPQDiAWzY0ZrrN5ZaPN06dy-7-lHU81dnPwfJHwvxwWQ1QPsmXxgqQRNdMeT7kFQ2YRTCNGt
+- '@type': type.googleapis.com/google.rpc.PreconditionFailure
+  violations:
+  - subject: ?error_code=390002&project=958787376532&services=compute.googleapis.com&services=cloudbuild.googleapis.com&services=artifactregistry.googleapis.com&services=containerregistry.googleapis.com
+    type: googleapis.com/billing-enabled
+- '@type': type.googleapis.com/google.rpc.ErrorInfo
+  domain: serviceusage.googleapis.com/billing-enabled
+  metadata:
+    project: '958787376532'
+    services: compute.googleapis.com,cloudbuild.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com
+  reason: UREQ_PROJECT_BILLING_NOT_OPEN
+2025-07-22 02:49:33,771 DEBUG    root            Metrics reporting process started...

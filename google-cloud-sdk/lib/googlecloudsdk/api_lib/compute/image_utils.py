@@ -25,6 +25,7 @@ from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
 from googlecloudsdk.core.console import console_io
+from googlecloudsdk.core.universe_descriptor import universe_descriptor
 from googlecloudsdk.core.util import files as file_utils
 
 FAMILY_PREFIX = 'family/'
@@ -124,6 +125,17 @@ class ImageExpander(object):
           error_message='Could not fetch image resource:')
     return res[0]
 
+  def _AddUniversePrefix(self, project_name):
+    if properties.IsDefaultUniverse():
+      return project_name
+    else:
+      prefix = (
+          universe_descriptor.UniverseDescriptor()
+          .Get(properties.GetUniverseDomain())
+          .project_prefix
+      )
+      return prefix + ':' + project_name
+
   def ExpandImageFlag(self,
                       user_project,
                       image=None,
@@ -202,10 +214,10 @@ class ImageExpander(object):
         image_family = constants.DEFAULT_IMAGE_FAMILY_FOR_CONFIDENTIAL_VMS[
             confidential_vm_type
         ]
-        params['project'] = 'ubuntu-os-cloud'
+        params['project'] = self._AddUniversePrefix('ubuntu-os-cloud')
       else:
         image_family = constants.DEFAULT_IMAGE_FAMILY
-        params['project'] = 'debian-cloud'
+        params['project'] = self._AddUniversePrefix('debian-cloud')
         if support_image_family_scope and image_family_scope != 'global':
           params['zone'] = '-'
           collection = 'compute.imageFamilyViews'

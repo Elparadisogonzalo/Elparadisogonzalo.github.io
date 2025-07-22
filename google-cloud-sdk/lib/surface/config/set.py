@@ -27,8 +27,11 @@ from googlecloudsdk.command_lib.config import flags
 from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
 from googlecloudsdk.core.console import console_io
+from googlecloudsdk.core.credentials import store as c_store
+from googlecloudsdk.core.universe_descriptor import universe_descriptor
 
 
+@base.UniverseCompatible
 class Set(base.Command):
   """Set a Google Cloud CLI property.
 
@@ -137,11 +140,52 @@ class Set(base.Command):
       showed_warning = config_validators.WarnIfSettingApiEndpointOverrideOutsideOfConfigUniverse(
           args.value, prop
       )
+    cred_account_universe_domain = None
+    if prop == properties.VALUES.core.account:
+      cred_account_universe_domain = (
+          c_store.GetCredentialedAccountUniverseDomain(args.value)
+      )
+      showed_warning = (
+          config_validators.WarnIfSettingAccountOutsideOfConfigUniverse(
+              args.value, cred_account_universe_domain
+          )
+      )
+    is_deprecated_and_switched = False
+    if prop == properties.VALUES.core.universe_domain:
+      showed_warning = config_validators.WarnIfSettingUniverseDomainOutsideOfConfigAccountUniverse(
+          args.value
+      )
+      showed_warning = (
+          config_validators.WarnIfSettingUniverseDomainWithNoDescriptorData(
+              args.value
+          )
+      ) or showed_warning
+      universe_descriptor_obj = universe_descriptor.UniverseDescriptor()
+      is_deprecated_and_switched = (
+          universe_descriptor_obj.IsDomainUpdatedFromDeprecatedToPrimary(
+              args.value
+          )
+      )
+
     if showed_warning and not args.quiet and console_io.CanPrompt():
       if not console_io.PromptContinue(
           'Are you sure you wish to set {0}property [{1}] to {2}?'.format(
-              scope_msg, prop, args.value)):
+              scope_msg, prop, args.value
+          )
+      ):
         return
 
-    properties.PersistProperty(prop, args.value, scope=scope)
+    # Avoid setting back the universe domain property if args.value is
+    # deprecated.
+    if not is_deprecated_and_switched:
+      properties.PersistProperty(prop, args.value, scope=scope)
+    else:
+      log.status.Print('Domain is switched to primary.')
     log.status.Print('Updated {0}property [{1}].'.format(scope_msg, prop))
+    if cred_account_universe_domain and showed_warning:
+      properties.PersistProperty(
+          properties.VALUES.core.universe_domain,
+          cred_account_universe_domain,
+          scope=scope,
+      )
+      log.status.Print('Updated [core/universe_domain] to match.')

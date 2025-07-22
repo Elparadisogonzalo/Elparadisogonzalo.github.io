@@ -177,7 +177,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
           }
 
     def CreateBackup(self, request, global_params=None):
-      r"""Creates a backup for a cloud sql instance. This API can only be used to create OnDemand backups.
+      r"""Creates a backup for a Cloud SQL instance. This API can be used only to create on-demand backups.
 
       Args:
         request: (SqlBackupsCreateBackupRequest) input message
@@ -285,7 +285,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
     )
 
     def UpdateBackup(self, request, global_params=None):
-      r"""Updates the retention period and the description of the backup, currently restricted to final backups.
+      r"""Updates the retention period and the description of the backup. You can use this API to update final backups only.
 
       Args:
         request: (SqlBackupsUpdateBackupRequest) input message
@@ -567,7 +567,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
         method_id='sql.flags.list',
         ordered_params=[],
         path_params=[],
-        query_params=['databaseVersion'],
+        query_params=['databaseVersion', 'flagScope'],
         relative_path='sql/v1beta4/flags',
         request_field='',
         request_type_name='SqlFlagsListRequest',
@@ -584,6 +584,58 @@ class SqladminV1beta4(base_api.BaseApiClient):
       super(SqladminV1beta4.InstancesService, self).__init__(client)
       self._upload_configs = {
           }
+
+    def ListServerCertificates(self, request, global_params=None):
+      r"""Lists all versions of server certificates and certificate authorities (CAs) for the specified instance. There can be up to three sets of certs listed: the certificate that is currently in use, a future that has been added but not yet used to sign a certificate, and a certificate that has been rotated out. For instances not using Certificate Authority Service (CAS) server CA, use ListServerCas instead.
+
+      Args:
+        request: (SqlInstancesListServerCertificatesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (InstancesListServerCertificatesResponse) The response message.
+      """
+      config = self.GetMethodConfig('ListServerCertificates')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    ListServerCertificates.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='GET',
+        method_id='sql.instances.ListServerCertificates',
+        ordered_params=['project', 'instance'],
+        path_params=['instance', 'project'],
+        query_params=[],
+        relative_path='sql/v1beta4/projects/{project}/instances/{instance}/listServerCertificates',
+        request_field='',
+        request_type_name='SqlInstancesListServerCertificatesRequest',
+        response_type_name='InstancesListServerCertificatesResponse',
+        supports_download=False,
+    )
+
+    def RotateServerCertificate(self, request, global_params=None):
+      r"""Rotates the server certificate version to one previously added with the addServerCertificate method. For instances not using Certificate Authority Service (CAS) server CA, use RotateServerCa instead.
+
+      Args:
+        request: (SqlInstancesRotateServerCertificateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('RotateServerCertificate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    RotateServerCertificate.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='sql.instances.RotateServerCertificate',
+        ordered_params=['project', 'instance'],
+        path_params=['instance', 'project'],
+        query_params=[],
+        relative_path='sql/v1beta4/projects/{project}/instances/{instance}/rotateServerCertificate',
+        request_field='instancesRotateServerCertificateRequest',
+        request_type_name='SqlInstancesRotateServerCertificateRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
 
     def AcquireSsrsLease(self, request, global_params=None):
       r"""Acquire a lease for the setup of SQL Server Reporting Services (SSRS).
@@ -612,7 +664,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
     )
 
     def AddServerCa(self, request, global_params=None):
-      r"""Add a new trusted Certificate Authority (CA) version for the specified instance. Required to prepare for a certificate rotation. If a CA version was previously added but never used in a certificate rotation, this operation replaces that version. There cannot be more than one CA version waiting to be rotated in.
+      r"""Add a new trusted Certificate Authority (CA) version for the specified instance. Required to prepare for a certificate rotation. If a CA version was previously added but never used in a certificate rotation, this operation replaces that version. There cannot be more than one CA version waiting to be rotated in. For instances that have enabled Certificate Authority Service (CAS) based server CA, use AddServerCertificate to add a new server certificate.
 
       Args:
         request: (SqlInstancesAddServerCaRequest) input message
@@ -633,6 +685,32 @@ class SqladminV1beta4(base_api.BaseApiClient):
         relative_path='sql/v1beta4/projects/{project}/instances/{instance}/addServerCa',
         request_field='',
         request_type_name='SqlInstancesAddServerCaRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def AddServerCertificate(self, request, global_params=None):
+      r"""Add a new trusted server certificate version for the specified instance using Certificate Authority Service (CAS) server CA. Required to prepare for a certificate rotation. If a server certificate version was previously added but never used in a certificate rotation, this operation replaces that version. There cannot be more than one certificate version waiting to be rotated in. For instances not using CAS server CA, use AddServerCa instead.
+
+      Args:
+        request: (SqlInstancesAddServerCertificateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('AddServerCertificate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    AddServerCertificate.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='sql.instances.addServerCertificate',
+        ordered_params=['project', 'instance'],
+        path_params=['instance', 'project'],
+        query_params=[],
+        relative_path='sql/v1beta4/projects/{project}/instances/{instance}/addServerCertificate',
+        request_field='',
+        request_type_name='SqlInstancesAddServerCertificateRequest',
         response_type_name='Operation',
         supports_download=False,
     )
@@ -681,7 +759,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
         method_id='sql.instances.delete',
         ordered_params=['project', 'instance'],
         path_params=['instance', 'project'],
-        query_params=['finalBackupDescription', 'finalBackupExpiryTime', 'finalBackupTtlDays', 'skipFinalBackup'],
+        query_params=['enableFinalBackup', 'finalBackupDescription', 'finalBackupExpiryTime', 'finalBackupTtlDays', 'retainBackups', 'retainBackupsExpiryTime', 'retainBackupsTtlDays', 'skipFinalBackup'],
         relative_path='sql/v1beta4/projects/{project}/instances/{instance}',
         request_field='',
         request_type_name='SqlInstancesDeleteRequest',
@@ -738,6 +816,32 @@ class SqladminV1beta4(base_api.BaseApiClient):
         request_field='instancesDemoteMasterRequest',
         request_type_name='SqlInstancesDemoteMasterRequest',
         response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def ExecuteSql(self, request, global_params=None):
+      r"""Runs a SQL statement in a database that's inside of a Cloud SQL instance.
+
+      Args:
+        request: (SqlInstancesExecuteSqlRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (SqlInstancesExecuteSqlResponse) The response message.
+      """
+      config = self.GetMethodConfig('ExecuteSql')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    ExecuteSql.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='sql.instances.executeSql',
+        ordered_params=['project', 'instance'],
+        path_params=['instance', 'project'],
+        query_params=[],
+        relative_path='sql/v1beta4/projects/{project}/instances/{instance}/executeSql',
+        request_field='executeSqlPayload',
+        request_type_name='SqlInstancesExecuteSqlRequest',
+        response_type_name='SqlInstancesExecuteSqlResponse',
         supports_download=False,
     )
 
@@ -941,7 +1045,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
         method_id='sql.instances.patch',
         ordered_params=['project', 'instance'],
         path_params=['instance', 'project'],
-        query_params=[],
+        query_params=['enforcePsaWriteEndpoint'],
         relative_path='sql/v1beta4/projects/{project}/instances/{instance}',
         request_field='databaseInstance',
         request_type_name='SqlInstancesPatchRequest',
@@ -949,8 +1053,61 @@ class SqladminV1beta4(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def PointInTimeRestore(self, request, global_params=None):
+      r"""Point in time restore for an instance managed by Google Cloud Backup and Disaster Recovery.
+
+      Args:
+        request: (SqlInstancesPointInTimeRestoreRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('PointInTimeRestore')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    PointInTimeRestore.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='sql/v1beta4/projects/{projectsId}:pointInTimeRestore',
+        http_method='POST',
+        method_id='sql.instances.pointInTimeRestore',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=[],
+        relative_path='sql/v1beta4/{+parent}:pointInTimeRestore',
+        request_field='pointInTimeRestoreContext',
+        request_type_name='SqlInstancesPointInTimeRestoreRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def PreCheckMajorVersionUpgrade(self, request, global_params=None):
+      r"""Execute MVU Pre-checks.
+
+      Args:
+        request: (SqlInstancesPreCheckMajorVersionUpgradeRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('PreCheckMajorVersionUpgrade')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    PreCheckMajorVersionUpgrade.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='sql.instances.preCheckMajorVersionUpgrade',
+        ordered_params=['project', 'instance'],
+        path_params=['instance', 'project'],
+        query_params=[],
+        relative_path='sql/v1beta4/projects/{project}/instances/{instance}/preCheckMajorVersionUpgrade',
+        request_field='instancesPreCheckMajorVersionUpgradeRequest',
+        request_type_name='SqlInstancesPreCheckMajorVersionUpgradeRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
     def PromoteReplica(self, request, global_params=None):
-      r"""Promotes the read replica instance to be a stand-alone Cloud SQL instance. Using this operation might cause your instance to restart.
+      r"""Promotes the read replica instance to be an independent Cloud SQL primary instance. Using this operation might cause your instance to restart.
 
       Args:
         request: (SqlInstancesPromoteReplicaRequest) input message
@@ -1106,7 +1263,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
     )
 
     def RotateServerCa(self, request, global_params=None):
-      r"""Rotates the server certificate to one signed by the Certificate Authority (CA) version previously added with the addServerCA method.
+      r"""Rotates the server certificate to one signed by the Certificate Authority (CA) version previously added with the addServerCA method. For instances that have enabled Certificate Authority Service (CAS) based server CA, use RotateServerCertificate to rotate the server certificate.
 
       Args:
         request: (SqlInstancesRotateServerCaRequest) input message
@@ -1184,7 +1341,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
     )
 
     def Switchover(self, request, global_params=None):
-      r"""Switches over from the primary instance to a replica instance.
+      r"""Switches over from the primary instance to the DR replica instance.
 
       Args:
         request: (SqlInstancesSwitchoverRequest) input message
@@ -1253,7 +1410,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
         method_id='sql.instances.update',
         ordered_params=['project', 'instance'],
         path_params=['instance', 'project'],
-        query_params=[],
+        query_params=['enforcePsaWriteEndpoint'],
         relative_path='sql/v1beta4/projects/{project}/instances/{instance}',
         request_field='databaseInstance',
         request_type_name='SqlInstancesUpdateRequest',
@@ -1403,7 +1560,7 @@ class SqladminV1beta4(base_api.BaseApiClient):
         method_id='sql.projects.instances.getLatestRecoveryTime',
         ordered_params=['project', 'instance'],
         path_params=['instance', 'project'],
-        query_params=[],
+        query_params=['sourceInstanceDeletionTime'],
         relative_path='sql/v1beta4/projects/{project}/instances/{instance}/getLatestRecoveryTime',
         request_field='',
         request_type_name='SqlProjectsInstancesGetLatestRecoveryTimeRequest',

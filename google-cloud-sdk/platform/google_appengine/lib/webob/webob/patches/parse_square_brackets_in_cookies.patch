@@ -1,0 +1,14 @@
+--- a/cookies.py
++++ b/cookies.py
+@@ -316,7 +316,10 @@ _re_legal_char  = r"[\w\d%s]" % re.escap
+ _re_expires_val = r"\w{3},\s[\w\d-]{9,11}\s[\d:]{8}\sGMT"
+ _re_cookie_str_key = r"(%s+?)" % _re_legal_char
+ _re_cookie_str_equal = r"\s*=\s*"
+-_re_unquoted_val = r"(?:%s|\\(?:[0-3][0-7][0-7]|.))*" % _re_legal_char
++# Add support for square brackets in cookie values, while keeping this patch as small as possible.
++_legal_value_chars = _legal_special_chars + "[]"
++_re_value_char = r"[\w\d%s]" % re.escape(_legal_value_chars)
++_re_unquoted_val = r"(?:%s|\\(?:[0-3][0-7][0-7]|.))*" % _re_value_char
+ _re_cookie_str_val = r"(%s|%s|%s)" % (_re_quoted, _re_expires_val,
+                                        _re_unquoted_val)
+ _re_cookie_str = _re_cookie_str_key + _re_cookie_str_equal + _re_cookie_str_val

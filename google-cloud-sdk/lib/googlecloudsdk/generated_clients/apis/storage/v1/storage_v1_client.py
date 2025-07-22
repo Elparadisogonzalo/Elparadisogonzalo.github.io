@@ -44,6 +44,7 @@ class StorageV1(base_api.BaseApiClient):
     self.buckets = self.BucketsService(self)
     self.channels = self.ChannelsService(self)
     self.defaultObjectAccessControls = self.DefaultObjectAccessControlsService(self)
+    self.folders = self.FoldersService(self)
     self.managedFolders = self.ManagedFoldersService(self)
     self.notifications = self.NotificationsService(self)
     self.objectAccessControls = self.ObjectAccessControlsService(self)
@@ -422,7 +423,7 @@ class StorageV1(base_api.BaseApiClient):
           }
 
     def Delete(self, request, global_params=None):
-      r"""Permanently deletes an empty bucket.
+      r"""Deletes an empty bucket. Deletions are permanent unless soft delete is enabled on the bucket.
 
       Args:
         request: (StorageBucketsDeleteRequest) input message
@@ -465,7 +466,7 @@ class StorageV1(base_api.BaseApiClient):
         method_id='storage.buckets.get',
         ordered_params=['bucket'],
         path_params=['bucket'],
-        query_params=['ifMetagenerationMatch', 'ifMetagenerationNotMatch', 'projection', 'userProject'],
+        query_params=['generation', 'ifMetagenerationMatch', 'ifMetagenerationNotMatch', 'projection', 'softDeleted', 'userProject'],
         relative_path='b/{bucket}',
         request_field='',
         request_type_name='StorageBucketsGetRequest',
@@ -496,6 +497,32 @@ class StorageV1(base_api.BaseApiClient):
         request_field='',
         request_type_name='StorageBucketsGetIamPolicyRequest',
         response_type_name='Policy',
+        supports_download=False,
+    )
+
+    def GetStorageLayout(self, request, global_params=None):
+      r"""Returns the storage layout configuration for the specified bucket. Note that this operation requires storage.objects.list permission.
+
+      Args:
+        request: (StorageBucketsGetStorageLayoutRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (BucketStorageLayout) The response message.
+      """
+      config = self.GetMethodConfig('GetStorageLayout')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetStorageLayout.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='GET',
+        method_id='storage.buckets.getStorageLayout',
+        ordered_params=['bucket'],
+        path_params=['bucket'],
+        query_params=['prefix'],
+        relative_path='b/{bucket}/storageLayout',
+        request_field='',
+        request_type_name='StorageBucketsGetStorageLayoutRequest',
+        response_type_name='BucketStorageLayout',
         supports_download=False,
     )
 
@@ -543,7 +570,7 @@ class StorageV1(base_api.BaseApiClient):
         method_id='storage.buckets.list',
         ordered_params=['project'],
         path_params=[],
-        query_params=['maxResults', 'pageToken', 'prefix', 'project', 'projection', 'userProject'],
+        query_params=['maxResults', 'pageToken', 'prefix', 'project', 'projection', 'softDeleted', 'userProject'],
         relative_path='b',
         request_field='',
         request_type_name='StorageBucketsListRequest',
@@ -599,6 +626,58 @@ class StorageV1(base_api.BaseApiClient):
         relative_path='b/{bucket}',
         request_field='bucketResource',
         request_type_name='StorageBucketsPatchRequest',
+        response_type_name='Bucket',
+        supports_download=False,
+    )
+
+    def Relocate(self, request, global_params=None):
+      r"""Initiates a long-running Relocate Bucket operation on the specified bucket.
+
+      Args:
+        request: (StorageBucketsRelocateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleLongrunningOperation) The response message.
+      """
+      config = self.GetMethodConfig('Relocate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Relocate.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='storage.buckets.relocate',
+        ordered_params=['bucket'],
+        path_params=['bucket'],
+        query_params=[],
+        relative_path='b/{bucket}/relocate',
+        request_field='relocateBucketRequest',
+        request_type_name='StorageBucketsRelocateRequest',
+        response_type_name='GoogleLongrunningOperation',
+        supports_download=False,
+    )
+
+    def Restore(self, request, global_params=None):
+      r"""Restores a soft-deleted bucket.
+
+      Args:
+        request: (StorageBucketsRestoreRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Bucket) The response message.
+      """
+      config = self.GetMethodConfig('Restore')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Restore.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='storage.buckets.restore',
+        ordered_params=['bucket', 'generation'],
+        path_params=['bucket'],
+        query_params=['generation', 'projection', 'userProject'],
+        relative_path='b/{bucket}/restore',
+        request_field='',
+        request_type_name='StorageBucketsRestoreRequest',
         response_type_name='Bucket',
         supports_download=False,
     )
@@ -883,6 +962,146 @@ class StorageV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class FoldersService(base_api.BaseApiService):
+    """Service class for the folders resource."""
+
+    _NAME = 'folders'
+
+    def __init__(self, client):
+      super(StorageV1.FoldersService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Delete(self, request, global_params=None):
+      r"""Permanently deletes a folder. Only applicable to buckets with hierarchical namespace enabled.
+
+      Args:
+        request: (StorageFoldersDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (StorageFoldersDeleteResponse) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='DELETE',
+        method_id='storage.folders.delete',
+        ordered_params=['bucket', 'folder'],
+        path_params=['bucket', 'folder'],
+        query_params=['ifMetagenerationMatch', 'ifMetagenerationNotMatch'],
+        relative_path='b/{bucket}/folders/{folder}',
+        request_field='',
+        request_type_name='StorageFoldersDeleteRequest',
+        response_type_name='StorageFoldersDeleteResponse',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Returns metadata for the specified folder. Only applicable to buckets with hierarchical namespace enabled.
+
+      Args:
+        request: (StorageFoldersGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Folder) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='GET',
+        method_id='storage.folders.get',
+        ordered_params=['bucket', 'folder'],
+        path_params=['bucket', 'folder'],
+        query_params=['ifMetagenerationMatch', 'ifMetagenerationNotMatch'],
+        relative_path='b/{bucket}/folders/{folder}',
+        request_field='',
+        request_type_name='StorageFoldersGetRequest',
+        response_type_name='Folder',
+        supports_download=False,
+    )
+
+    def Insert(self, request, global_params=None):
+      r"""Creates a new folder. Only applicable to buckets with hierarchical namespace enabled.
+
+      Args:
+        request: (StorageFoldersInsertRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Folder) The response message.
+      """
+      config = self.GetMethodConfig('Insert')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Insert.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='storage.folders.insert',
+        ordered_params=['bucket'],
+        path_params=['bucket'],
+        query_params=['recursive'],
+        relative_path='b/{bucket}/folders',
+        request_field='folder',
+        request_type_name='StorageFoldersInsertRequest',
+        response_type_name='Folder',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Retrieves a list of folders matching the criteria. Only applicable to buckets with hierarchical namespace enabled.
+
+      Args:
+        request: (StorageFoldersListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Folders) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='GET',
+        method_id='storage.folders.list',
+        ordered_params=['bucket'],
+        path_params=['bucket'],
+        query_params=['delimiter', 'endOffset', 'pageSize', 'pageToken', 'prefix', 'startOffset'],
+        relative_path='b/{bucket}/folders',
+        request_field='',
+        request_type_name='StorageFoldersListRequest',
+        response_type_name='Folders',
+        supports_download=False,
+    )
+
+    def Rename(self, request, global_params=None):
+      r"""Renames a source folder to a destination folder. Only applicable to buckets with hierarchical namespace enabled.
+
+      Args:
+        request: (StorageFoldersRenameRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleLongrunningOperation) The response message.
+      """
+      config = self.GetMethodConfig('Rename')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Rename.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='storage.folders.rename',
+        ordered_params=['bucket', 'sourceFolder', 'destinationFolder'],
+        path_params=['bucket', 'destinationFolder', 'sourceFolder'],
+        query_params=['ifSourceMetagenerationMatch', 'ifSourceMetagenerationNotMatch'],
+        relative_path='b/{bucket}/folders/{sourceFolder}/renameTo/folders/{destinationFolder}',
+        request_field='',
+        request_type_name='StorageFoldersRenameRequest',
+        response_type_name='GoogleLongrunningOperation',
+        supports_download=False,
+    )
+
   class ManagedFoldersService(base_api.BaseApiService):
     """Service class for the managedFolders resource."""
 
@@ -911,7 +1130,7 @@ class StorageV1(base_api.BaseApiClient):
         method_id='storage.managedFolders.delete',
         ordered_params=['bucket', 'managedFolder'],
         path_params=['bucket', 'managedFolder'],
-        query_params=['ifMetagenerationMatch', 'ifMetagenerationNotMatch'],
+        query_params=['allowNonEmpty', 'ifMetagenerationMatch', 'ifMetagenerationNotMatch'],
         relative_path='b/{bucket}/managedFolders/{managedFolder}',
         request_field='',
         request_type_name='StorageManagedFoldersDeleteRequest',
@@ -1498,7 +1717,7 @@ class StorageV1(base_api.BaseApiClient):
         method_id='storage.objects.get',
         ordered_params=['bucket', 'object'],
         path_params=['bucket', 'object'],
-        query_params=['generation', 'ifGenerationMatch', 'ifGenerationNotMatch', 'ifMetagenerationMatch', 'ifMetagenerationNotMatch', 'projection', 'softDeleted', 'userProject'],
+        query_params=['generation', 'ifGenerationMatch', 'ifGenerationNotMatch', 'ifMetagenerationMatch', 'ifMetagenerationNotMatch', 'projection', 'restoreToken', 'softDeleted', 'userProject'],
         relative_path='b/{bucket}/o/{object}',
         request_field='',
         request_type_name='StorageObjectsGetRequest',
@@ -1588,6 +1807,32 @@ class StorageV1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Move(self, request, global_params=None):
+      r"""Moves the source object to the destination object in the same bucket.
+
+      Args:
+        request: (StorageObjectsMoveRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Object) The response message.
+      """
+      config = self.GetMethodConfig('Move')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Move.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='storage.objects.move',
+        ordered_params=['bucket', 'sourceObject', 'destinationObject'],
+        path_params=['bucket', 'destinationObject', 'sourceObject'],
+        query_params=['ifGenerationMatch', 'ifGenerationNotMatch', 'ifMetagenerationMatch', 'ifMetagenerationNotMatch', 'ifSourceGenerationMatch', 'ifSourceGenerationNotMatch', 'ifSourceMetagenerationMatch', 'ifSourceMetagenerationNotMatch', 'projection', 'userProject'],
+        relative_path='b/{bucket}/o/{sourceObject}/moveTo/o/{destinationObject}',
+        request_field='',
+        request_type_name='StorageObjectsMoveRequest',
+        response_type_name='Object',
+        supports_download=False,
+    )
+
     def Patch(self, request, global_params=None):
       r"""Patches an object's metadata.
 
@@ -1630,11 +1875,11 @@ class StorageV1(base_api.BaseApiClient):
     Restore.method_config = lambda: base_api.ApiMethodInfo(
         http_method='POST',
         method_id='storage.objects.restore',
-        ordered_params=['bucket', 'object'],
+        ordered_params=['bucket', 'object', 'generation'],
         path_params=['bucket', 'object'],
-        query_params=['copySourceAcl', 'generation', 'ifGenerationMatch', 'ifGenerationNotMatch', 'ifMetagenerationMatch', 'ifMetagenerationNotMatch', 'projection', 'userProject'],
+        query_params=['copySourceAcl', 'generation', 'ifGenerationMatch', 'ifGenerationNotMatch', 'ifMetagenerationMatch', 'ifMetagenerationNotMatch', 'projection', 'restoreToken', 'userProject'],
         relative_path='b/{bucket}/o/{object}/restore',
-        request_field='objectResource',
+        request_field='',
         request_type_name='StorageObjectsRestoreRequest',
         response_type_name='Object',
         supports_download=False,
@@ -1779,6 +2024,32 @@ class StorageV1(base_api.BaseApiClient):
       super(StorageV1.OperationsService, self).__init__(client)
       self._upload_configs = {
           }
+
+    def AdvanceRelocateBucket(self, request, global_params=None):
+      r"""Starts asynchronous advancement of the relocate bucket operation in the case of required write downtime, to allow it to lock the bucket at the source location, and proceed with the bucket location swap. The server makes a best effort to advance the relocate bucket operation, but success is not guaranteed.
+
+      Args:
+        request: (StorageBucketsOperationsAdvanceRelocateBucketRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (StorageBucketsOperationsAdvanceRelocateBucketResponse) The response message.
+      """
+      config = self.GetMethodConfig('AdvanceRelocateBucket')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    AdvanceRelocateBucket.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='POST',
+        method_id='storage.buckets.operations.advanceRelocateBucket',
+        ordered_params=['bucket', 'operationId'],
+        path_params=['bucket', 'operationId'],
+        query_params=[],
+        relative_path='b/{bucket}/operations/{operationId}/advanceRelocateBucket',
+        request_field='advanceRelocateBucketOperationRequest',
+        request_type_name='StorageBucketsOperationsAdvanceRelocateBucketRequest',
+        response_type_name='StorageBucketsOperationsAdvanceRelocateBucketResponse',
+        supports_download=False,
+    )
 
     def Cancel(self, request, global_params=None):
       r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed.
@@ -1973,7 +2244,7 @@ class StorageV1(base_api.BaseApiClient):
     )
 
     def Update(self, request, global_params=None):
-      r"""Updates the state of an HMAC key. See the HMAC Key resource descriptor for valid states.
+      r"""Updates the state of an HMAC key. See the [HMAC Key resource descriptor](https://cloud.google.com/storage/docs/json_api/v1/projects/hmacKeys/update#request-body) for valid states.
 
       Args:
         request: (StorageProjectsHmacKeysUpdateRequest) input message

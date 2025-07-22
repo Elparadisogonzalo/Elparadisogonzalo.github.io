@@ -589,6 +589,62 @@ class Empty(_messages.Message):
 
 
 
+class ExecutionStats(_messages.Message):
+  r"""Execution statistics for the query.
+
+  Messages:
+    DebugStatsValue: Debugging statistics from the execution of the query.
+      Note that the debugging stats are subject to change as Firestore
+      evolves. It could include: { "indexes_entries_scanned": "1000",
+      "documents_scanned": "20", "billing_details" : { "documents_billable":
+      "20", "index_entries_billable": "1000", "min_query_cost": "0" } }
+
+  Fields:
+    debugStats: Debugging statistics from the execution of the query. Note
+      that the debugging stats are subject to change as Firestore evolves. It
+      could include: { "indexes_entries_scanned": "1000", "documents_scanned":
+      "20", "billing_details" : { "documents_billable": "20",
+      "index_entries_billable": "1000", "min_query_cost": "0" } }
+    executionDuration: Total time to execute the query in the backend.
+    readOperations: Total billable read operations.
+    resultsReturned: Total number of results returned, including documents,
+      projections, aggregation results, keys.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class DebugStatsValue(_messages.Message):
+    r"""Debugging statistics from the execution of the query. Note that the
+    debugging stats are subject to change as Firestore evolves. It could
+    include: { "indexes_entries_scanned": "1000", "documents_scanned": "20",
+    "billing_details" : { "documents_billable": "20",
+    "index_entries_billable": "1000", "min_query_cost": "0" } }
+
+    Messages:
+      AdditionalProperty: An additional property for a DebugStatsValue object.
+
+    Fields:
+      additionalProperties: Properties of the object.
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a DebugStatsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A extra_types.JsonValue attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.MessageField('extra_types.JsonValue', 2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  debugStats = _messages.MessageField('DebugStatsValue', 1)
+  executionDuration = _messages.StringField(2)
+  readOperations = _messages.IntegerField(3)
+  resultsReturned = _messages.IntegerField(4)
+
+
 class ExistenceFilter(_messages.Message):
   r"""A digest of all the documents that match a given target.
 
@@ -616,6 +672,33 @@ class ExistenceFilter(_messages.Message):
   count = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   targetId = _messages.IntegerField(2, variant=_messages.Variant.INT32)
   unchangedNames = _messages.MessageField('BloomFilter', 3)
+
+
+class ExplainMetrics(_messages.Message):
+  r"""Explain metrics for the query.
+
+  Fields:
+    executionStats: Aggregated stats from the execution of the query. Only
+      present when ExplainOptions.analyze is set to true.
+    planSummary: Planning phase information for the query.
+  """
+
+  executionStats = _messages.MessageField('ExecutionStats', 1)
+  planSummary = _messages.MessageField('PlanSummary', 2)
+
+
+class ExplainOptions(_messages.Message):
+  r"""Explain options for the query.
+
+  Fields:
+    analyze: Optional. Whether to execute this query. When false (the
+      default), the query will be planned, returning only metrics from the
+      planning stages. When true, the query will be planned and executed,
+      returning the full query results along with both planning and execution
+      stage metrics.
+  """
+
+  analyze = _messages.BooleanField(1)
 
 
 class FieldFilter(_messages.Message):
@@ -783,6 +866,72 @@ class Filter(_messages.Message):
   unaryFilter = _messages.MessageField('UnaryFilter', 3)
 
 
+class FindNearest(_messages.Message):
+  r"""Nearest Neighbors search config. The ordering provided by FindNearest
+  supersedes the order_by stage. If multiple documents have the same vector
+  distance, the returned document order is not guaranteed to be stable between
+  queries.
+
+  Enums:
+    DistanceMeasureValueValuesEnum: Required. The distance measure to use,
+      required.
+
+  Fields:
+    distanceMeasure: Required. The distance measure to use, required.
+    distanceResultField: Optional. Optional name of the field to output the
+      result of the vector distance calculation. Must conform to document
+      field name limitations.
+    distanceThreshold: Optional. Option to specify a threshold for which no
+      less similar documents will be returned. The behavior of the specified
+      `distance_measure` will affect the meaning of the distance threshold.
+      Since DOT_PRODUCT distances increase when the vectors are more similar,
+      the comparison is inverted. * For EUCLIDEAN, COSINE: `WHERE distance <=
+      distance_threshold` * For DOT_PRODUCT: `WHERE distance >=
+      distance_threshold`
+    limit: Required. The number of nearest neighbors to return. Must be a
+      positive integer of no more than 1000.
+    queryVector: Required. The query vector that we are searching on. Must be
+      a vector of no more than 2048 dimensions.
+    vectorField: Required. An indexed vector field to search upon. Only
+      documents which contain vectors whose dimensionality match the
+      query_vector can be returned.
+  """
+
+  class DistanceMeasureValueValuesEnum(_messages.Enum):
+    r"""Required. The distance measure to use, required.
+
+    Values:
+      DISTANCE_MEASURE_UNSPECIFIED: Should not be set.
+      EUCLIDEAN: Measures the EUCLIDEAN distance between the vectors. See
+        [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) to learn
+        more. The resulting distance decreases the more similar two vectors
+        are.
+      COSINE: COSINE distance compares vectors based on the angle between
+        them, which allows you to measure similarity that isn't based on the
+        vectors magnitude. We recommend using DOT_PRODUCT with unit normalized
+        vectors instead of COSINE distance, which is mathematically equivalent
+        with better performance. See [Cosine
+        Similarity](https://en.wikipedia.org/wiki/Cosine_similarity) to learn
+        more about COSINE similarity and COSINE distance. The resulting COSINE
+        distance decreases the more similar two vectors are.
+      DOT_PRODUCT: Similar to cosine but is affected by the magnitude of the
+        vectors. See [Dot Product](https://en.wikipedia.org/wiki/Dot_product)
+        to learn more. The resulting distance increases the more similar two
+        vectors are.
+    """
+    DISTANCE_MEASURE_UNSPECIFIED = 0
+    EUCLIDEAN = 1
+    COSINE = 2
+    DOT_PRODUCT = 3
+
+  distanceMeasure = _messages.EnumField('DistanceMeasureValueValuesEnum', 1)
+  distanceResultField = _messages.StringField(2)
+  distanceThreshold = _messages.FloatField(3)
+  limit = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  queryVector = _messages.MessageField('Value', 5)
+  vectorField = _messages.MessageField('FieldReference', 6)
+
+
 class FirestoreProjectsDatabasesBackupSchedulesCreateRequest(_messages.Message):
   r"""A FirestoreProjectsDatabasesBackupSchedulesCreateRequest object.
 
@@ -802,8 +951,8 @@ class FirestoreProjectsDatabasesBackupSchedulesDeleteRequest(_messages.Message):
   r"""A FirestoreProjectsDatabasesBackupSchedulesDeleteRequest object.
 
   Fields:
-    name: Required. The name of backup schedule. Format `projects/{project}/da
-      tabases/{database}/backupSchedules/{backup_schedule}`
+    name: Required. The name of the backup schedule. Format `projects/{project
+      }/databases/{database}/backupSchedules/{backup_schedule}`
   """
 
   name = _messages.StringField(1, required=True)
@@ -850,6 +999,36 @@ class FirestoreProjectsDatabasesBackupSchedulesPatchRequest(_messages.Message):
   updateMask = _messages.StringField(3)
 
 
+class FirestoreProjectsDatabasesBulkDeleteDocumentsRequest(_messages.Message):
+  r"""A FirestoreProjectsDatabasesBulkDeleteDocumentsRequest object.
+
+  Fields:
+    googleFirestoreAdminV1BulkDeleteDocumentsRequest: A
+      GoogleFirestoreAdminV1BulkDeleteDocumentsRequest resource to be passed
+      as the request body.
+    name: Required. Database to operate. Should be of the form:
+      `projects/{project_id}/databases/{database_id}`.
+  """
+
+  googleFirestoreAdminV1BulkDeleteDocumentsRequest = _messages.MessageField('GoogleFirestoreAdminV1BulkDeleteDocumentsRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class FirestoreProjectsDatabasesCloneRequest(_messages.Message):
+  r"""A FirestoreProjectsDatabasesCloneRequest object.
+
+  Fields:
+    googleFirestoreAdminV1CloneDatabaseRequest: A
+      GoogleFirestoreAdminV1CloneDatabaseRequest resource to be passed as the
+      request body.
+    parent: Required. The project to clone the database in. Format is
+      `projects/{project_id}`.
+  """
+
+  googleFirestoreAdminV1CloneDatabaseRequest = _messages.MessageField('GoogleFirestoreAdminV1CloneDatabaseRequest', 1)
+  parent = _messages.StringField(2, required=True)
+
+
 class FirestoreProjectsDatabasesCollectionGroupsFieldsGetRequest(_messages.Message):
   r"""A FirestoreProjectsDatabasesCollectionGroupsFieldsGetRequest object.
 
@@ -869,7 +1048,7 @@ class FirestoreProjectsDatabasesCollectionGroupsFieldsListRequest(_messages.Mess
       FirestoreAdmin.ListFields only supports listing fields that have been
       explicitly overridden. To issue this query, call
       FirestoreAdmin.ListFields with a filter that includes
-      `indexConfig.usesAncestorConfig:false` .
+      `indexConfig.usesAncestorConfig:false` or `ttlConfig:*`.
     pageSize: The number of results to return.
     pageToken: A page token, returned from a previous call to
       FirestoreAdmin.ListFields, that may be used to get the next page of
@@ -890,24 +1069,23 @@ class FirestoreProjectsDatabasesCollectionGroupsFieldsPatchRequest(_messages.Mes
   Fields:
     googleFirestoreAdminV1Field: A GoogleFirestoreAdminV1Field resource to be
       passed as the request body.
-    name: Required. A field name of the form `projects/{project_id}/databases/
-      {database_id}/collectionGroups/{collection_id}/fields/{field_path}` A
-      field path may be a simple field name, e.g. `address` or a path to
-      fields within map_value , e.g. `address.city`, or a special field path.
-      The only valid special field is `*`, which represents any field. Field
-      paths may be quoted using ` (backtick). The only character that needs to
-      be escaped within a quoted field path is the backtick character itself,
-      escaped using a backslash. Special characters in field paths that must
-      be quoted include: `*`, `.`, ``` (backtick), `[`, `]`, as well as any
-      ascii symbolic characters. Examples: (Note: Comments here are written in
-      markdown syntax, so there is an additional layer of backticks to
-      represent a code block) `\`address.city\`` represents a field named
-      `address.city`, not the map key `city` in the field `address`. `\`*\``
-      represents a field named `*`, not any field. A special `Field` contains
-      the default indexing settings for all fields. This field's resource name
-      is: `projects/{project_id}/databases/{database_id}/collectionGroups/__de
-      fault__/fields/*` Indexes defined on this `Field` will be applied to all
-      fields which do not have their own `Field` index configuration.
+    name: Required. A field name of the form: `projects/{project_id}/databases
+      /{database_id}/collectionGroups/{collection_id}/fields/{field_path}` A
+      field path can be a simple field name, e.g. `address` or a path to
+      fields within `map_value` , e.g. `address.city`, or a special field
+      path. The only valid special field is `*`, which represents any field.
+      Field paths can be quoted using `` ` `` (backtick). The only character
+      that must be escaped within a quoted field path is the backtick
+      character itself, escaped using a backslash. Special characters in field
+      paths that must be quoted include: `*`, `.`, `` ` `` (backtick), `[`,
+      `]`, as well as any ascii symbolic characters. Examples: ``
+      `address.city` `` represents a field named `address.city`, not the map
+      key `city` in the field `address`. `` `*` `` represents a field named
+      `*`, not any field. A special `Field` contains the default indexing
+      settings for all fields. This field's resource name is: `projects/{proje
+      ct_id}/databases/{database_id}/collectionGroups/__default__/fields/*`
+      Indexes defined on this `Field` will be applied to all fields which do
+      not have their own `Field` index configuration.
     updateMask: A mask, relative to the field. If specified, only
       configuration specified by this field_mask will be updated in the field.
   """
@@ -980,7 +1158,7 @@ class FirestoreProjectsDatabasesCreateRequest(_messages.Message):
       the final component of the database's resource name. This value should
       be 4-63 characters. Valid characters are /a-z-/ with first character a
       letter and the last a letter or a number. Must not be UUID-like
-      /[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/. "(default)" database id is
+      /[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/. "(default)" database ID is
       also valid.
     googleFirestoreAdminV1Database: A GoogleFirestoreAdminV1Database resource
       to be passed as the request body.
@@ -1408,9 +1586,11 @@ class FirestoreProjectsDatabasesListRequest(_messages.Message):
 
   Fields:
     parent: Required. A parent name of the form `projects/{project_id}`
+    showDeleted: If true, also returns deleted resources.
   """
 
   parent = _messages.StringField(1, required=True)
+  showDeleted = _messages.BooleanField(2)
 
 
 class FirestoreProjectsDatabasesOperationsCancelRequest(_messages.Message):
@@ -1494,6 +1674,109 @@ class FirestoreProjectsDatabasesRestoreRequest(_messages.Message):
   parent = _messages.StringField(2, required=True)
 
 
+class FirestoreProjectsDatabasesUserCredsCreateRequest(_messages.Message):
+  r"""A FirestoreProjectsDatabasesUserCredsCreateRequest object.
+
+  Fields:
+    googleFirestoreAdminV1UserCreds: A GoogleFirestoreAdminV1UserCreds
+      resource to be passed as the request body.
+    parent: Required. A parent name of the form
+      `projects/{project_id}/databases/{database_id}`
+    userCredsId: Required. The ID to use for the user creds, which will become
+      the final component of the user creds's resource name. This value should
+      be 4-63 characters. Valid characters are /a-z-/ with first character a
+      letter and the last a letter or a number. Must not be UUID-like
+      /[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/.
+  """
+
+  googleFirestoreAdminV1UserCreds = _messages.MessageField('GoogleFirestoreAdminV1UserCreds', 1)
+  parent = _messages.StringField(2, required=True)
+  userCredsId = _messages.StringField(3)
+
+
+class FirestoreProjectsDatabasesUserCredsDeleteRequest(_messages.Message):
+  r"""A FirestoreProjectsDatabasesUserCredsDeleteRequest object.
+
+  Fields:
+    name: Required. A name of the form
+      `projects/{project_id}/databases/{database_id}/userCreds/{user_creds_id}
+      `
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class FirestoreProjectsDatabasesUserCredsDisableRequest(_messages.Message):
+  r"""A FirestoreProjectsDatabasesUserCredsDisableRequest object.
+
+  Fields:
+    googleFirestoreAdminV1DisableUserCredsRequest: A
+      GoogleFirestoreAdminV1DisableUserCredsRequest resource to be passed as
+      the request body.
+    name: Required. A name of the form
+      `projects/{project_id}/databases/{database_id}/userCreds/{user_creds_id}
+      `
+  """
+
+  googleFirestoreAdminV1DisableUserCredsRequest = _messages.MessageField('GoogleFirestoreAdminV1DisableUserCredsRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class FirestoreProjectsDatabasesUserCredsEnableRequest(_messages.Message):
+  r"""A FirestoreProjectsDatabasesUserCredsEnableRequest object.
+
+  Fields:
+    googleFirestoreAdminV1EnableUserCredsRequest: A
+      GoogleFirestoreAdminV1EnableUserCredsRequest resource to be passed as
+      the request body.
+    name: Required. A name of the form
+      `projects/{project_id}/databases/{database_id}/userCreds/{user_creds_id}
+      `
+  """
+
+  googleFirestoreAdminV1EnableUserCredsRequest = _messages.MessageField('GoogleFirestoreAdminV1EnableUserCredsRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class FirestoreProjectsDatabasesUserCredsGetRequest(_messages.Message):
+  r"""A FirestoreProjectsDatabasesUserCredsGetRequest object.
+
+  Fields:
+    name: Required. A name of the form
+      `projects/{project_id}/databases/{database_id}/userCreds/{user_creds_id}
+      `
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class FirestoreProjectsDatabasesUserCredsListRequest(_messages.Message):
+  r"""A FirestoreProjectsDatabasesUserCredsListRequest object.
+
+  Fields:
+    parent: Required. A parent database name of the form
+      `projects/{project_id}/databases/{database_id}`
+  """
+
+  parent = _messages.StringField(1, required=True)
+
+
+class FirestoreProjectsDatabasesUserCredsResetPasswordRequest(_messages.Message):
+  r"""A FirestoreProjectsDatabasesUserCredsResetPasswordRequest object.
+
+  Fields:
+    googleFirestoreAdminV1ResetUserPasswordRequest: A
+      GoogleFirestoreAdminV1ResetUserPasswordRequest resource to be passed as
+      the request body.
+    name: Required. A name of the form
+      `projects/{project_id}/databases/{database_id}/userCreds/{user_creds_id}
+      `
+  """
+
+  googleFirestoreAdminV1ResetUserPasswordRequest = _messages.MessageField('GoogleFirestoreAdminV1ResetUserPasswordRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
 class FirestoreProjectsLocationsBackupsDeleteRequest(_messages.Message):
   r"""A FirestoreProjectsLocationsBackupsDeleteRequest object.
 
@@ -1520,13 +1803,21 @@ class FirestoreProjectsLocationsBackupsListRequest(_messages.Message):
   r"""A FirestoreProjectsLocationsBackupsListRequest object.
 
   Fields:
+    filter: An expression that filters the list of returned backups. A filter
+      expression consists of a field name, a comparison operator, and a value
+      for filtering. The value must be a string, a number, or a boolean. The
+      comparison operator must be one of: `<`, `>`, `<=`, `>=`, `!=`, `=`, or
+      `:`. Colon `:` is the contains operator. Filter rules are not case
+      sensitive. The following fields in the Backup are eligible for
+      filtering: * `database_uid` (supports `=` only)
     parent: Required. The location to list backups from. Format is
       `projects/{project}/locations/{location}`. Use `{location} = '-'` to
       list backups from all locations for the given project. This allows
       listing backups from a single location or from all locations.
   """
 
-  parent = _messages.StringField(1, required=True)
+  filter = _messages.StringField(1)
+  parent = _messages.StringField(2, required=True)
 
 
 class FirestoreProjectsLocationsGetRequest(_messages.Message):
@@ -1543,6 +1834,8 @@ class FirestoreProjectsLocationsListRequest(_messages.Message):
   r"""A FirestoreProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -1553,10 +1846,11 @@ class FirestoreProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class GoogleFirestoreAdminV1Backup(_messages.Message):
@@ -1616,18 +1910,18 @@ class GoogleFirestoreAdminV1BackupSchedule(_messages.Message):
     createTime: Output only. The timestamp at which this backup schedule was
       created and effective since. No backups will be created for this
       schedule before this time.
-    dailyRecurrence: For a schedule that runs daily at a specified time.
+    dailyRecurrence: For a schedule that runs daily.
     name: Output only. The unique backup schedule identifier across all
       locations and databases for the given project. This will be auto-
       assigned. Format is `projects/{project}/databases/{database}/backupSched
       ules/{backup_schedule}`
     retention: At what relative time in the future, compared to its creation
-      time, the backup should be deleted, e.g. keep backups for 7 days.
+      time, the backup should be deleted, e.g. keep backups for 7 days. The
+      maximum supported retention period is 14 weeks.
     updateTime: Output only. The timestamp at which this backup schedule was
       most recently updated. When a backup schedule is first created, this is
       the same as create_time.
-    weeklyRecurrence: For a schedule that runs weekly on a specific day and
-      time.
+    weeklyRecurrence: For a schedule that runs weekly on a specific day.
   """
 
   createTime = _messages.StringField(1)
@@ -1636,6 +1930,205 @@ class GoogleFirestoreAdminV1BackupSchedule(_messages.Message):
   retention = _messages.StringField(4)
   updateTime = _messages.StringField(5)
   weeklyRecurrence = _messages.MessageField('GoogleFirestoreAdminV1WeeklyRecurrence', 6)
+
+
+class GoogleFirestoreAdminV1BackupSource(_messages.Message):
+  r"""Information about a backup that was used to restore a database.
+
+  Fields:
+    backup: The resource name of the backup that was used to restore this
+      database. Format:
+      `projects/{project}/locations/{location}/backups/{backup}`.
+  """
+
+  backup = _messages.StringField(1)
+
+
+class GoogleFirestoreAdminV1BulkDeleteDocumentsMetadata(_messages.Message):
+  r"""Metadata for google.longrunning.Operation results from
+  FirestoreAdmin.BulkDeleteDocuments.
+
+  Enums:
+    OperationStateValueValuesEnum: The state of the operation.
+
+  Fields:
+    collectionIds: The IDs of the collection groups that are being deleted.
+    endTime: The time this operation completed. Will be unset if operation
+      still in progress.
+    namespaceIds: Which namespace IDs are being deleted.
+    operationState: The state of the operation.
+    progressBytes: The progress, in bytes, of this operation.
+    progressDocuments: The progress, in documents, of this operation.
+    snapshotTime: The timestamp that corresponds to the version of the
+      database that is being read to get the list of documents to delete. This
+      time can also be used as the timestamp of PITR in case of disaster
+      recovery (subject to PITR window limit).
+    startTime: The time this operation started.
+  """
+
+  class OperationStateValueValuesEnum(_messages.Enum):
+    r"""The state of the operation.
+
+    Values:
+      OPERATION_STATE_UNSPECIFIED: Unspecified.
+      INITIALIZING: Request is being prepared for processing.
+      PROCESSING: Request is actively being processed.
+      CANCELLING: Request is in the process of being cancelled after user
+        called google.longrunning.Operations.CancelOperation on the operation.
+      FINALIZING: Request has been processed and is in its finalization stage.
+      SUCCESSFUL: Request has completed successfully.
+      FAILED: Request has finished being processed, but encountered an error.
+      CANCELLED: Request has finished being cancelled after user called
+        google.longrunning.Operations.CancelOperation.
+    """
+    OPERATION_STATE_UNSPECIFIED = 0
+    INITIALIZING = 1
+    PROCESSING = 2
+    CANCELLING = 3
+    FINALIZING = 4
+    SUCCESSFUL = 5
+    FAILED = 6
+    CANCELLED = 7
+
+  collectionIds = _messages.StringField(1, repeated=True)
+  endTime = _messages.StringField(2)
+  namespaceIds = _messages.StringField(3, repeated=True)
+  operationState = _messages.EnumField('OperationStateValueValuesEnum', 4)
+  progressBytes = _messages.MessageField('GoogleFirestoreAdminV1Progress', 5)
+  progressDocuments = _messages.MessageField('GoogleFirestoreAdminV1Progress', 6)
+  snapshotTime = _messages.StringField(7)
+  startTime = _messages.StringField(8)
+
+
+class GoogleFirestoreAdminV1BulkDeleteDocumentsRequest(_messages.Message):
+  r"""The request for FirestoreAdmin.BulkDeleteDocuments. When both
+  collection_ids and namespace_ids are set, only documents satisfying both
+  conditions will be deleted. Requests with namespace_ids and collection_ids
+  both empty will be rejected. Please use FirestoreAdmin.DeleteDatabase
+  instead.
+
+  Fields:
+    collectionIds: Optional. IDs of the collection groups to delete.
+      Unspecified means all collection groups. Each collection group in this
+      list must be unique.
+    namespaceIds: Optional. Namespaces to delete. An empty list means all
+      namespaces. This is the recommended usage for databases that don't use
+      namespaces. An empty string element represents the default namespace.
+      This should be used if the database has data in non-default namespaces,
+      but doesn't want to delete from them. Each namespace in this list must
+      be unique.
+  """
+
+  collectionIds = _messages.StringField(1, repeated=True)
+  namespaceIds = _messages.StringField(2, repeated=True)
+
+
+class GoogleFirestoreAdminV1CloneDatabaseMetadata(_messages.Message):
+  r"""Metadata for the long-running operation from the CloneDatabase request.
+
+  Enums:
+    OperationStateValueValuesEnum: The operation state of the clone.
+
+  Fields:
+    database: The name of the database being cloned to.
+    endTime: The time the clone finished, unset for ongoing clones.
+    operationState: The operation state of the clone.
+    pitrSnapshot: The snapshot from which this database was cloned.
+    progressPercentage: How far along the clone is as an estimated percentage
+      of remaining time.
+    startTime: The time the clone was started.
+  """
+
+  class OperationStateValueValuesEnum(_messages.Enum):
+    r"""The operation state of the clone.
+
+    Values:
+      OPERATION_STATE_UNSPECIFIED: Unspecified.
+      INITIALIZING: Request is being prepared for processing.
+      PROCESSING: Request is actively being processed.
+      CANCELLING: Request is in the process of being cancelled after user
+        called google.longrunning.Operations.CancelOperation on the operation.
+      FINALIZING: Request has been processed and is in its finalization stage.
+      SUCCESSFUL: Request has completed successfully.
+      FAILED: Request has finished being processed, but encountered an error.
+      CANCELLED: Request has finished being cancelled after user called
+        google.longrunning.Operations.CancelOperation.
+    """
+    OPERATION_STATE_UNSPECIFIED = 0
+    INITIALIZING = 1
+    PROCESSING = 2
+    CANCELLING = 3
+    FINALIZING = 4
+    SUCCESSFUL = 5
+    FAILED = 6
+    CANCELLED = 7
+
+  database = _messages.StringField(1)
+  endTime = _messages.StringField(2)
+  operationState = _messages.EnumField('OperationStateValueValuesEnum', 3)
+  pitrSnapshot = _messages.MessageField('GoogleFirestoreAdminV1PitrSnapshot', 4)
+  progressPercentage = _messages.MessageField('GoogleFirestoreAdminV1Progress', 5)
+  startTime = _messages.StringField(6)
+
+
+class GoogleFirestoreAdminV1CloneDatabaseRequest(_messages.Message):
+  r"""The request message for FirestoreAdmin.CloneDatabase.
+
+  Messages:
+    TagsValue: Optional. Immutable. Tags to be bound to the cloned database.
+      The tags should be provided in the format of `tagKeys/{tag_key_id} ->
+      tagValues/{tag_value_id}`.
+
+  Fields:
+    databaseId: Required. The ID to use for the database, which will become
+      the final component of the database's resource name. This database ID
+      must not be associated with an existing database. This value should be
+      4-63 characters. Valid characters are /a-z-/ with first character a
+      letter and the last a letter or a number. Must not be UUID-like
+      /[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/. "(default)" database ID is
+      also valid.
+    encryptionConfig: Optional. Encryption configuration for the cloned
+      database. If this field is not specified, the cloned database will use
+      the same encryption configuration as the source database, namely
+      use_source_encryption.
+    pitrSnapshot: Required. Specification of the PITR data to clone from. The
+      source database must exist. The cloned database will be created in the
+      same location as the source database.
+    tags: Optional. Immutable. Tags to be bound to the cloned database. The
+      tags should be provided in the format of `tagKeys/{tag_key_id} ->
+      tagValues/{tag_value_id}`.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class TagsValue(_messages.Message):
+    r"""Optional. Immutable. Tags to be bound to the cloned database. The tags
+    should be provided in the format of `tagKeys/{tag_key_id} ->
+    tagValues/{tag_value_id}`.
+
+    Messages:
+      AdditionalProperty: An additional property for a TagsValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type TagsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a TagsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  databaseId = _messages.StringField(1)
+  encryptionConfig = _messages.MessageField('GoogleFirestoreAdminV1EncryptionConfig', 2)
+  pitrSnapshot = _messages.MessageField('GoogleFirestoreAdminV1PitrSnapshot', 3)
+  tags = _messages.MessageField('TagsValue', 4)
 
 
 class GoogleFirestoreAdminV1CmekConfig(_messages.Message):
@@ -1668,9 +2161,26 @@ class GoogleFirestoreAdminV1CreateDatabaseMetadata(_messages.Message):
   r"""Metadata related to the create database operation."""
 
 
+class GoogleFirestoreAdminV1CustomerManagedEncryptionOptions(_messages.Message):
+  r"""The configuration options for using CMEK (Customer Managed Encryption
+  Key) encryption.
+
+  Fields:
+    kmsKeyName: Required. Only keys in the same location as the database are
+      allowed to be used for encryption. For Firestore's nam5 multi-region,
+      this corresponds to Cloud KMS multi-region us. For Firestore's eur3
+      multi-region, this corresponds to Cloud KMS multi-region europe. See
+      https://cloud.google.com/kms/docs/locations. The expected format is `pro
+      jects/{project_id}/locations/{kms_location}/keyRings/{key_ring}/cryptoKe
+      ys/{crypto_key}`.
+  """
+
+  kmsKeyName = _messages.StringField(1)
+
+
 class GoogleFirestoreAdminV1DailyRecurrence(_messages.Message):
-  r"""Represent a recurring schedule that runs at a specific time every day.
-  The time zone is UTC.
+  r"""Represents a recurring schedule that runs every day. The time zone is
+  UTC.
   """
 
 
@@ -1683,6 +2193,7 @@ class GoogleFirestoreAdminV1Database(_messages.Message):
       to use for this database.
     ConcurrencyModeValueValuesEnum: The concurrency control mode to use for
       this database.
+    DatabaseEditionValueValuesEnum: Immutable. The edition of the database.
     DeleteProtectionStateValueValuesEnum: State of delete protection for the
       database.
     PointInTimeRecoveryEnablementValueValuesEnum: Whether to enable the PITR
@@ -1690,6 +2201,11 @@ class GoogleFirestoreAdminV1Database(_messages.Message):
     TypeValueValuesEnum: The type of the database. See
       https://cloud.google.com/datastore/docs/firestore-or-datastore for
       information about how to choose.
+
+  Messages:
+    TagsValue: Optional. Input only. Immutable. Tag keys/values directly bound
+      to this resource. For example: "123/environment": "production",
+      "123/costCenter": "marketing"
 
   Fields:
     appEngineIntegrationMode: The App Engine integration mode to use for this
@@ -1699,7 +2215,10 @@ class GoogleFirestoreAdminV1Database(_messages.Message):
     concurrencyMode: The concurrency control mode to use for this database.
     createTime: Output only. The timestamp at which this database was created.
       Databases created before 2016 do not populate create_time.
+    databaseEdition: Immutable. The edition of the database.
     deleteProtectionState: State of delete protection for the database.
+    deleteTime: Output only. The timestamp at which this database was deleted.
+      Only set if the database has been deleted.
     earliestVersionTime: Output only. The earliest timestamp at which older
       versions of the data can be read from the database. See
       [version_retention_period] above; this field is populated with `now -
@@ -1710,9 +2229,18 @@ class GoogleFirestoreAdminV1Database(_messages.Message):
     etag: This checksum is computed by the server based on the value of other
       fields, and may be sent on update and delete requests to ensure the
       client has an up-to-date value before proceeding.
+    freeTier: Output only. Background: Free tier is the ability of a Firestore
+      database to use a small amount of resources every day without being
+      charged. Once usage exceeds the free tier limit further usage is
+      charged. Whether this database can make use of the free tier. Only one
+      database per project can be eligible for the free tier. The first (or
+      next) database that is created in a project without a free tier database
+      will be marked as eligible for the free tier. Databases that are created
+      while there is a free tier database will not be eligible for the free
+      tier.
     keyPrefix: Output only. The key_prefix for this database. This key_prefix
-      is used, in combination with the project id ("~") to construct the
-      application id that is returned from the Cloud Datastore APIs in Google
+      is used, in combination with the project ID ("~") to construct the
+      application ID that is returned from the Cloud Datastore APIs in Google
       App Engine first generation runtimes. This value may be empty in which
       case the appid to use for URL-encoded keys is the project_id (eg: foo
       instead of v~foo).
@@ -1722,6 +2250,13 @@ class GoogleFirestoreAdminV1Database(_messages.Message):
       `projects/{project}/databases/{database}`
     pointInTimeRecoveryEnablement: Whether to enable the PITR feature on this
       database.
+    previousId: Output only. The database resource's prior database ID. This
+      field is only populated for deleted databases.
+    sourceInfo: Output only. Information about the provenance of this
+      database.
+    tags: Optional. Input only. Immutable. Tag keys/values directly bound to
+      this resource. For example: "123/environment": "production",
+      "123/costCenter": "marketing"
     type: The type of the database. See
       https://cloud.google.com/datastore/docs/firestore-or-datastore for
       information about how to choose.
@@ -1773,6 +2308,19 @@ class GoogleFirestoreAdminV1Database(_messages.Message):
     PESSIMISTIC = 2
     OPTIMISTIC_WITH_ENTITY_GROUPS = 3
 
+  class DatabaseEditionValueValuesEnum(_messages.Enum):
+    r"""Immutable. The edition of the database.
+
+    Values:
+      DATABASE_EDITION_UNSPECIFIED: Not used.
+      STANDARD: Standard edition. This is the default setting if not
+        specified.
+      ENTERPRISE: Enterprise edition.
+    """
+    DATABASE_EDITION_UNSPECIFIED = 0
+    STANDARD = 1
+    ENTERPRISE = 2
+
   class DeleteProtectionStateValueValuesEnum(_messages.Enum):
     r"""State of delete protection for the database.
 
@@ -1810,8 +2358,7 @@ class GoogleFirestoreAdminV1Database(_messages.Message):
     information about how to choose.
 
     Values:
-      DATABASE_TYPE_UNSPECIFIED: The default value. This value is used if the
-        database type is omitted.
+      DATABASE_TYPE_UNSPECIFIED: Not used.
       FIRESTORE_NATIVE: Firestore Native Mode
       DATASTORE_MODE: Firestore in Datastore Mode.
     """
@@ -1819,40 +2366,82 @@ class GoogleFirestoreAdminV1Database(_messages.Message):
     FIRESTORE_NATIVE = 1
     DATASTORE_MODE = 2
 
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class TagsValue(_messages.Message):
+    r"""Optional. Input only. Immutable. Tag keys/values directly bound to
+    this resource. For example: "123/environment": "production",
+    "123/costCenter": "marketing"
+
+    Messages:
+      AdditionalProperty: An additional property for a TagsValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type TagsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a TagsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
   appEngineIntegrationMode = _messages.EnumField('AppEngineIntegrationModeValueValuesEnum', 1)
   cmekConfig = _messages.MessageField('GoogleFirestoreAdminV1CmekConfig', 2)
   concurrencyMode = _messages.EnumField('ConcurrencyModeValueValuesEnum', 3)
   createTime = _messages.StringField(4)
-  deleteProtectionState = _messages.EnumField('DeleteProtectionStateValueValuesEnum', 5)
-  earliestVersionTime = _messages.StringField(6)
-  etag = _messages.StringField(7)
-  keyPrefix = _messages.StringField(8)
-  locationId = _messages.StringField(9)
-  name = _messages.StringField(10)
-  pointInTimeRecoveryEnablement = _messages.EnumField('PointInTimeRecoveryEnablementValueValuesEnum', 11)
-  type = _messages.EnumField('TypeValueValuesEnum', 12)
-  uid = _messages.StringField(13)
-  updateTime = _messages.StringField(14)
-  versionRetentionPeriod = _messages.StringField(15)
-
-
-class GoogleFirestoreAdminV1DatabaseSnapshot(_messages.Message):
-  r"""A consistent snapshot of a database at a specific point in time.
-
-  Fields:
-    database: Required. A name of the form
-      `projects/{project_id}/databases/{database_id}`
-    snapshotTime: Required. The timestamp at which the database snapshot is
-      taken. The requested timestamp must be a whole minute within the PITR
-      window.
-  """
-
-  database = _messages.StringField(1)
-  snapshotTime = _messages.StringField(2)
+  databaseEdition = _messages.EnumField('DatabaseEditionValueValuesEnum', 5)
+  deleteProtectionState = _messages.EnumField('DeleteProtectionStateValueValuesEnum', 6)
+  deleteTime = _messages.StringField(7)
+  earliestVersionTime = _messages.StringField(8)
+  etag = _messages.StringField(9)
+  freeTier = _messages.BooleanField(10)
+  keyPrefix = _messages.StringField(11)
+  locationId = _messages.StringField(12)
+  name = _messages.StringField(13)
+  pointInTimeRecoveryEnablement = _messages.EnumField('PointInTimeRecoveryEnablementValueValuesEnum', 14)
+  previousId = _messages.StringField(15)
+  sourceInfo = _messages.MessageField('GoogleFirestoreAdminV1SourceInfo', 16)
+  tags = _messages.MessageField('TagsValue', 17)
+  type = _messages.EnumField('TypeValueValuesEnum', 18)
+  uid = _messages.StringField(19)
+  updateTime = _messages.StringField(20)
+  versionRetentionPeriod = _messages.StringField(21)
 
 
 class GoogleFirestoreAdminV1DeleteDatabaseMetadata(_messages.Message):
   r"""Metadata related to the delete database operation."""
+
+
+class GoogleFirestoreAdminV1DisableUserCredsRequest(_messages.Message):
+  r"""The request for FirestoreAdmin.DisableUserCreds."""
+
+
+class GoogleFirestoreAdminV1EnableUserCredsRequest(_messages.Message):
+  r"""The request for FirestoreAdmin.EnableUserCreds."""
+
+
+class GoogleFirestoreAdminV1EncryptionConfig(_messages.Message):
+  r"""Encryption configuration for a new database being created from another
+  source. The source could be a Backup .
+
+  Fields:
+    customerManagedEncryption: Use Customer Managed Encryption Keys (CMEK) for
+      encryption.
+    googleDefaultEncryption: Use Google default encryption.
+    useSourceEncryption: The database will use the same encryption
+      configuration as the source.
+  """
+
+  customerManagedEncryption = _messages.MessageField('GoogleFirestoreAdminV1CustomerManagedEncryptionOptions', 1)
+  googleDefaultEncryption = _messages.MessageField('GoogleFirestoreAdminV1GoogleDefaultEncryptionOptions', 2)
+  useSourceEncryption = _messages.MessageField('GoogleFirestoreAdminV1SourceEncryptionOptions', 3)
 
 
 class GoogleFirestoreAdminV1ExportDocumentsMetadata(_messages.Message):
@@ -1863,10 +2452,10 @@ class GoogleFirestoreAdminV1ExportDocumentsMetadata(_messages.Message):
     OperationStateValueValuesEnum: The state of the export operation.
 
   Fields:
-    collectionIds: Which collection ids are being exported.
+    collectionIds: Which collection IDs are being exported.
     endTime: The time this operation completed. Will be unset if operation
       still in progress.
-    namespaceIds: Which namespace ids are being exported.
+    namespaceIds: Which namespace IDs are being exported.
     operationState: The state of the export operation.
     outputUriPrefix: Where the documents are being exported to.
     progressBytes: The progress, in bytes, of this operation.
@@ -1916,8 +2505,8 @@ class GoogleFirestoreAdminV1ExportDocumentsRequest(_messages.Message):
   r"""The request for FirestoreAdmin.ExportDocuments.
 
   Fields:
-    collectionIds: Which collection ids to export. Unspecified means all
-      collections.
+    collectionIds: Which collection IDs to export. Unspecified means all
+      collections. Each collection ID in this list must be unique.
     namespaceIds: An empty list represents all namespaces. This is the
       preferred usage for databases that don't use namespaces. An empty string
       element represents the default namespace. This should be used if the
@@ -1960,31 +2549,30 @@ class GoogleFirestoreAdminV1ExportDocumentsResponse(_messages.Message):
 class GoogleFirestoreAdminV1Field(_messages.Message):
   r"""Represents a single field in the database. Fields are grouped by their
   "Collection Group", which represent all collections in the database with the
-  same id.
+  same ID.
 
   Fields:
     indexConfig: The index configuration for this field. If unset, field
       indexing will revert to the configuration defined by the
       `ancestor_field`. To explicitly remove all indexes for this field,
       specify an index config with an empty list of indexes.
-    name: Required. A field name of the form `projects/{project_id}/databases/
-      {database_id}/collectionGroups/{collection_id}/fields/{field_path}` A
-      field path may be a simple field name, e.g. `address` or a path to
-      fields within map_value , e.g. `address.city`, or a special field path.
-      The only valid special field is `*`, which represents any field. Field
-      paths may be quoted using ` (backtick). The only character that needs to
-      be escaped within a quoted field path is the backtick character itself,
-      escaped using a backslash. Special characters in field paths that must
-      be quoted include: `*`, `.`, ``` (backtick), `[`, `]`, as well as any
-      ascii symbolic characters. Examples: (Note: Comments here are written in
-      markdown syntax, so there is an additional layer of backticks to
-      represent a code block) `\`address.city\`` represents a field named
-      `address.city`, not the map key `city` in the field `address`. `\`*\``
-      represents a field named `*`, not any field. A special `Field` contains
-      the default indexing settings for all fields. This field's resource name
-      is: `projects/{project_id}/databases/{database_id}/collectionGroups/__de
-      fault__/fields/*` Indexes defined on this `Field` will be applied to all
-      fields which do not have their own `Field` index configuration.
+    name: Required. A field name of the form: `projects/{project_id}/databases
+      /{database_id}/collectionGroups/{collection_id}/fields/{field_path}` A
+      field path can be a simple field name, e.g. `address` or a path to
+      fields within `map_value` , e.g. `address.city`, or a special field
+      path. The only valid special field is `*`, which represents any field.
+      Field paths can be quoted using `` ` `` (backtick). The only character
+      that must be escaped within a quoted field path is the backtick
+      character itself, escaped using a backslash. Special characters in field
+      paths that must be quoted include: `*`, `.`, `` ` `` (backtick), `[`,
+      `]`, as well as any ascii symbolic characters. Examples: ``
+      `address.city` `` represents a field named `address.city`, not the map
+      key `city` in the field `address`. `` `*` `` represents a field named
+      `*`, not any field. A special `Field` contains the default indexing
+      settings for all fields. This field's resource name is: `projects/{proje
+      ct_id}/databases/{database_id}/collectionGroups/__default__/fields/*`
+      Indexes defined on this `Field` will be applied to all fields which do
+      not have their own `Field` index configuration.
     ttlConfig: The TTL configuration for this `Field`. Setting or unsetting
       this will enable or disable the TTL for documents that have this
       `Field`.
@@ -2058,6 +2646,10 @@ class GoogleFirestoreAdminV1FlatIndex(_messages.Message):
 
 
 
+class GoogleFirestoreAdminV1GoogleDefaultEncryptionOptions(_messages.Message):
+  r"""The configuration options for using Google default encryption."""
+
+
 class GoogleFirestoreAdminV1ImportDocumentsMetadata(_messages.Message):
   r"""Metadata for google.longrunning.Operation results from
   FirestoreAdmin.ImportDocuments.
@@ -2066,11 +2658,11 @@ class GoogleFirestoreAdminV1ImportDocumentsMetadata(_messages.Message):
     OperationStateValueValuesEnum: The state of the import operation.
 
   Fields:
-    collectionIds: Which collection ids are being imported.
+    collectionIds: Which collection IDs are being imported.
     endTime: The time this operation completed. Will be unset if operation
       still in progress.
     inputUriPrefix: The location of the documents being imported.
-    namespaceIds: Which namespace ids are being imported.
+    namespaceIds: Which namespace IDs are being imported.
     operationState: The state of the import operation.
     progressBytes: The progress, in bytes, of this operation.
     progressDocuments: The progress, in documents, of this operation.
@@ -2115,8 +2707,9 @@ class GoogleFirestoreAdminV1ImportDocumentsRequest(_messages.Message):
   r"""The request for FirestoreAdmin.ImportDocuments.
 
   Fields:
-    collectionIds: Which collection ids to import. Unspecified means all
-      collections included in the import.
+    collectionIds: Which collection IDs to import. Unspecified means all
+      collections included in the import. Each collection ID in this list must
+      be unique.
     inputUriPrefix: Location of the exported files. This must match the
       output_uri_prefix of an ExportDocumentsResponse from an export that has
       completed successfully. See:
@@ -2139,16 +2732,18 @@ class GoogleFirestoreAdminV1Index(_messages.Message):
 
   Enums:
     ApiScopeValueValuesEnum: The API scope supported by this index.
+    DensityValueValuesEnum: Immutable. The density configuration of the index.
     QueryScopeValueValuesEnum: Indexes with a collection query scope specified
       allow queries against a collection that is the child of a specific
-      document, specified at query time, and that has the same collection id.
+      document, specified at query time, and that has the same collection ID.
       Indexes with a collection group query scope specified allow queries
       against all collections descended from a specific document, specified at
-      query time, and that have the same collection id as this index.
+      query time, and that have the same collection ID as this index.
     StateValueValuesEnum: Output only. The serving state of the index.
 
   Fields:
     apiScope: The API scope supported by this index.
+    density: Immutable. The density configuration of the index.
     fields: The fields supported by this index. For composite indexes, this
       requires a minimum of 2 and a maximum of 100 fields. The last field
       entry is always for the field path `__name__`. If, on creation,
@@ -2158,16 +2753,24 @@ class GoogleFirestoreAdminV1Index(_messages.Message):
       `__name__` will be ordered ASCENDING (unless explicitly specified). For
       single field indexes, this will always be exactly one entry with a field
       path equal to the field path of the associated field.
+    multikey: Optional. Whether the index is multikey. By default, the index
+      is not multikey. For non-multikey indexes, none of the paths in the
+      index definition reach or traverse an array, except via an explicit
+      array index. For multikey indexes, at most one of the paths in the index
+      definition reach or traverse an array, except via an explicit array
+      index. Violations will result in errors. Note this field only applies to
+      index with MONGODB_COMPATIBLE_API ApiScope.
     name: Output only. A server defined name for this index. The form of this
       name for composite indexes will be: `projects/{project_id}/databases/{da
       tabase_id}/collectionGroups/{collection_id}/indexes/{composite_index_id}
       ` For single field indexes, this field will be empty.
     queryScope: Indexes with a collection query scope specified allow queries
       against a collection that is the child of a specific document, specified
-      at query time, and that has the same collection id. Indexes with a
+      at query time, and that has the same collection ID. Indexes with a
       collection group query scope specified allow queries against all
       collections descended from a specific document, specified at query time,
-      and that have the same collection id as this index.
+      and that have the same collection ID as this index.
+    shardCount: Optional. The number of shards for the index.
     state: Output only. The serving state of the index.
   """
 
@@ -2179,27 +2782,52 @@ class GoogleFirestoreAdminV1Index(_messages.Message):
         This is the default.
       DATASTORE_MODE_API: The index can only be used by the Firestore in
         Datastore Mode query API.
+      MONGODB_COMPATIBLE_API: The index can only be used by the
+        MONGODB_COMPATIBLE_API.
     """
     ANY_API = 0
     DATASTORE_MODE_API = 1
+    MONGODB_COMPATIBLE_API = 2
+
+  class DensityValueValuesEnum(_messages.Enum):
+    r"""Immutable. The density configuration of the index.
+
+    Values:
+      DENSITY_UNSPECIFIED: Unspecified. It will use database default setting.
+        This value is input only.
+      SPARSE_ALL: In order for an index entry to be added, the document must
+        contain all fields specified in the index. This is the only allowed
+        value for indexes having ApiScope `ANY_API` and `DATASTORE_MODE_API`.
+      SPARSE_ANY: In order for an index entry to be added, the document must
+        contain at least one of the fields specified in the index. Non-
+        existent fields are treated as having a NULL value when generating
+        index entries.
+      DENSE: An index entry will be added regardless of whether the document
+        contains any of the fields specified in the index. Non-existent fields
+        are treated as having a NULL value when generating index entries.
+    """
+    DENSITY_UNSPECIFIED = 0
+    SPARSE_ALL = 1
+    SPARSE_ANY = 2
+    DENSE = 3
 
   class QueryScopeValueValuesEnum(_messages.Enum):
     r"""Indexes with a collection query scope specified allow queries against
     a collection that is the child of a specific document, specified at query
-    time, and that has the same collection id. Indexes with a collection group
+    time, and that has the same collection ID. Indexes with a collection group
     query scope specified allow queries against all collections descended from
     a specific document, specified at query time, and that have the same
-    collection id as this index.
+    collection ID as this index.
 
     Values:
       QUERY_SCOPE_UNSPECIFIED: The query scope is unspecified. Not a valid
         option.
       COLLECTION: Indexes with a collection query scope specified allow
         queries against a collection that is the child of a specific document,
-        specified at query time, and that has the collection id specified by
+        specified at query time, and that has the collection ID specified by
         the index.
       COLLECTION_GROUP: Indexes with a collection group query scope specified
-        allow queries against all collections that has the collection id
+        allow queries against all collections that has the collection ID
         specified by the index.
       COLLECTION_RECURSIVE: Include all the collections's ancestor in the
         index. Only available for Datastore Mode databases.
@@ -2233,10 +2861,13 @@ class GoogleFirestoreAdminV1Index(_messages.Message):
     NEEDS_REPAIR = 3
 
   apiScope = _messages.EnumField('ApiScopeValueValuesEnum', 1)
-  fields = _messages.MessageField('GoogleFirestoreAdminV1IndexField', 2, repeated=True)
-  name = _messages.StringField(3)
-  queryScope = _messages.EnumField('QueryScopeValueValuesEnum', 4)
-  state = _messages.EnumField('StateValueValuesEnum', 5)
+  density = _messages.EnumField('DensityValueValuesEnum', 2)
+  fields = _messages.MessageField('GoogleFirestoreAdminV1IndexField', 3, repeated=True)
+  multikey = _messages.BooleanField(4)
+  name = _messages.StringField(5)
+  queryScope = _messages.EnumField('QueryScopeValueValuesEnum', 6)
+  shardCount = _messages.IntegerField(7, variant=_messages.Variant.INT32)
+  state = _messages.EnumField('StateValueValuesEnum', 8)
 
 
 class GoogleFirestoreAdminV1IndexConfig(_messages.Message):
@@ -2309,7 +2940,7 @@ class GoogleFirestoreAdminV1IndexField(_messages.Message):
       name of the field or may be omitted.
     order: Indicates that this field supports ordering by the specified order
       or comparing using =, !=, <, <=, >, >=.
-    vectorConfig: Indicates that this field supports nearest neighbors and
+    vectorConfig: Indicates that this field supports nearest neighbor and
       distance operations on vector.
   """
 
@@ -2408,8 +3039,7 @@ class GoogleFirestoreAdminV1ListBackupsResponse(_messages.Message):
   r"""The response for FirestoreAdmin.ListBackups.
 
   Fields:
-    backups: List of all backups for the project. Ordered by `location ASC,
-      create_time DESC, name ASC`.
+    backups: List of all backups for the project.
     unreachable: List of locations that existing backups were not able to be
       fetched from. Instead of failing the entire requests when a single
       location is unreachable, this response returns a partial result set and
@@ -2466,8 +3096,38 @@ class GoogleFirestoreAdminV1ListIndexesResponse(_messages.Message):
   nextPageToken = _messages.StringField(2)
 
 
+class GoogleFirestoreAdminV1ListUserCredsResponse(_messages.Message):
+  r"""The response for FirestoreAdmin.ListUserCreds.
+
+  Fields:
+    userCreds: The user creds for the database.
+  """
+
+  userCreds = _messages.MessageField('GoogleFirestoreAdminV1UserCreds', 1, repeated=True)
+
+
 class GoogleFirestoreAdminV1LocationMetadata(_messages.Message):
   r"""The metadata message for google.cloud.location.Location.metadata."""
+
+
+class GoogleFirestoreAdminV1PitrSnapshot(_messages.Message):
+  r"""A consistent snapshot of a database at a specific point in time. A PITR
+  (Point-in-time recovery) snapshot with previous versions of a database's
+  data is available for every minute up to the associated database's data
+  retention period. If the PITR feature is enabled, the retention period is 7
+  days; otherwise, it is one hour.
+
+  Fields:
+    database: Required. The name of the database that this was a snapshot of.
+      Format: `projects/{project}/databases/{database}`.
+    databaseUid: Output only. Public UUID of the database the snapshot was
+      associated with.
+    snapshotTime: Required. Snapshot time of the database.
+  """
+
+  database = _messages.StringField(1)
+  databaseUid = _messages.BytesField(2)
+  snapshotTime = _messages.StringField(3)
 
 
 class GoogleFirestoreAdminV1Progress(_messages.Message):
@@ -2481,6 +3141,21 @@ class GoogleFirestoreAdminV1Progress(_messages.Message):
 
   completedWork = _messages.IntegerField(1)
   estimatedWork = _messages.IntegerField(2)
+
+
+class GoogleFirestoreAdminV1ResetUserPasswordRequest(_messages.Message):
+  r"""The request for FirestoreAdmin.ResetUserPassword."""
+
+
+class GoogleFirestoreAdminV1ResourceIdentity(_messages.Message):
+  r"""Describes a Resource Identity principal.
+
+  Fields:
+    principal: Output only. Principal identifier string. See:
+      https://cloud.google.com/iam/docs/principal-identifiers
+  """
+
+  principal = _messages.StringField(1)
 
 
 class GoogleFirestoreAdminV1RestoreDatabaseMetadata(_messages.Message):
@@ -2535,25 +3210,84 @@ class GoogleFirestoreAdminV1RestoreDatabaseMetadata(_messages.Message):
 class GoogleFirestoreAdminV1RestoreDatabaseRequest(_messages.Message):
   r"""The request message for FirestoreAdmin.RestoreDatabase.
 
+  Messages:
+    TagsValue: Optional. Immutable. Tags to be bound to the restored database.
+      The tags should be provided in the format of `tagKeys/{tag_key_id} ->
+      tagValues/{tag_value_id}`.
+
   Fields:
-    backup: Backup to restore from. Must be from the same project as the
-      parent. Format is:
+    backup: Required. Backup to restore from. Must be from the same project as
+      the parent. The restored database will be created in the same location
+      as the source backup. Format is:
       `projects/{project_id}/locations/{location}/backups/{backup}`
     databaseId: Required. The ID to use for the database, which will become
-      the final component of the database's resource name. This database id
+      the final component of the database's resource name. This database ID
       must not be associated with an existing database. This value should be
       4-63 characters. Valid characters are /a-z-/ with first character a
       letter and the last a letter or a number. Must not be UUID-like
-      /[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/. "(default)" database id is
+      /[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/. "(default)" database ID is
       also valid.
-    databaseSnapshot: Database snapshot to restore from. The source database
-      must exist and have enabled PITR. The restored database will be created
-      in the same location as the source database.
+    encryptionConfig: Optional. Encryption configuration for the restored
+      database. If this field is not specified, the restored database will use
+      the same encryption configuration as the backup, namely
+      use_source_encryption.
+    tags: Optional. Immutable. Tags to be bound to the restored database. The
+      tags should be provided in the format of `tagKeys/{tag_key_id} ->
+      tagValues/{tag_value_id}`.
   """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class TagsValue(_messages.Message):
+    r"""Optional. Immutable. Tags to be bound to the restored database. The
+    tags should be provided in the format of `tagKeys/{tag_key_id} ->
+    tagValues/{tag_value_id}`.
+
+    Messages:
+      AdditionalProperty: An additional property for a TagsValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type TagsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a TagsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   backup = _messages.StringField(1)
   databaseId = _messages.StringField(2)
-  databaseSnapshot = _messages.MessageField('GoogleFirestoreAdminV1DatabaseSnapshot', 3)
+  encryptionConfig = _messages.MessageField('GoogleFirestoreAdminV1EncryptionConfig', 3)
+  tags = _messages.MessageField('TagsValue', 4)
+
+
+class GoogleFirestoreAdminV1SourceEncryptionOptions(_messages.Message):
+  r"""The configuration options for using the same encryption method as the
+  source.
+  """
+
+
+
+class GoogleFirestoreAdminV1SourceInfo(_messages.Message):
+  r"""Information about the provenance of this database.
+
+  Fields:
+    backup: If set, this database was restored from the specified backup (or a
+      snapshot thereof).
+    operation: The associated long-running operation. This field may not be
+      set after the operation has completed. Format:
+      `projects/{project}/databases/{database}/operations/{operation}`.
+  """
+
+  backup = _messages.MessageField('GoogleFirestoreAdminV1BackupSource', 1)
+  operation = _messages.StringField(2)
 
 
 class GoogleFirestoreAdminV1Stats(_messages.Message):
@@ -2640,6 +3374,47 @@ class GoogleFirestoreAdminV1TtlConfigDelta(_messages.Message):
 
 class GoogleFirestoreAdminV1UpdateDatabaseMetadata(_messages.Message):
   r"""Metadata related to the update database operation."""
+
+
+class GoogleFirestoreAdminV1UserCreds(_messages.Message):
+  r"""A Cloud Firestore User Creds.
+
+  Enums:
+    StateValueValuesEnum: Output only. Whether the user creds are enabled or
+      disabled. Defaults to ENABLED on creation.
+
+  Fields:
+    createTime: Output only. The time the user creds were created.
+    name: Identifier. The resource name of the UserCreds. Format:
+      `projects/{project}/databases/{database}/userCreds/{user_creds}`
+    resourceIdentity: Resource Identity descriptor.
+    securePassword: Output only. The plaintext server-generated password for
+      the user creds. Only populated in responses for CreateUserCreds and
+      ResetUserPassword.
+    state: Output only. Whether the user creds are enabled or disabled.
+      Defaults to ENABLED on creation.
+    updateTime: Output only. The time the user creds were last updated.
+  """
+
+  class StateValueValuesEnum(_messages.Enum):
+    r"""Output only. Whether the user creds are enabled or disabled. Defaults
+    to ENABLED on creation.
+
+    Values:
+      STATE_UNSPECIFIED: The default value. Should not be used.
+      ENABLED: The user creds are enabled.
+      DISABLED: The user creds are disabled.
+    """
+    STATE_UNSPECIFIED = 0
+    ENABLED = 1
+    DISABLED = 2
+
+  createTime = _messages.StringField(1)
+  name = _messages.StringField(2)
+  resourceIdentity = _messages.MessageField('GoogleFirestoreAdminV1ResourceIdentity', 3)
+  securePassword = _messages.StringField(4)
+  state = _messages.EnumField('StateValueValuesEnum', 5)
+  updateTime = _messages.StringField(6)
 
 
 class GoogleFirestoreAdminV1VectorConfig(_messages.Message):
@@ -3171,6 +3946,46 @@ class PartitionQueryResponse(_messages.Message):
   partitions = _messages.MessageField('Cursor', 2, repeated=True)
 
 
+class PlanSummary(_messages.Message):
+  r"""Planning phase information for the query.
+
+  Messages:
+    IndexesUsedValueListEntry: A IndexesUsedValueListEntry object.
+
+  Fields:
+    indexesUsed: The indexes selected for the query. For example: [
+      {"query_scope": "Collection", "properties": "(foo ASC, __name__ ASC)"},
+      {"query_scope": "Collection", "properties": "(bar ASC, __name__ ASC)"} ]
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class IndexesUsedValueListEntry(_messages.Message):
+    r"""A IndexesUsedValueListEntry object.
+
+    Messages:
+      AdditionalProperty: An additional property for a
+        IndexesUsedValueListEntry object.
+
+    Fields:
+      additionalProperties: Properties of the object.
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a IndexesUsedValueListEntry object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A extra_types.JsonValue attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.MessageField('extra_types.JsonValue', 2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  indexesUsed = _messages.MessageField('IndexesUsedValueListEntry', 1, repeated=True)
+
+
 class Precondition(_messages.Message):
   r"""A precondition on a document, used for conditional operations.
 
@@ -3252,6 +4067,9 @@ class RunAggregationQueryRequest(_messages.Message):
   r"""The request for Firestore.RunAggregationQuery.
 
   Fields:
+    explainOptions: Optional. Explain options for the query. If set,
+      additional query statistics will be returned. If not, only query results
+      will be returned.
     newTransaction: Starts a new transaction as part of the query, defaulting
       to read-only. The new transaction ID will be returned as the first
       response in the stream.
@@ -3264,16 +4082,20 @@ class RunAggregationQueryRequest(_messages.Message):
       value here is the opaque transaction ID to execute the query in.
   """
 
-  newTransaction = _messages.MessageField('TransactionOptions', 1)
-  readTime = _messages.StringField(2)
-  structuredAggregationQuery = _messages.MessageField('StructuredAggregationQuery', 3)
-  transaction = _messages.BytesField(4)
+  explainOptions = _messages.MessageField('ExplainOptions', 1)
+  newTransaction = _messages.MessageField('TransactionOptions', 2)
+  readTime = _messages.StringField(3)
+  structuredAggregationQuery = _messages.MessageField('StructuredAggregationQuery', 4)
+  transaction = _messages.BytesField(5)
 
 
 class RunAggregationQueryResponse(_messages.Message):
   r"""The response for Firestore.RunAggregationQuery.
 
   Fields:
+    explainMetrics: Query explain metrics. This is only present when the
+      RunAggregationQueryRequest.explain_options is provided, and it is sent
+      only once with the last response in the stream.
     readTime: The time at which the aggregate result was computed. This is
       always monotonically increasing; in this case, the previous
       AggregationResult in the result stream are guaranteed not to have
@@ -3287,15 +4109,19 @@ class RunAggregationQueryResponse(_messages.Message):
       new transaction.
   """
 
-  readTime = _messages.StringField(1)
-  result = _messages.MessageField('AggregationResult', 2)
-  transaction = _messages.BytesField(3)
+  explainMetrics = _messages.MessageField('ExplainMetrics', 1)
+  readTime = _messages.StringField(2)
+  result = _messages.MessageField('AggregationResult', 3)
+  transaction = _messages.BytesField(4)
 
 
 class RunQueryRequest(_messages.Message):
   r"""The request for Firestore.RunQuery.
 
   Fields:
+    explainOptions: Optional. Explain options for the query. If set,
+      additional query statistics will be returned. If not, only query results
+      will be returned.
     newTransaction: Starts a new transaction and reads the documents. Defaults
       to a read-only transaction. The new transaction ID will be returned as
       the first response in the stream.
@@ -3308,10 +4134,11 @@ class RunQueryRequest(_messages.Message):
       here is the opaque transaction ID to execute the query in.
   """
 
-  newTransaction = _messages.MessageField('TransactionOptions', 1)
-  readTime = _messages.StringField(2)
-  structuredQuery = _messages.MessageField('StructuredQuery', 3)
-  transaction = _messages.BytesField(4)
+  explainOptions = _messages.MessageField('ExplainOptions', 1)
+  newTransaction = _messages.MessageField('TransactionOptions', 2)
+  readTime = _messages.StringField(3)
+  structuredQuery = _messages.MessageField('StructuredQuery', 4)
+  transaction = _messages.BytesField(5)
 
 
 class RunQueryResponse(_messages.Message):
@@ -3321,6 +4148,9 @@ class RunQueryResponse(_messages.Message):
     document: A query result, not set when reporting partial progress.
     done: If present, Firestore has completely finished the request and no
       more documents will be returned.
+    explainMetrics: Query explain metrics. This is only present when the
+      RunQueryRequest.explain_options is provided, and it is sent only once
+      with the last response in the stream.
     readTime: The time at which the document was read. This may be
       monotonically increasing; in this case, the previous documents in the
       result stream are guaranteed not to have changed between their
@@ -3337,9 +4167,10 @@ class RunQueryResponse(_messages.Message):
 
   document = _messages.MessageField('Document', 1)
   done = _messages.BooleanField(2)
-  readTime = _messages.StringField(3)
-  skippedResults = _messages.IntegerField(4, variant=_messages.Variant.INT32)
-  transaction = _messages.BytesField(5)
+  explainMetrics = _messages.MessageField('ExplainMetrics', 3)
+  readTime = _messages.StringField(4)
+  skippedResults = _messages.IntegerField(5, variant=_messages.Variant.INT32)
+  transaction = _messages.BytesField(6)
 
 
 class StandardQueryParameters(_messages.Message):
@@ -3473,7 +4304,7 @@ class StructuredAggregationQuery(_messages.Message):
 class StructuredQuery(_messages.Message):
   r"""A Firestore query. The query stages are executed in the following order:
   1. from 2. where 3. select 4. order_by + start_at + end_at 5. offset 6.
-  limit
+  limit 7. find_nearest
 
   Fields:
     endAt: A potential prefix of a position in the result set to end the query
@@ -3481,6 +4312,9 @@ class StructuredQuery(_messages.Message):
       position rather than the start position. Requires: * The number of
       values cannot be greater than the number of fields specified in the
       `ORDER BY` clause.
+    findNearest: Optional. A potential nearest neighbors search. Applies after
+      all other filters and ordering. Finds the closest vector embeddings to
+      the given query vector.
     from_: The collections to query.
     limit: The maximum number of results to return. Applies after all other
       constraints. Requires: * The value must be greater than or equal to zero
@@ -3526,13 +4360,14 @@ class StructuredQuery(_messages.Message):
   """
 
   endAt = _messages.MessageField('Cursor', 1)
-  from_ = _messages.MessageField('CollectionSelector', 2, repeated=True)
-  limit = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  offset = _messages.IntegerField(4, variant=_messages.Variant.INT32)
-  orderBy = _messages.MessageField('Order', 5, repeated=True)
-  select = _messages.MessageField('Projection', 6)
-  startAt = _messages.MessageField('Cursor', 7)
-  where = _messages.MessageField('Filter', 8)
+  findNearest = _messages.MessageField('FindNearest', 2)
+  from_ = _messages.MessageField('CollectionSelector', 3, repeated=True)
+  limit = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  offset = _messages.IntegerField(5, variant=_messages.Variant.INT32)
+  orderBy = _messages.MessageField('Order', 6, repeated=True)
+  select = _messages.MessageField('Projection', 7)
+  startAt = _messages.MessageField('Cursor', 8)
+  where = _messages.MessageField('Filter', 9)
 
 
 class Sum(_messages.Message):
@@ -3583,7 +4418,7 @@ class Target(_messages.Message):
       `target_id=0` is added, the server will immediately send a response with
       a `TargetChange::Remove` event. Note that if the client sends multiple
       `AddTarget` requests without an ID, the order of IDs returned in
-      `TargetChage.target_ids` are undefined. Therefore, clients should
+      `TargetChange.target_ids` are undefined. Therefore, clients should
       provide a target ID instead of relying on the server to assign one. If
       `target_id` is non-zero, there must not be an existing active target on
       this stream with the same ID.
@@ -3708,7 +4543,7 @@ class Value(_messages.Message):
 
   Fields:
     arrayValue: An array value. Cannot directly contain another array value,
-      though can contain an map which contains another array.
+      though can contain a map which contains another array.
     booleanValue: A boolean value.
     bytesValue: A bytes value. Must not exceed 1 MiB - 89 bytes. Only the
       first 1,500 bytes are considered by queries.
@@ -3885,3 +4720,23 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsCreateDocumentRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsDeleteRequest, 'currentDocument_exists', 'currentDocument.exists')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsDeleteRequest, 'currentDocument_updateTime', 'currentDocument.updateTime')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsGetRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsListRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsListDocumentsRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsPatchRequest, 'currentDocument_exists', 'currentDocument.exists')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsPatchRequest, 'currentDocument_updateTime', 'currentDocument.updateTime')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsPatchRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsPatchRequest, 'updateMask_fieldPaths', 'updateMask.fieldPaths')

@@ -18,19 +18,44 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from googlecloudsdk.command_lib.container.fleet.features import base
+from googlecloudsdk.calliope import base
+from googlecloudsdk.command_lib.container.fleet.features import base as features_base
 
 
-class Disable(base.DisableCommand):
-  """Disable Config Management Feature.
+@base.DefaultUniverseOnly
+class Disable(features_base.DisableCommand):
+  """Disable Config Management feature.
 
-  Disable the Config Management Feature in a fleet.
+  Disable the Config Management feature in a fleet. Disable the feature entirely
+  or only disable [fleet-default membership configuration
+  ](https://cloud.google.com/kubernetes-engine/fleet-management/docs/manage-features)
+  for the feature.
 
   ## EXAMPLES
 
-  To disable the Config Management Feature, run:
+  To disable the Config Management feature entirely, run:
 
     $ {command}
+
+  To disable only fleet-default membership configuration for the feature,
+  run:
+
+    $ {command} --fleet-default-member-config
   """
 
   feature_name = 'configmanagement'
+  support_fleet_default = True
+
+  @classmethod
+  def Args(cls, parser):
+    """Adds flags to the command.
+
+    Adds --force and --fleet-default-member-config as mutually exclusive flags
+    to the parser for this command.
+
+    Args:
+      parser: googlecloudsdk.calliope.parser_arguments.ArgumentInterceptor,
+        Argument parser to add flags to.
+    """
+    flag_group = parser.add_group(mutex=True)
+    super().Args(flag_group)

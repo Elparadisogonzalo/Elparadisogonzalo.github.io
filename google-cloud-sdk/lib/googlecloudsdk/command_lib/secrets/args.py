@@ -19,10 +19,15 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.calliope import arg_parsers
+from googlecloudsdk.calliope import base
+from googlecloudsdk.calliope import parser_arguments
 from googlecloudsdk.calliope.concepts import concepts
+from googlecloudsdk.calliope.concepts import multitype
 from googlecloudsdk.command_lib.secrets import completers as secrets_completers
 from googlecloudsdk.command_lib.util.concepts import concept_parsers
+from googlecloudsdk.command_lib.util.concepts import presentation_specs
 from googlecloudsdk.core import resources
+
 
 # Args
 
@@ -111,12 +116,24 @@ def AddReplicaLocation(parser, positional=False, **kwargs):
       **kwargs)
 
 
-def AddSecret(parser, purpose, positional=False, **kwargs):
+def AddSecret(parser, purpose='', positional=False, help_text=None, **kwargs):
+  """Add secret resource argument to the parser.
+
+  Args:
+    parser: The parser to add the argument to.
+    purpose: The purpose of the secret, used to generate the help text.
+    positional: Whether the argument is positional.
+    help_text: The help text to use for the argument.
+    **kwargs: Extra arguments.
+  """
+  if help_text is None:  # NOMUTANTS--no good way to test
+    help_text = 'The secret {}.'.format(purpose)
   concept_parsers.ConceptParser.ForResource(
       name=_ArgOrFlag('secret', positional),
       resource_spec=GetSecretResourceSpec(),
-      group_help='The secret {}.'.format(purpose),
-      **kwargs).AddToParser(parser)
+      group_help=help_text,
+      **kwargs,
+  ).AddToParser(parser)
 
 
 def AddVersion(parser, purpose, positional=False, **kwargs):
@@ -226,6 +243,74 @@ def AddCreateReplicationPolicyGroup(parser):
             'replicated.'))
 
 
+def AddCreateVersionDestroyTTL(parser, positional=False, **kwargs):
+  """Add flags for specifying version destroy ttl on secret creates."""
+  parser.add_argument(
+      _ArgOrFlag('version-destroy-ttl', positional),
+      metavar='VERSION-DESTROY-TTL',
+      type=arg_parsers.Duration(),
+      help=(
+          'Secret Version Time To Live (TTL) after destruction request. '
+          'For secret with TTL>0, version destruction does not happen '
+          'immediately on calling destroy; instead, the version goes to a '
+          'disabled state and destruction happens after the TTL expires. '
+          'See `$ gcloud topic datetimes` for information on duration formats.'
+      ),
+      **kwargs,
+  )
+
+
+def AddUpdateVersionDestroyTTL(parser, positional=False, **kwargs):
+  """Add flags for specifying version destroy ttl on secret updates."""
+  group = parser.add_group(mutex=True, help='Version destroy ttl.')
+  group.add_argument(
+      _ArgOrFlag('version-destroy-ttl', positional),
+      metavar='VERSION-DESTROY-TTL',
+      type=arg_parsers.Duration(),
+      help=(
+          'Secret Version TTL after destruction request. '
+          'For secret with TTL>0, version destruction does not happen '
+          'immediately on calling destroy; instead, the version goes to a '
+          'disabled state and destruction happens after the TTL expires. '
+          'See `$ gcloud topic datetimes` for information on duration formats.'
+      ),
+      **kwargs,
+  )
+  group.add_argument(
+      _ArgOrFlag('remove-version-destroy-ttl', False),
+      action='store_true',
+      help='If set, removes the version destroy TTL from the secret.',
+      **kwargs,
+  )
+
+
+def AddUpdateRegionalKmsKey(
+    parser: parser_arguments.ArgumentInterceptor,
+    positional: bool = False,
+    **kwargs
+)-> None:
+  """Add flags for specifying regional cmek on secret updates.
+
+  Args:
+      parser: Given argument parser.
+      positional : Whether the argument is positional.
+      **kwargs: Extra arguments.
+  """
+  group = parser.add_group(mutex=True, help='regional kms key.')
+  group.add_argument(
+      _ArgOrFlag('regional-kms-key-name', positional),
+      metavar='REGIONAL-KMS-KEY-NAME',
+      help='regional kms key name for regional secret.',
+      **kwargs,
+  )
+  group.add_argument(
+      _ArgOrFlag('remove-regional-kms-key-name', False),
+      action='store_true',
+      help='If set, removes the regional kms key.',
+      **kwargs,
+  )
+
+
 def AddCreateExpirationGroup(parser):
   """Add flags for specifying expiration on secret creates."""
 
@@ -293,7 +378,8 @@ def AddUpdateRotationGroup(parser):
       _ArgOrFlag('remove-rotation-period', False),
       action='store_true',
       help=(
-          'If set, removes the rotation period, cancelling all rotations except for the next one.'
+          'If set, removes the rotation period, cancelling all rotations '
+          'except for the next one.'
       ))
   group.add_argument(
       _ArgOrFlag('remove-rotation-schedule', False),
@@ -301,24 +387,41 @@ def AddUpdateRotationGroup(parser):
       help=('If set, removes rotation policy from a secret.'))
 
 
-def AddSecretEtag(parser):
+def AddSecretEtag(parser, action):
   """Add flag for specifying the current secret etag."""
   parser.add_argument(
       _ArgOrFlag('etag', False),
       metavar='ETAG',
       help=(
-          'Current entity tag (ETag) of the secret. If this flag is defined, the secret is updated only if the ETag provided matched the current secret\'s ETag.'
-      ))
+          'Current entity tag (ETag) of the secret. If specified, the secret is'
+          ' {action} only if the ETag provided matches the current secret\'s '
+          'ETag.'
+      ).format(action=action))
 
 
-def AddVersionEtag(parser):
+def AddVersionEtag(parser, action):
   """Add flag for specifying the current secret version etag."""
   parser.add_argument(
       _ArgOrFlag('etag', False),
       metavar='ETAG',
       help=(
-          'Current entity tag (ETag) of the secret version. If this flag is defined, the version is updated only if the ETag provided matched the current version\'s ETag.'
-      ))
+          'Current entity tag (ETag) of the secret version. If specified, the '
+          'version is {action} only if the ETag provided matches the current '
+          'version\'s ETag.'
+      ).format(action=action))
+
+
+def AddRegionalKmsKeyName(parser, positional=False, **kwargs):
+  """Add flag for specifying the regional KMS key name."""
+  parser.add_argument(
+      _ArgOrFlag('regional-kms-key-name', positional),
+      metavar='KMS-KEY-NAME',
+      help=(
+          'Regional KMS key with which to encrypt and decrypt the secret. Only '
+          'valid for regional secrets.'
+      ),
+      **kwargs,
+  )
 
 
 def _ArgOrFlag(name, positional):
@@ -336,6 +439,95 @@ def _ArgOrFlag(name, positional):
   return '--{}'.format(name)
 
 
+def AddGlobalOrRegionalSecret(parser, purpose='create a secret', **kwargs):
+  """Adds a secret resource.
+
+  Secret resource can be global secret or regional secret. If command has
+  "--location" then regional secret will be created or else global secret will
+  be created.
+  Regionl secret - projects/<project>/locations/<location>/secrets/<secret>
+  Global secret - projects/<project>/secrets/<secret>
+
+  Args:
+      parser: given argument parser
+      purpose: help text
+      **kwargs: extra arguments
+  """
+  secret_or_region_secret_spec = multitype.MultitypeResourceSpec(
+      'global or regional secret',
+      GetSecretResourceSpec(),
+      GetRegionalSecretResourceSpec(),
+      allow_inactive=True,
+      **kwargs,
+  )
+
+  concept_parsers.ConceptParser([
+      presentation_specs.MultitypeResourcePresentationSpec(
+          'secret',
+          secret_or_region_secret_spec,
+          purpose,
+          required=True,
+          hidden=True,
+      )
+  ]).AddToParser(parser)
+
+
+def AddGlobalOrRegionalVersion(parser, purpose='create a version', **kwargs):
+  """Adds a version resource.
+
+  Args:
+      parser: given argument parser
+      purpose: help text
+      **kwargs: extra arguments
+  """
+  global_or_region_version_spec = multitype.MultitypeResourceSpec(
+      'global or regional secret version',
+      GetVersionResourceSpec(),
+      GetRegionalVersionResourceSpec(),
+      allow_inactive=True,
+      **kwargs,
+  )
+
+  concept_parsers.ConceptParser([
+      presentation_specs.MultitypeResourcePresentationSpec(
+          'version',
+          global_or_region_version_spec,
+          purpose,
+          required=True,
+          hidden=True,
+      )
+  ]).AddToParser(parser)
+
+
+def AddGlobalOrRegionalVersionOrAlias(
+    parser, purpose='create a version alias', **kwargs
+):
+  """Adds a version resource or alias.
+
+  Args:
+      parser: given argument parser
+      purpose: help text
+      **kwargs: extra arguments
+  """
+  global_or_region_version_spec = multitype.MultitypeResourceSpec(
+      'global or regional secret version',
+      GetVersionResourceSpec(),
+      GetRegionalVersionResourceSpec(),
+      allow_inactive=True,
+      **kwargs,
+  )
+
+  concept_parsers.ConceptParser([
+      presentation_specs.MultitypeResourcePresentationSpec(
+          'version',
+          global_or_region_version_spec,
+          purpose,
+          required=True,
+          hidden=True,
+      )
+  ]).AddToParser(parser)
+
+
 ### Attribute configurations
 
 
@@ -351,11 +543,32 @@ def GetLocationAttributeConfig():
       completion_id_field='name')
 
 
+def GetLocationResourceAttributeConfig():
+  """Returns the attribute config for location resource."""
+  return concepts.ResourceParameterAttributeConfig(
+      name='location',
+      help_text=(
+          '[EXPERIMENTAL] The location of the {resource}.'
+      ),
+      completion_request_params={'fieldMask': 'name'},
+      completion_id_field='name',
+  )
+
+
 def GetSecretAttributeConfig():
   return concepts.ResourceParameterAttributeConfig(
       name='secret',
       help_text='The secret of the {resource}.',
       completer=secrets_completers.SecretsCompleter)
+
+
+def GetRegionalSecretAttributeConfig():
+  """Returns the attribute config for regional secret."""
+  return concepts.ResourceParameterAttributeConfig(
+      name='secret',
+      help_text='The secret of the {resource}.',
+      completer=secrets_completers.SecretsCompleter,
+  )
 
 
 def GetVersionAttributeConfig():
@@ -364,6 +577,16 @@ def GetVersionAttributeConfig():
       help_text='The version of the {resource}.',
       completion_request_params={'fieldMask': 'name'},
       completion_id_field='name')
+
+
+def GetRegionalVersionAttributeConfig():
+  """Returns the attribute config for regional secret version."""
+  return concepts.ResourceParameterAttributeConfig(
+      name='version',
+      help_text='The version of the {resource}.',
+      completion_request_params={'fieldMask': 'name'},
+      completion_id_field='name',
+  )
 
 
 # Resource specs
@@ -409,24 +632,110 @@ def GetVersionResourceSpec():
       projectsId=GetProjectAttributeConfig())
 
 
+def GetRegionalSecretResourceSpec():
+  """Returns the resource spec for regional secret."""
+  return concepts.ResourceSpec(
+      resource_collection='secretmanager.projects.locations.secrets',
+      resource_name='regional secret',
+      plural_name='secrets',
+      disable_auto_completers=False,
+      secretsId=GetRegionalSecretAttributeConfig(),
+      projectsId=GetProjectAttributeConfig(),
+      locationsId=GetLocationResourceAttributeConfig(),
+  )
+
+
+def GetRegionalVersionResourceSpec():
+  """Returns the resource spec for regional secret version."""
+  return concepts.ResourceSpec(
+      resource_collection='secretmanager.projects.locations.secrets.versions',
+      resource_name='regional version',
+      plural_name='version',
+      disable_auto_completers=False,
+      versionsId=GetRegionalVersionAttributeConfig(),
+      secretsId=GetRegionalSecretAttributeConfig(),
+      projectsId=GetProjectAttributeConfig(),
+      locationsId=GetLocationResourceAttributeConfig(),
+  )
+
+
 # Resource parsers
 
 
-def ParseProjectRef(ref, **kwargs):
-  kwargs['collection'] = 'secretmanager.projects'
-  return resources.REGISTRY.Parse(ref, **kwargs)
+def ParseSecretRef(ref):
+  return resources.REGISTRY.Parse(
+      ref, collection='secretmanager.projects.secrets'
+  )
 
 
-def ParseLocationRef(ref, **kwargs):
-  kwargs['collection'] = 'secretmanager.projects.locations'
-  return resources.REGISTRY.Parse(ref, **kwargs)
+def ParseVersionRef(ref):
+  return resources.REGISTRY.Parse(
+      ref, collection='secretmanager.projects.secrets.versions'
+  )
 
 
-def ParseSecretRef(ref, **kwargs):
-  kwargs['collection'] = 'secretmanager.projects.secrets'
-  return resources.REGISTRY.Parse(ref, **kwargs)
+def ParseRegionalVersionRef(ref):
+  """Parses regional section version into 'secretmanager.projects.locations.secrets.versions' format .
+
+  Args:
+    ref: resource name of regional secret version.
+  Returns:
+    Parsed secret version.
+  """
+  return resources.REGISTRY.Parse(
+      ref, collection='secretmanager.projects.locations.secrets.versions'
+  )
 
 
-def ParseVersionRef(ref, **kwargs):
-  kwargs['collection'] = 'secretmanager.projects.secrets.versions'
-  return resources.REGISTRY.Parse(ref, **kwargs)
+def MakeGetUriFunc(collection: str, api_version: str = 'v1'):
+  """Returns a function which turns a resource into a uri.
+
+  Example:
+    class List(base.ListCommand):
+      def GetUriFunc(self):
+        return MakeGetUriFunc(self)
+
+  Args:
+    collection: A command instance.
+    api_version: api_version to be displayed.
+
+  Returns:
+    A function which can be returned in GetUriFunc.
+  """
+
+  def _GetUri(resource):
+    registry = resources.REGISTRY.Clone()
+    registry.RegisterApiByName('secretmanager', api_version)
+    parsed = registry.Parse(resource.name, collection=collection)
+    return parsed.SelfLink()
+
+  return _GetUri
+
+
+def GetTagsArg():
+  """Makes the base.Argument for --tags flag."""
+  help_parts = [
+      'List of tags KEY=VALUE pairs to bind.',
+      'Each item must be expressed as',
+      '`<tag-key-namespaced-name>=<tag-value-short-name>`.\n',
+      'Example: `123/environment=production,123/costCenter=marketing`\n',
+  ]
+  return base.Argument(
+      '--tags',
+      metavar='KEY=VALUE',
+      type=arg_parsers.ArgDict(),
+      action=arg_parsers.UpdateAction,
+      help='\n'.join(help_parts),
+      hidden=True,
+  )
+
+
+def GetTagsFromArgs(args, tags_message, tags_arg_name='tags'):
+  """Makes the tags message object."""
+  tags = getattr(args, tags_arg_name)
+  if not tags:
+    return None
+  # Sorted for test stability
+  return tags_message(additionalProperties=[
+      tags_message.AdditionalProperty(key=key, value=value)
+      for key, value in sorted(tags.items())])

@@ -38,3 +38,15 @@ export NVM_DIR="$HOME/.nvm"
 # Git sync aliases
 alias syncup="git add . && git commit -m '🔄 Sync update' && git pull --rebase origin main && git push"
 alias syncdown="git pull --rebase origin main"
+export GOROOT=/data/data/com.termux/files/usr/lib/go
+export GOPATH=$HOME/go
+export PATH=$GOROOT/bin:$GOPATH/bin:$PATH
+export GOROOT=$PREFIX/lib/go
+export GOPATH=$HOME/go
+export PATH=$GOROOT/bin:$GOPATH/bin:$PATH
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/data/data/com.termux/files/home/google-cloud-sdk/path.bash.inc' ]; then . '/data/data/com.termux/files/home/google-cloud-sdk/path.bash.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/data/data/com.termux/files/home/google-cloud-sdk/completion.bash.inc' ]; then . '/data/data/com.termux/files/home/google-cloud-sdk/completion.bash.inc'; fi

@@ -19,7 +19,6 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import os
-import tempfile
 
 from googlecloudsdk.api_lib.artifacts import exceptions as ar_exceptions
 from googlecloudsdk.calliope import base
@@ -29,8 +28,8 @@ from googlecloudsdk.command_lib.artifacts import flags
 from googlecloudsdk.core import log
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
-@base.Hidden
 class Download(base.Command):
   """Download an Artifact Registry file.
 
@@ -85,8 +84,8 @@ class Download(base.Command):
         if args.local_filename
         else self.os_friendly_filename(file_escaped.filesId)
     )
-    tmp_path = os.path.join(tempfile.gettempdir(), filename)
     final_path = os.path.join(args.destination, filename)
+    final_path = os.path.expanduser(final_path)
     dest_dir = os.path.dirname(final_path)
     if not os.path.exists(dest_dir):
       raise ar_exceptions.DirectoryNotExistError(
@@ -96,8 +95,13 @@ class Download(base.Command):
       raise ar_exceptions.PathNotDirectoryError(
           'Destination is not a directory: ' + dest_dir
       )
+    default_chunk_size = 3 * 1024 * 1024
     download_util.Download(
-        tmp_path, final_path, file_escaped.RelativeName(), args.allow_overwrite
+        final_path,
+        file_escaped.RelativeName(),
+        filename,
+        args.allow_overwrite,
+        default_chunk_size
     )
     log.status.Print('Successfully downloaded the file to ' + args.destination)
 

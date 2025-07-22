@@ -51,14 +51,13 @@ class AutotuningConfigFactory(object):
     """
     kwargs = {}
 
-    if args.autotuning_cohort:
-      kwargs['cohort'] = args.autotuning_cohort
-
     if args.autotuning_scenarios:
       kwargs['scenarios'] = [
           arg_utils.ChoiceToEnum(sc, ac.ScenariosValueListEntryValuesEnum)
           for sc in args.autotuning_scenarios
       ]
+    elif args.enable_autotuning:
+      kwargs['scenarios'] = [ac.ScenariosValueListEntryValuesEnum.AUTO]
 
     if not kwargs:
       return None
@@ -68,22 +67,19 @@ class AutotuningConfigFactory(object):
 
 def AddArguments(parser):
   """Adds related arguments to parser."""
-  parser.add_argument(
-      '--autotuning-cohort',
-      help=(
-          'Autotuning cohort identifier. Identifies families of the workloads'
-          ' having the similar structure and inputs, e.g. daily ETL jobs.'
-      ),
-      hidden=True,
-  )
-
   scenario_choices = [
       arg_utils.EnumNameToChoice(str(sc))
       for sc in ac.ScenariosValueListEntryValuesEnum
-      if sc != ac.ScenariosValueListEntryValuesEnum.SCENARIO_UNSPECIFIED
+      if sc
+      not in [
+          ac.ScenariosValueListEntryValuesEnum.SCENARIO_UNSPECIFIED,
+          ac.ScenariosValueListEntryValuesEnum.BHJ,
+          ac.ScenariosValueListEntryValuesEnum.NONE,
+      ]
   ]
 
-  parser.add_argument(
+  scenarios_group = parser.add_mutually_exclusive_group(hidden=True)
+  scenarios_group.add_argument(
       '--autotuning-scenarios',
       type=arg_parsers.ArgList(
           element_type=str,
@@ -92,5 +88,12 @@ def AddArguments(parser):
       metavar='SCENARIO',
       default=[],
       help='Scenarios for which tunings are applied.',
+      hidden=True,
+  )
+  scenarios_group.add_argument(
+      '--enable-autotuning',
+      action='store_true',
+      default=False,
+      help='Enable autotuning got the workload.',
       hidden=True,
   )

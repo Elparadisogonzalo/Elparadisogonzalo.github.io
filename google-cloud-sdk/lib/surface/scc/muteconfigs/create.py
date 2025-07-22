@@ -29,33 +29,45 @@ from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.ALPHA)
 class Create(base.CreateCommand):
-  """Create a Cloud Security Command Center mute config."""
+  """Create a Security Command Center mute config."""
 
   detailed_help = {
-      "DESCRIPTION": "Create a Cloud Security Command Center mute config.",
+      "DESCRIPTION": "Create a Security Command Center mute config.",
       "EXAMPLES": """
-        To create a mute config ``my-mute-config'' given organization ``123'' with a filter on category that equals to ``XSS_SCRIPTING'', run:
+        To create a mute config ``test-mute-config'' given organization ``123''
+        with a filter on category that equals to ``XSS_SCRIPTING'', run:
 
-          $ {command} my-mute-config --organization=organizations/123 --description="This is a test mute config" --filter="category=\\"XSS_SCRIPTING\\""
-          $ {command} my-mute-config --organization=123 --description="This is a test mute config" --filter="category=\\"XSS_SCRIPTING\\""
-          $ {command} organizations/123/muteConfigs/my-mute-config --description="This is a test mute config" --filter="category=\\"XSS_SCRIPTING\\""
+          $ {command} test-mute-config --organization=123
+            --description="This is a test mute config"
+            --filter="category=\\"XSS_SCRIPTING\\""
 
-        To create a mute config ``my-mute-config'' given folder ``456'' with a filter on category that equals to ``XSS_SCRIPTING'', run:
+        To create a mute config ``test-mute-config'' given folder ``456'' with a
+        filter on category that equals to ``XSS_SCRIPTING'', run:
 
-          $ {command} my-mute-config --folder=folders/456 --description="This is a test mute config" --filter="category=\\"XSS_SCRIPTING\\""
-          $ {command} my-mute-config --folder=456 --description="This is a test mute config" --filter="category=\\"XSS_SCRIPTING\\""
-          $ {command} folders/456/muteConfigs/my-mute-config --description="This is a test mute config" --filter="category=\\"XSS_SCRIPTING\\""
+          $ {command} test-mute-config --folder=456
+            --description="This is a test mute config"
+            --filter="category=\\"XSS_SCRIPTING\\""
 
-        To create a mute config ``my-mute-config'' given project ``789'' with a filter on category that equals to ``XSS_SCRIPTING'', run:
+        To create a mute config ``test-mute-config'' given project ``789'' with a
+        filter on category that equals to ``XSS_SCRIPTING'', run:
 
-          $ {command} my-mute-config --project=projects/789 --description="This is a test mute config" --filter="category=\\"XSS_SCRIPTING\\""
-          $ {command} my-mute-config --project=789 --description="This is a test mute config" --filter="category=\\"XSS_SCRIPTING\\""
-          $ {command} projects/789/muteConfigs/my-mute-config --description="This is a test mute config" --filter="category=\\"XSS_SCRIPTING\\"" """,
+          $ {command} test-mute-config --project=789
+            --description="This is a test mute config"
+            --filter="category=\\"XSS_SCRIPTING\\""
+
+        To create a mute config ``test-mute-config'' given organization ``123'',
+        `location=eu` with a filter on category that equals to ``XSS_SCRIPTING'',
+        run:
+
+          $ {command} test-mute-config --organization=123
+            --description="This is a test mute config"
+            --filter="category=\\"XSS_SCRIPTING\\"" --location=eu""",
       "API REFERENCE": """
-        This command uses the securitycenter/v1 API. The full documentation for
-        this API can be found at: https://cloud.google.com/security-command-center""",
+      This command uses the Security Command Center API. For more information,
+      see [Security Command Center API.](https://cloud.google.com/security-command-center/docs/reference/rest)""",
   }
 
   @staticmethod
@@ -65,6 +77,8 @@ class Create(base.CreateCommand):
     flags.AddParentGroup(parser)
     flags.DESCRIPTION_FLAG.AddToParser(parser)
     flags.FILTER_FLAG.AddToParser(parser)
+    flags.TYPE_FLAG.AddToParser(parser)
+    flags.EXPIRY_TIME_FLAG.AddToParser(parser)
     scc_flags.API_VERSION_FLAG.AddToParser(parser)
     scc_flags.LOCATION_FLAG.AddToParser(parser)
     parser.display_info.AddFormat(properties.VALUES.core.default_format.Get())
@@ -75,16 +89,24 @@ class Create(base.CreateCommand):
     # Build request from args.
     messages = securitycenter_client.GetMessages(version)
     request = messages.SecuritycenterOrganizationsMuteConfigsCreateRequest()
+    mute_config_type = util.ValidateAndGetType(args, version)
+    expiry_time = util.ValidateAndGetExpiryTime(args)
     if version == "v2":
       request.googleCloudSecuritycenterV2MuteConfig = (
           messages.GoogleCloudSecuritycenterV2MuteConfig(
-              filter=args.filter, description=args.description
+              filter=args.filter,
+              description=args.description,
+              type=mute_config_type,
+              expiryTime=expiry_time,
           )
       )
     else:
       request.googleCloudSecuritycenterV1MuteConfig = (
           messages.GoogleCloudSecuritycenterV1MuteConfig(
-              filter=args.filter, description=args.description
+              filter=args.filter,
+              description=args.description,
+              type=mute_config_type,
+              expiryTime=expiry_time,
           )
       )
     request = _GenerateMuteConfig(args, request, version)

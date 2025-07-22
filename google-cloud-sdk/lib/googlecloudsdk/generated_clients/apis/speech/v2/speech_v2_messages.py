@@ -64,7 +64,9 @@ class AutoDetectDecodingConfig(_messages.Message):
   an rfc4867.5 header. * FLAC: FLAC frames in the "native FLAC" container
   format. * MP3: MPEG audio frames with optional (ignored) ID3 metadata. *
   OGG_OPUS: Opus audio frames in an Ogg container. * WEBM_OPUS: Opus audio
-  frames in a WebM container. * M4A: M4A audio format.
+  frames in a WebM container. * MP4_AAC: AAC audio frames in an MP4 container.
+  * M4A_AAC: AAC audio frames in an M4A container. * MOV_AAC: AAC audio frames
+  in an MOV container.
   """
 
 
@@ -179,7 +181,7 @@ class BatchRecognizeRequest(_messages.Message):
       provided, config completely overrides and replaces the config in the
       recognizer for this recognition request.
     files: Audio files with file metadata for ASR. The maximum number of files
-      allowed to be specified is 5.
+      allowed to be specified is 15.
     processingStrategy: Processing strategy to use for this request.
     recognitionOutputConfig: Configuration options for where to output the
       transcripts of each file.
@@ -296,10 +298,18 @@ class CloudStorageResult(_messages.Message):
   r"""Final results written to Cloud Storage.
 
   Fields:
+    srtFormatUri: The Cloud Storage URI to which recognition results were
+      written as SRT formatted captions. This is populated only when `SRT`
+      output is requested.
     uri: The Cloud Storage URI to which recognition results were written.
+    vttFormatUri: The Cloud Storage URI to which recognition results were
+      written as VTT formatted captions. This is populated only when `VTT`
+      output is requested.
   """
 
-  uri = _messages.StringField(1)
+  srtFormatUri = _messages.StringField(1)
+  uri = _messages.StringField(2)
+  vttFormatUri = _messages.StringField(3)
 
 
 class Config(_messages.Message):
@@ -578,20 +588,18 @@ class ExplicitDecodingConfig(_messages.Message):
       recognition.
 
   Fields:
-    audioChannelCount: Number of channels present in the audio data sent for
-      recognition. Supported for the following encodings: * LINEAR16:
-      Headerless 16-bit signed little-endian PCM samples. * MULAW: Headerless
-      8-bit companded mulaw samples. * ALAW: Headerless 8-bit companded alaw
-      samples. The maximum allowed value is 8.
+    audioChannelCount: Optional. Number of channels present in the audio data
+      sent for recognition. Note that this field is marked as OPTIONAL for
+      backward compatibility reasons. It is (and has always been) effectively
+      REQUIRED. The maximum allowed value is 8.
     encoding: Required. Encoding of the audio data sent for recognition.
-    sampleRateHertz: Sample rate in Hertz of the audio data sent for
-      recognition. Valid values are: 8000-48000. 16000 is optimal. For best
-      results, set the sampling rate of the audio source to 16000 Hz. If
+    sampleRateHertz: Optional. Sample rate in Hertz of the audio data sent for
+      recognition. Valid values are: 8000-48000, and 16000 is optimal. For
+      best results, set the sampling rate of the audio source to 16000 Hz. If
       that's not possible, use the native sample rate of the audio source
-      (instead of re-sampling). Supported for the following encodings: *
-      LINEAR16: Headerless 16-bit signed little-endian PCM samples. * MULAW:
-      Headerless 8-bit companded mulaw samples. * ALAW: Headerless 8-bit
-      companded alaw samples.
+      (instead of resampling). Note that this field is marked as OPTIONAL for
+      backward compatibility reasons. It is (and has always been) effectively
+      REQUIRED.
   """
 
   class EncodingValueValuesEnum(_messages.Enum):
@@ -602,11 +610,29 @@ class ExplicitDecodingConfig(_messages.Message):
       LINEAR16: Headerless 16-bit signed little-endian PCM samples.
       MULAW: Headerless 8-bit companded mulaw samples.
       ALAW: Headerless 8-bit companded alaw samples.
+      AMR: AMR frames with an rfc4867.5 header.
+      AMR_WB: AMR-WB frames with an rfc4867.5 header.
+      FLAC: FLAC frames in the "native FLAC" container format.
+      MP3: MPEG audio frames with optional (ignored) ID3 metadata.
+      OGG_OPUS: Opus audio frames in an Ogg container.
+      WEBM_OPUS: Opus audio frames in a WebM container.
+      MP4_AAC: AAC audio frames in an MP4 container.
+      M4A_AAC: AAC audio frames in an M4A container.
+      MOV_AAC: AAC audio frames in an MOV container.
     """
     AUDIO_ENCODING_UNSPECIFIED = 0
     LINEAR16 = 1
     MULAW = 2
     ALAW = 3
+    AMR = 4
+    AMR_WB = 5
+    FLAC = 6
+    MP3 = 7
+    OGG_OPUS = 8
+    WEBM_OPUS = 9
+    MP4_AAC = 10
+    M4A_AAC = 11
+    MOV_AAC = 12
 
   audioChannelCount = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   encoding = _messages.EnumField('EncodingValueValuesEnum', 2)
@@ -632,10 +658,16 @@ class InlineResult(_messages.Message):
   r"""Final results returned inline in the recognition response.
 
   Fields:
+    srtCaptions: The transcript for the audio file as SRT formatted captions.
+      This is populated only when `SRT` output is requested.
     transcript: The transcript for the audio file.
+    vttCaptions: The transcript for the audio file as VTT formatted captions.
+      This is populated only when `VTT` output is requested.
   """
 
-  transcript = _messages.MessageField('BatchRecognizeResults', 1)
+  srtCaptions = _messages.StringField(1)
+  transcript = _messages.MessageField('BatchRecognizeResults', 2)
+  vttCaptions = _messages.StringField(3)
 
 
 class LanguageMetadata(_messages.Message):
@@ -841,7 +873,7 @@ class LocationsMetadata(_messages.Message):
 
 
 class ModelFeature(_messages.Message):
-  r"""Representes a singular feature of a model. If the feature is
+  r"""Represents a singular feature of a model. If the feature is
   `recognizer`, the release_state of the feature represents the release_state
   of the model
 
@@ -901,6 +933,10 @@ class ModelMetadata(_messages.Message):
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   modelFeatures = _messages.MessageField('ModelFeaturesValue', 1)
+
+
+class NativeOutputFileFormatConfig(_messages.Message):
+  r"""Output configurations for serialized `BatchRecognizeResults` protos."""
 
 
 class Operation(_messages.Message):
@@ -1084,6 +1120,24 @@ class OperationMetadata(_messages.Message):
   updateTime = _messages.StringField(22)
 
 
+class OutputFormatConfig(_messages.Message):
+  r"""Configuration for the format of the results stored to `output`.
+
+  Fields:
+    native: Configuration for the native output format. If this field is set
+      or if no other output format field is set, then transcripts will be
+      written to the sink in the native format.
+    srt: Configuration for the SRT output format. If this field is set, then
+      transcripts will be written to the sink in the SRT format.
+    vtt: Configuration for the VTT output format. If this field is set, then
+      transcripts will be written to the sink in the VTT format.
+  """
+
+  native = _messages.MessageField('NativeOutputFileFormatConfig', 1)
+  srt = _messages.MessageField('SrtOutputFileFormatConfig', 2)
+  vtt = _messages.MessageField('VttOutputFileFormatConfig', 3)
+
+
 class Phrase(_messages.Message):
   r"""A Phrase contains words and phrase "hints" so that the speech
   recognition is more likely to recognize them. This can be used to improve
@@ -1252,6 +1306,9 @@ class RecognitionConfig(_messages.Message):
       automatically replace parts of the transcript with phrases of your
       choosing. For StreamingRecognize, this normalization only applies to
       stable partial transcripts (stability > 0.8) and final transcripts.
+    translationConfig: Optional. Optional configuration used to automatically
+      run translation on the given audio to the desired language for supported
+      models.
   """
 
   adaptation = _messages.MessageField('SpeechAdaptation', 1)
@@ -1261,6 +1318,7 @@ class RecognitionConfig(_messages.Message):
   languageCodes = _messages.StringField(5, repeated=True)
   model = _messages.StringField(6)
   transcriptNormalization = _messages.MessageField('TranscriptNormalization', 7)
+  translationConfig = _messages.MessageField('TranslationConfig', 8)
 
 
 class RecognitionFeatures(_messages.Message):
@@ -1344,21 +1402,27 @@ class RecognitionOutputConfig(_messages.Message):
       are provided in the BatchRecognizeResponse message of the Operation when
       completed. This is only supported when calling BatchRecognize with just
       one audio file.
+    outputFormatConfig: Optional. Configuration for the format of the results
+      stored to `output`. If unspecified transcripts will be written in the
+      `NATIVE` format only.
   """
 
   gcsOutputConfig = _messages.MessageField('GcsOutputConfig', 1)
   inlineResponseConfig = _messages.MessageField('InlineOutputConfig', 2)
+  outputFormatConfig = _messages.MessageField('OutputFormatConfig', 3)
 
 
 class RecognitionResponseMetadata(_messages.Message):
-  r"""Metadata about the recognition request and response. Next ID: 10
+  r"""Metadata about the recognition request and response.
 
   Fields:
+    requestId: Global request identifier auto-generated by the API.
     totalBilledDuration: When available, billed audio seconds for the
       corresponding request.
   """
 
-  totalBilledDuration = _messages.StringField(1)
+  requestId = _messages.StringField(1)
+  totalBilledDuration = _messages.StringField(2)
 
 
 class RecognizeRequest(_messages.Message):
@@ -1710,6 +1774,8 @@ class SpeechProjectsLocationsListRequest(_messages.Message):
   r"""A SpeechProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -1720,10 +1786,11 @@ class SpeechProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class SpeechProjectsLocationsOperationsGetRequest(_messages.Message):
@@ -2010,6 +2077,14 @@ class SpeechRecognitionResult(_messages.Message):
   resultEndOffset = _messages.StringField(4)
 
 
+class SrtOutputFileFormatConfig(_messages.Message):
+  r"""Output configurations [SubRip
+  Text](https://www.matroska.org/technical/subtitles.html#srt-subtitles)
+  formatted subtitle file.
+  """
+
+
+
 class StandardQueryParameters(_messages.Message):
   r"""Query parameters accepted by all methods.
 
@@ -2178,6 +2253,17 @@ class TranscriptNormalization(_messages.Message):
   entries = _messages.MessageField('Entry', 1, repeated=True)
 
 
+class TranslationConfig(_messages.Message):
+  r"""Translation configuration. Use to translate the given audio into text
+  for the desired language.
+
+  Fields:
+    targetLanguage: Required. The language code to translate to.
+  """
+
+  targetLanguage = _messages.StringField(1)
+
+
 class UndeleteCustomClassRequest(_messages.Message):
   r"""Request message for the UndeleteCustomClass method.
 
@@ -2300,6 +2386,13 @@ class UpdateRecognizerRequest(_messages.Message):
   recognizer = _messages.MessageField('Recognizer', 1)
   updateMask = _messages.StringField(2)
   validateOnly = _messages.BooleanField(3)
+
+
+class VttOutputFileFormatConfig(_messages.Message):
+  r"""Output configurations for [WebVTT](https://www.w3.org/TR/webvtt1/)
+  formatted subtitle file.
+  """
+
 
 
 class WordInfo(_messages.Message):

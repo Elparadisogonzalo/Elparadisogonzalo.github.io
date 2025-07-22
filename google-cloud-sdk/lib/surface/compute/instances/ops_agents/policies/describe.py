@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from apitools.base.py import exceptions as apitools_exceptions
+from googlecloudsdk.api_lib.compute.instances.ops_agents import cloud_ops_agents_util
 from googlecloudsdk.api_lib.compute.instances.ops_agents import exceptions as ops_agents_exceptions
 from googlecloudsdk.api_lib.compute.instances.ops_agents.converters import guest_policy_to_ops_agents_policy_converter as to_ops_agents
 from googlecloudsdk.api_lib.compute.instances.ops_agents.validators import guest_policy_validator
@@ -31,7 +32,7 @@ from googlecloudsdk.core import properties
 
 
 @base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
-class Describe(base.DescribeCommand):
+class DescribeAlphaBeta(base.DescribeCommand):
   """Describe a Google Cloud's operations suite agents (Ops Agents) policy.
 
   *{command}* describes a policy that facilitates agent management across
@@ -64,10 +65,8 @@ class Describe(base.DescribeCommand):
   """
 
   detailed_help = {
-      'DESCRIPTION':
-          '{description}',
-      'EXAMPLES':
-          """\
+      'DESCRIPTION': '{description}',
+      'EXAMPLES': """\
           To describe an Ops Agents policy named ``ops-agents-test-policy'' in
           the current project, run:
 
@@ -86,27 +85,92 @@ class Describe(base.DescribeCommand):
 
     project = properties.VALUES.core.project.GetOrFail()
     guest_policy_uri_path = osconfig_command_utils.GetGuestPolicyUriPath(
-        'projects', project, args.POLICY_ID)
+        'projects', project, args.POLICY_ID
+    )
     client = osconfig_api_utils.GetClientInstance(
-        release_track, api_version_override='v1beta')
+        release_track, api_version_override='v1beta'
+    )
     service = client.projects_guestPolicies
     messages = osconfig_api_utils.GetClientMessages(
-        release_track, api_version_override='v1beta')
+        release_track, api_version_override='v1beta'
+    )
 
     get_request = messages.OsconfigProjectsGuestPoliciesGetRequest(
-        name=guest_policy_uri_path)
+        name=guest_policy_uri_path
+    )
     try:
       get_response = service.Get(get_request)
     except apitools_exceptions.HttpNotFoundError:
-      raise ops_agents_exceptions.PolicyNotFoundError(
-          policy_id=args.POLICY_ID)
+      raise ops_agents_exceptions.PolicyNotFoundError(policy_id=args.POLICY_ID)
     if not guest_policy_validator.IsOpsAgentPolicy(get_response):
-      raise ops_agents_exceptions.PolicyNotFoundError(
-          policy_id=args.POLICY_ID)
+      raise ops_agents_exceptions.PolicyNotFoundError(policy_id=args.POLICY_ID)
     try:
       ops_agents_policy = to_ops_agents.ConvertGuestPolicyToOpsAgentPolicy(
-          get_response)
+          get_response
+      )
     except calliope_exceptions.BadArgumentException:
-      raise ops_agents_exceptions.PolicyMalformedError(
-          policy_id=args.POLICY_ID)
+      raise ops_agents_exceptions.PolicyMalformedError(policy_id=args.POLICY_ID)
     return ops_agents_policy
+
+
+@base.UniverseCompatible
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class Describe(base.DescribeCommand):
+  """Describe a Google Cloud Observability agents policy for the Ops Agent.
+
+  *{command}* describes a policy that facilitates agent management across
+  Compute Engine instances based on user specified instance filters. This policy
+  installs, specifies versioning, and removes Ops Agents.
+
+  The command returns the content of one policy. For instance:
+
+    agentsRule:
+      packageState: installed
+      version: latest
+    instanceFilter:
+      inclusionLabels:
+      - labels:
+          env: prod
+
+  If no policies are found, then the command returns a `NOT_FOUND` error.
+  """
+
+  detailed_help = {
+      'DESCRIPTION': '{description}',
+      'EXAMPLES': """\
+          To describe an agents policy named `ops-agents-test-policy` in
+          the current project, run:
+
+            $ {command} ops-agents-test-policy --zone=ZONE
+          """,
+  }
+
+  @staticmethod
+  def Args(parser):
+    """See base class."""
+    parser.add_argument(
+        'POLICY_ID',
+        type=str,
+        help="""\
+          ID of the policy.
+
+          This ID must contain only lowercase letters,
+          numbers, and hyphens, end with a number or a letter, be between 1-63
+          characters, and be unique within the project.
+          """,
+    )
+    parser.add_argument(
+        '--zone',
+        required=True,
+        help="""\
+          Zone of the agents policy.""",
+    )
+
+  def Run(self, args):
+    """See base class."""
+    release_track = self.ReleaseTrack()
+    project = properties.VALUES.core.project.GetOrFail()
+
+    return cloud_ops_agents_util.GetOpsAgentsPolicyFromApi(
+        release_track, args.POLICY_ID, project, args.zone
+    ).ToPyValue()

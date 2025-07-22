@@ -18,7 +18,7 @@ import enum
 
 
 BASE_URL = 'https://parallelstore.googleapis.com/v1beta/'
-DOCS_URL = 'https://cloud.google.com/'
+DOCS_URL = 'https://cloud.google.com/parallelstore'
 
 
 class Collections(enum.Enum):
@@ -61,6 +61,27 @@ class Collections(enum.Enum):
               '{operationsId}',
       },
       ['name'],
+      True
+  )
+  PROJECTS_NETWORKS = (
+      'projects.networks',
+      'projects/{projectsId}/global/networks/{networksId}',
+      {},
+      ['projectsId', 'networksId'],
+      True
+  )
+  PROJECTS_REGIONS_ADDRESSES = (
+      'projects.regions.addresses',
+      'projects/{projectsId}/regions/{regionsId}/addresses/{addressesId}',
+      {},
+      ['projectsId', 'regionsId', 'addressesId'],
+      True
+  )
+  PROJECTS_SERVICEACCOUNTS = (
+      'projects.serviceAccounts',
+      'projects/{projectsId}/serviceAccounts/{serviceAccountsId}',
+      {},
+      ['projectsId', 'serviceAccountsId'],
       True
   )
 

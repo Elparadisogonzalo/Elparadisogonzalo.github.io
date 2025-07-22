@@ -43,7 +43,7 @@ from googlecloudsdk.core.credentials import creds_context_managers
 from googlecloudsdk.core.credentials import devshell as c_devshell
 from googlecloudsdk.core.survey import survey_check
 from googlecloudsdk.core.updater import local_state
-from googlecloudsdk.core.updater import update_manager
+
 from googlecloudsdk.core.util import keyboard_interrupt
 from googlecloudsdk.core.util import platforms
 import surface
@@ -57,6 +57,7 @@ if not config.Paths().sdk_root:
 
 
 def UpdateCheck(command_path, **unused_kwargs):
+  from googlecloudsdk.core.updater import update_manager
   try:
     update_manager.UpdateManager.PerformUpdateCheck(command_path=command_path)
   # pylint:disable=broad-except, We never want this to escape, ever. Only
@@ -135,6 +136,10 @@ def CreateCLI(surfaces, translator=None):
       base.ReleaseTrack.BETA,
       os.path.join(pkg_root, 'surface', 'beta'),
       component='beta')
+  loader.AddReleaseTrack(
+      base.ReleaseTrack.PREVIEW,
+      os.path.join(pkg_root, 'surface', 'preview'),
+      component='preview')
 
   for dot_path, dir_path in surfaces:
     loader.AddModule(dot_path, dir_path, component=None)
@@ -153,6 +158,13 @@ def CreateCLI(surfaces, translator=None):
       'container.hub',
       os.path.join(pkg_root, 'surface', 'container', 'fleet'))
 
+  # Make 'bigtable.tables' an alias for 'bigtable.instances.tables' to be
+  # consistent with other bigtable commands while avoiding a breaking change.
+  loader.AddModule(
+      'bigtable.tables',
+      os.path.join(pkg_root, 'surface', 'bigtable', 'instances', 'tables'),
+  )
+
   # Check for updates on shutdown but not for any of the updater commands.
   # Skip update checks for 'gcloud version' command as it does that manually.
   exclude_commands = r'gcloud\.components\..*|gcloud\.version'
@@ -166,7 +178,8 @@ def _IssueAIPlatformAliasWarning(command_path=None):
   del command_path  # Unused in _IssueTestWarning
   log.warning(
       'The `gcloud ml-engine` commands have been renamed and will soon be '
-      'removed. Please use `gcloud ai-platform` instead.')
+      'removed. Please use `gcloud ai-platform` instead.'
+  )
 
 
 @crash_handling.CrashManager

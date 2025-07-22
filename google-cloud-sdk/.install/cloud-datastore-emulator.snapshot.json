@@ -1,0 +1,36 @@
+{
+  "components": [
+    {
+      "data": {
+        "contents_checksum": "81f9bd9d6d2794a75ae60c33b0d74788608f9335d61c47caa5d4688cedadc9fa",
+        "source": "",
+        "type": "tar"
+      },
+      "dependencies": [
+        "core"
+      ],
+      "details": {
+        "description": "Provides a local emulator of Cloud Datastore.",
+        "display_name": "Cloud Datastore Emulator"
+      },
+      "gdu_only": false,
+      "id": "cloud-datastore-emulator",
+      "is_configuration": false,
+      "is_hidden": false,
+      "is_required": false,
+      "platform": {},
+      "platform_required": false,
+      "version": {
+        "build_number": 20230707144938,
+        "version_string": "2.3.1"
+      }
+    }
+  ],
+  "revision": 20250711193911,
+  "schema_version": {
+    "no_update": false,
+    "url": "https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz",
+    "version": 3
+  },
+  "version": "530.0.0"
+}

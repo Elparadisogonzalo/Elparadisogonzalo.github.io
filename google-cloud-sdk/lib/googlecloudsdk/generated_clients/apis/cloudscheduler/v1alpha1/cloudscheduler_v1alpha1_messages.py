@@ -376,6 +376,8 @@ class CloudschedulerProjectsLocationsListRequest(_messages.Message):
   r"""A CloudschedulerProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -386,10 +388,11 @@ class CloudschedulerProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class Empty(_messages.Message):
@@ -596,6 +599,8 @@ class Job(_messages.Message):
       execution time according to the schedule.
     pubsubTarget: Pub/Sub target.
     retryConfig: Settings that determine the retry behavior.
+    satisfiesPzs: Output only. Whether or not this Job satisfies the
+      requirements of physical zone separation
     schedule: Specifies a schedule of start times. This can be used to specify
       complicated and time-zone-aware schedules. A scheduled start time will
       be delayed if the previous execution has not ended when its scheduled
@@ -642,10 +647,11 @@ class Job(_messages.Message):
   nextScheduleTime = _messages.StringField(8)
   pubsubTarget = _messages.MessageField('PubsubTarget', 9)
   retryConfig = _messages.MessageField('RetryConfig', 10)
-  schedule = _messages.MessageField('Schedule', 11)
-  state = _messages.EnumField('StateValueValuesEnum', 12)
-  status = _messages.MessageField('Status', 13)
-  userUpdateTime = _messages.StringField(14)
+  satisfiesPzs = _messages.BooleanField(11)
+  schedule = _messages.MessageField('Schedule', 12)
+  state = _messages.EnumField('StateValueValuesEnum', 13)
+  status = _messages.MessageField('Status', 14)
+  userUpdateTime = _messages.StringField(15)
 
 
 class ListJobsResponse(_messages.Message):
@@ -796,6 +802,32 @@ class OidcToken(_messages.Message):
 
   audience = _messages.StringField(1)
   serviceAccountEmail = _messages.StringField(2)
+
+
+class OperationMetadata(_messages.Message):
+  r"""Represents the metadata of the long-running operation.
+
+  Fields:
+    apiVersion: Output only. API version used to start the operation.
+    cancelRequested: Output only. Identifies whether the user has requested
+      cancellation of the operation. Operations that have been cancelled
+      successfully have google.longrunning.Operation.error value with a
+      google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
+    createTime: Output only. The time the operation was created.
+    endTime: Output only. The time the operation finished running.
+    statusDetail: Output only. Human-readable status of the operation, if any.
+    target: Output only. Server-defined resource path for the target of the
+      operation.
+    verb: Output only. Name of the verb executed by the operation.
+  """
+
+  apiVersion = _messages.StringField(1)
+  cancelRequested = _messages.BooleanField(2)
+  createTime = _messages.StringField(3)
+  endTime = _messages.StringField(4)
+  statusDetail = _messages.StringField(5)
+  target = _messages.StringField(6)
+  verb = _messages.StringField(7)
 
 
 class PauseJobRequest(_messages.Message):

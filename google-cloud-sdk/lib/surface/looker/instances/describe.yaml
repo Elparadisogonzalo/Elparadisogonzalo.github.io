@@ -2,12 +2,9 @@
 
   help_text:
     brief: |
-      Show metadata for a Looker.
+      Show metadata for a Looker instance.
     description: |
       Show metadata for a Looker instance.
-
-      Displays all metadata associated with a Looker instance given a valid
-      instance name.
 
       This command can fail for the following reasons:
         * The instance specified does not exist.
@@ -19,6 +16,10 @@
 
         $ {command} my-looker-instance
 
+      To display all fields of the instance metadata, add the `--format=json` flag:
+
+        $ {command} my-looker-instance --format=json
+
   arguments:
     resource:
       spec: !REF googlecloudsdk.command_lib.looker.resources:instance
@@ -28,7 +29,7 @@
 
   request:
     ALPHA:
-      api_version: v1alpha1
+      api_version: v1alpha2
     GA:
       api_version: v1
     collection: looker.projects.locations.instances

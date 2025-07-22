@@ -36,10 +36,9 @@ The operation is not supported for given environment. Composer version {composer
 """
 
 
-@base.Hidden
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+@base.DefaultUniverseOnly
 class ListWorkloads(base.Command):
-  """List Composer workloads, supported in Composer 3.0.0 environments or greater."""
+  """List Composer workloads, supported in Composer 3 environments or greater."""
 
   detailed_help = DETAILED_HELP
 

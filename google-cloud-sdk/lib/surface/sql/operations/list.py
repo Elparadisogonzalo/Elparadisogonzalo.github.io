@@ -48,6 +48,7 @@ DETAILED_HELP = {
 }
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA,
                     base.ReleaseTrack.ALPHA)
 class List(base.ListCommand):
@@ -76,11 +77,11 @@ class List(base.ListCommand):
     sql_client = client.sql_client
     sql_messages = client.sql_messages
 
-    validate.ValidateInstanceName(args.instance)
     instance_ref = client.resource_parser.Parse(
         args.instance,
         params={'project': properties.VALUES.core.project.GetOrFail},
         collection='sql.instances')
+    validate.ValidateInstanceName(args.instance)
 
     return list_pager.YieldFromList(
         sql_client.operations,

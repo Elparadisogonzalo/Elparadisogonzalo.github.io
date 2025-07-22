@@ -1,0 +1,21 @@
+application: guestbook
+runtime: python38
+runtime_channel: canary
+service: guestbook3
+app_engine_apis: true
+version: 1
+entrypoint: exec gunicorn -b :${PORT} main:app
+
+# [START handlers]
+handlers:
+- url: /favicon\.ico
+  static_files: favicon.ico
+  upload: favicon\.ico
+
+- url: /bootstrap
+  static_dir: bootstrap
+
+- url: /.*
+  script: auto
+# [END handlers]
+

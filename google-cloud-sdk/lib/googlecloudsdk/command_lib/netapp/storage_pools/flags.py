@@ -58,23 +58,30 @@ def GetStoragePoolServiceLevelArg(messages, required=True):
           'premium',
           """
                           Premium Service Level for Cloud NetApp Storage Pool.
-                          The Premium Service Level has a throughput per TiB of
-                          allocated volume size of 64 MiB/s.""",
+                          The Premium Service Level has a throughput per GiB of
+                          allocated volume size of 64 KiB/s.""",
       ),
       'EXTREME': (
           'extreme',
           """
                           Extreme Service Level for Cloud NetApp Storage Pool.
-                          The Extreme Service Level has a throughput per TiB of
-                          allocated volume size of 128 MiB/s.""",
+                          The Extreme Service Level has a throughput per GiB of
+                          allocated volume size of 128 KiB/s.""",
       ),
       'STANDARD': (
           'standard',
           """
                           Standard Service Level for Cloud NetApp Storage Pool.
-                          The Standard Service Level has a throughput per TiB of
-                          allocated volume size of 128 MiB/s.""",
-      )
+                          The Standard Service Level has a throughput per GiB of
+                          allocated volume size of 16 KiB/s.""",
+      ),
+      'FLEX': (
+          'flex',
+          """
+                          Flex Service Level for Cloud NetApp Storage Pool.
+                          The Flex Service Level has a throughput per GiB of
+                          allocated volume size of 16 KiB/s.""",
+      ),
   }
   service_level_arg = arg_utils.ChoiceEnumMapper(
       '--service-level',
@@ -87,6 +94,22 @@ def GetStoragePoolServiceLevelArg(messages, required=True):
       required=required,
   )
   return service_level_arg
+
+
+def GetDirectoryServiceTypeEnumFromArg(choice, messages):
+  """Returns the Choice Enum for Directory Service Type.
+
+  Args:
+    choice: The choice for directory service type as string
+    messages: The messages module.
+
+  Returns:
+    the directory service type enum.
+  """
+  return arg_utils.ChoiceToEnum(
+      choice=choice,
+      enum_type=messages.ValidateDirectoryServiceRequest.DirectoryServiceTypeValueValuesEnum,
+  )
 
 
 def AddStoragePoolServiceLevelArg(
@@ -125,10 +148,8 @@ def AddStoragePoolNetworkArg(parser, required=True):
         the volume is connected. Short-form (VPC network ID) or long-form
         (full VPC network name: projects/PROJECT/locations/LOCATION/networks/NETWORK) are both
         accepted, but please use the long-form when attempting to create a Storage Pool using a shared VPC.
-        *psa-range*::: The `psa-range` is the name of the allocated range of the
-        Private Service Access connection. The range you specify can't
-        overlap with either existing subnets or assigned IP address ranges for
-        other Cloud NetApp Files Storage Pools in the selected VPC network.
+        *psa-range*::: This field is not implemented. The values provided in
+        this field are ignored.
   """
 
   parser.add_argument(
@@ -165,6 +186,114 @@ def AddStoragePoolEnableLdapArg(parser):
       help="""Boolean flag indicating whether Storage Pool is a NFS LDAP Storage Pool or not"""
   )
 
+
+def AddStoragePoolAllowAutoTieringArg(parser):
+  """Adds the --allow-auto-tiering arg to the given parser."""
+  parser.add_argument(
+      '--allow-auto-tiering',
+      type=arg_parsers.ArgBoolean(
+          truthy_strings=netapp_util.truthy, falsey_strings=netapp_util.falsey),
+      help="""Boolean flag indicating whether Storage Pool is allowed to use auto-tiering""",
+  )
+
+
+def AddStoragePoolZoneArg(parser):
+  """Adds the Zone arg to the arg parser."""
+  parser.add_argument(
+      '--zone',
+      type=str,
+      help="""String indicating active zone of the Storage Pool""",
+  )
+
+
+def AddStoragePoolReplicaZoneArg(parser):
+  """Adds the Replica Zone arg to the arg parser."""
+  parser.add_argument(
+      '--replica-zone',
+      type=str,
+      help="""String indicating replica zone for the Storage Pool""",
+  )
+
+
+def AddStoragePoolDirectoryServiceTypeArg(parser):
+  """Adds the Directory Service Type arg to the arg parser."""
+  parser.add_argument(
+      '--directory-service-type',
+      type=str,
+      help="""String indicating directory service type for the Storage Pool""",
+  )
+
+
+def AddStoragePoolCustomPerformanceEnabledArg(parser):
+  """Adds the Custom Performance Enabled arg to the arg parser."""
+  parser.add_argument(
+      '--custom-performance-enabled',
+      type=arg_parsers.ArgBoolean(
+          truthy_strings=netapp_util.truthy, falsey_strings=netapp_util.falsey
+      ),
+      help="""Boolean flag indicating whether Storage Pool is a custom performance Storage Pool or not""",
+  )
+
+
+def AddStoragePoolTotalThroughputArg(parser):
+  """Adds the Total Throughput arg to the arg parser."""
+  parser.add_argument(
+      '--total-throughput',
+      type=arg_parsers.BinarySize(
+          default_unit='MiB/s',
+          suggested_binary_size_scales=['MiB/s', 'GiB/s'],
+          type_abbr='B/s',
+      ),
+      help="""The total throughput of the Storage Pool in MiB/s or GiB/s units.
+              If no throughput unit is specified, MiB/s is assumed.""",
+  )
+
+
+def AddStoragePoolTotalIopsArg(parser):
+  """Adds the Total IOPS arg to the arg parser."""
+  parser.add_argument(
+      '--total-iops',
+      type=int,
+      help="""Integer indicating total IOPS of the Storage Pool""",
+  )
+
+
+def AddStoragePoolHotTierSizeArg(parser):
+  """Adds the Hot Tier Size arg to the arg parser."""
+  parser.add_argument(
+      '--hot-tier-size',
+      type=arg_parsers.BinarySize(
+          default_unit='GiB/s',
+          suggested_binary_size_scales=['GiB/s'],
+          type_abbr='B/s',
+      ),
+      help="""The hot tier size of the Storage Pool in GiB/s units.
+              If no throughput unit is specified, GiB/s is assumed.""",
+  )
+
+
+def AddStoragePoolEnableHotTierAutoResizeArg(parser):
+  """Adds the Enable Hot Tier Auto Resize arg to the arg parser."""
+  parser.add_argument(
+      '--enable-hot-tier-auto-resize',
+      type=arg_parsers.ArgBoolean(
+          truthy_strings=netapp_util.truthy, falsey_strings=netapp_util.falsey
+      ),
+      help="""Boolean flag indicating whether Storage Pool is allowed to use hot tier auto resize""",
+  )
+
+
+def AddStoragePoolUnifiedPoolArg(parser):
+  """Adds the Unified Pool arg to the  parser."""
+  parser.add_argument(
+      '--unified-pool',
+      type=arg_parsers.ArgBoolean(
+          truthy_strings=netapp_util.truthy, falsey_strings=netapp_util.falsey
+      ),
+      help="""Boolean flag indicating whether Storage Pool is a unified pool that supports BLOCK storage. Defaults to False if not specified.""",
+      hidden=True,
+  )
+
 ## Helper functions to combine Storage Pools args / flags for gcloud commands ##
 
 
@@ -185,6 +314,17 @@ def AddStoragePoolCreateArgs(parser, release_track):
   AddStoragePoolActiveDirectoryArg(parser)
   AddStoragePoolKmsConfigArg(parser)
   AddStoragePoolEnableLdapArg(parser)
+  AddStoragePoolZoneArg(parser)
+  AddStoragePoolReplicaZoneArg(parser)
+  AddStoragePoolAllowAutoTieringArg(parser)
+  AddStoragePoolCustomPerformanceEnabledArg(parser)
+  AddStoragePoolTotalThroughputArg(parser)
+  AddStoragePoolTotalIopsArg(parser)
+  if (release_track == base.ReleaseTrack.ALPHA or
+      release_track == base.ReleaseTrack.BETA):
+    AddStoragePoolHotTierSizeArg(parser)
+    AddStoragePoolEnableHotTierAutoResizeArg(parser)
+    AddStoragePoolUnifiedPoolArg(parser)
 
 
 def AddStoragePoolDeleteArgs(parser):
@@ -195,7 +335,7 @@ def AddStoragePoolDeleteArgs(parser):
   flags.AddResourceAsyncFlag(parser)
 
 
-def AddStoragePoolUpdateArgs(parser):
+def AddStoragePoolUpdateArgs(parser, release_track):
   """Add args for updating a Storage Pool."""
   concept_parsers.ConceptParser([
       flags.GetStoragePoolPresentationSpec('The Storage Pool to update.')
@@ -205,3 +345,29 @@ def AddStoragePoolUpdateArgs(parser):
   flags.AddResourceCapacityArg(parser, 'Storage Pool', required=False)
   labels_util.AddUpdateLabelsFlags(parser)
   AddStoragePoolActiveDirectoryArg(parser)
+  AddStoragePoolZoneArg(parser)
+  AddStoragePoolReplicaZoneArg(parser)
+  AddStoragePoolAllowAutoTieringArg(parser)
+  AddStoragePoolTotalThroughputArg(parser)
+  AddStoragePoolTotalIopsArg(parser)
+  if (release_track == base.ReleaseTrack.ALPHA or
+      release_track == base.ReleaseTrack.BETA):
+    AddStoragePoolHotTierSizeArg(parser)
+    AddStoragePoolEnableHotTierAutoResizeArg(parser)
+
+
+def AddStoragePoolSwitchArg(parser):
+  """Add args for switching zones of a Storage Pool."""
+  concept_parsers.ConceptParser([
+      flags.GetStoragePoolPresentationSpec('The Storage Pool to switch.')
+  ]).AddToParser(parser)
+  flags.AddResourceAsyncFlag(parser)
+
+
+def AddStoragePoolValidateDirectoryServiceArg(parser):
+  """Add args for validating directory service of a Storage Pool."""
+  concept_parsers.ConceptParser([
+      flags.GetStoragePoolPresentationSpec('The Storage Pool to validate.')
+  ]).AddToParser(parser)
+  flags.AddResourceAsyncFlag(parser)
+  AddStoragePoolDirectoryServiceTypeArg(parser)

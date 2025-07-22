@@ -18,7 +18,7 @@ import enum
 
 
 BASE_URL = 'https://dataprocgdc.googleapis.com/v1alpha1/'
-DOCS_URL = ''
+DOCS_URL = 'https://cloud.google.com/dataproc/docs'
 
 
 class Collections(enum.Enum):
@@ -41,6 +41,13 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  PROJECTS_LOCATIONS_CLUSTERS = (
+      'projects.locations.clusters',
+      'projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}',
+      {},
+      ['projectsId', 'locationsId', 'clustersId'],
+      True
+  )
   PROJECTS_LOCATIONS_OPERATIONS = (
       'projects.locations.operations',
       '{+name}',
@@ -59,6 +66,30 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/'
               'serviceInstances/{serviceInstancesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_SERVICEINSTANCES_APPLICATIONENVIRONMENTS = (
+      'projects.locations.serviceInstances.applicationEnvironments',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'serviceInstances/{serviceInstancesId}/applicationEnvironments/'
+              '{applicationEnvironmentsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_SERVICEINSTANCES_SPARKAPPLICATIONS = (
+      'projects.locations.serviceInstances.sparkApplications',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'serviceInstances/{serviceInstancesId}/sparkApplications/'
+              '{sparkApplicationsId}',
       },
       ['name'],
       True

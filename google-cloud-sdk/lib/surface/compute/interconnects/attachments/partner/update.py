@@ -14,10 +14,6 @@
 # limitations under the License.
 """Command for updating interconnects."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.api_lib.compute.interconnects.attachments import client
 from googlecloudsdk.calliope import base
@@ -26,6 +22,7 @@ from googlecloudsdk.command_lib.compute.interconnects.attachments import flags a
 from googlecloudsdk.command_lib.util.args import labels_util
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Update(base.UpdateCommand):
   """Update a Compute Engine partner interconnect attachment.
@@ -35,7 +32,6 @@ class Update(base.UpdateCommand):
   Interconnect to a path into and out of the customer's cloud network.
   """
   _support_label = False
-  _support_partner_ipv6 = False
 
   @classmethod
   def Args(cls, parser):
@@ -45,6 +41,7 @@ class Update(base.UpdateCommand):
     attachment_flags.AddDescription(parser)
     attachment_flags.AddAdminEnabled(parser, update=True)
     attachment_flags.AddMtu(parser)
+    attachment_flags.AddStackType(parser)
 
   def Run(self, args):
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
@@ -70,20 +67,23 @@ class Update(base.UpdateCommand):
         if labels is not None:
           label_fingerprint = old_attachment.labelFingerprint
 
-    stack_type = None
-    if self._support_partner_ipv6:
-      stack_type = getattr(args, 'stack_type', None)
-
     return interconnect_attachment.Patch(
         description=args.description,
         admin_enabled=admin_enabled,
         labels=labels,
         label_fingerprint=label_fingerprint,
         mtu=getattr(args, 'mtu', None),
-        stack_type=stack_type,
+        stack_type=getattr(args, 'stack_type', None),
+        candidate_cloud_router_ipv6_address=getattr(
+            args, 'candidate_cloud_router_ipv6_address', None
+        ),
+        candidate_customer_router_ipv6_address=getattr(
+            args, 'candidate_customer_router_ipv6_address', None
+        ),
     )
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
 class UpdateBeta(Update):
   """Update a Compute Engine partner interconnect attachment.
@@ -94,15 +94,16 @@ class UpdateBeta(Update):
   """
 
   _support_label = True
-  _support_partner_ipv6 = True
 
   @classmethod
   def Args(cls, parser):
     super(UpdateBeta, cls).Args(parser)
     labels_util.AddUpdateLabelsFlags(parser)
-    attachment_flags.AddStackType(parser)
+    attachment_flags.AddCandidateCloudRouterIpv6Address(parser)
+    attachment_flags.AddCandidateCustomerRouterIpv6Address(parser)
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class UpdateAlpha(UpdateBeta):
   """Update a Compute Engine partner interconnect attachment.
@@ -113,7 +114,6 @@ class UpdateAlpha(UpdateBeta):
   """
 
   _support_label = True
-  _support_partner_ipv6 = True
 
   @classmethod
   def Args(cls, parser):

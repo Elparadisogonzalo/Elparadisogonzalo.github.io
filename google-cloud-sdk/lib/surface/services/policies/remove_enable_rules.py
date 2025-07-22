@@ -19,8 +19,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-import collections
-
+from googlecloudsdk.api_lib.services import services_util
 from googlecloudsdk.api_lib.services import serviceusage
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.services import arg_parsers
@@ -34,13 +33,14 @@ _FOLDER_RESOURCE = 'folders/{}'
 _ORGANIZATION_RESOURCE = 'organizations/{}'
 _CONSUMER_POLICY_DEFAULT = '/consumerPolicies/{}'
 
-OP_BASE_CMD = 'gcloud beta services operations '
-OP_WAIT_CMD = OP_BASE_CMD + 'wait {0}'
+_OP_BASE_CMD = 'gcloud beta services operations '
+_OP_WAIT_CMD = _OP_BASE_CMD + 'wait {0}'
 
 
 # TODO(b/321801975) make command public after preview.
+@base.UniverseCompatible
 @base.Hidden
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
 class RemovedEnableRules(base.SilentCommand):
   """Remove service(s) from a consumer policy for a project, folder or organization.
 
@@ -94,17 +94,14 @@ class RemovedEnableRules(base.SilentCommand):
         help=(
             'If specified, the remove-enable-rules call will proceed even if'
             ' there are enabled services which depend on the service to be'
-            ' removed from enable rule. Forcing the call means that the'
-            ' services which depend on the service to be removed from enable'
-            ' rule will also be removed  .'
+            ' removed from enable rule or the service to be removed was used in'
+            ' the last 30 days, or the service to be removed was enabled in the'
+            ' last 3 days. Forcing the call means that the services which'
+            ' depend on the service to be removed from the enable rule will'
+            ' also be removed.'
         ),
     )
-
-    parser.display_info.AddFormat("""
-        table(
-            services:label=''
-        )
-      """)
+    common_flags.validate_only_args(parser, suffix='remove enable rule')
 
   def Run(self, args):
     """Run services policies remove-enable-rules.
@@ -114,24 +111,18 @@ class RemovedEnableRules(base.SilentCommand):
         with.
 
     Returns:
-      Nothing.
+      The services in the consumer policy.
     """
 
-    if args.IsSpecified('project'):
-      project = args.project
-    else:
-      project = properties.VALUES.core.project.Get(required=True)
-    resource_name = _PROJECT_RESOURCE.format(project)
-    if args.IsSpecified('folder'):
-      folder = args.folder
-      resource_name = _FOLDER_RESOURCE.format(args.folder)
-    else:
-      folder = None
-    if args.IsSpecified('organization'):
-      organization = args.organization
-      resource_name = _ORGANIZATION_RESOURCE.format(args.organization)
-    else:
-      organization = None
+    project = (
+        args.project
+        if args.IsSpecified('project')
+        else properties.VALUES.core.project.Get(required=True)
+    )
+    folder = args.folder if args.IsSpecified('folder') else None
+    organization = (
+        args.organization if args.IsSpecified('organization') else None
+    )
     for service_name in args.service:
       service_name = arg_parsers.GetServiceNameFromArg(service_name)
 
@@ -152,32 +143,19 @@ class RemovedEnableRules(base.SilentCommand):
           args.force,
           folder,
           organization,
+          args.validate_only,
       )
-      if op.done:
-        continue
+
       if args.async_:
-        cmd = OP_WAIT_CMD.format(op.name)
+        cmd = _OP_WAIT_CMD.format(op.name)
         log.status.Print(
             'Asynchronous operation is in progress... '
             'Use the following command to wait for its '
-            'completion:\n {0}'.format(cmd)
+            f'completion:\n {cmd}'
         )
-        continue
-
-    update_policy = serviceusage.GetConsumerPolicyV2Alpha(
-        resource_name + _CONSUMER_POLICY_DEFAULT.format(args.policy_name)
-    )
-
-    log.status.Print(
-        'Consumer policy ('
-        + resource_name
-        + _CONSUMER_POLICY_DEFAULT.format(args.policy_name)
-        + ') has been updated to:',
-    )
-
-    if update_policy.enableRules:
-      resources = collections.namedtuple('Values', ['services'])
-      result = []
-      for value in update_policy.enableRules[0].services:
-        result.append(resources(value))
-      return result
+        return
+      op = services_util.WaitOperation(op.name, serviceusage.GetOperationV2Beta)
+      if args.validate_only:
+        services_util.PrintOperation(op)
+      else:
+        services_util.PrintOperationWithResponse(op)

@@ -1,0 +1,422 @@
+2025-07-22 02:32:39,470 DEBUG    root            Loaded Command Group: ['gcloud', 'components']
+2025-07-22 02:32:39,474 DEBUG    root            Loaded Command Group: ['gcloud', 'components', 'install']
+2025-07-22 02:32:39,478 DEBUG    root            Running [gcloud.components.install] with arguments: [COMPONENT-IDS:4: "['beta', 'kubectl', 'gke-gcloud-auth-plugin', 'docker-credential-gcr']"]
+2025-07-22 02:32:39,495 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): dl.google.com:443
+2025-07-22 02:32:40,233 DEBUG    urllib3.connectionpool https://dl.google.com:443 "GET /dl/cloudsdk/channels/rapid/components-v530.0.0.json HTTP/11" 200 239798
+2025-07-22 02:32:41,428 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,430 INFO     ___FILE_ONLY___ 
+Your current Google Cloud CLI version is: 530.0.0
+
+2025-07-22 02:32:41,430 INFO     ___FILE_ONLY___ Installing components from version: 530.0.0
+
+2025-07-22 02:32:41,430 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,431 DEBUG    root            Chosen display Format:table[box,title="These components will be removed."](details.display_name:label=Name:align=left,version.version_string:label=Version:align=right,data.size.size(zero="",min=1048576):label=Size:align=right)
+2025-07-22 02:32:41,431 DEBUG    root            Chosen display Format:table[box,title="These components will be updated."](details.display_name:label=Name:align=left,version.version_string:label=Version:align=right,data.size.size(zero="",min=1048576):label=Size:align=right)
+2025-07-22 02:32:41,432 DEBUG    root            Chosen display Format:table[box,title="These components will be installed."](details.display_name:label=Name:align=left,version.version_string:label=Version:align=right,data.size.size(zero="",min=1048576):label=Size:align=right)
+2025-07-22 02:32:41,456 INFO     ___FILE_ONLY___ ┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+2025-07-22 02:32:41,456 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,456 INFO     ___FILE_ONLY___ │                                These components will be installed.                                │
+2025-07-22 02:32:41,456 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___ ├──────────────────────────────────────────────────────────────────────────┬────────────┬───────────┤
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___ │                                   Name                                   │  Version   │    Size   │
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___ ├──────────────────────────────────────────────────────────────────────────┼────────────┼───────────┤
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___ Google Container Registry's Docker credential helper (Platform Specific)
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,457 INFO     ___FILE_ONLY___      1.5.0
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___   2.0 MiB
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___ │
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___ gcloud Beta Commands                                                    
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,458 INFO     ___FILE_ONLY___ 2025.07.11
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___   < 1 MiB
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___ │
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___ gke-gcloud-auth-plugin (Platform Specific)                              
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___     0.5.10
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,459 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___   3.2 MiB
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___ │
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___ kubectl                                                                 
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___     1.32.4
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,460 INFO     ___FILE_ONLY___   < 1 MiB
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___ │
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___ kubectl (Platform Specific)                                             
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___     1.32.4
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___ │ 
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___ 117.1 MiB
+2025-07-22 02:32:41,461 INFO     ___FILE_ONLY___  
+2025-07-22 02:32:41,462 INFO     ___FILE_ONLY___ │
+2025-07-22 02:32:41,462 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,462 INFO     ___FILE_ONLY___ └──────────────────────────────────────────────────────────────────────────┴────────────┴───────────┘
+2025-07-22 02:32:41,462 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,462 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:32:41,467 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): dl.google.com:443
+2025-07-22 02:32:42,997 DEBUG    urllib3.connectionpool https://dl.google.com:443 "GET /dl/cloudsdk/channels/rapid/RELEASE_NOTES HTTP/11" 200 1449519
+2025-07-22 02:32:53,383 INFO     ___FILE_ONLY___ For the latest full release notes, please visit:
+  https://cloud.google.com/sdk/release_notes
+
+
+2025-07-22 02:32:59,664 INFO     ___FILE_ONLY___ Performing in place update...
+
+
+2025-07-22 02:32:59,664 INFO     ___FILE_ONLY___ ╔════════════════════════════════════════════════════════════╗
+
+2025-07-22 02:32:59,665 INFO     ___FILE_ONLY___ ╠═ Downloading: Google Container Registry's Docker crede... ═╣
+
+2025-07-22 02:32:59,665 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:32:59,665 INFO     ___FILE_ONLY___ ════════════════════════════════════════════════════════════
+2025-07-22 02:32:59,665 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:32:59,666 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:32:59,666 INFO     ___FILE_ONLY___ ╠═ Downloading: Google Container Registry's Docker crede... ═╣
+
+2025-07-22 02:32:59,666 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:32:59,669 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): dl.google.com:443
+2025-07-22 02:33:00,364 DEBUG    urllib3.connectionpool https://dl.google.com:443 "GET /dl/cloudsdk/channels/rapid/components/google-cloud-sdk-docker-credential-gcr-linux-arm-20210212155704.tar.gz HTTP/11" 200 2079984
+2025-07-22 02:33:03,637 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,639 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,640 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,641 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,642 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,643 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,644 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,644 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,645 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,646 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,646 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,647 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,647 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,648 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,648 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,649 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,650 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,651 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,652 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,653 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,653 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,654 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,655 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,655 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,655 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,656 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,656 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,657 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,657 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,658 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,658 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,659 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,659 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,659 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,660 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,660 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,661 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,661 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,662 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,662 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,662 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,663 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,663 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,664 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,664 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,664 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,665 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,665 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,665 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,666 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,666 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,666 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,667 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,667 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,667 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,668 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,668 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,668 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,668 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,669 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:03,669 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:33:03,670 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:33:03,670 INFO     ___FILE_ONLY___ ╠═ Downloading: gcloud Beta Commands                        ═╣
+
+2025-07-22 02:33:03,671 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:33:03,677 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): dl.google.com:443
+2025-07-22 02:33:04,168 DEBUG    urllib3.connectionpool https://dl.google.com:443 "GET /dl/cloudsdk/channels/rapid/components/google-cloud-sdk-beta-20250711193911.tar.gz HTTP/11" 200 797
+2025-07-22 02:33:04,170 INFO     ___FILE_ONLY___ ════════════════════════════════════════════════════════════
+2025-07-22 02:33:04,171 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:33:04,172 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:33:04,172 INFO     ___FILE_ONLY___ ╠═ Downloading: gke-gcloud-auth-plugin                      ═╣
+
+2025-07-22 02:33:04,172 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:33:04,173 INFO     ___FILE_ONLY___ ════════════════════════════════════════════════════════════
+2025-07-22 02:33:04,173 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:33:04,174 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:33:04,174 INFO     ___FILE_ONLY___ ╠═ Downloading: gke-gcloud-auth-plugin (Platform Specific)  ═╣
+
+2025-07-22 02:33:04,174 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:33:04,183 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): dl.google.com:443
+2025-07-22 02:33:04,711 DEBUG    urllib3.connectionpool https://dl.google.com:443 "GET /dl/cloudsdk/channels/rapid/components/google-cloud-sdk-gke-gcloud-auth-plugin-linux-arm-20250117151628.tar.gz HTTP/11" 200 3344537
+2025-07-22 02:33:10,736 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,737 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,738 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,739 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,740 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,740 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,741 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,743 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,744 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,745 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,746 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,746 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,747 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,747 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,748 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,748 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,749 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,749 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,750 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,750 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,751 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,751 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,752 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,752 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,752 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,753 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,753 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,754 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,754 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,754 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,755 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,755 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,755 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,756 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,756 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,756 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,757 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,757 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,757 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,758 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,758 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,758 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,759 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,759 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,759 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,760 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,760 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,760 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,760 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,761 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,761 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,761 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,762 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,762 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,762 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,762 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,763 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,763 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,763 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,763 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:33:10,763 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:33:10,764 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:33:10,764 INFO     ___FILE_ONLY___ ╠═ Downloading: kubectl                                     ═╣
+
+2025-07-22 02:33:10,765 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:33:10,769 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): dl.google.com:443
+2025-07-22 02:33:11,238 DEBUG    urllib3.connectionpool https://dl.google.com:443 "GET /dl/cloudsdk/channels/rapid/components/google-cloud-sdk-kubectl-20250502143716.tar.gz HTTP/11" 200 36864
+2025-07-22 02:33:11,424 INFO     ___FILE_ONLY___ ══════════════════════════
+2025-07-22 02:33:11,426 INFO     ___FILE_ONLY___ ═══════════════════════════
+2025-07-22 02:33:11,427 INFO     ___FILE_ONLY___ ═══════
+2025-07-22 02:33:11,428 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:33:11,431 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:33:11,432 INFO     ___FILE_ONLY___ ╠═ Downloading: kubectl (Platform Specific)                 ═╣
+
+2025-07-22 02:33:11,433 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:33:11,456 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): dl.google.com:443
+2025-07-22 02:33:12,183 DEBUG    urllib3.connectionpool https://dl.google.com:443 "GET /dl/cloudsdk/channels/rapid/components/google-cloud-sdk-kubectl-linux-arm-20250627154417.tar.gz HTTP/11" 200 122774451
+2025-07-22 02:37:46,009 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,011 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,013 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,015 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,018 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,020 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,022 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,024 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,026 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,028 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,031 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,033 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,035 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,037 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,040 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,042 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,044 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,046 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,048 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,051 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,053 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,056 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,058 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,061 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,063 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,066 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,068 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,070 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,073 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,075 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,078 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,080 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,082 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,084 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,086 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,090 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,092 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,095 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,098 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,102 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,105 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,108 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,111 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,114 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,118 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,121 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,124 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,127 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,130 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,133 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,136 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,139 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,143 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,146 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,149 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,152 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,156 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,158 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,160 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,161 INFO     ___FILE_ONLY___ ═
+2025-07-22 02:37:46,162 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:37:46,173 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:37:46,173 INFO     ___FILE_ONLY___ ╠═ Installing: Google Container Registry's Docker creden... ═╣
+
+2025-07-22 02:37:46,173 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:37:46,178 INFO     ___FILE_ONLY___ ════════════════════════════════════════════════════════════
+2025-07-22 02:37:46,178 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:37:46,178 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:37:46,178 INFO     ___FILE_ONLY___ ╠═ Installing: Google Container Registry's Docker creden... ═╣
+
+2025-07-22 02:37:46,179 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:37:46,242 INFO     ___FILE_ONLY___ ════════════════════════════════════════════════════════════
+2025-07-22 02:37:46,243 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:37:46,248 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:37:46,248 INFO     ___FILE_ONLY___ ╠═ Installing: gcloud Beta Commands                         ═╣
+
+2025-07-22 02:37:46,248 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:37:46,249 INFO     ___FILE_ONLY___ ════════════════════════════════════════════════════════════
+2025-07-22 02:37:46,250 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:37:46,254 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:37:46,254 INFO     ___FILE_ONLY___ ╠═ Installing: gke-gcloud-auth-plugin                       ═╣
+
+2025-07-22 02:37:46,254 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:37:46,258 INFO     ___FILE_ONLY___ ════════════════════════════════════════════════════════════
+2025-07-22 02:37:46,258 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:37:46,258 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:37:46,258 INFO     ___FILE_ONLY___ ╠═ Installing: gke-gcloud-auth-plugin (Platform Specific)   ═╣
+
+2025-07-22 02:37:46,258 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:37:46,356 INFO     ___FILE_ONLY___ ════════════════════════════════════════════════════════════
+2025-07-22 02:37:46,356 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:37:46,362 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:37:46,362 INFO     ___FILE_ONLY___ ╠═ Installing: kubectl                                      ═╣
+
+2025-07-22 02:37:46,362 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:37:46,365 INFO     ___FILE_ONLY___ ════════════════════════════════════════════════════════════
+2025-07-22 02:37:46,366 INFO     ___FILE_ONLY___ ╝
+2025-07-22 02:37:46,370 INFO     ___FILE_ONLY___ ╠════════════════════════════════════════════════════════════╣
+
+2025-07-22 02:37:46,370 INFO     ___FILE_ONLY___ ╠═ Installing: kubectl (Platform Specific)                  ═╣
+
+2025-07-22 02:37:46,370 INFO     ___FILE_ONLY___ ╚
+2025-07-22 02:37:48,284 INFO     ___FILE_ONLY___ ═══════
+2025-07-22 02:37:48,522 INFO     ___FILE_ONLY___ ════════
+2025-07-22 02:37:48,765 INFO     ___FILE_ONLY___ ═══════
+2025-07-22 02:37:49,026 INFO     ___FILE_ONLY___ ════════
+2025-07-22 02:37:49,290 INFO     ___FILE_ONLY___ ═══════
+2025-07-22 02:37:49,568 INFO     ___FILE_ONLY___ ════════
+2025-07-22 02:37:49,837 INFO     ___FILE_ONLY___ ═══════
+2025-07-22 02:37:50,123 INFO     ___FILE_ONLY___ ════════
+2025-07-22 02:37:50,124 INFO     ___FILE_ONLY___ ╝
+
+2025-07-22 02:37:51,272 DEBUG    root            Updating notification cache...
+2025-07-22 02:37:51,274 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:37:51,275 INFO     ___FILE_ONLY___ Performing post processing steps...
+2025-07-22 02:37:51,276 DEBUG    root            Executing command: ['/data/data/com.termux/files/home/google-cloud-sdk/bin/gcloud', 'components', 'post-process']
+2025-07-22 02:38:16,758 DEBUG    ___FILE_ONLY___ 
+2025-07-22 02:38:16,758 DEBUG    ___FILE_ONLY___ 
+2025-07-22 02:38:16,890 INFO     root            descriptor_list: [{'universeDomain': 'googleapis.com', 'universeShortName': '', 'authenticationDomain': 'auth.cloud.google.com', 'projectPrefix': '', 'cloudWebDomain': 'cloud.google.com', 'documentationDomain': 'cloud.google.com', 'version': '1.0.0', 'state': 'primary', 'artifactRegistryDomain': 'pkg.dev'}]
+2025-07-22 02:38:16,891 INFO     ___FILE_ONLY___ 
+Update done!
+
+
+2025-07-22 02:38:16,902 WARNING  root              There are other instances of Google Cloud tools on your system PATH.
+  Please remove the following to avoid confusion or accidental invocation:
+
+  /data/data/com.termux/files/usr/bin/kubectl
+
+  
+2025-07-22 02:38:16,913 DEBUG    root            Chosen display Format:none
+2025-07-22 02:38:16,914 INFO     root            Display format: "none"
+2025-07-22 02:38:16,944 DEBUG    root            Metrics reporting process started...

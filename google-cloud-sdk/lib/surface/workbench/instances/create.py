@@ -26,7 +26,7 @@ from googlecloudsdk.command_lib.workbench import flags
 DETAILED_HELP = {
     'DESCRIPTION':
         """
-        Request for creating an instance.
+        Creates a workbench instance.
     """,
     'EXAMPLES':
         """
@@ -41,18 +41,25 @@ DETAILED_HELP = {
     To create an instance from a Container Repository, run:
 
       $ {command} example-instance --container-repository=gcr.io/deeplearning-platform-release/base-cpu --container-tag=latest --machine-type=n1-standard-4 --location=us-central1-b
+
+    To create an instance with shielded-secure-boot, shielded-vtpm and shielded-integrity-monitoring disabled, run:
+
+      $ {command} example-instance --shielded-integrity-monitoring=false --shielded-secure-boot=false --shielded-vtpm=false --location=us-central1-b
     """,
 }
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
-  """Request for creating an instance."""
+  """Creates a workbench instance."""
 
-  @staticmethod
-  def Args(parser):
+  _support_managed_euc = False
+
+  @classmethod
+  def Args(cls, parser):
     """Register flags for this command."""
-    flags.AddCreateInstanceFlags(parser)
+    flags.AddCreateInstanceFlags(cls._support_managed_euc, parser)
 
   def Run(self, args):
     """This is what gets called when the user runs this command."""
@@ -61,13 +68,24 @@ class Create(base.CreateCommand):
     messages = util.GetMessages(release_track)
     instance_service = client.projects_locations_instances
     operation = instance_service.Create(
-        instance_util.CreateInstanceCreateRequest(args, messages))
+        instance_util.CreateInstanceCreateRequest(
+            args, messages, self._support_managed_euc
+        )
+    )
     return instance_util.HandleLRO(
         operation,
         args,
         instance_service,
         release_track,
-        operation_type=instance_util.OperationType.CREATE)
+        operation_type=instance_util.OperationType.CREATE,
+    )
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class CreateBeta(Create):
+  """Creates a workbench instance."""
+
+  _support_managed_euc = True
 
 
 Create.detailed_help = DETAILED_HELP

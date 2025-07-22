@@ -509,20 +509,20 @@ def _CreateConfig(messages, flags, is_composer_v1):
         startTime=flags.maintenance_window_start.isoformat(),
         endTime=flags.maintenance_window_end.isoformat(),
         recurrence=flags.maintenance_window_recurrence)
-  if flags.airflow_database_retention_days:
-    enable_retention = (
-        messages.AirflowMetadataRetentionPolicy.EnableRetentionValueValuesEnum.RETENTION_MODE_ENABLED
-    )
+  if flags.airflow_database_retention_days is not None:
     if flags.airflow_database_retention_days == 0:
-      enable_retention = (
-          messages.AirflowMetadataRetentionPolicy.EnableRetentionValueValuesEnum.RETENTION_MODE_DISABLED
+      config.dataRetentionConfig = messages.DataRetentionConfig(
+          airflowMetadataRetentionConfig=messages.AirflowMetadataRetentionPolicyConfig(
+              retentionMode=messages.AirflowMetadataRetentionPolicyConfig.RetentionModeValueValuesEnum.RETENTION_MODE_DISABLED,
+          )
       )
-    config.dataRetentionConfig = messages.DataRetentionConfig(
-        airflowMetadataRetentionConfig=messages.AirflowMetadataRetentionPolicy(
-            retentionDays=flags.airflow_database_retention_days,
-            enableRetention=enable_retention,
-        )
-    )
+    else:
+      config.dataRetentionConfig = messages.DataRetentionConfig(
+          airflowMetadataRetentionConfig=messages.AirflowMetadataRetentionPolicyConfig(
+              retentionDays=flags.airflow_database_retention_days,
+              retentionMode=messages.AirflowMetadataRetentionPolicyConfig.RetentionModeValueValuesEnum.RETENTION_MODE_ENABLED,
+          )
+      )
 
   if flags.enable_scheduled_snapshot_creation:
     config.recoveryConfig = messages.RecoveryConfig(
@@ -775,7 +775,7 @@ def Delete(environment_ref, release_track=base.ReleaseTrack.GA):
           name=environment_ref.RelativeName()))
 
 
-def RestartWebServer(environment_ref, release_track=base.ReleaseTrack.BETA):
+def RestartWebServer(environment_ref, release_track=base.ReleaseTrack.GA):
   """Calls the Composer Environments.RestartWebServer method.
 
   Args:
@@ -1011,7 +1011,7 @@ def FetchDatabaseProperties(environment_ref,
 
 def CheckUpgrade(environment_ref,
                  image_version,
-                 release_track=base.ReleaseTrack.BETA):
+                 release_track=base.ReleaseTrack.GA):
   """Calls the Composer Environments.CheckUpgrade method.
 
   Args:

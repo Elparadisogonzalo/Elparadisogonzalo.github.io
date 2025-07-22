@@ -34,49 +34,68 @@ from googlecloudsdk.core.util import times
 @base.ReleaseTracks(
     base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA
 )
+@base.DefaultUniverseOnly
 class UpdateMarks(base.UpdateCommand):
-  """Update Cloud Security Command Center finding's security marks."""
+  """Update Security Command Center finding's security marks."""
 
   detailed_help = {
       "DESCRIPTION": (
-          """Update Cloud Security Command Center finding's security marks."""
+          """Update Security Command Center finding's security marks."""
       ),
       "EXAMPLES": """
-      Selectively update security mark (Key1) with value (v1) on myFinding. Note that other security marks on myFinding are untouched:
+      Selectively update security mark `Key1` with value `v1` on testFinding. Note
+      that other security marks on `testFinding` are untouched:
 
-        $ {command} `myFinding` --organization=123456 --source=5678 --security-marks="key1=v1" --update-mask="marks.markKey1"
+        $ {command} `testFinding` --organization=123456 --source=5678
+          --security-marks="key1=v1" --update-mask="marks.markKey1"
 
-      Update all security marks on myFinding, under project example-project and source 5678:
+      Update all security marks on `testFinding`, under project `example-project`
+      and source `5678`:
 
-        $ {command} projects/example-project/sources/5678/findings/myFinding --security-marks="key1=v1,key2=v2"
+        $ {command} projects/example-project/sources/5678/findings/testFinding
+          --security-marks="key1=v1,key2=v2"
 
-      Update all security marks on myFinding, under folder 456 and source 5678:
+      Update all security marks on `testFinding`, under folder `456` and source
+      `5678`:
 
-        $ {command} folders/456/sources/5678/findings/myFinding --security-marks="key1=v1,key2=v2"
+        $ {command} folders/456/sources/5678/findings/testFinding
+          --security-marks="key1=v1,key2=v2"
 
-      Update all security marks on myFinding, under organization 123456 and source 5678:
+      Update all security marks on `testFinding`, under organization `123456` and
+      source `5678`:
 
-        $ {command} `myFinding` --organization=123456 --source=5678 --security-marks="key1=v1,key2=v2"
+        $ {command} `testFinding` --organization=123456 --source=5678
+          --security-marks="key1=v1,key2=v2"
 
-      Delete all security marks on myFinding:
+      Delete all security marks on `testFinding`:
 
-        $ {command} `myFinding` --organization=123456 --source=5678 --security-marks="" """,
+        $ {command} `testFinding` --organization=123456 --source=5678
+          --security-marks=""
+
+      Update all security marks on `testFinding`, under project `example-project`,
+      source `5678` and `location=eu`:
+
+        $ {command} projects/example-project/sources/5678/findings/testFinding
+          --security-marks="key1=v1,key2=v2" --location=eu""",
       "API REFERENCE": """
-          This command uses the securitycenter/v1 API. The full documentation for
-          this API can be found at: https://cloud.google.com/security-command-center""",
+      This command uses the Security Command Center API. For more information,
+      see [Security Command Center API.](https://cloud.google.com/security-command-center/docs/reference/rest)""",
   }
 
   @staticmethod
   def Args(parser):
     # Add the shared flags and positional argument.
-    flags.CreateFindingArg().AddToParser(parser)
+    flags.FINDING_FLAG.AddToParser(parser)
+    flags.SOURCE_FLAG.AddToParser(parser)
+    flags.AddParentGroup(parser)
     scc_flags.API_VERSION_FLAG.AddToParser(parser)
     scc_flags.LOCATION_FLAG.AddToParser(parser)
     base.Argument(
         "--security-marks",
         help="""
-        SecurityMarks resource to be passed as the request body. It's a key=value pair separated
-        by comma (,). For example: --security-marks="key1=val1,key2=val2".""",
+        SecurityMarks resource to be passed as the request body. It's a
+        key=value pair separated by comma (,). For example:
+        --security-marks="key1=val1,key2=val2".""",
         type=arg_parsers.ArgDict(),
         metavar="KEY=VALUE",
     ).AddToParser(parser)
@@ -84,17 +103,18 @@ class UpdateMarks(base.UpdateCommand):
     parser.add_argument(
         "--start-time",
         help="""
-        Time at which the updated SecurityMarks take effect. See `$ gcloud topic datetimes` for
-        information on supported time formats.""",
+        Time at which the updated SecurityMarks take effect. See `$ gcloud topic
+        datetimes` for information on supported time formats.""",
     )
 
     parser.add_argument(
         "--update-mask",
         help="""
-        Use update-mask if you want to selectively update marks represented by --security-marks
-        flag. For example: --update-mask="marks.key1,marks.key2". If you want to override all the
-        marks for the given finding either skip the update-mask flag or provide an empty value
-        (--update-mask '') for it.""",
+        Use update-mask if you want to selectively update marks represented by
+        --security-marks flag. For example:
+        --update-mask="marks.key1,marks.key2". If you want to override all the
+        marks for the given finding either skip the update-mask flag or provide
+        an empty value (--update-mask '') for it.""",
     )
     parser.display_info.AddFormat(properties.VALUES.core.default_format.Get())
 

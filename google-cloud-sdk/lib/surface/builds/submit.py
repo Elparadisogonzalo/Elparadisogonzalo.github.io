@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import textwrap
+
 from googlecloudsdk.api_lib.cloudbuild import cloudbuild_util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.builds import flags
@@ -41,16 +43,18 @@ def _CommonArgs(parser):
       default='.',  # By default, the current directory is used.
       help=(
           'The location of the source to build. The location can be a directory'
-          ' on a local disk, a gzipped archive file (.tar.gz) in Google Cloud'
-          ' Storage, or a Git repo url starting with http:// or https://. If'
-          ' the source is a local directory, this command skips the files'
-          ' specified in the `--ignore-file`. If `--ignore-file` is not'
-          ' specified, use`.gcloudignore` file. If a `.gcloudignore` file is'
-          ' absent and a `.gitignore` file is present in the local source'
-          ' directory, gcloud will use a generated Git-compatible'
-          ' `.gcloudignore` file that respects your .gitignored files. The'
-          ' global `.gitignore` is not respected. For more information on'
-          ' `.gcloudignore`, see `gcloud topic gcloudignore`.'
+          ' on a local disk, an archive file (e.g., .zip, .tar.gz) or a'
+          ' manifest file (.json) in Google Cloud Storage, a Git repo url'
+          ' starting with http:// or https://, a 2nd-gen Cloud Build repository'
+          ' resource, or a Developer Connect GitRepositoryLink resource. If the'
+          ' source is a local directory, this command skips the files specified'
+          ' in the `--ignore-file`. If `--ignore-file` is not specified,'
+          ' use`.gcloudignore` file. If a `.gcloudignore` file is absent and a'
+          ' `.gitignore` file is present in the local source directory, gcloud'
+          ' will use a generated Git-compatible `.gcloudignore` file that'
+          ' respects your .gitignored files. The global `.gitignore` is not'
+          ' respected. For more information on `.gcloudignore`, see `gcloud'
+          ' topic gcloudignore`.'
       ),
   )
   source.add_argument(
@@ -60,9 +64,11 @@ def _CommonArgs(parser):
   )
 
   flags.AddRegionFlag(parser)
+  flags.AddServiceAccountFlag(parser)
   flags.AddGcsSourceStagingDirFlag(parser)
   flags.AddGcsLogDirFlag(parser)
   flags.AddTimeoutFlag(parser)
+  flags.AddPollingIntervalFlag(parser)
 
   flags.AddMachineTypeFlag(parser)
   flags.AddDiskSizeFlag(parser)
@@ -112,29 +118,34 @@ https://git-scm.com/docs/gitrevisions#_specifying_revisions. For information on
   )
   parser.add_argument(
       '--dir',
-      help="""\
-Directory, relative to the source root, in which to run the build. This is used when the build source is a 2nd-gen Cloud Build repository resource.
-This must be a relative path. If a step's `dir` is specified and is an absolute
-path, this value is ignored for that step's execution.
-""",
+      help=textwrap.dedent("""\
+    Directory, relative to the source root, in which to run the build. This is
+    used when the build source is a 2nd-gen Cloud Build repository resource, or
+    a Developer Connect GitRepositoryLink resource. This must be a relative
+    path. If a step's `dir` is specified and is an absolute path, this value is
+    ignored for that step's execution.
+    """),
   )
   parser.add_argument(
       '--revision',
-      help="""\
-Revision to fetch from the Git repository such as a branch, a tag, a commit
-SHA, or any Git ref to run the build. This is used when the build source is a 2nd-gen Cloud Build repository resource.
+      help=textwrap.dedent("""\
+    Revision to fetch from the Git repository such as a branch, a tag, a commit
+    SHA, or any Git ref to run the build. This is used when the build source is
+    a 2nd-gen Cloud Build repository resource, or a Developer Connect
+    GitRepositoryLink resource.
 
-Cloud Build uses `git fetch` to fetch the revision from the Git repository;
-therefore make sure that the string you provide for `revision` is parsable by
-the command. For information on string values accepted by `git fetch`, see
-https://git-scm.com/docs/gitrevisions#_specifying_revisions. For information on
-`git fetch`, see https://git-scm.com/docs/git-fetch.
-""",
+    Cloud Build uses `git fetch` to fetch the revision from the Git repository;
+    therefore make sure that the string you provide for `revision` is parsable
+    by the command. For information on string values accepted by `git fetch`,
+    see https://git-scm.com/docs/gitrevisions#_specifying_revisions. For
+    information on `git fetch`, see https://git-scm.com/docs/git-fetch.
+"""),
   )
 
   return worker_pools
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Submit(base.CreateCommand):
   """Submit a build using Cloud Build.
@@ -163,6 +174,10 @@ class Submit(base.CreateCommand):
 
         $ {command} "gs://bucket/object.zip" --tag=gcr.io/my-project/image --config=config.yaml
 
+      To submit a build with source from a source manifest:
+
+        $ {command} "gs://bucket/manifest.json" --tag=gcr.io/my-project/image --config=config.yaml
+
       To submit a build with local source `source.tgz` asynchronously:
 
         $ {command} "source.tgz" --tag=gcr.io/my-project/image --async
@@ -174,6 +189,10 @@ class Submit(base.CreateCommand):
       To submit a build with source from a 2nd-gen Cloud Build repository resource `projects/my-project/locations/us-west1/connections/my-conn/repositories/my-repo`:
 
         $ {command} "projects/my-project/locations/us-west1/connections/my-conn/repositories/my-repo" --revision=main
+
+      To submit a build with source from a Developer Connect GitRepositoryLink resource `projects/my-project/locations/us-west1/connections/my-conn/gitRepositoryLinks/my-repo-link`:
+
+        $ {command} "projects/my-project/locations/us-west1/connections/my-conn/gitRepositoryLinks/my-repo-link" --revision=main
       """,
   }
 
@@ -220,11 +239,12 @@ class Submit(base.CreateCommand):
         args.git_source_revision,
         args.dir,
         args.revision,
+        args.service_account,
         args.pack,
         False,
         args.default_buckets_behavior,
         skip_set_source=True,
-        client_tag='gcloudsubmits'
+        client_tag='gcloudsubmits',
     )
 
     build_region = submit_util.DetermineBuildRegion(build_config, build_region)
@@ -255,7 +275,8 @@ class Submit(base.CreateCommand):
         build_config,
         build_region=build_region,
         support_gcl=self._support_gcl,
-        suppress_logs=args.suppress_logs)
+        suppress_logs=args.suppress_logs,
+        polling_interval=args.polling_interval)
     return build
 
 
@@ -324,7 +345,7 @@ class SubmitAlpha(SubmitBeta):
         False,
         args.default_buckets_behavior,
         skip_set_source=True,
-        client_tag='gcloudsubmits'
+        client_tag='gcloudsubmits',
     )
 
     build_region = submit_util.DetermineBuildRegion(build_config, build_region)
@@ -354,5 +375,6 @@ class SubmitAlpha(SubmitBeta):
         args.async_,
         build_config,
         build_region=build_region,
-        support_gcl=True)
+        support_gcl=True,
+        polling_interval=args.polling_interval)
     return build

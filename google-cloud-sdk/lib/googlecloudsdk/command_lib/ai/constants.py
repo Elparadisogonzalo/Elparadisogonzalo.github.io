@@ -44,6 +44,7 @@ SUPPORTED_REGION = ('us-central1', 'europe-west4', 'asia-east1')
 # Available regions specifically for training, including custom-jobs and
 # hp-tuning-jobs.
 SUPPORTED_TRAINING_REGIONS = (
+    'africa-south1',
     'asia-east1',
     'asia-east2',
     'asia-northeast1',
@@ -64,6 +65,9 @@ SUPPORTED_TRAINING_REGIONS = (
     'europe-west6',
     'europe-west8',
     'europe-west9',
+    'europe-west12',
+    'me-central1',
+    'me-central2',
     'me-west1',
     'northamerica-northeast1',
     'northamerica-northeast2',
@@ -72,6 +76,7 @@ SUPPORTED_TRAINING_REGIONS = (
     'us-central1',
     'us-east1',
     'us-east4',
+    'us-east5',
     'us-south1',
     'us-west1',
     'us-west2',
@@ -82,12 +87,14 @@ SUPPORTED_TRAINING_REGIONS = (
 # Available regions specifically for online prediction, including endpoints and
 # models
 SUPPORTED_OP_REGIONS = (
+    'africa-south1',
     'asia-east1',
     'asia-east2',
     'asia-northeast1',
     'asia-northeast2',
     'asia-northeast3',
     'asia-south1',
+    'asia-south2',
     'asia-southeast1',
     'asia-southeast2',
     'australia-southeast1',
@@ -102,6 +109,9 @@ SUPPORTED_OP_REGIONS = (
     'europe-west6',
     'europe-west8',
     'europe-west9',
+    'europe-west12',
+    'me-central1',
+    'me-central2',
     'me-west1',
     'northamerica-northeast1',
     'northamerica-northeast2',
@@ -110,6 +120,7 @@ SUPPORTED_OP_REGIONS = (
     'us-central1',
     'us-east1',
     'us-east4',
+    'us-east5',
     'us-south1',
     'us-west1',
     'us-west2',
@@ -184,11 +195,15 @@ TENSORBOARD_TIME_SERIES_COLLECTION = 'aiplatform.projects.locations.tensorboards
 
 MODEL_MONITORING_JOBS_COLLECTION = 'aiplatform.projects.locations.modelDeploymentMonitoringJobs'
 
+# gcloud-disable-gdu-domain
 OP_AUTOSCALING_METRIC_NAME_MAPPER = {
-    'cpu-usage':
-        'aiplatform.googleapis.com/prediction/online/cpu/utilization',
-    'gpu-duty-cycle':
-        'aiplatform.googleapis.com/prediction/online/accelerator/duty_cycle',
+    'cpu-usage': 'aiplatform.googleapis.com/prediction/online/cpu/utilization',
+    'gpu-duty-cycle': (
+        'aiplatform.googleapis.com/prediction/online/accelerator/duty_cycle'
+    ),
+    'request-counts-per-minute': (
+        'aiplatform.googleapis.com/prediction/online/request_count'
+    ),
 }
 
 MODEL_MONITORING_JOB_CREATION_DISPLAY_MESSAGE = """\

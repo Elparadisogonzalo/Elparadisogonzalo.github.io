@@ -21,13 +21,26 @@ instance:
     property: spanner/instance
   disable_auto_completers: false
 
+instancePartition:
+  name: instancePartition
+  collection: spanner.projects.instances.instancePartitions
+  attributes:
+  - *project
+  - *instance
+  - parameter_name: instancePartitionsId
+    attribute_name: instancePartition
+    help: |
+      The name of the Spanner instance partition.
+  disable_auto_completers: false
+
 database:
   name: database
   collection: spanner.projects.instances.databases
   attributes:
   - *project
   - *instance
-  - parameter_name: databasesId
+  - &database
+    parameter_name: databasesId
     attribute_name: database
     help: |
       The name of the Cloud Spanner database.
@@ -43,6 +56,19 @@ backup:
     attribute_name: backup
     help: |
       The name of the Cloud Spanner backup.
+  disable_auto_completers: false
+
+backupSchedule:
+  name: backupSchedule
+  collection: spanner.projects.instances.databases.backupSchedules
+  attributes:
+  - *project
+  - *instance
+  - *database
+  - parameter_name: backupSchedulesId
+    attribute_name: backup_schedule
+    help: |
+      The name of the Cloud Spanner backup schedule.
   disable_auto_completers: false
 
 backupOperation:

@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from googlecloudsdk.api_lib.apphub import utils as api_lib_utils
 from googlecloudsdk.api_lib.apphub.applications import client as apis
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.apphub import flags
@@ -32,8 +33,8 @@ _DETAILED_HELP = {
 }
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class Describe(base.DescribeCommand):
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class DescribeGA(base.DescribeCommand):
   """Describe an Apphub application."""
 
   detailed_help = _DETAILED_HELP
@@ -44,8 +45,23 @@ class Describe(base.DescribeCommand):
 
   def Run(self, args):
     """Run the describe command."""
-    client = apis.ApplicationsClient()
-    app_ref = args.CONCEPTS.application.Parse()
+    client = apis.ApplicationsClient(release_track=base.ReleaseTrack.GA)
+    app_ref = api_lib_utils.GetApplicationRef(args)
     return client.Describe(app_id=app_ref.RelativeName())
 
 
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class DescribeAlpha(base.DescribeCommand):
+  """Describe an Apphub application."""
+
+  detailed_help = _DETAILED_HELP
+
+  @staticmethod
+  def Args(parser):
+    flags.AddDescribeApplicationFlags(parser)
+
+  def Run(self, args):
+    """Run the describe command."""
+    client = apis.ApplicationsClient(release_track=base.ReleaseTrack.ALPHA)
+    app_ref = api_lib_utils.GetApplicationRef(args)
+    return client.Describe(app_id=app_ref.RelativeName())

@@ -28,6 +28,7 @@ from googlecloudsdk.command_lib.util import java
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
                     base.ReleaseTrack.GA)
+@base.DefaultUniverseOnly
 class Start(base.Command):
   """Start a local Firestore emulator.
 
@@ -48,6 +49,18 @@ class Start(base.Command):
           To run the local Firestore emulator with a Firebase Rules set, run:
 
             $ {command} --rules=firestore.rules
+
+          To run the local Firestore emulator in Datastore Mode, run:
+
+            $ {command} --database-mode=datastore-mode
+
+          To import data at the start of the Firestore emulator, run:
+
+            $ {command} --import-data=<path/to/file>
+
+          To export emulator data upon emulator shutdown, run:
+
+            $ {command} --export-on-exit=<path/to/directory>
           """,
   }
 
@@ -70,6 +83,36 @@ class Start(base.Command):
         'e.g.\n\n'
         '  [2001:db8:0:0:0:ff00:42:8329]:8080\n\n'
         'The default value is localhost:8080.')
+    parser.add_argument(
+        '--database-mode',
+        required=False,
+        help='The database mode to start the Firestore Emulator in. The valid '
+        'options are: \n\n'
+        '  `firestore-native` (default): start the emulator in Firestore '
+        'Native\n'
+        '  `datastore-mode`: start the emulator in Datastore Mode')
+    parser.add_argument(
+        '--use-firestore-in-datastore-mode',
+        default=False,
+        action='store_true',
+        hidden=True,
+        help='Runs the emulator in Datastore Mode.')
+    parser.add_argument(
+        '--import-data',
+        required=False,
+        help='File path to the data to be loaded into the emulator upon start '
+        'up. Example:`/home/user/myexports/sampleExport/sampleExport.overall_export_metadata.`')
+    parser.add_argument(
+        '--export-on-exit',
+        required=False,
+        help='Directory path in which emulator data will be saved upon '
+        'shutdown. Example:`/home/user/myexports/2024-03-26/`')
+    parser.add_argument(
+        '--licenses',
+        default=False,
+        action='store_true',
+        help='If set, the emulator will print open-source dependencies and '
+        'licenses, then exit.')
 
   def Run(self, args):
     if not args.host_port:
@@ -77,7 +120,8 @@ class Start(base.Command):
           firestore_util.GetHostPort(), ipv6_enabled=socket.has_ipv6)
     args.host_port.host = args.host_port.host or 'localhost'
     args.host_port.port = args.host_port.port or '8080'
+    args.database_mode = args.database_mode or 'firestore-native'
     firestore_util.ValidateStartArgs(args)
-    java.RequireJavaInstalled(firestore_util.FIRESTORE_TITLE, min_version=11)
+    java.RequireJavaInstalled(firestore_util.FIRESTORE_TITLE, min_version=21)
     with firestore_util.StartFirestoreEmulator(args) as proc:
       util.PrefixOutput(proc, 'firestore')

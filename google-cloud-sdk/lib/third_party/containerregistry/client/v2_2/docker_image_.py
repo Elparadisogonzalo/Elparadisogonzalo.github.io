@@ -15,7 +15,6 @@
 
 from __future__ import absolute_import
 from __future__ import division
-
 from __future__ import print_function
 
 import abc
@@ -177,6 +176,7 @@ class Delegate(DockerImage):
     Args:
       image: a DockerImage on which __enter__ has already been called.
     """
+    super().__init__()
     self._image = image
 
   def manifest(self):
@@ -240,6 +240,7 @@ class FromRegistry(DockerImage):
                basic_creds,
                transport,
                accepted_mimes = docker_http.MANIFEST_SCHEMA2_MIMES):
+    super().__init__()
     self._name = name
     self._creds = basic_creds
     self._original_transport = transport
@@ -268,6 +269,18 @@ class FromRegistry(DockerImage):
     if cache:
       self._response[suffix] = content
     return content
+
+  def check_usage_only(self):
+    # See //cloud/containers/registry/proto/v2/registry_usage.proto
+    # for the full response structure.
+    response = json.loads(
+        self._content('tags/list?check_usage_only=true').decode('utf8')
+    )
+    if 'usage' not in response:
+      raise docker_http.BadStateException(
+          'Malformed JSON response: {}. Missing "usage" field'.format(response)
+      )
+    return response.get('usage')
 
   def _tags(self):
     # See //cloud/containers/registry/proto/v2/tags.proto
@@ -300,6 +313,12 @@ class FromRegistry(DockerImage):
       if err.status == six.moves.http_client.NOT_FOUND:
         return False
       raise
+
+  def digest(self):
+    """The digest of the manifest."""
+    if isinstance(self._name, docker_name.Digest):
+      return self._name.digest
+    return super().digest()
 
   def manifest(self, validate=True):
     """Override."""
@@ -415,6 +434,7 @@ class FromTarball(DockerImage):
       name = None,
       compresslevel = 9,
   ):
+    super().__init__()
     self._tarball = tarball
     self._compresslevel = compresslevel
     self._memoize = {}
@@ -551,6 +571,7 @@ class FromTarball(DockerImage):
     """Override."""
     if not self._blob_names:
       self._populate_manifest_and_blobs()
+    assert self._blob_names is not None
     return self._content(
         self._blob_names[digest],
         memoize=False,
@@ -563,6 +584,7 @@ class FromTarball(DockerImage):
       self._populate_manifest_and_blobs()
     if digest == self._config_blob:
       return self.config_file().encode('utf8')
+    assert self._blob_names is not None
     return self._gzipped_content(
         self._blob_names[digest])
 
@@ -670,6 +692,7 @@ class FromDisk(DockerImage):
                uncompressed_layers = None,
                legacy_base = None,
                foreign_layers_manifest = None):
+    super().__init__()
     self._config = config_file
     self._manifest = None
     self._foreign_layers_manifest = foreign_layers_manifest
@@ -749,6 +772,7 @@ class FromDisk(DockerImage):
     """Override."""
     if not self._manifest:
       self._populate_manifest()
+    assert self._manifest is not None
     return self._manifest
 
   def config_file(self):
@@ -763,13 +787,14 @@ class FromDisk(DockerImage):
         return bytes([])
       else:
         # Leverage the FromTarball fast-path.
-        return self._legacy_base.uncompressed_blob(digest)
+        return self._checked_legacy_base.uncompressed_blob(digest)
     return super(FromDisk, self).uncompressed_blob(digest)
 
   def uncompressed_layer(self, diff_id):
     if diff_id in self._uncompressed_layer_to_filename:
-      with io.open(self._uncompressed_layer_to_filename[diff_id],
-                   u'rb') as reader:
+      with io.open(
+          self._uncompressed_layer_to_filename[diff_id], 'rb'
+      ) as reader:
         # TODO(b/118349036): Remove the disable once the pytype bug is fixed.
         return reader.read()  # pytype: disable=bad-return-type
     if self._legacy_base and diff_id in self._legacy_base.diff_ids():
@@ -780,14 +805,14 @@ class FromDisk(DockerImage):
   def blob(self, digest):
     """Override."""
     if digest not in self._layer_to_filename:
-      return self._legacy_base.blob(digest)
+      return self._checked_legacy_base.blob(digest)
     with open(self._layer_to_filename[digest], 'rb') as reader:
       return reader.read()
 
   def blob_size(self, digest):
     """Override."""
     if digest not in self._layer_to_filename:
-      return self._legacy_base.blob_size(digest)
+      return self._checked_legacy_base.blob_size(digest)
     info = os.stat(self._layer_to_filename[digest])
     return info.st_size
 
@@ -797,6 +822,14 @@ class FromDisk(DockerImage):
 
   def __exit__(self, unused_type, unused_value, unused_traceback):
     pass
+
+  @property
+  def _checked_legacy_base(self):
+    if self._legacy_base is None:
+      raise ValueError(
+          'self._legacy_base is None. set legacy_base in constructor.'
+      )
+    return self._legacy_base
 
 
 def _in_whiteout_dir(fs, name):

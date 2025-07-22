@@ -47,6 +47,8 @@ _ESCAPED_RIGHT_CURLY = 'R'
 
 # ErrorInfo identifier used for extracting domain based handlers.
 ERROR_INFO_SUFFIX = 'google.rpc.ErrorInfo'
+LOCALIZED_MESSAGE_SUFFIX = 'google.rpc.LocalizedMessage'
+HELP_SUFFIX = 'google.rpc.Help'
 
 
 def _Escape(s):
@@ -260,10 +262,14 @@ class HttpErrorPayload(FormattableErrorPayload):
     status_code: The HTTP status code number.
     status_description: The status_code description.
     status_message: Context specific status message.
+    unparsed_details: The unparsed details.
     type_details: ErrorDetails Indexed by type.
-    url: The HTTP url.
-    .<a>.<b>...: The <a>.<b>... attribute in the JSON content (synthesized in
-      get_field()).
+    url: The HTTP url. .<a>.<b>...: The <a>.<b>... attribute in the JSON content
+      (synthesized in get_field()).
+
+  Grammar:
+    Format strings inherit from python's string.formatter. where we pass tokens
+    obtained by the resource projection framework format strings.
 
   Examples:
     error_format values and resulting output:
@@ -303,6 +309,7 @@ class HttpErrorPayload(FormattableErrorPayload):
     self.resource_name = ''
     self.resource_version = ''
     self.url = ''
+    self._cred_info = None
     if not isinstance(http_error, six.string_types):
       self._ExtractResponseAndJsonContent(http_error)
       self._ExtractUrlResourceAndInstanceNames(http_error)
@@ -332,6 +339,33 @@ class HttpErrorPayload(FormattableErrorPayload):
       self.error_info = _JsonSortedDict(self.content['error'])
       if not self.status_code:  # Could have been set above.
         self.status_code = int(self.error_info.get('code', 0))
+
+      if self.status_code in [401, 403, 404] and self.error_info.get(
+          'message', ''
+      ):
+        from googlecloudsdk.core.credentials import store as c_store  # pylint: disable=g-import-not-at-top
+
+        # Append the credential info to the error message.
+        self._cred_info = c_store.CredentialInfo.GetCredentialInfo()
+        if self._cred_info:
+          cred_info_message = self._cred_info.GetInfoString()
+          existing_message = self.content['error']['message']
+          # Some surface actually appends an ending dot at the end of the
+          # message, so we need to make sure not adding an ending dot if the
+          # existing message doesn't have one. (Note that cred_info_message
+          # string we created ends with a dot.)
+          if existing_message[-1] != '.':
+            # add dot after existing_message and remove the ending dot from
+            # cred_info_message.
+            self.content['error']['message'] = (
+                existing_message + '. ' + cred_info_message[:-1]
+            )
+          else:
+            self.content['error']['message'] = (
+                existing_message + ' ' + cred_info_message
+            )
+          self.error_info['message'] = self.content['error']['message']
+
       if not self.status_description:  # Could have been set above.
         self.status_description = self.error_info.get('status', '')
       self.status_message = self.error_info.get('message', '')
@@ -340,10 +374,22 @@ class HttpErrorPayload(FormattableErrorPayload):
       self.field_violations = self._ExtractFieldViolations(self.details)
       self.type_details = self._IndexErrorDetailsByType(self.details)
       self.domain_details = self._IndexErrorInfoByDomain(self.details)
+      if properties.VALUES.core.parse_error_details.GetBool():
+        self.unparsed_details = self.RedactParsedTypes(self.details)
     except (KeyError, TypeError, ValueError):
       self.status_message = content
     except AttributeError:
       pass
+
+  def RedactParsedTypes(self, details):
+    """Redacts the parsed types from the details list."""
+    unparsed_details = []
+    for item in details:
+      error_type = item.get('@type', None)
+      error_suffix = error_type.split('/')[-1]
+      if error_suffix not in (LOCALIZED_MESSAGE_SUFFIX, HELP_SUFFIX):
+        unparsed_details.append(item)
+    return unparsed_details
 
   def _IndexErrorDetailsByType(self, details):
     """Extracts and indexes error details list by the type attribute."""
@@ -398,10 +444,16 @@ class HttpErrorPayload(FormattableErrorPayload):
     """Makes description for error by checking which fields are filled in."""
     if self.status_code and self.resource_item and self.instance_name:
       if self.status_code == 403:
-        return ('User [{0}] does not have permission to access {1} [{2}] (or '
-                'it may not exist)').format(
-                    properties.VALUES.core.account.Get(),
-                    self.resource_item, self.instance_name)
+        if self._cred_info:
+          account = (
+              self._cred_info.impersonated_account or self._cred_info.account
+          )
+        else:
+          account = properties.VALUES.core.account.Get()
+        return (
+            '[{0}] does not have permission to access {1} [{2}] (or '
+            'it may not exist)'
+        ).format(account, self.resource_item, self.instance_name)
       if self.status_code == 404:
         return '{0} [{1}] not found'.format(
             self.resource_item.capitalize(), self.instance_name)
@@ -499,12 +551,25 @@ class HttpException(core_exceptions.Error):
   def __str__(self):
     error_format = self.error_format
     if error_format is None:
-      error_format = '{message}'
+      error_prefix = '{message?}'
       if properties.VALUES.core.parse_error_details.GetBool():
-        error_format += ('\n{type_details.LocalizedMessage'
-                         ':value(message.list(separator="\n"))}')
+        parsed_localized_messages = (
+            '{type_details.LocalizedMessage'
+            ':value(message.list(separator="\n"))?\n{?}}'
+        )
+        parsed_help_messages = (
+            '{type_details.Help'
+            ':value(links.flatten(show="values",separator="\n"))?\n{?}}'
+        )
+        unparsed_details = '{unparsed_details?\n{?}}'
+        error_format = (
+            error_prefix
+            + parsed_localized_messages
+            + parsed_help_messages
+            + unparsed_details
+        )
       else:
-        error_format += '{details?\n{?}}'
+        error_format = error_prefix + '{details?\n{?}}'
       if log.GetVerbosity() <= logging.DEBUG:
         error_format += '{.debugInfo?\n{?}}'
     return _Expand(self.payload.format(_Escape(error_format)))

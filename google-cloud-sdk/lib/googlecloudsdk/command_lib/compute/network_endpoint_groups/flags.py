@@ -68,6 +68,7 @@ def _AddNetworkEndpointType(parser):
       'serverless',
       'gce-vm-ip',
       'private-service-connect',
+      'gce-vm-ip-portmap',
   ]
 
   help_text = """\
@@ -118,6 +119,12 @@ def _AddNetworkEndpointType(parser):
       Compute Engine. Instance reference is required. The IP address is
       optional. If unspecified, the primary NIC address is used.
       A port must not be specified.
+
+      *gce-vm-ip-portmap*:::
+      Endpoint IP address must be a primary IP of a VM's network interface in
+      Compute Engine.
+      The `--default-port` must be specified or every network endpoint
+      in the network endpoint group must have a port specified.
   """
 
   base.ChoiceArgument(
@@ -142,6 +149,7 @@ def _AddNetwork(parser):
       '`private-service-connect`',
       '`internet-ip-port`',
       '`internet-fqdn-port`',
+      '`gce-vm-ip-portmap`',
   ]
 
   help_text += """\
@@ -164,9 +172,13 @@ def _AddSubnet(parser):
       If not specified, network endpoints may belong to any subnetwork in the
       region where the network endpoint group is created.
   """
-  subnet_applicable_types = ['`gce-vm-ip-port`']
-  subnet_applicable_types.append('`gce-vm-ip`')
-  subnet_applicable_types.append('`private-service-connect`')
+  subnet_applicable_types = [
+      '`gce-vm-ip-port`',
+      '`gce-vm-ip`',
+      '`private-service-connect`',
+      '`gce-vm-ip-portmap`',
+  ]
+
   help_text += """\
 
       This is only supported for NEGs with endpoint type {0}.
@@ -184,8 +196,8 @@ def _AddDefaultPort(parser):
     The default port to use if the port number is not specified in the network
     endpoint.
 
-    If this flag isn't specified for a NEG with endpoint type `gce-vm-ip-port`
-    or `non-gcp-private-ip-port`, then every network endpoint in the network
+    If this flag isn't specified for a NEG with endpoint type `gce-vm-ip-port`,
+    `gce-vm-ip-portmap` or `non-gcp-private-ip-port`, then every network endpoint in the network
     endpoint group must have a port specified. For a global NEG with endpoint
     type `internet-ip-port` and `internet-fqdn-port` if the default port is not
     specified, the well-known port for your backend protocol is used (80 for
@@ -198,6 +210,22 @@ def _AddDefaultPort(parser):
   """
 
   parser.add_argument('--default-port', type=int, help=help_text)
+
+
+def _AddProducerPort(parser):
+  """Adds psc producer port argument for creating network endpoint groups."""
+  help_text = """\
+    The producer port to use when a consumer PSC NEG connects to a producer's
+    internal network load balancer. If this flag isn't specified for a NEG with
+    endpoint type `private-service-connect`, the PSC NEG will connect to port
+    443 or the first available port in the PSC producer port range, or to port 1
+    if the PSC producer's forwarding rule ports flag is set to all-ports.
+
+    This flag is not supported for NEGs with endpoint type other than
+    `private-service-connect`.
+  """
+
+  parser.add_argument('--producer-port', type=int, help=help_text)
 
 
 def _AddServerlessRoutingInfo(parser, support_serverless_deployment=False):
@@ -375,31 +403,10 @@ def _AddL7pscRoutingInfo(parser):
   parser.add_argument('--psc-target-service', help=psc_target_service_help)
 
 
-def _AddPortMappingInfo(parser):
-  """Adds port mapping info arguments for network endpoint groups."""
-
-  help_text = """
-  Determines the spec of client port maping mode of this group.
-  Port Mapping is a use case in which NEG specifies routing by mapping client ports to destinations (e.g. ip and port).
-
-  *port-mapping-disabled*:::
-  Group should not be used for mapping client port to destination.
-
-  *client-port-per-endpoint*:::
-  For each endpoint there is exactly one client port.
-  """
-
-  parser.add_argument(
-      '--client-port-mapping-mode',
-      help=help_text,
-  )
-
-
 def AddCreateNegArgsToParser(
     parser,
     support_neg_type=False,
     support_serverless_deployment=False,
-    support_port_mapping_neg=False,
 ):
   """Adds flags for creating a network endpoint group to the parser."""
 
@@ -408,15 +415,12 @@ def AddCreateNegArgsToParser(
   _AddNetwork(parser)
   _AddSubnet(parser)
   _AddDefaultPort(parser)
+  _AddProducerPort(parser)
   _AddServerlessRoutingInfo(parser, support_serverless_deployment)
   _AddL7pscRoutingInfo(parser)
-  if support_port_mapping_neg:
-    _AddPortMappingInfo(parser)
 
 
-def _AddAddEndpoint(
-    endpoint_group, endpoint_spec, support_ipv6, support_port_mapping_neg
-):
+def _AddAddEndpoint(endpoint_group, endpoint_spec):
   """Adds add endpoint argument for updating network endpoint groups."""
   help_text = """\
           The network endpoint to add to the network endpoint group. Keys used
@@ -438,52 +442,20 @@ def _AddAddEndpoint(
               specified, then the primary IP address for the VM instance in
               the network that the network endpoint group belongs to is
               used.
-              """
-
-  if support_ipv6:
-    help_text += """\
 
               *ipv6* - Optional IPv6 address of the network endpoint. The IPv6
               address must belong to a VM in compute engine (either the internal
               or external IPv6 address).
 
-              At least one of the ip and ipv6 must be specified.
-                 """
-  help_text += """\
-
               *port* - Required endpoint port unless NEG default port is set.
-               """
-  if support_port_mapping_neg:
-    help_text += """\
 
-              *client-port* - Required endpoint client port only for the port
+              *client-destination-port* - Required endpoint client destination port only for the port
               mapping NEG.
-               """
-
-  help_text += """\
 
           `internet-ip-port`
-               """
-
-  if support_ipv6:
-    help_text += """\
-
-              *ip* - Optional IPv4 address of the endpoint to attach. Must be
-              publicly routable.
-
-              *ipv6* - Optional IPv6 address of the endpoint to attach. Must be
-              publicly routable.
-
-              At least one of the ip and ipv6 must be specified.
-            """
-  else:
-    help_text += """\
 
               *ip* - Required IPv4 address of the endpoint to attach. Must be
               publicly routable.
-            """
-
-  help_text += """\
 
               *port* - Optional port of the endpoint to attach. If unspecified,
               the NEG default port is set. If no default port is set, the
@@ -505,32 +477,10 @@ def _AddAddEndpoint(
 
           `non-gcp-private-ip-port`
 
-    """
-  if support_ipv6:
-    help_text += """\
-
-              *ip* - Optional IPv4 address of the network endpoint to attach.
-              The IP address must belong to a VM not in Compute Engine and must
-              be routable using a Cloud Router over VPN or an Interconnect
-              connection.
-
-              *ipv6* - Optional IPv6 address of the network endpoint to attach.
-              The IP address must belong to a VM not in Compute Engine and must
-              be routable using a Cloud Router over VPN or an Interconnect
-              connection.
-
-              At least one of the ip and ipv6 must be specified.
-      """
-  else:
-    help_text += """\
-
               *ip* - Required IPv4 address of the network endpoint to attach.
               The IP address must belong to a VM not in Compute Engine and must
               be routable using a Cloud Router over VPN or an Interconnect
               connection.
-      """
-
-  help_text += """\
 
               *port* - Required port of the network endpoint to attach unless
               the NEG default port is set.
@@ -558,9 +508,7 @@ def _AddAddEndpoint(
   )
 
 
-def _AddRemoveEndpoint(
-    endpoint_group, endpoint_spec, support_ipv6, support_port_mapping_neg
-):
+def _AddRemoveEndpoint(endpoint_group, endpoint_spec):
   """Adds remove endpoint argument for updating network endpoint groups."""
   help_text = """\
           The network endpoint to detach from the network endpoint group. Keys
@@ -574,40 +522,17 @@ def _AddRemoveEndpoint(
 
               *ip* - Optional IPv4 address of the network endpoint to detach.
               If specified port must be provided as well.
-  """
-  if support_ipv6:
-    help_text += """\
 
               *ipv6* - Optional IPv6 address of the network endpoint to detach.
               If specified port must be provided as well.
-    """
-  help_text += """\
 
               *port* - Optional port of the network endpoint to detach.
-    """
 
-  if support_port_mapping_neg:
-    help_text += """\
-
-              *client-port* - Optional client port, only for port mapping NEGs.
-               """
-
-  help_text += """\
+              *client-destination-port* - Optional client destination port, only for port mapping NEGs.
 
           `internet-ip-port`
 
               *ip* - Required IPv4 address of the network endpoint to detach.
-  """
-
-  if support_ipv6:
-    help_text += """\
-
-              *ipv6* - Required IPv6 address of the network endpoint to detach.
-
-              At least one of the ip and ipv6 must be specified.
-    """
-
-  help_text += """\
 
               *port* - Optional port of the network endpoint to detach if the
               endpoint has a port specified.
@@ -623,17 +548,6 @@ def _AddRemoveEndpoint(
           `non-gcp-private-ip-port`
 
               *ip* - Required IPv4 address of the network endpoint to detach.
-    """
-
-  if support_ipv6:
-    help_text += """\
-
-              *ipv6* - Required IPv6 address of the network endpoint to detach.
-
-              At least one of the ip and ipv6 must be specified.
-      """
-
-  help_text += """\
 
               *port* - Required port of the network endpoint to detach unless
               NEG default port is set.
@@ -657,9 +571,7 @@ def _AddRemoveEndpoint(
   )
 
 
-def AddUpdateNegArgsToParser(
-    parser, support_ipv6=False, support_port_mapping_neg=False
-):
+def AddUpdateNegArgsToParser(parser):
   """Adds flags for updating a network endpoint group to the parser."""
   endpoint_group = parser.add_group(
       mutex=True,
@@ -670,14 +582,13 @@ def AddUpdateNegArgsToParser(
       ),
   )
 
-  endpoint_spec = {'instance': str, 'ip': str, 'port': int, 'fqdn': str}
-  if support_ipv6:
-    endpoint_spec['ipv6'] = str
-  if support_port_mapping_neg:
-    endpoint_spec['client-port'] = int
-  _AddAddEndpoint(
-      endpoint_group, endpoint_spec, support_ipv6, support_port_mapping_neg
-  )
-  _AddRemoveEndpoint(
-      endpoint_group, endpoint_spec, support_ipv6, support_port_mapping_neg
-  )
+  endpoint_spec = {
+      'instance': str,
+      'ip': str,
+      'ipv6': str,
+      'port': int,
+      'fqdn': str,
+      'client-destination-port': int,
+  }
+  _AddAddEndpoint(endpoint_group, endpoint_spec)
+  _AddRemoveEndpoint(endpoint_group, endpoint_spec)

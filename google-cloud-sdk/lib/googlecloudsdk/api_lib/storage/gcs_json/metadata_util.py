@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import copy
+from typing import List
 
 from apitools.base.py import encoding
 from apitools.base.py import encoding_helper
@@ -120,7 +121,7 @@ def get_apitools_metadata_from_url(cloud_url):
   elif cloud_url.is_object():
     generation = int(cloud_url.generation) if cloud_url.generation else None
     return messages.Object(
-        name=cloud_url.object_name,
+        name=cloud_url.resource_name,
         bucket=cloud_url.bucket_name,
         generation=generation)
 
@@ -160,11 +161,13 @@ def get_bucket_resource_from_metadata(metadata):
       default_storage_class=metadata.storageClass,
       etag=metadata.etag,
       labels=_message_to_dict(metadata.labels),
+      ip_filter_config=_message_to_dict(metadata.ipFilter),
       lifecycle_config=_message_to_dict(metadata.lifecycle),
       location=metadata.location,
       location_type=metadata.locationType,
       logging_config=_message_to_dict(metadata.logging),
       metadata=metadata,
+      generation=metadata.generation,
       metageneration=metadata.metageneration,
       per_object_retention=_message_to_dict(metadata.objectRetention),
       project_number=metadata.projectNumber,
@@ -178,6 +181,8 @@ def get_bucket_resource_from_metadata(metadata):
       soft_delete_policy=_message_to_dict(metadata.softDeletePolicy),
       uniform_bucket_level_access=uniform_bucket_level_access,
       update_time=metadata.updated,
+      soft_delete_time=metadata.softDeleteTime,
+      hard_delete_time=metadata.hardDeleteTime,
       versioning_enabled=getattr(metadata.versioning, 'enabled', None),
       website_config=_message_to_dict(metadata.website),
   )
@@ -215,7 +220,7 @@ def get_anywhere_cache_resource_from_metadata(metadata):
   url = storage_url.CloudUrl(
       scheme=storage_url.ProviderPrefix.GCS,
       bucket_name=metadata.bucket,
-      object_name=metadata.anywhereCacheId,
+      resource_name=metadata.anywhereCacheId,
   )
   return gcs_resource_reference.GcsAnywhereCacheResource(
       admission_policy=metadata.admissionPolicy,
@@ -251,7 +256,7 @@ def get_object_resource_from_metadata(metadata):
   url = storage_url.CloudUrl(
       scheme=storage_url.ProviderPrefix.GCS,
       bucket_name=metadata.bucket,
-      object_name=metadata.name,
+      resource_name=metadata.name,
       generation=generation)
 
   if metadata.customerEncryption:
@@ -481,6 +486,12 @@ def update_bucket_metadata_from_request_config(bucket_metadata, request_config):
         resource_args.enable_autoclass,
         resource_args.autoclass_terminal_storage_class,
     )
+  if resource_args.enable_hierarchical_namespace is not None:
+    bucket_metadata.hierarchicalNamespace = (
+        metadata_field_converters.process_hierarchical_namespace(
+            resource_args.enable_hierarchical_namespace
+        )
+    )
   if resource_args.cors_file_path is not None:
     bucket_metadata.cors = metadata_field_converters.process_cors(
         resource_args.cors_file_path)
@@ -495,6 +506,12 @@ def update_bucket_metadata_from_request_config(bucket_metadata, request_config):
     bucket_metadata.storageClass = (
         metadata_field_converters.process_default_storage_class(
             resource_args.default_storage_class))
+  if (
+      resource_args.ip_filter_file_path is not None
+  ):
+    bucket_metadata.ipFilter = metadata_field_converters.process_ip_filter(
+        resource_args.ip_filter_file_path
+    )
   if resource_args.lifecycle_file_path is not None:
     bucket_metadata.lifecycle = (
         metadata_field_converters.process_lifecycle(
@@ -623,9 +640,6 @@ def get_cleared_bucket_fields(request_config):
   if resource_args.retention_period == user_request_args_factory.CLEAR:
     cleared_fields.append('retentionPolicy')
 
-  if resource_args.soft_delete_duration == user_request_args_factory.CLEAR:
-    cleared_fields.append('softDeletePolicy')
-
   if (
       resource_args.web_error_page
       == resource_args.web_main_page_suffix
@@ -637,6 +651,32 @@ def get_cleared_bucket_fields(request_config):
   elif resource_args.web_main_page_suffix == user_request_args_factory.CLEAR:
     cleared_fields.append('website.mainPageSuffix')
 
+  return cleared_fields
+
+
+def get_cleared_ip_filter_fields(
+    ip_filter
+) -> List[str]:
+  """Returns cleared IP filter fields for the bucket.
+
+  Args:
+    ip_filter: IP filter object.
+
+  Returns:
+    List of IP filter fields to be cleared.
+  """
+  cleared_fields = []
+  if ip_filter.mode is None:
+    cleared_fields.append('ipFilter.mode')
+  if ip_filter.publicNetworkSource is None:
+    cleared_fields.append('ipFilter.publicNetworkSource')
+  elif (
+      ip_filter.publicNetworkSource is not None
+      and not ip_filter.publicNetworkSource.allowedIpCidrRanges
+  ):
+    cleared_fields.append('ipFilter.publicNetworkSource.allowedIpCidrRanges')
+  if not ip_filter.vpcNetworkSources:
+    cleared_fields.append('ipFilter.vpcNetworkSources')
   return cleared_fields
 
 
@@ -695,7 +735,7 @@ def get_should_gzip_locally(attributes_resource, request_config):
   if isinstance(attributes_resource, resource_reference.FileObjectResource):
     return gzip_util.should_gzip_locally(
         request_config.gzip_settings,
-        attributes_resource.storage_url.object_name,
+        attributes_resource.storage_url.resource_name,
     )
 
   return False
@@ -824,6 +864,9 @@ def get_cleared_object_fields(request_config):
   if resource_args.cache_control == user_request_args_factory.CLEAR:
     cleared_fields.append('cacheControl')
 
+  if resource_args.content_type == user_request_args_factory.CLEAR:
+    cleared_fields.append('contentType')
+
   if resource_args.content_disposition == user_request_args_factory.CLEAR:
     cleared_fields.append('contentDisposition')
 
@@ -850,9 +893,25 @@ def get_managed_folder_resource_from_metadata(metadata):
   url = storage_url.CloudUrl(
       scheme=storage_url.ProviderPrefix.GCS,
       bucket_name=metadata.bucket,
-      object_name=metadata.name,
+      resource_name=metadata.name,
   )
   return resource_reference.ManagedFolderResource(
+      url,
+      create_time=metadata.createTime,
+      metadata=metadata,
+      metageneration=metadata.metageneration,
+      update_time=metadata.updateTime,
+  )
+
+
+def get_folder_resource_from_metadata(metadata):
+  """Returns a FolderResource from Apitools metadata."""
+  url = storage_url.CloudUrl(
+      scheme=storage_url.ProviderPrefix.GCS,
+      bucket_name=metadata.bucket,
+      resource_name=metadata.name,
+  )
+  return resource_reference.FolderResource(
       url,
       create_time=metadata.createTime,
       metadata=metadata,

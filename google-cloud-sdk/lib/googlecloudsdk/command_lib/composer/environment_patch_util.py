@@ -42,21 +42,22 @@ def _ConstructAirflowDatabaseRetentionDaysPatch(airflow_database_retention_days,
   """
   messages = api_util.GetMessagesModule(release_track=release_track)
   config = messages.EnvironmentConfig()
-  enable_retention = (
-      messages.AirflowMetadataRetentionPolicy.EnableRetentionValueValuesEnum.RETENTION_MODE_ENABLED
-  )
+
   if airflow_database_retention_days == 0:
-    enable_retention = (
-        messages.AirflowMetadataRetentionPolicy.EnableRetentionValueValuesEnum.RETENTION_MODE_DISABLED
+    config.dataRetentionConfig = messages.DataRetentionConfig(
+        airflowMetadataRetentionConfig=messages.AirflowMetadataRetentionPolicyConfig(
+            retentionMode=messages.AirflowMetadataRetentionPolicyConfig.RetentionModeValueValuesEnum.RETENTION_MODE_DISABLED,
+        )
     )
-  config.dataRetentionConfig = messages.DataRetentionConfig(
-      airflowMetadataRetentionConfig=messages.AirflowMetadataRetentionPolicy(
-          retentionDays=airflow_database_retention_days,
-          enableRetention=enable_retention,
-      )
-  )
+  else:
+    config.dataRetentionConfig = messages.DataRetentionConfig(
+        airflowMetadataRetentionConfig=messages.AirflowMetadataRetentionPolicyConfig(
+            retentionDays=airflow_database_retention_days,
+            retentionMode=messages.AirflowMetadataRetentionPolicyConfig.RetentionModeValueValuesEnum.RETENTION_MODE_ENABLED,
+        )
+    )
   return (
-      'config.data_retention_configuration.airflow_metadata_retention_config',
+      'config.data_retention_config.airflow_metadata_retention_config',
       messages.Environment(config=config),
   )
 
@@ -145,6 +146,7 @@ def ConstructPatch(
     min_workers=None,
     max_workers=None,
     scheduler_count=None,
+    clear_maintenance_window=None,
     maintenance_window_start=None,
     maintenance_window_end=None,
     maintenance_window_recurrence=None,
@@ -238,6 +240,8 @@ def ConstructPatch(
       be specified only in Composer 2.0.0.
     scheduler_count: int or None, number of schedulers in the Environment. Can
       be specified only in Composer 2.0.0.
+    clear_maintenance_window: bool or None, specifies if maintenance window
+      options should be cleared.
     maintenance_window_start: Datetime or None, a starting date of the
       maintenance window.
     maintenance_window_end: Datetime or None, an ending date of the maintenance
@@ -432,11 +436,13 @@ def ConstructPatch(
       maintenance_window_start
       and maintenance_window_end
       and maintenance_window_recurrence
+      or clear_maintenance_window
   ):
     return _ConstructMaintenanceWindowPatch(
         maintenance_window_start,
         maintenance_window_end,
         maintenance_window_recurrence,
+        clear_maintenance_window,
         release_track=release_track,
     )
   if cloud_data_lineage_integration_enabled is not None:
@@ -1005,14 +1011,13 @@ def _ConstructAutoscalingPatch(scheduler_cpu, worker_cpu, web_server_cpu,
     workload_resources['triggerer'] = messages.TriggererResource(
         cpu=triggerer_cpu, memoryGb=triggerer_memory_gb, count=triggerer_count
     )
-  if release_track != base.ReleaseTrack.GA:
-    if dag_processor_count is not None:
-      workload_resources['dagProcessor'] = messages.DagProcessorResource(
-          cpu=dag_processor_cpu,
-          memoryGb=dag_processor_memory_gb,
-          storageGb=dag_processor_storage_gb,
-          count=dag_processor_count,
-      )
+  if dag_processor_count is not None:
+    workload_resources['dagProcessor'] = messages.DagProcessorResource(
+        cpu=dag_processor_cpu,
+        memoryGb=dag_processor_memory_gb,
+        storageGb=dag_processor_storage_gb,
+        count=dag_processor_count,
+    )
 
   config = messages.EnvironmentConfig(
       workloadsConfig=messages.WorkloadsConfig(**workload_resources))
@@ -1022,6 +1027,7 @@ def _ConstructAutoscalingPatch(scheduler_cpu, worker_cpu, web_server_cpu,
 def _ConstructMaintenanceWindowPatch(maintenance_window_start,
                                      maintenance_window_end,
                                      maintenance_window_recurrence,
+                                     clear_maintenance_window,
                                      release_track=base.ReleaseTrack.GA):
   """Constructs an environment patch for updating maintenance window.
 
@@ -1032,6 +1038,8 @@ def _ConstructMaintenanceWindowPatch(maintenance_window_start,
       window.
     maintenance_window_recurrence: str or None, recurrence RRULE for the
       maintenance window.
+    clear_maintenance_window: bool or None, specifies if maintenance window
+      options should be cleared.
     release_track: base.ReleaseTrack, the release track of command. Will dictate
       which Composer client library will be used.
 
@@ -1039,6 +1047,9 @@ def _ConstructMaintenanceWindowPatch(maintenance_window_start,
     (str, Environment), the field mask and environment to use for update.
   """
   messages = api_util.GetMessagesModule(release_track=release_track)
+
+  if clear_maintenance_window:
+    return 'config.maintenance_window', messages.Environment()
 
   window_value = messages.MaintenanceWindow(
       startTime=maintenance_window_start.isoformat(),

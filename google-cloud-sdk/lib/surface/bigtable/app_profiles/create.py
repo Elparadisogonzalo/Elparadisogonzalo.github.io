@@ -28,6 +28,7 @@ from googlecloudsdk.command_lib.bigtable import arguments
 from googlecloudsdk.core import log
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class CreateAppProfile(base.CreateCommand):
   """Create a new Bigtable app profile."""
@@ -51,6 +52,14 @@ class CreateAppProfile(base.CreateCommand):
           run:
 
             $ {command} my-app-profile-id --instance=my-instance-id --route-any --priority=PRIORITY_MEDIUM
+
+          To create an app profile with row-affinity routing enabled, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --route-any --row-affinity
+
+          To create an app profile with Data Boost enabled which bills usage to the host project, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --data-boost --data-boost-compute-billing-owner=HOST_PAYS
 
           """),
   }
@@ -89,7 +98,10 @@ class CreateAppProfile(base.CreateCommand):
         multi_cluster=args.route_any,
         restrict_to=args.restrict_to,
         transactional_writes=args.transactional_writes,
+        row_affinity=args.row_affinity,
         priority=args.priority,
+        data_boost=args.data_boost,
+        data_boost_compute_billing_owner=args.data_boost_compute_billing_owner,
         force=args.force,
     )
 
@@ -122,6 +134,37 @@ class CreateAppProfile(base.CreateCommand):
 class CreateAppProfileBeta(CreateAppProfile):
   """Create a new Bigtable app profile."""
 
+  detailed_help = {
+      'EXAMPLES': textwrap.dedent("""\
+          To create an app profile with a multi-cluster routing policy, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --route-any
+
+          To create an app profile with a single-cluster routing policy which
+          routes all requests to `my-cluster-id`, run:
+
+            $ {command} my-single-cluster-app-profile --instance=my-instance-id --route-to=my-cluster-id
+
+          To create an app profile with a friendly description, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --route-any --description="Routes requests for my use case"
+
+          To create an app profile with a request priority of PRIORITY_MEDIUM,
+          run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --route-any --priority=PRIORITY_MEDIUM
+
+          To create an app profile with Data Boost enabled which bills usage to the host project, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --data-boost --data-boost-compute-billing-owner=HOST_PAYS
+
+          To create an app profile with row-affinity routing enabled, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --route-any --row-affinity
+
+          """),
+  }
+
   @staticmethod
   def Args(parser):
     arguments.AddAppProfileResourceArg(parser, 'to create')
@@ -129,7 +172,7 @@ class CreateAppProfileBeta(CreateAppProfile):
         arguments.ArgAdder(parser)
         .AddDescription('app profile', required=False)
         .AddAppProfileRouting()
-        .AddIsolation(allow_data_boost=True)
+        .AddIsolation()
         .AddForce('create')
     )
 
@@ -156,6 +199,7 @@ class CreateAppProfileBeta(CreateAppProfile):
         multi_cluster=args.route_any,
         restrict_to=args.restrict_to,
         transactional_writes=args.transactional_writes,
+        row_affinity=args.row_affinity,
         priority=args.priority,
         data_boost=args.data_boost,
         data_boost_compute_billing_owner=args.data_boost_compute_billing_owner,
@@ -173,11 +217,8 @@ class CreateAppProfileAlpha(CreateAppProfileBeta):
     (
         arguments.ArgAdder(parser)
         .AddDescription('app profile', required=False)
-        .AddAppProfileRouting(
-            allow_failover_radius=True,
-            allow_row_affinity=True,
-        )
-        .AddIsolation(allow_data_boost=True)
+        .AddAppProfileRouting()
+        .AddIsolation()
         .AddForce('create')
     )
 
@@ -203,7 +244,6 @@ class CreateAppProfileAlpha(CreateAppProfileBeta):
         description=args.description,
         multi_cluster=args.route_any,
         restrict_to=args.restrict_to,
-        failover_radius=args.failover_radius,
         transactional_writes=args.transactional_writes,
         row_affinity=args.row_affinity,
         priority=args.priority,

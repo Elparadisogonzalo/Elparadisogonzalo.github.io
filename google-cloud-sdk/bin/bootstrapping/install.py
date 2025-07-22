@@ -19,14 +19,12 @@ import sys
 from googlecloudsdk.calliope import actions
 from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.core import config
-from googlecloudsdk.core import execution_utils
 from googlecloudsdk.core import platforms_install
 from googlecloudsdk.core import properties
 from googlecloudsdk.core.console import console_io
+from googlecloudsdk.core.updater import python_manager
 from googlecloudsdk.core.updater import update_manager
 from googlecloudsdk.core.util import encoding
-from googlecloudsdk.core.util import files
-from googlecloudsdk.core.util import platforms
 from googlecloudsdk import gcloud_main
 
 # pylint:disable=superfluous-parens
@@ -53,6 +51,14 @@ def ParseArgs():
       default=None,
       type=Bool,
       help='(true/false) Enable screen reader mode.',
+  )
+  parser.add_argument(
+      '--universe-domain',
+      default=None,
+      help=(
+          'Universe domain to default to. If specified, sets the'
+          ' [core/universe_domain] property installation-wide.'
+      ),
   )
   parser.add_argument(
       '--rc-path',
@@ -142,23 +148,34 @@ def ParseArgs():
   return parser.parse_args(bootstrapping.GetDecodedArgv()[1:])
 
 
-def Prompts(usage_reporting):
+def Prompts(usage_reporting, universe_domain):
   """Display prompts to opt out of usage reporting.
 
   Args:
-    usage_reporting: bool, If True, enable usage reporting. If None, check
-    the environmental variable. If None, check if its alternate release channel.
-    If not, ask.
+    usage_reporting: bool, If True, enable usage reporting. If None, check the
+      environmental variable. If None, check if its alternate release channel.
+      If not, ask.
+    universe_domain: str, if specified and not 'googleapis.com', set
+      usage-reporting to False.
   """
-
   if usage_reporting is None:
 
-    if encoding.GetEncodedValue(
-        os.environ, 'CLOUDSDK_CORE_DISABLE_USAGE_REPORTING') is not None:
+    if (
+        encoding.GetEncodedValue(
+            os.environ, 'CLOUDSDK_CORE_DISABLE_USAGE_REPORTING'
+        )
+        is not None
+    ):
       usage_reporting = not encoding.GetEncodedValue(
-          os.environ, 'CLOUDSDK_CORE_DISABLE_USAGE_REPORTING')
+          os.environ, 'CLOUDSDK_CORE_DISABLE_USAGE_REPORTING'
+      )
     else:
-      if config.InstallationConfig.Load().IsAlternateReleaseChannel():
+      if (
+          universe_domain is not None
+          and universe_domain != properties.VALUES.core.universe_domain.default
+      ):
+        usage_reporting = False
+      elif config.InstallationConfig.Load().IsAlternateReleaseChannel():
         usage_reporting = True
         print("""
     Usage reporting is always on for alternate release channels.
@@ -248,7 +265,7 @@ the Google Cloud Platform.
   )
 
   verb = 'update' if update else 'install'
-  execute_arg_list = ['--quiet', 'components', verb, '--allow-no-backup']
+  execute_arg_list = ['--quiet', 'components', verb]
   if not compile_python:
     execute_arg_list.append('--no-compile-python')
   else:
@@ -256,71 +273,6 @@ the Google Cloud Platform.
   _CLI.Execute(
       execute_arg_list + component_ids
   )
-
-
-MACOS_PYTHON_INSTALL_PATH = '/Library/Frameworks/Python.framework/Versions/3.11/'
-MACOS_PYTHON = 'python-3.11.6-macos11.tar.gz'
-MACOS_PYTHON_URL = (
-    'https://dl.google.com/dl/cloudsdk/channels/rapid/' + MACOS_PYTHON
-)
-PYTHON_VERSION = '3.11'
-
-
-def MaybeInstallPythonOnMac():
-  """Optionally install Python on Mac machines."""
-  if platforms.OperatingSystem.Current() != platforms.OperatingSystem.MACOSX:
-    return
-
-  print('\nGoogle Cloud CLI works best with Python {} and certain modules.\n'
-        .format(PYTHON_VERSION))
-
-  already_have_python_version = os.path.isdir(MACOS_PYTHON_INSTALL_PATH)
-  if already_have_python_version:
-    prompt = ('Python {} installation detected, install recommended'
-              ' modules?'.format(PYTHON_VERSION))
-  else:
-    prompt = 'Download and run Python {} installer?'.format(PYTHON_VERSION)
-  setup_python = console_io.PromptContinue(prompt_string=prompt, default=True)
-
-  if setup_python:
-    install_errors = []
-    if not already_have_python_version:
-      print('Running Python {} installer, you may be prompted for sudo '
-            'password...'.format(PYTHON_VERSION))
-      with files.TemporaryDirectory() as tempdir:
-        with files.ChDir(tempdir):
-          curl_args = ['curl', '--silent', '-O', MACOS_PYTHON_URL]
-          exit_code = execution_utils.Exec(curl_args, no_exit=True)
-          if exit_code != 0:
-            install_errors.append('Failed to download Python installer')
-          else:
-            exit_code = execution_utils.Exec(['tar', '-xf', MACOS_PYTHON],
-                                             no_exit=True)
-            if exit_code != 0:
-              install_errors.append('Failed to extract Python installer')
-            else:
-              exit_code = execution_utils.Exec([
-                  'sudo', 'installer', '-target', '/', '-pkg',
-                  './python-3.11.6-macos11.pkg'
-              ],
-                                               no_exit=True)
-              if exit_code != 0:
-                install_errors.append('Installer failed.')
-
-    if not install_errors:
-      python_to_use = '{}/bin/python3'.format(MACOS_PYTHON_INSTALL_PATH)
-      os.environ['CLOUDSDK_PYTHON'] = python_to_use
-      print('Setting up virtual environment')
-      if os.path.isdir(config.Paths().virtualenv_dir):
-        _CLI.Execute(['config', 'virtualenv', 'update'])
-        _CLI.Execute(['config', 'virtualenv', 'enable'])
-      else:
-        _CLI.Execute(['config', 'virtualenv', 'create', '--python-to-use',
-                      python_to_use])
-        _CLI.Execute(['config', 'virtualenv', 'enable'])
-    else:
-      print('Failed to install Python. Errors \n\n{}'.format(
-          '\n*'.join(install_errors)))
 
 
 def main():
@@ -331,6 +283,10 @@ def main():
     properties.PersistProperty(properties.VALUES.accessibility.screen_reader,
                                pargs.screen_reader,
                                scope=properties.Scope.INSTALLATION)
+  if pargs.universe_domain is not None:
+    properties.PersistProperty(properties.VALUES.core.universe_domain,
+                               pargs.universe_domain,
+                               scope=properties.Scope.INSTALLATION)
   update_manager.RestartIfUsingBundledPython(sdk_root=config.Paths().sdk_root,
                                              command=__file__)
   reinstall_components = encoding.GetEncodedValue(
@@ -339,7 +295,7 @@ def main():
     if reinstall_components:
       ReInstall(reinstall_components.split(','), pargs.no_compile_python)
     else:
-      Prompts(pargs.usage_reporting)
+      Prompts(pargs.usage_reporting, pargs.universe_domain)
       bootstrapping.CommandStart('INSTALL', component_id='core')
       if not config.INSTALLATION_CONFIG.disable_updater:
         Install(
@@ -356,7 +312,7 @@ def main():
           sdk_root=bootstrapping.SDK_ROOT,
       )
       if pargs.install_python:
-        MaybeInstallPythonOnMac()
+        python_manager.PromptAndInstallPythonOnMac()
       print("""\
 
 For more information on how to get started, please visit:

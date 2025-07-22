@@ -21,10 +21,14 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.util import apis
 from googlecloudsdk.api_lib.util import waiter
 from googlecloudsdk.calliope import base
+from googlecloudsdk.calliope import exceptions
+from googlecloudsdk.core import properties
 from googlecloudsdk.core import resources
+
 
 VERSION_MAP = {
     base.ReleaseTrack.ALPHA: 'v1alpha',
+    base.ReleaseTrack.GA: 'v1',
 }
 
 
@@ -64,52 +68,58 @@ def WaitForOperation(poller, operation, message, max_wait_sec):
   )
 
 
-def PopulateAttributes(args):
+def PopulateAttributes(args, release_track=base.ReleaseTrack.ALPHA):
   """Populate attirbutes from args."""
 
-  attributes = GetMessagesModule().Attributes()
-  if args.environment:
-    attributes.environment = GetMessagesModule().Environment(
-        environment=args.environment
+  attributes = GetMessagesModule(release_track).Attributes()
+  if args.environment_type:
+    attributes.environment = GetMessagesModule(release_track).Environment(
+        type=GetMessagesModule(release_track).Environment.TypeValueValuesEnum(
+            args.environment_type
+        )
     )
 
-  if args.criticality:
-    criticality = GetMessagesModule().Criticality()
-    criticality.level = args.criticality.get('level')
-    criticality.missionCritical = args.criticality.get('mission-critical')
-    attributes.criticality = criticality
+  if args.criticality_type:
+    attributes.criticality = GetMessagesModule(release_track).Criticality(
+        type=GetMessagesModule(release_track).Criticality.TypeValueValuesEnum(
+            args.criticality_type
+        )
+    )
 
   for b_owner in args.business_owners or []:
-    business_owner = GetMessagesModule().ContactInfo()
+    business_owner = GetMessagesModule(release_track).ContactInfo()
     business_owner.email = b_owner.get('email', None)
     if b_owner.get('display-name', None):
       business_owner.displayName = b_owner.get('display-name', None)
-    if b_owner.get('channel-uri', None):
-      business_owner.channel = GetMessagesModule().Channel(
-          uri=b_owner.get('channel-uri')
-      )
+    if release_track == base.ReleaseTrack.ALPHA:
+      if b_owner.get('channel-uri', None):
+        business_owner.channel = GetMessagesModule(release_track).Channel(
+            uri=b_owner.get('channel-uri')
+        )
     attributes.businessOwners.append(business_owner)
 
   for d_owner in args.developer_owners or []:
-    developer_owner = GetMessagesModule().ContactInfo()
+    developer_owner = GetMessagesModule(release_track).ContactInfo()
     developer_owner.email = d_owner.get('email', None)
     if d_owner.get('display-name', None):
       developer_owner.displayName = d_owner.get('display-name', None)
-    if d_owner.get('channel-uri', None):
-      developer_owner.channel = GetMessagesModule().Channel(
-          uri=d_owner.get('channel-uri')
-      )
+    if release_track == base.ReleaseTrack.ALPHA:
+      if d_owner.get('channel-uri', None):
+        developer_owner.channel = GetMessagesModule(release_track).Channel(
+            uri=d_owner.get('channel-uri')
+        )
     attributes.developerOwners.append(developer_owner)
 
   for o_owner in args.operator_owners or []:
-    operator_owner = GetMessagesModule().ContactInfo()
+    operator_owner = GetMessagesModule(release_track).ContactInfo()
     operator_owner.email = o_owner.get('email', None)
     if o_owner.get('display-name'):
       operator_owner.displayName = o_owner.get('display-name')
-    if o_owner.get('channel-uri'):
-      operator_owner.channel = GetMessagesModule().Channel(
-          uri=o_owner.get('channel-uri')
-      )
+    if release_track == base.ReleaseTrack.ALPHA:
+      if o_owner.get('channel-uri'):
+        operator_owner.channel = GetMessagesModule(release_track).Channel(
+            uri=o_owner.get('channel-uri')
+        )
     attributes.operatorOwners.append(operator_owner)
 
   return attributes
@@ -126,3 +136,91 @@ def MakeGetUriFunc(collection, release_track=base.ReleaseTrack.ALPHA):
     return result.SelfLink()
 
   return _GetUri
+
+
+def GetServiceProjectRef(args):
+  """Returns a service project reference."""
+  service_project_ref = args.CONCEPTS.service_project.Parse()
+  if not service_project_ref.Name():
+    raise exceptions.InvalidArgumentException(
+        'service project', 'service project id must be non-empty.'
+    )
+  return service_project_ref
+
+
+def GetOperationRef(args):
+  """Returns a operation reference."""
+  operation_ref = args.CONCEPTS.operation.Parse()
+  if not operation_ref.Name():
+    raise exceptions.InvalidArgumentException(
+        'operation', 'operation id must be non-empty.'
+    )
+  return operation_ref
+
+
+def GetLocationRef(args):
+  """Returns a location reference."""
+  location_ref = args.CONCEPTS.location.Parse()
+  if not location_ref.Name():
+    raise exceptions.InvalidArgumentException(
+        'location', 'location id must be non-empty.'
+    )
+  return location_ref
+
+
+def GetDiscoveredWorkloadRef(args):
+  """Returns a discovered workload reference."""
+  discovered_workload_ref = args.CONCEPTS.discovered_workload.Parse()
+  if not discovered_workload_ref.Name():
+    raise exceptions.InvalidArgumentException(
+        'discovered workload', 'discovered workload id must be non-empty.'
+    )
+  return discovered_workload_ref
+
+
+def GetDiscoveredServiceRef(args):
+  """Returns a discovered service reference."""
+  discovered_service_ref = args.CONCEPTS.discovered_service.Parse()
+  if not discovered_service_ref.Name():
+    raise exceptions.InvalidArgumentException(
+        'discovered service', 'discovered service id must be non-empty.'
+    )
+  return discovered_service_ref
+
+
+def GetApplicationRef(args):
+  """Returns a application reference."""
+  app_ref = args.CONCEPTS.application.Parse()
+  if not app_ref.Name():
+    raise exceptions.InvalidArgumentException(
+        'application', 'application id must be non-empty.'
+    )
+  return app_ref
+
+
+def GetApplicationWorkloadRef(args):
+  """Returns a application workload reference."""
+  workload_ref = args.CONCEPTS.workload.Parse()
+  if not workload_ref.Name():
+    raise exceptions.InvalidArgumentException(
+        'workload', 'workload id must be non-empty.'
+    )
+  return workload_ref
+
+
+def GetApplicationServiceRef(args):
+  """Returns a application service reference."""
+  service_ref = args.CONCEPTS.service.Parse()
+  if not service_ref.Name():
+    raise exceptions.InvalidArgumentException(
+        'service', 'service id must be non-empty.'
+    )
+  return service_ref
+
+
+def GetProjectRef():
+  """Returns a project reference."""
+  return resources.REGISTRY.Parse(
+      properties.VALUES.core.project.GetOrFail(),
+      collection='apphub.projects',
+  )

@@ -37,11 +37,7 @@ class BlockchainNode(_messages.Message):
     privateServiceConnectEnabled: Optional. When true, the node is only
       accessible via Private Service Connect; no public endpoints are exposed.
       Otherwise, the node is only accessible via public endpoints. Warning:
-      Private Service Connect enabled nodes may require a manual migration
-      effort to remain compatible with future versions of the product. If this
-      feature is enabled, you will be notified of these changes along with any
-      required action to avoid disruption. See
-      https://cloud.google.com/vpc/docs/private-service-connect.
+      These nodes are deprecated, please use public endpoints instead.
     state: Output only. A status representing the state of the node.
     updateTime: Output only. The timestamp at which the blockchain node was
       last updated.
@@ -72,6 +68,8 @@ class BlockchainNode(_messages.Message):
       UPDATING: The node is currently being updated.
       REPAIRING: The node is currently being repaired.
       RECONCILING: The node is currently being reconciled.
+      SYNCING: The node is syncing, which is the process by which it obtains
+        the latest block and current global state.
     """
     STATE_UNSPECIFIED = 0
     CREATING = 1
@@ -81,6 +79,7 @@ class BlockchainNode(_messages.Message):
     UPDATING = 5
     REPAIRING = 6
     RECONCILING = 7
+    SYNCING = 8
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class LabelsValue(_messages.Message):
@@ -249,6 +248,8 @@ class BlockchainnodeengineProjectsLocationsListRequest(_messages.Message):
   r"""A BlockchainnodeengineProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -259,10 +260,11 @@ class BlockchainnodeengineProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class BlockchainnodeengineProjectsLocationsOperationsCancelRequest(_messages.Message):
@@ -415,7 +417,8 @@ class EthereumDetails(_messages.Message):
     Values:
       NETWORK_UNSPECIFIED: The network has not been specified, but should be.
       MAINNET: The Ethereum Mainnet.
-      TESTNET_GOERLI_PRATER: The Ethereum Testnet based on Goerli protocol.
+      TESTNET_GOERLI_PRATER: Deprecated: The Ethereum Testnet based on Goerli
+        protocol. Please use another test network.
       TESTNET_SEPOLIA: The Ethereum Testnet based on Sepolia/Bepolia protocol.
         See https://github.com/eth-clients/sepolia.
       TESTNET_HOLESKY: The Ethereum Testnet based on Holesky specification.
@@ -893,14 +896,22 @@ class ValidatorConfig(_messages.Message):
   for any GCP-managed validator client.
 
   Fields:
+    beaconFeeRecipient: An Ethereum address which the beacon client will send
+      fee rewards to if no recipient is configured in the validator client.
+      See https://lighthouse-book.sigmaprime.io/suggested-fee-recipient.html
+      or https://docs.prylabs.network/docs/execution-node/fee-recipient for
+      examples of how this is used. Note that while this is often described as
+      "suggested", as we run the execution node we can trust the execution
+      node, and therefore this is considered enforced.
     managedValidatorClient: Immutable. When true, deploys a GCP-managed
       validator client alongside the beacon client.
     mevRelayUrls: URLs for MEV-relay services to use for block building. When
       set, a GCP-managed MEV-boost service is configured on the beacon client.
   """
 
-  managedValidatorClient = _messages.BooleanField(1)
-  mevRelayUrls = _messages.StringField(2, repeated=True)
+  beaconFeeRecipient = _messages.StringField(1)
+  managedValidatorClient = _messages.BooleanField(2)
+  mevRelayUrls = _messages.StringField(3, repeated=True)
 
 
 encoding.AddCustomJsonFieldMapping(

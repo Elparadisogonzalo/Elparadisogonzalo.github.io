@@ -41,7 +41,7 @@ from googlecloudsdk.core.console import progress_tracker
 EXAMPLE_JOB_IMAGE = 'us-docker.pkg.dev/cloudrun/container/job:latest'
 
 
-def ContainerArgGroup():
+def ContainerArgGroup(release_track=base.ReleaseTrack.GA):
   """Returns an argument group with all per-container deploy args."""
 
   help_text = """
@@ -52,16 +52,23 @@ Container Flags
   group = base.ArgumentGroup(help=help_text)
   # Verify image flag is specified in Run function for better error message.
   group.AddArgument(flags.ImageArg(image=EXAMPLE_JOB_IMAGE, required=False))
-  group.AddArgument(flags.MutexEnvVarsFlags())
+  group.AddArgument(flags.MutexEnvVarsFlags(release_track=release_track))
   group.AddArgument(flags.MemoryFlag())
   group.AddArgument(flags.CpuFlag())
+  if release_track in [base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA]:
+    group.AddArgument(flags.GpuFlag(hidden=False))
   group.AddArgument(flags.ArgsFlag())
   group.AddArgument(flags.SecretsFlags())
   group.AddArgument(flags.CommandFlag())
+  group.AddArgument(flags.DependsOnFlag())
+  group.AddArgument(flags.AddVolumeMountFlag())
+  group.AddArgument(flags.RemoveVolumeMountFlag())
+  group.AddArgument(flags.ClearVolumeMountsFlag())
 
   return group
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.Command):
   """Create a Cloud Run job."""
@@ -82,8 +89,8 @@ class Create(base.Command):
           """,
   }
 
-  @staticmethod
-  def CommonArgs(parser, add_container_args=True):
+  @classmethod
+  def CommonArgs(cls, parser):
     # Flags not specific to any platform
     job_presentation = presentation_specs.ResourcePresentationSpec(
         'JOB',
@@ -92,22 +99,15 @@ class Create(base.Command):
         required=True,
         prefixes=False,
     )
-    if add_container_args:
-      flags.AddImageArg(parser, image=EXAMPLE_JOB_IMAGE)
-      flags.AddArgsFlag(parser)
-      flags.AddCommandFlag(parser)
-      flags.AddCpuFlag(parser, managed_only=True)
-      flags.AddMemoryFlag(parser)
-      flags.AddMutexEnvVarsFlagsForCreate(parser)
-      flags.AddSetSecretsFlag(parser)
     flags.AddLabelsFlag(parser)
     flags.AddParallelismFlag(parser)
     flags.AddTasksFlag(parser)
     flags.AddMaxRetriesFlag(parser)
     flags.AddTaskTimeoutFlags(parser)
-    flags.AddServiceAccountFlag(parser, managed_only=True)
+    flags.AddServiceAccountFlag(parser)
     flags.AddSetCloudSQLFlag(parser)
     flags.AddVpcConnectorArg(parser)
+    flags.AddVpcNetworkGroupFlagsForCreate(parser, resource_kind='job')
     flags.AddEgressSettingsFlag(parser)
     flags.AddClientNameAndVersionFlags(parser)
     flags.AddBinAuthzPolicyFlags(parser, with_clear=False)
@@ -115,6 +115,7 @@ class Create(base.Command):
     flags.AddCmekKeyFlag(parser, with_clear=False)
     flags.AddSandboxArg(parser, hidden=True)
     flags.AddGeneralAnnotationFlags(parser)
+    flags.AddVolumesFlags(parser, cls.ReleaseTrack())
 
     polling_group = parser.add_mutually_exclusive_group()
     flags.AddAsyncFlag(polling_group)
@@ -133,6 +134,8 @@ class Create(base.Command):
   @staticmethod
   def Args(parser):
     Create.CommonArgs(parser)
+    container_args = ContainerArgGroup()
+    container_parser.AddContainerFlags(parser, container_args)
 
   def Run(self, args):
     """Deploy a Job to Cloud Run."""
@@ -231,20 +234,24 @@ class Create(base.Command):
 class BetaCreate(Create):
   """Create a Cloud Run job."""
 
-  @staticmethod
-  def Args(parser):
-    Create.CommonArgs(parser)
-    flags.AddVpcNetworkGroupFlagsForCreate(parser, resource_kind='job')
+  @classmethod
+  def Args(cls, parser):
+    cls.CommonArgs(parser)
+    flags.AddGpuTypeFlag(parser, hidden=False)
+    flags.GpuZonalRedundancyFlag(parser, hidden=False)
+    container_args = ContainerArgGroup(release_track=base.ReleaseTrack.BETA)
+    container_parser.AddContainerFlags(parser, container_args)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class AlphaCreate(BetaCreate):
   """Create a Cloud Run job."""
 
-  @staticmethod
-  def Args(parser):
-    Create.CommonArgs(parser, add_container_args=False)
-    flags.AddVpcNetworkGroupFlagsForCreate(parser, resource_kind='job')
+  @classmethod
+  def Args(cls, parser):
+    cls.CommonArgs(parser)
     flags.AddRuntimeFlag(parser)
-    container_args = ContainerArgGroup()
+    flags.AddGpuTypeFlag(parser, hidden=False)
+    flags.GpuZonalRedundancyFlag(parser, hidden=False)
+    container_args = ContainerArgGroup(release_track=base.ReleaseTrack.ALPHA)
     container_parser.AddContainerFlags(parser, container_args)

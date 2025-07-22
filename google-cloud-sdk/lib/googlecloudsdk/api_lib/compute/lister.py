@@ -14,10 +14,6 @@
 # limitations under the License.
 """Facilities for getting a list of Cloud resources."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import itertools
 
 from googlecloudsdk.api_lib.compute import constants
@@ -29,10 +25,15 @@ from googlecloudsdk.calliope import actions
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.command_lib.compute import completers as compute_completers
 from googlecloudsdk.command_lib.compute import flags
+from googlecloudsdk.command_lib.compute import scope as compute_scope
 from googlecloudsdk.core import properties
 from googlecloudsdk.core.resource import resource_expr_rewrite
 from googlecloudsdk.core.resource import resource_projector
 import six
+
+
+def _AllowPartialError():
+  return properties.VALUES.compute.allow_partial_error.GetBool()
 
 
 def _ConvertProtobufsToDicts(resources):
@@ -93,14 +94,37 @@ def FormatListRequests(service, project, scopes, scope_name,
             maxResults=constants.MAX_RESULTS_PER_PAGE)))
 
   else:
-    requests.append((
-        service,
-        'AggregatedList',
-        service.GetRequestType('AggregatedList')(
-            filter=filter_expr,
-            project=project,
-            maxResults=constants.MAX_RESULTS_PER_PAGE)))
 
+    request_message = service.GetRequestType('AggregatedList')
+
+    input_params = {}
+
+    if hasattr(request_message, 'includeAllScopes'):
+      input_params['includeAllScopes'] = True
+    if hasattr(request_message, 'returnPartialSuccess'):
+      input_params['returnPartialSuccess'] = True
+
+    if _AllowPartialError():
+      requests.append((
+          service,
+          'AggregatedList',
+          request_message(
+              filter=filter_expr,
+              project=project,
+              maxResults=constants.MAX_RESULTS_PER_PAGE,
+              **input_params
+          ),
+      ))
+    else:
+      requests.append((
+          service,
+          'AggregatedList',
+          request_message(
+              filter=filter_expr,
+              project=project,
+              maxResults=constants.MAX_RESULTS_PER_PAGE,
+          ),
+      ))
   return requests
 
 
@@ -438,24 +462,75 @@ def AddMultiScopeListerFlags(parser, zonal=False, regional=False,
     scope.add_argument(
         '--zones',
         metavar='ZONE',
-        help=('If provided, only zonal resources are shown. '
-              'If arguments are provided, only resources from the given '
-              'zones are shown.'),
-        type=arg_parsers.ArgList())
+        help=(
+            'If provided, only zonal resources are shown. '
+            'If arguments are provided, only resources from the given '
+            'zones are shown.'
+        ),
+        type=arg_parsers.ArgList(),
+    )
   if regional:
     scope.add_argument(
         '--regions',
         metavar='REGION',
-        help=('If provided, only regional resources are shown. '
-              'If arguments are provided, only resources from the given '
-              'regions are shown.'),
-        type=arg_parsers.ArgList())
+        help=(
+            'If provided, only regional resources are shown. '
+            'If arguments are provided, only resources from the given '
+            'regions are shown.'
+        ),
+        type=arg_parsers.ArgList(),
+    )
   if global_:
     scope.add_argument(
         '--global',
         action='store_true',
         help='If provided, only global resources are shown.',
-        default=False)
+        default=False,
+    )
+
+
+def AddMultiScopeListerFlagsIsg(
+    parser, zonal=False, regional=False, global_=False
+):
+  """Adds scope flags as necessary.
+
+  Args:
+    parser: argparse.ArgumentParser, the parser to add arguments to.
+    zonal: bool, whether to add the --zones flag.
+    regional: bool, whether to add the --regions flag.
+    global_: bool, whether to add the --global flag.
+
+  """
+  scope = parser.add_mutually_exclusive_group()
+  if zonal:
+    scope.add_argument(
+        '--zones',
+        metavar='ZONE',
+        help=(
+            'If provided, only zonal resources are shown. '
+            'If arguments are provided, only resources from the given '
+            'zones are shown.'
+        ),
+        type=arg_parsers.ArgList(),
+    )
+  if regional:
+    scope.add_argument(
+        '--regions',
+        metavar='REGION',
+        help=(
+            'If provided, only regional resources are shown. '
+            'If arguments are provided, only resources from the given '
+            'regions are shown.'
+        ),
+        type=arg_parsers.ArgList(),
+    )
+  if global_:
+    scope.add_argument(
+        '--global',
+        action='store_true',
+        help='If provided, only global resources are shown.',
+        default=False,
+    )
 
 
 class _Frontend(object):
@@ -497,8 +572,8 @@ def _GetListCommandFrontendPrototype(args, message=None):
   local_filter, _ = filter_expr
   if args.limit and (max_results is None or max_results > args.limit):
     max_results = args.limit
-  if not local_filter:
-    # If we are not applying a client-side filter, don't limit batch size.
+  if local_filter or (hasattr(args, 'sort_by') and args.sort_by):
+    # If we are applying a client-side filter/sort, don't limit batch size.
     max_results = None
   return _Frontend(filter_expr=filter_expr, maxResults=max_results)
 
@@ -722,7 +797,7 @@ def ParseRegionalFlags(args, resources, message=None):
   return _Frontend(filter_expr, frontend.max_results, scope_set)
 
 
-def ParseMultiScopeFlags(args, resources, message=None):
+def ParseMultiScopeFlags(args, resources, message=None, default_scope_set=None):
   """Make Frontend suitable for MultiScopeLister argument namespace.
 
   Generated client-side filter is stored to args.filter.
@@ -731,6 +806,7 @@ def ParseMultiScopeFlags(args, resources, message=None):
     args: The argument namespace of MultiScopeLister.
     resources: resources.Registry, The resource registry
     message: The response resource proto message for the request.
+    default_scope_set: Default scope set to use.
 
   Returns:
     Frontend initialized with information from MultiScopeLister argument
@@ -748,7 +824,8 @@ def ParseMultiScopeFlags(args, resources, message=None):
         args, resources, message=message)
   elif args.filter and 'region' in args.filter:
     scope_set = _TranslateRegionsFilters(args, resources)
-  elif getattr(args, 'global', None):
+  elif (getattr(args, 'global', None) or
+        default_scope_set is compute_scope.ScopeEnum.GLOBAL):
     scope_set = GlobalScope([
         resources.Parse(
             properties.VALUES.core.project.GetOrFail(),
@@ -855,7 +932,10 @@ class ZonalLister(object):
             errors=errors):
           yield item
     if errors:
-      utils.RaiseException(errors, ListException)
+      if _AllowPartialError():
+        utils.WarnIfPartialRequestFail(errors)
+      else:
+        utils.RaiseException(errors, ListException)
 
 
 class RegionalLister(object):
@@ -922,8 +1002,12 @@ class RegionalLister(object):
             batch_url=self.client.batch_url,
             errors=errors):
           yield item
+
     if errors:
-      utils.RaiseException(errors, ListException)
+      if _AllowPartialError():
+        utils.WarnIfPartialRequestFail(errors)
+      else:
+        utils.RaiseException(errors, ListException)
 
 
 class GlobalLister(object):
@@ -1018,9 +1102,11 @@ class MultiScopeLister(object):
       entire operation.
     image_zone_flag: Returns the images rolled out to the specific zone. This is
       used for images.list API
-    instance_view_flag: control the retruned view of the instance,
+    instance_view_flag: control the returned view of the instance,
       either default view or full view of instance/instanceProperities.
       this is used for instances.List/instanceTemplates.List API
+    subnetwork_views_flag: control the returned views of the subnetwork.
+      this is used for subnetworks.List API
   """
 
   def __init__(
@@ -1034,6 +1120,7 @@ class MultiScopeLister(object):
       return_partial_success=True,
       image_zone_flag=None,
       instance_view_flag=None,
+      subnetwork_views_flag=None,
   ):
     self.client = client
     self.zonal_service = zonal_service
@@ -1044,6 +1131,7 @@ class MultiScopeLister(object):
     self.return_partial_success = return_partial_success
     self.image_zone_flag = image_zone_flag
     self.instance_view_flag = instance_view_flag
+    self.subnetwork_views_flag = subnetwork_views_flag
 
   def __deepcopy__(self, memodict=None):
     return self  # MultiScopeLister is immutable
@@ -1129,11 +1217,14 @@ class MultiScopeLister(object):
       for project_ref in sorted(list(scope_set.projects)):
         input_params = {}
 
-        if hasattr(request_message, 'includeAllScopes'):
-          input_params['includeAllScopes'] = True
-        if hasattr(request_message,
-                   'returnPartialSuccess') and self.return_partial_success:
-          input_params['returnPartialSuccess'] = True
+        if _AllowPartialError():
+          if hasattr(request_message, 'includeAllScopes'):
+            input_params['includeAllScopes'] = True
+          if (
+              hasattr(request_message, 'returnPartialSuccess')
+              and self.return_partial_success
+          ):
+            input_params['returnPartialSuccess'] = True
 
         requests.append((self.aggregation_service, 'AggregatedList',
                          request_message(
@@ -1146,14 +1237,18 @@ class MultiScopeLister(object):
       for request in requests:
         if request[1] == 'List':
           request[2].view = self.instance_view_flag
+
+    if self.subnetwork_views_flag is not None:
+      for request in requests:
+        if request[1] == 'List':
+          request[2].views = self.subnetwork_views_flag
+
     errors = []
-    response_count = 0
     for item in request_helper.ListJson(
         requests=requests,
         http=self.client.apitools_client.http,
         batch_url=self.client.batch_url,
         errors=errors):
-      response_count += 1
 
       yield item
 
@@ -1161,7 +1256,10 @@ class MultiScopeLister(object):
       # If the command allows partial server errors, instead of raising an
       # exception to show something went wrong, we show a warning message that
       # contains the error messages instead.
-      if self.allow_partial_server_failure and response_count > 0:
+      if (
+          _AllowPartialError()
+          and self.allow_partial_server_failure
+      ):
         utils.WarnIfPartialRequestFail(errors)
       else:
         utils.RaiseException(errors, ListException)

@@ -18,7 +18,7 @@ import enum
 
 
 BASE_URL = 'https://dlp.googleapis.com/v2/'
-DOCS_URL = 'https://cloud.google.com/dlp/docs/'
+DOCS_URL = 'https://cloud.google.com/sensitive-data-protection/docs/'
 
 
 class Collections(enum.Enum):
@@ -67,6 +67,28 @@ class Collections(enum.Enum):
       ['organizationsId', 'locationsId'],
       True
   )
+  ORGANIZATIONS_LOCATIONS_COLUMNDATAPROFILES = (
+      'organizations.locations.columnDataProfiles',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'columnDataProfiles/{columnDataProfilesId}',
+      },
+      ['name'],
+      True
+  )
+  ORGANIZATIONS_LOCATIONS_CONNECTIONS = (
+      'organizations.locations.connections',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'connections/{connectionsId}',
+      },
+      ['name'],
+      True
+  )
   ORGANIZATIONS_LOCATIONS_DEIDENTIFYTEMPLATES = (
       'organizations.locations.deidentifyTemplates',
       '{+name}',
@@ -85,6 +107,17 @@ class Collections(enum.Enum):
           '':
               'organizations/{organizationsId}/locations/{locationsId}/'
               'discoveryConfigs/{discoveryConfigsId}',
+      },
+      ['name'],
+      True
+  )
+  ORGANIZATIONS_LOCATIONS_FILESTOREDATAPROFILES = (
+      'organizations.locations.fileStoreDataProfiles',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'fileStoreDataProfiles/{fileStoreDataProfilesId}',
       },
       ['name'],
       True
@@ -111,6 +144,17 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  ORGANIZATIONS_LOCATIONS_PROJECTDATAPROFILES = (
+      'organizations.locations.projectDataProfiles',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'projectDataProfiles/{projectDataProfilesId}',
+      },
+      ['name'],
+      True
+  )
   ORGANIZATIONS_LOCATIONS_STOREDINFOTYPES = (
       'organizations.locations.storedInfoTypes',
       '{+name}',
@@ -118,6 +162,17 @@ class Collections(enum.Enum):
           '':
               'organizations/{organizationsId}/locations/{locationsId}/'
               'storedInfoTypes/{storedInfoTypesId}',
+      },
+      ['name'],
+      True
+  )
+  ORGANIZATIONS_LOCATIONS_TABLEDATAPROFILES = (
+      'organizations.locations.tableDataProfiles',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'tableDataProfiles/{tableDataProfilesId}',
       },
       ['name'],
       True
@@ -202,6 +257,28 @@ class Collections(enum.Enum):
       ['projectsId', 'locationsId'],
       True
   )
+  PROJECTS_LOCATIONS_COLUMNDATAPROFILES = (
+      'projects.locations.columnDataProfiles',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'columnDataProfiles/{columnDataProfilesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_CONNECTIONS = (
+      'projects.locations.connections',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/connections/'
+              '{connectionsId}',
+      },
+      ['name'],
+      True
+  )
   PROJECTS_LOCATIONS_DEIDENTIFYTEMPLATES = (
       'projects.locations.deidentifyTemplates',
       '{+name}',
@@ -235,6 +312,17 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  PROJECTS_LOCATIONS_FILESTOREDATAPROFILES = (
+      'projects.locations.fileStoreDataProfiles',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'fileStoreDataProfiles/{fileStoreDataProfilesId}',
+      },
+      ['name'],
+      True
+  )
   PROJECTS_LOCATIONS_INSPECTTEMPLATES = (
       'projects.locations.inspectTemplates',
       '{+name}',
@@ -257,6 +345,17 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  PROJECTS_LOCATIONS_PROJECTDATAPROFILES = (
+      'projects.locations.projectDataProfiles',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'projectDataProfiles/{projectDataProfilesId}',
+      },
+      ['name'],
+      True
+  )
   PROJECTS_LOCATIONS_STOREDINFOTYPES = (
       'projects.locations.storedInfoTypes',
       '{+name}',
@@ -264,6 +363,17 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/storedInfoTypes/'
               '{storedInfoTypesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_TABLEDATAPROFILES = (
+      'projects.locations.tableDataProfiles',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'tableDataProfiles/{tableDataProfilesId}',
       },
       ['name'],
       True

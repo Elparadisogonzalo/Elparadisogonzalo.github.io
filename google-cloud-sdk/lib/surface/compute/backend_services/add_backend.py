@@ -30,6 +30,7 @@ from googlecloudsdk.command_lib.compute.backend_services import backend_services
 from googlecloudsdk.command_lib.compute.backend_services import flags
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class AddBackend(base.UpdateCommand):
   """Add a backend to a backend service.
@@ -52,9 +53,6 @@ class AddBackend(base.UpdateCommand):
   support_global_neg = True
   support_region_neg = True
   support_failover = True
-  # This fields decides whether --preference flag can be set when updating the
-  # backend.
-  support_preference = False
 
   @classmethod
   def Args(cls, parser):
@@ -77,10 +75,10 @@ class AddBackend(base.UpdateCommand):
         parser,
         support_global_neg=cls.support_global_neg,
         support_region_neg=cls.support_region_neg)
-    if cls.support_preference:
-      backend_flags.AddPreference(parser)
+    backend_flags.AddPreference(parser)
     if cls.support_failover:
       backend_flags.AddFailover(parser, default=None)
+    backend_flags.AddCustomMetrics(parser)
 
   def _GetGetRequest(self, client, backend_service_ref):
     if backend_service_ref.Collection() == 'compute.regionBackendServices':
@@ -127,7 +125,12 @@ class AddBackend(base.UpdateCommand):
               scope_lister=compute_flags.GetDefaultScopeLister(client))
 
   def _CreateBackendMessage(
-      self, messages, group_uri, balancing_mode, preference, args
+      self,
+      messages,
+      group_uri,
+      balancing_mode,
+      preference,
+      args,
   ):
     """Create a backend message.
 
@@ -144,7 +147,7 @@ class AddBackend(base.UpdateCommand):
       arguments.
     """
     backend_services_utils.ValidateBalancingModeArgs(messages, args)
-    if self.support_preference and preference is not None:
+    if preference is not None:
       return messages.Backend(
           balancingMode=balancing_mode,
           preference=preference,
@@ -158,7 +161,8 @@ class AddBackend(base.UpdateCommand):
           maxConnections=args.max_connections,
           maxConnectionsPerInstance=args.max_connections_per_instance,
           maxConnectionsPerEndpoint=args.max_connections_per_endpoint,
-          failover=args.failover)
+          failover=args.failover,
+      )
     else:
       return messages.Backend(
           balancingMode=balancing_mode,
@@ -172,7 +176,8 @@ class AddBackend(base.UpdateCommand):
           maxConnections=args.max_connections,
           maxConnectionsPerInstance=args.max_connections_per_instance,
           maxConnectionsPerEndpoint=args.max_connections_per_endpoint,
-          failover=args.failover)
+          failover=args.failover,
+      )
 
   def _Modify(self, client, resources, backend_service_ref, args, existing):
     replacement = encoding.CopyProtoMessage(existing)
@@ -180,19 +185,27 @@ class AddBackend(base.UpdateCommand):
     group_ref = self._GetGroupRef(args, resources, client)
     group_uri = group_ref.SelfLink()
 
+    scope = ''
     for backend in existing.backends:
       if group_uri == backend.group:
-        if (group_ref.Collection() == 'compute.instanceGroups'
-            or group_ref.Collection() == 'compute.networkEndpointGroups'):
-          scope = 'zone'
-        elif group_ref.Collection() == 'compute.regionInstanceGroups':
-          scope = 'region'
+        if (
+            group_ref.Collection() == 'compute.instanceGroups'
+            or group_ref.Collection() == 'compute.networkEndpointGroups'
+        ):
+          scope = 'zone [' + getattr(group_ref, 'zone') + ']'
+        elif (
+            group_ref.Collection() == 'compute.regionInstanceGroups'
+            or group_ref.Collection() == 'compute.regionNetworkEndpointGroups'
+        ):
+          scope = 'region [' + getattr(group_ref, 'region') + ']'
+        elif group_ref.Collection() == 'compute.globalNetworkEndpointGroups':
+          scope = 'global'
+
         raise exceptions.ArgumentError(
-            'Backend [{}] in {} [{}] already exists in backend service '
-            '[{}].'.format(group_ref.Name(),
-                           scope,
-                           getattr(group_ref, scope),
-                           backend_service_ref.Name()))
+            'Backend [{}] in {} already exists in backend service [{}].'.format(
+                group_ref.Name(), scope, backend_service_ref.Name()
+            )
+        )
 
     if args.balancing_mode:
       balancing_mode = client.messages.Backend.BalancingModeValueValuesEnum(
@@ -201,12 +214,21 @@ class AddBackend(base.UpdateCommand):
       balancing_mode = None
 
     preference = None
-    if self.support_preference and args.preference:
+    if args.preference:
       preference = client.messages.Backend.PreferenceValueValuesEnum(
           args.preference)
 
-    backend = self._CreateBackendMessage(client.messages, group_uri,
-                                         balancing_mode, preference, args)
+    backend = self._CreateBackendMessage(
+        client.messages,
+        group_uri,
+        balancing_mode,
+        preference,
+        args,
+    )
+    if args.custom_metrics:
+      backend.customMetrics = args.custom_metrics
+    if args.custom_metrics_file:
+      backend.customMetrics = args.custom_metrics_file
 
     replacement.backends.append(backend)
     return replacement
@@ -232,7 +254,29 @@ class AddBackend(base.UpdateCommand):
         [self._GetSetRequest(client, backend_service_ref, new_object)])
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class AddBackendBeta(AddBackend):
+  """Add a backend to a backend service.
+
+  *{command}* adds a backend to a Google Cloud load balancer or Traffic
+  Director. Depending on the load balancing scheme of the backend service,
+  backends can be instance groups (managed or unmanaged), zonal network endpoint
+  groups (zonal NEGs), serverless NEGs, or an internet NEG. For more
+  information, see the [backend services
+  overview](https://cloud.google.com/load-balancing/docs/backend-service).
+
+  For most load balancers, you can define how Google Cloud measures capacity by
+  selecting a balancing mode. For more information, see [traffic
+  distribution](https://cloud.google.com/load-balancing/docs/backend-service#traffic_distribution).
+
+  To modify a backend, use the `gcloud compute backend-services update-backend`
+  or `gcloud compute backend-services edit` command.
+  """
+
+  # Allow --preference flag to be set when updating the backend.
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class AddBackendAlpha(AddBackend):
   """Add a backend to a backend service.
 
@@ -251,4 +295,3 @@ class AddBackendAlpha(AddBackend):
   or `gcloud compute backend-services edit` command.
   """
   # Allow --preference flag to be set when updating the backend.
-  support_preference = True

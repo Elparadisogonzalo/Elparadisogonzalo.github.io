@@ -172,7 +172,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
         method_id='composer.projects.locations.environments.dags.dagRuns.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['filter', 'pageSize', 'pageToken'],
+        query_params=['filter', 'pageSize', 'pageToken', 'runsCountPerDag'],
         relative_path='v1alpha2/{+parent}/dagRuns',
         request_field='',
         request_type_name='ComposerProjectsLocationsEnvironmentsDagsDagRunsListRequest',
@@ -427,7 +427,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Creates a user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (ComposerProjectsLocationsEnvironmentsUserWorkloadsConfigMapsCreateRequest) input message
@@ -454,7 +454,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Deletes a user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (ComposerProjectsLocationsEnvironmentsUserWorkloadsConfigMapsDeleteRequest) input message
@@ -481,7 +481,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets an existing user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Gets an existing user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (ComposerProjectsLocationsEnvironmentsUserWorkloadsConfigMapsGetRequest) input message
@@ -508,7 +508,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists user workloads ConfigMaps. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Lists user workloads ConfigMaps. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (ComposerProjectsLocationsEnvironmentsUserWorkloadsConfigMapsListRequest) input message
@@ -535,7 +535,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
     )
 
     def Update(self, request, global_params=None):
-      r"""Updates a user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Updates a user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (UserWorkloadsConfigMap) input message
@@ -572,7 +572,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a user workloads Secret. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Creates a user workloads Secret. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (ComposerProjectsLocationsEnvironmentsUserWorkloadsSecretsCreateRequest) input message
@@ -599,7 +599,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a user workloads Secret. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Deletes a user workloads Secret. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (ComposerProjectsLocationsEnvironmentsUserWorkloadsSecretsDeleteRequest) input message
@@ -626,7 +626,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets an existing user workloads Secret. Values of the "data" field in the response are cleared. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Gets an existing user workloads Secret. Values of the "data" field in the response are cleared. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (ComposerProjectsLocationsEnvironmentsUserWorkloadsSecretsGetRequest) input message
@@ -653,7 +653,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists user workloads Secrets. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Lists user workloads Secrets. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (ComposerProjectsLocationsEnvironmentsUserWorkloadsSecretsListRequest) input message
@@ -680,7 +680,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
     )
 
     def Update(self, request, global_params=None):
-      r"""Updates a user workloads Secret. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Updates a user workloads Secret. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
       Args:
         request: (UserWorkloadsSecret) input message
@@ -717,7 +717,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
           }
 
     def List(self, request, global_params=None):
-      r"""Lists workloads in a Cloud Composer environment. Workload is a unit that runs a single Composer component. This method is supported for Cloud Composer environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      r"""Lists workloads in a Cloud Composer environment. Workload is a unit that runs a single Composer component. This method is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.
 
       Args:
         request: (ComposerProjectsLocationsEnvironmentsWorkloadsListRequest) input message
@@ -1206,7 +1206,7 @@ class ComposerV1alpha2(base_api.BaseApiClient):
           }
 
     def Cancel(self, request, global_params=None):
-      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
+      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
 
       Args:
         request: (ComposerProjectsLocationsOperationsCancelRequest) input message

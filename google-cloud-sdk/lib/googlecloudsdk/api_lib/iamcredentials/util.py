@@ -20,19 +20,20 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import datetime
+import json
 
 from apitools.base.py import exceptions as apitools_exceptions
-from google.auth import exceptions as google_auth_exceptions
-from google.auth import impersonated_credentials as google_auth_impersonated_credentials
+from apitools.base.py import http_wrapper
 from googlecloudsdk.api_lib.util import apis_internal
 from googlecloudsdk.api_lib.util import exceptions
 from googlecloudsdk.core import exceptions as core_exceptions
 from googlecloudsdk.core import properties
-from googlecloudsdk.core import requests as core_requests
 from googlecloudsdk.core import resources
 from googlecloudsdk.core import transport
-from googlecloudsdk.core.credentials import transports
 from oauth2client import client
+
+
+IAM_ENDPOINT_GDU = 'https://iamcredentials.googleapis.com/'
 
 
 class Error(core_exceptions.Error):
@@ -49,6 +50,9 @@ class ImpersonatedCredGoogleAuthRefreshError(Error):
 
 def GenerateAccessToken(service_account_id, scopes):
   """Generates an access token for the given service account."""
+  # pylint: disable=g-import-not-at-top
+  from googlecloudsdk.core.credentials import transports
+  # pylint: enable=g-import-not-at-top
   service_account_ref = resources.REGISTRY.Parse(
       service_account_id, collection='iamcredentials.serviceAccounts',
       params={'projectsId': '-', 'serviceAccountsId': service_account_id})
@@ -86,6 +90,9 @@ def GenerateAccessToken(service_account_id, scopes):
 
 def GenerateIdToken(service_account_id, audience, include_email=False):
   """Generates an id token for the given service account."""
+  # pylint: disable=g-import-not-at-top
+  from googlecloudsdk.core.credentials import transports
+  # pylint: enable=g-import-not-at-top
   service_account_ref = resources.REGISTRY.Parse(
       service_account_id, collection='iamcredentials.serviceAccounts',
       params={'projectsId': '-', 'serviceAccountsId': service_account_id})
@@ -107,6 +114,29 @@ def GenerateIdToken(service_account_id, audience, include_email=False):
       )
   )
   return response.token
+
+
+def GetEffectiveIamEndpoint():
+  """Returns the effective IAM endpoint.
+
+  (1) If the [api_endpoint_overrides/iamcredentials] property is explicitly set,
+  return the property value.
+  (2) Otherwise if [core/universe_domain] value is not default, return
+  "https://iamcredentials.{universe_domain_value}/".
+  (3) Otherise return "https://iamcredentials.googleapis.com/"
+
+  Returns:
+    str: The effective IAM endpoint.
+  """
+  if properties.VALUES.api_endpoint_overrides.iamcredentials.IsExplicitlySet():
+    return properties.VALUES.api_endpoint_overrides.iamcredentials.Get()
+
+  universe_domain_property = properties.VALUES.core.universe_domain
+  if universe_domain_property.Get() != universe_domain_property.default:
+    return IAM_ENDPOINT_GDU.replace(
+        'googleapis.com', universe_domain_property.Get()
+    )
+  return IAM_ENDPOINT_GDU
 
 
 class ImpersonationAccessTokenProvider(object):
@@ -131,6 +161,12 @@ class ImpersonationAccessTokenProvider(object):
   def GetElevationAccessTokenGoogleAuth(self, source_credentials,
                                         target_principal, delegates, scopes):
     """Creates a fresh impersonation credential using google-auth library."""
+    # pylint: disable=g-import-not-at-top
+    from google.auth import exceptions as google_auth_exceptions
+    from google.auth import impersonated_credentials as google_auth_impersonated_credentials
+    from googlecloudsdk.core import requests as core_requests
+    # pylint: enable=g-import-not-at-top
+
     request_client = core_requests.GoogleAuthRequest()
     # google-auth makes a shadow copy of the source_credentials and refresh
     # the copy instead of the original source_credentials. During the copying,
@@ -148,17 +184,60 @@ class ImpersonationAccessTokenProvider(object):
     self.PerformIamEndpointsOverride()
     try:
       cred.refresh(request_client)
-    except google_auth_exceptions.RefreshError:
-      raise ImpersonatedCredGoogleAuthRefreshError(
-          'Failed to impersonate [{service_acc}]. Make sure the '
-          'account that\'s trying to impersonate it has access to the service '
-          'account itself and the "roles/iam.serviceAccountTokenCreator" '
-          'role.'.format(service_acc=target_principal))
+    except google_auth_exceptions.RefreshError as e:
+      original_message = (
+          "Failed to impersonate [{service_acc}]. Make sure the account that's"
+          ' trying to impersonate it has access to the service account itself'
+          ' and the "roles/iam.serviceAccountTokenCreator" role.'.format(
+              service_acc=target_principal
+          )
+      )
+      http_error = None
+
+      # Try to convert RefreshError into a HttpError.
+      try:
+        # RefreshError has the content:
+        # (
+        #   "Unable to acquire impersonated credentials",
+        #   "'error': {'code': xxx, 'message': "xxx", 'details': [...]}"
+        # )
+        # The refresh error's args[1] is the 2nd part (the json with 'error').
+        # It is a AIP-193 format error message. In the code below we refer to
+        # the json part with 'error' as the "AIP-193 error message".
+        content = json.loads(e.args[1])
+
+        # Prepend the original gcloud message to the AIP-193 error message.
+        content['error']['message'] = (
+            original_message + ' ' + content['error']['message']
+        )
+
+        # Create HttpError with the modified AIP-193 error message.
+        http_response = http_wrapper.Response(
+            info={'status': content['error']['code']},
+            content=json.dumps(content),
+            request_url=None,
+        )
+        http_error = apitools_exceptions.HttpError.FromResponse(http_response)
+      except Exception:  # pylint: disable=broad-exception-caught
+        pass
+
+      if http_error:
+        raise exceptions.HttpException(
+            http_error, error_format='{message} {details?\n{?}}'
+        )
+
+      # Fall back to RefreshError if we have trouble creating a HttpError.
+      raise ImpersonatedCredGoogleAuthRefreshError(original_message)
+
     return cred
 
   def GetElevationIdTokenGoogleAuth(self, google_auth_impersonation_credentials,
                                     audience, include_email):
     """Creates an ID token credentials for impersonated credentials."""
+    # pylint: disable=g-import-not-at-top
+    from google.auth import impersonated_credentials as google_auth_impersonated_credentials
+    from googlecloudsdk.core import requests as core_requests
+    # pylint: enable=g-import-not-at-top
     cred = google_auth_impersonated_credentials.IDTokenCredentials(
         google_auth_impersonation_credentials,
         target_audience=audience,
@@ -171,6 +250,9 @@ class ImpersonationAccessTokenProvider(object):
 
   @classmethod
   def IsImpersonationCredential(cls, cred):
+    # pylint: disable=g-import-not-at-top
+    from google.auth import impersonated_credentials as google_auth_impersonated_credentials
+    # pylint: enable=g-import-not-at-top
     return isinstance(cred, ImpersonationCredentials) or isinstance(
         cred, google_auth_impersonated_credentials.Credentials
     )
@@ -188,46 +270,29 @@ class ImpersonationAccessTokenProvider(object):
     is not default, we replace "googleapis.com" with the [core/universe_domain]
     property value in these endpoints.
     """
-    iamcredentials_property = (
-        properties.VALUES.api_endpoint_overrides.iamcredentials
-    )
-    universe_domain_property = properties.VALUES.core.universe_domain
+    # pylint: disable=g-import-not-at-top
+    from google.auth import iam as google_auth_iam
+    # pylint: enable=g-import-not-at-top
 
-    if iamcredentials_property.IsExplicitlySet():
-      google_auth_impersonated_credentials._IAM_ENDPOINT = (  # pylint: disable=protected-access
-          google_auth_impersonated_credentials._IAM_ENDPOINT.replace(  # pylint: disable=protected-access
-              'https://iamcredentials.googleapis.com/',
-              iamcredentials_property.Get(),
-          )
-      )
-      google_auth_impersonated_credentials._IAM_SIGN_ENDPOINT = (  # pylint: disable=protected-access
-          google_auth_impersonated_credentials._IAM_SIGN_ENDPOINT.replace(  # pylint: disable=protected-access
-              'https://iamcredentials.googleapis.com/',
-              iamcredentials_property.Get(),
-          )
-      )
-      google_auth_impersonated_credentials._IAM_IDTOKEN_ENDPOINT = (  # pylint: disable=protected-access
-          google_auth_impersonated_credentials._IAM_IDTOKEN_ENDPOINT.replace(  # pylint: disable=protected-access
-              'https://iamcredentials.googleapis.com/',
-              iamcredentials_property.Get(),
-          )
-      )
-    elif universe_domain_property.Get() != universe_domain_property.default:
-      google_auth_impersonated_credentials._IAM_ENDPOINT = (  # pylint: disable=protected-access
-          google_auth_impersonated_credentials._IAM_ENDPOINT.replace(  # pylint: disable=protected-access
-              'googleapis.com', universe_domain_property.Get()
-          )
-      )
-      google_auth_impersonated_credentials._IAM_SIGN_ENDPOINT = (  # pylint: disable=protected-access
-          google_auth_impersonated_credentials._IAM_SIGN_ENDPOINT.replace(  # pylint: disable=protected-access
-              'googleapis.com', universe_domain_property.Get()
-          )
-      )
-      google_auth_impersonated_credentials._IAM_IDTOKEN_ENDPOINT = (  # pylint: disable=protected-access
-          google_auth_impersonated_credentials._IAM_IDTOKEN_ENDPOINT.replace(  # pylint: disable=protected-access
-              'googleapis.com', universe_domain_property.Get()
-          )
-      )
+    effective_iam_endpoint = GetEffectiveIamEndpoint()
+    google_auth_iam._IAM_ENDPOINT = (  # pylint: disable=protected-access
+        google_auth_iam._IAM_ENDPOINT.replace(  # pylint: disable=protected-access
+            IAM_ENDPOINT_GDU,
+            effective_iam_endpoint,
+        )
+    )
+    google_auth_iam._IAM_SIGN_ENDPOINT = (  # pylint: disable=protected-access
+        google_auth_iam._IAM_SIGN_ENDPOINT.replace(  # pylint: disable=protected-access
+            IAM_ENDPOINT_GDU,
+            effective_iam_endpoint,
+        )
+    )
+    google_auth_iam._IAM_IDTOKEN_ENDPOINT = (  # pylint: disable=protected-access
+        google_auth_iam._IAM_IDTOKEN_ENDPOINT.replace(  # pylint: disable=protected-access
+            IAM_ENDPOINT_GDU,
+            effective_iam_endpoint,
+        )
+    )
 
 
 class ImpersonationCredentials(client.OAuth2Credentials):

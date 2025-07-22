@@ -59,6 +59,7 @@ def _RunCreate(compute_api, args):
 
 
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
+@base.DefaultUniverseOnly
 class CreateBeta(base.CreateCommand):
   """Create a Compute Engine reservation."""
   _support_share_setting = True
@@ -68,6 +69,11 @@ class CreateBeta(base.CreateCommand):
   _support_planning_status = True
   _support_local_ssd_count = True
   _support_auto_delete = True
+  _support_require_specific_reservation = True
+  _support_gsc = True
+  _support_dws_gpu = True
+  _support_cuds = True
+  _support_dws_tpu = True
 
   @classmethod
   def Args(cls, parser):
@@ -81,7 +87,13 @@ class CreateBeta(base.CreateCommand):
         support_planning_status=cls._support_planning_status,
         support_instance_template=cls._support_instance_template,
         support_local_ssd_count=cls._support_local_ssd_count,
-        support_auto_delete=cls._support_auto_delete)
+        support_auto_delete=cls._support_auto_delete,
+        support_require_specific_reservation=cls._support_require_specific_reservation,
+        support_gsc=cls._support_gsc,
+        support_dws_gpu=cls._support_dws_gpu,
+        support_cuds=cls._support_cuds,
+        support_dws_tpu=cls._support_dws_tpu,
+    )
 
   def Run(self, args):
     return _RunCreate(
@@ -99,6 +111,11 @@ class CreateAlpha(CreateBeta):
   _support_planning_status = True
   _support_local_ssd_count = True
   _support_auto_delete = True
+  _support_require_specific_reservation = True
+  _support_gsc = True
+  _support_cuds = True
+  _support_dws_gpu = True
+  _support_dws_tpu = True
 
   @classmethod
   def Args(cls, parser):
@@ -112,7 +129,13 @@ class CreateAlpha(CreateBeta):
         support_planning_status=cls._support_planning_status,
         support_instance_template=cls._support_instance_template,
         support_local_ssd_count=cls._support_local_ssd_count,
-        support_auto_delete=cls._support_auto_delete)
+        support_auto_delete=cls._support_auto_delete,
+        support_require_specific_reservation=cls._support_require_specific_reservation,
+        support_gsc=cls._support_gsc,
+        support_cuds=cls._support_cuds,
+        support_dws_gpu=cls._support_dws_gpu,
+        support_dws_tpu=cls._support_dws_tpu,
+    )
 
   def Run(self, args):
     return _RunCreate(

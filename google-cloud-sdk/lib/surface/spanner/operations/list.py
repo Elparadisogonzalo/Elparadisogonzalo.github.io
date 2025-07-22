@@ -24,19 +24,14 @@ from googlecloudsdk.api_lib.spanner import backup_operations
 from googlecloudsdk.api_lib.spanner import database_operations
 from googlecloudsdk.api_lib.spanner import instance_config_operations
 from googlecloudsdk.api_lib.spanner import instance_operations
+from googlecloudsdk.api_lib.spanner import instance_partition_operations
 from googlecloudsdk.api_lib.spanner import ssd_cache_operations
 from googlecloudsdk.calliope import base
 from googlecloudsdk.calliope import exceptions as c_exceptions
 from googlecloudsdk.command_lib.spanner import flags
 
-
-@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
-class List(base.ListCommand):
-  """List the Cloud Spanner operations on the given instance or database or instance configuration."""
-
-  detailed_help = {
-      'EXAMPLES':
-          textwrap.dedent("""\
+DETAILED_HELP = {
+    'EXAMPLES': textwrap.dedent("""\
         To list Cloud Spanner instance operations for an instance, run:
 
           $ {command} --instance=my-instance-id --type=INSTANCE
@@ -60,8 +55,24 @@ class List(base.ListCommand):
         To list Cloud Spanner backup operations for a backup, run:
 
           $ {command} --instance=my-instance-id --backup=my-backup-id --type=BACKUP
+
+        To list instance partition operations for an instance partition, run:
+
+          $ {command} --instance=my-instance-id --instance-partition=my-partition-id --type=INSTANCE_PARTITION
+
+        To list instance partition operations for all instance partitions belonging to this instance, run:
+
+          $ {command} --instance=my-instance-id --type=INSTANCE_PARTITION
         """),
-  }
+}
+
+
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class List(base.ListCommand):
+  """List the Cloud Spanner operations."""
+
+  detailed_help = DETAILED_HELP
 
   @staticmethod
   def Args(parser):
@@ -92,8 +103,12 @@ class List(base.ListCommand):
       return instance_config_operations.List(args.instance_config, type_filter)
 
     is_database_type = (
-        args.type == 'DATABASE_RESTORE' or args.type == 'DATABASE' or
-        args.type == 'DATABASE_CREATE' or args.type == 'DATABASE_UPDATE_DDL')
+        args.type == 'DATABASE_RESTORE'
+        or args.type == 'DATABASE'
+        or args.type == 'DATABASE_CREATE'
+        or args.type == 'DATABASE_UPDATE_DDL'
+        or args.type == 'DATABASE_CHANGE_QUORUM'
+    )
 
     if args.backup or args.type == 'BACKUP':
       # Update output table for backup operations.
@@ -121,7 +136,7 @@ class List(base.ListCommand):
               metadata.name.split('/').slice(-1:).join():label=RESTORED_DATABASE,
               metadata.backupInfo.backup.split('/').slice(-1).join():label=SOURCE_BACKUP,
               metadata.progress.startTime:label=START_TIME,
-              metadata.progress.endTime:label=END_TIME
+              endtime():label=END_TIME
             )
           """)
     elif is_database_type:
@@ -137,12 +152,9 @@ class List(base.ListCommand):
             )
           """)
 
-    # Checks that user only specified either database or backup flag.
-    if (args.IsSpecified('database') and args.IsSpecified('backup')):
-      raise c_exceptions.InvalidArgumentException(
-          '--database or --backup',
-          'Must specify either --database or --backup. To search backups for a '
-          'specific database, use the --database flag with --type=BACKUP')
+    # Checks that user only specified database or backup or instance partition
+    # flag.
+    flags.CheckExclusiveLROFlagsUnderInstance(args)
 
     # Checks that the user did not specify the backup flag with the type filter
     # set to a database operation type.
@@ -161,6 +173,12 @@ class List(base.ListCommand):
         raise c_exceptions.InvalidArgumentException(
             '--backup or --type',
             'The `--backup` flag cannot be used with `--type=INSTANCE`.')
+      if args.IsSpecified('instance_partition'):
+        raise c_exceptions.InvalidArgumentException(
+            '--instance-partition or --type',
+            'The `--instance-partition` flag cannot be used with'
+            ' `--type=INSTANCE`.',
+        )
 
     if args.type == 'BACKUP':
       if args.database:
@@ -183,14 +201,38 @@ class List(base.ListCommand):
     if args.database:
       return database_operations.List(args.instance, args.database)
 
+    if args.type == 'INSTANCE_PARTITION':
+      # Update output table for instance partition operations.
+      # pylint:disable=protected-access
+      args.GetDisplayInfo().AddFormat("""
+            table(
+              name.basename():label=OPERATION_ID,
+              done():label=DONE,
+              metadata.'@type'.split('.').slice(-1:).join(),
+              metadata.instancePartition.name.split('/').slice(-1:).join():label=INSTANCE_PARTITION_ID,
+              metadata.startTime:label=START_TIME,
+              metadata.endTime:label=END_TIME
+            )
+          """)
+      if args.instance_partition:
+        return instance_partition_operations.ListGeneric(
+            args.instance, args.instance_partition
+        )
+      else:
+        return instance_partition_operations.List(args.instance)
+
     return instance_operations.List(args.instance)
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class AlphaList(List):
-  """List the Cloud Spanner operations with ALPHA features."""
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class BetaList(List):
+  """List the Cloud Spanner operations."""
 
-  __doc__ = List.__doc__
+  detailed_help = {
+      'EXAMPLES': DETAILED_HELP['EXAMPLES'] + textwrap.dedent("""\
+        """),
+  }
 
   @staticmethod
   def Args(parser):
@@ -202,15 +244,25 @@ class AlphaList(List):
       parser: An argparse parser that you can use to add arguments that go on
         the command line after this command. Positional arguments are allowed.
     """
-    additional_choices = {
-        'DATABASE_CHANGE_QUORUM': (
-            'Database change quorum operations are returned for all databases '
-            'in the given instance (--instance only) or only those associated '
-            'with the given database (--database).'
-        )
-    }
+    super(BetaList, BetaList).Args(parser)
 
-    flags.AddCommonListArgs(parser, additional_choices)
+
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class AlphaList(BetaList):
+  """List the Cloud Spanner operations."""
+
+  @staticmethod
+  def Args(parser):
+    """Args is called by calliope to gather arguments for this command.
+
+    Please add arguments in alphabetical order except for no- or a clear-
+    pair for that argument which can follow the argument itself.
+    Args:
+      parser: An argparse parser that you can use to add arguments that go on
+        the command line after this command. Positional arguments are allowed.
+    """
+    super(AlphaList, AlphaList).Args(parser)
     flags.SsdCache(
         positional=False,
         required=False,
@@ -251,5 +303,4 @@ class AlphaList(List):
           )
         """)
       return ssd_cache_operations.List(args.ssd_cache, args.instance_config)
-
     return super().Run(args)

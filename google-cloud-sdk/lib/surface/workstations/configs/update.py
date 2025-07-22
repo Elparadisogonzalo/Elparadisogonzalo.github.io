@@ -23,6 +23,7 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.workstations import flags as workstations_flags
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(
     base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA
 )
@@ -57,8 +58,7 @@ class Update(base.UpdateCommand):
     workstations_flags.AddNetworkTags(parser)
     workstations_flags.AddPoolSize(parser, use_default=False)
     workstations_flags.AddDisablePublicIpAddresses(parser, use_default=False)
-    workstations_flags.AddEnableSSHToVM(parser, use_default=False)
-    workstations_flags.AddEnableTcpConnections(parser, use_default=False)
+    workstations_flags.AddEnableTcpConnections(parser)
     workstations_flags.AddServiceAccountScopes(parser)
     workstations_flags.AddShieldedSecureBoot(parser, use_default=False)
     workstations_flags.AddShieldedVtpm(parser, use_default=False)
@@ -66,6 +66,10 @@ class Update(base.UpdateCommand):
     workstations_flags.AddEnableAuditAgent(parser, use_default=False)
     workstations_flags.AddEnableConfidentialCompute(parser, use_default=False)
     workstations_flags.AddEnableNestedVirtualization(parser, use_default=False)
+    workstations_flags.AddGrantWorkstationAdminRoleOnCreate(
+        parser, use_default=False
+    )
+    workstations_flags.AddDisableSSHToVM(parser)
     workstations_flags.AddBootDiskSize(parser, use_default=False)
     workstations_flags.AddContainerImageField(parser, use_default=False)
     workstations_flags.AddContainerCommandField(parser)
@@ -73,9 +77,18 @@ class Update(base.UpdateCommand):
     workstations_flags.AddContainerEnvField(parser)
     workstations_flags.AddContainerWorkingDirField(parser)
     workstations_flags.AddContainerRunAsUserField(parser)
+    workstations_flags.AddPersistentDirectories(parser, use_default=False)
     workstations_flags.AddLabelsField(parser)
-    if (cls.ReleaseTrack() != base.ReleaseTrack.GA):
-      workstations_flags.AddAcceleratorFields(parser)
+    workstations_flags.AddAcceleratorFields(parser)
+    workstations_flags.AddVmTags(parser)
+    workstations_flags.AddAllowedPortsFlag(parser)
+    workstations_flags.AddMaxUsableWorkstationsCount(parser)
+    if cls.ReleaseTrack() != base.ReleaseTrack.GA:
+      workstations_flags.AddDisallowUnauthenticatedCorsPreflightRequestsToggleFlag(
+          parser
+      )
+      workstations_flags.AddBoostConfigs(parser)
+      workstations_flags.AddDisableLocalhostReplacementToggleFlag(parser)
 
   def Collection(self):
     return (

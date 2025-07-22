@@ -22,7 +22,6 @@ from __future__ import unicode_literals
 from enum import Enum
 
 from googlecloudsdk.calliope import base
-from googlecloudsdk.command_lib.util.apis import yaml_arg_schema
 from googlecloudsdk.command_lib.util.apis import yaml_command_schema_util as util
 
 
@@ -30,7 +29,11 @@ class CommandData(object):
   """A general holder object for yaml command schema."""
 
   def __init__(self, name, data):
+    # pylint: disable=g-import-not-at-top
+    from googlecloudsdk.command_lib.util.apis import yaml_arg_schema
+    # pylint: enable=g-import-not-at-top
     self.hidden = data.get('hidden', False)
+    self.auto_generated = data.get('auto_generated', False)
     self.universe_compatible = data.get('universe_compatible', None)
     self.release_tracks = [
         base.ReleaseTrack.FromId(i) for i in data.get('release_tracks', [])
@@ -47,6 +50,7 @@ class CommandData(object):
     async_data = data.get('async')
     iam_data = data.get('iam')
     update_data = data.get('update')
+    generic_data = data.get('generic')
     import_data = data.get('import')
     if self.command_type == CommandType.WAIT and not async_data:
       raise util.InvalidSchemaError(
@@ -57,6 +61,7 @@ class CommandData(object):
     self.input = Input(self.command_type, data.get('input', {}))
     self.output = Output(data.get('output', {}))
     self.update = UpdateData(update_data) if update_data else None
+    self.generic = GenericData(generic_data) if generic_data else None
     self.import_ = ImportData(import_data, request_data,
                               async_data) if import_data else None
     self.deprecated_data = data.get('deprecate')
@@ -137,6 +142,7 @@ class Request(object):
       raise util.InvalidSchemaError(
           'request.method was not specified and there is no default for this '
           'command type.')
+    self.disable_pagination = data.get('disable_pagination', False)
     self.static_fields = data.get('static_fields', {})
     self.modify_request_hooks = [
         util.Hook.FromPath(p) for p in data.get('modify_request_hooks', [])]
@@ -241,6 +247,13 @@ class UpdateData(object):
     self.mask_field = data.get('mask_field', None)
     self.read_modify_update = data.get('read_modify_update', False)
     self.disable_auto_field_mask = data.get('disable_auto_field_mask', False)
+
+
+class GenericData(object):
+  """A holder object for generic commands."""
+
+  def __init__(self, data):
+    self.disable_paging_flags = data.get('disable_paging_flags', False)
 
 
 class ImportData(object):

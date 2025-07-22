@@ -26,7 +26,7 @@ from googlecloudsdk.command_lib.workbench import flags
 DETAILED_HELP = {
     'DESCRIPTION':
         """
-        Request for checking if an instance is upgradeable.
+        Checks if a workbench instance is upgradeable.
     """,
     'EXAMPLES':
         """
@@ -37,9 +37,10 @@ DETAILED_HELP = {
 }
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
 class IsUpgradeable(base.DescribeCommand):
-  """Request for checking if an instance is upgradeable."""
+  """Checks if a workbench instance is upgradeable."""
 
   @staticmethod
   def Args(parser):

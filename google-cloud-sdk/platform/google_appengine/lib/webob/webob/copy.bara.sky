@@ -1,0 +1,21 @@
+load("//devtools/python/janitor/puppy/puppy", "git_to_third_party_py")
+
+git_to_third_party_py(
+    git_origin_url = "https://github.com/Pylons/webob",
+    git_files = glob(
+        include = ["src/webob/**", "docs/license.txt"],
+    ),
+    python_package_name = "webob",
+    google3_exclude = [
+        "README.md",
+        "patches/**",
+        "trivial_test.py",
+    ],
+    transformations = [
+        core.move("src/webob", ""),
+        core.move("docs/license.txt", "LICENSE"),
+    ],
+    patching_enabled = True,
+    version_selector = None,
+    git_ref = "main",
+)

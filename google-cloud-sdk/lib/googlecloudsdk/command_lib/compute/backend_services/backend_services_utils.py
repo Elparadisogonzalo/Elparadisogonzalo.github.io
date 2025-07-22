@@ -18,11 +18,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from apitools.base.py import encoding
+from typing import Any
 
+from apitools.base.py import encoding
 from googlecloudsdk.api_lib.compute.operations import poller
 from googlecloudsdk.api_lib.util import waiter
 from googlecloudsdk.calliope import exceptions
+from googlecloudsdk.command_lib.compute import reference_utils
 from googlecloudsdk.core import exceptions as core_exceptions
 from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
@@ -395,6 +397,87 @@ def ApplyIpAddressSelectionPolicyArgs(client, args, backend_service):
     )
 
 
+def ApplyAffinityCookieArgs(client, args, backend_service):
+  """Applies the --affinity-cookie-name and --affinity-cookie-ttl arguments to the backend service.
+
+  The values are written into the backend_service message as follows:
+
+  - HTTP_COOKIE: name copied into backend_service.hashPolicy.httpCookie.name,
+    TTL copied into backendService.affinityCookieTtlSec.
+  - GENERATED_COOKIE: TTL copied into backendService.affinityCookieTtlSec.
+  - STRONG_COOKIE_AFFINITY: name copied into
+    backendService.strongSessionAffinityCookie.name, TTL copied into
+    backendService.strongSessionAffinityCookie.ttl. (STRONG_COOKIE_AFFINITY
+    does not fall back to affinityCookieTtlSec the same way HTTP_COOKIE does.)
+
+  Args:
+    client: The client used by gcloud.
+    args: The arguments passed to the gcloud command.
+    backend_service: The backend service object.
+  """
+  if args.affinity_cookie_name is not None:
+    if args.session_affinity == 'STRONG_COOKIE_AFFINITY':
+      if backend_service.strongSessionAffinityCookie is None:
+        backend_service.strongSessionAffinityCookie = (
+            client.messages.BackendServiceHttpCookie()
+        )
+      backend_service.strongSessionAffinityCookie.name = (
+          args.affinity_cookie_name
+      )
+    elif args.session_affinity == 'HTTP_COOKIE':
+      if backend_service.consistentHash is None:
+        backend_service.consistentHash = (
+            client.messages.ConsistentHashLoadBalancerSettings()
+        )
+      if backend_service.consistentHash.httpCookie is None:
+        backend_service.consistentHash.httpCookie = (
+            client.messages.ConsistentHashLoadBalancerSettingsHttpCookie()
+        )
+      backend_service.consistentHash.httpCookie.name = args.affinity_cookie_name
+  if args.affinity_cookie_ttl is not None:
+    # TTL for a cookie is specified within strongSessionAffinityCookie if
+    # using STRONG_COOKIE_AFFINITY, in affinityCookieTtlSec if using
+    # GENERATED_COOKIE, and in *either* of consistentHash.httpCookie.ttl *or*
+    # affinityCookieTtlSec if using HTTP_COOKIE. Since gcloud historically
+    # used affinityCookieTtlSec for HTTP_COOKIE, we use the HttpCookie message
+    # to store the TTL if using STRONG_COOKIE_AFFINITY, and continue to use
+    # affinityCookieTtlSec for everything else. This avoids needing to have
+    # two flags that do confusingly similar things.
+    if args.session_affinity == 'STRONG_COOKIE_AFFINITY':
+      if backend_service.strongSessionAffinityCookie is None:
+        backend_service.strongSessionAffinityCookie = (
+            client.messages.BackendServiceHttpCookie()
+        )
+      if backend_service.strongSessionAffinityCookie.ttl is None:
+        backend_service.strongSessionAffinityCookie.ttl = (
+            client.messages.Duration()
+        )
+      backend_service.strongSessionAffinityCookie.ttl.seconds = (
+          args.affinity_cookie_ttl
+      )
+    else:
+      backend_service.affinityCookieTtlSec = args.affinity_cookie_ttl
+  if args.affinity_cookie_path is not None:
+    if args.session_affinity == 'STRONG_COOKIE_AFFINITY':
+      if backend_service.strongSessionAffinityCookie is None:
+        backend_service.strongSessionAffinityCookie = (
+            client.messages.BackendServiceHttpCookie()
+        )
+      backend_service.strongSessionAffinityCookie.path = (
+          args.affinity_cookie_path
+      )
+    elif args.session_affinity == 'HTTP_COOKIE':
+      if backend_service.consistentHash is None:
+        backend_service.consistentHash = (
+            client.messages.ConsistentHashLoadBalancerSettings()
+        )
+      if backend_service.consistentHash.httpCookie is None:
+        backend_service.consistentHash.httpCookie = (
+            client.messages.ConsistentHashLoadBalancerSettingsHttpCookie()
+        )
+      backend_service.consistentHash.httpCookie.path = args.affinity_cookie_path
+
+
 def GetNegativeCachingPolicy(client, args, backend_service):
   """Returns the negative caching policy.
 
@@ -615,7 +698,7 @@ def HasFailoverPolicyArgs(args):
     return False
 
 
-def ApplyFailoverPolicyArgs(messages, args, backend_service, support_failover):
+def ApplyFailoverPolicyArgs(messages, args, backend_service):
   """Applies the FailoverPolicy arguments to the specified backend service.
 
   If there are no arguments related to FailoverPolicy, the backend service
@@ -625,9 +708,8 @@ def ApplyFailoverPolicyArgs(messages, args, backend_service, support_failover):
     messages: The available API proto messages.
     args: The arguments passed to the gcloud command.
     backend_service: The backend service proto message object.
-    support_failover: Indicates whether failover functionality is supported.
   """
-  if (support_failover and HasFailoverPolicyArgs(args)):
+  if HasFailoverPolicyArgs(args):
     failover_policy = (
         backend_service.failoverPolicy if backend_service.failoverPolicy else
         messages.BackendServiceFailoverPolicy())
@@ -673,14 +755,16 @@ def ApplyLogConfigArgs(
       messages.BackendService.ProtocolValueValuesEnum.SSL,
       messages.BackendService.ProtocolValueValuesEnum.UDP,
       messages.BackendService.ProtocolValueValuesEnum.UNSPECIFIED,
+      messages.BackendService.ProtocolValueValuesEnum.H2C,
   ]
+
   if logging_specified and backend_service.protocol not in valid_protocols:
     raise exceptions.InvalidArgumentException(
         '--protocol',
         (
             'can only specify --enable-logging, --logging-sample-rate,'
             ' --logging-optional or --logging-optional-fields if the'
-            ' protocol is HTTP/HTTPS/HTTP2/TCP/SSL/UDP/UNSPECIFIED.'
+            ' protocol is HTTP/HTTPS/HTTP2/H2C/TCP/SSL/UDP/UNSPECIFIED.'
         ),
     )
 
@@ -704,6 +788,138 @@ def ApplyLogConfigArgs(
       if not args.logging_optional_fields and cleared_fields is not None:
         cleared_fields.append('logConfig.optionalFields')
     backend_service.logConfig = log_config
+
+
+def ApplyTlsSettingsArgs(
+    client: Any,
+    args: Any,
+    backend_service: Any,
+    project_name: str,
+    location: str,
+    release_track: str,
+) -> None:
+  """Applies the TlsSettings arguments to the specified backend service.
+
+  If there are no arguments related to TlsSettings, the backend service remains
+  unmodified.
+
+  Args:
+    client: The client used by gcloud.
+    args: The arguments passed to the gcloud command.
+    backend_service: The backend service proto message object.
+    project_name: The project name of the backend service.
+    location: The location of the backend service.
+    release_track: The release track of the backend service.
+  """
+  if args.tls_settings:
+    tls_settings = client.messages.BackendServiceTlsSettings()
+    for key, value in args.tls_settings.items():
+      if key == 'authenticationConfig':
+        tls_settings.authenticationConfig = (
+            reference_utils.BuildBackendAuthenticationConfigUrl(
+                project_name=project_name,
+                location=location,
+                bac_name=value,
+                release_track=release_track,
+            )
+        )
+      elif key == 'sni':
+        tls_settings.sni = value
+      else:
+        raise exceptions.InvalidArgumentException(
+            '--tls-settings', 'Invalid key: %s' % key
+        )
+    backend_service.tlsSettings = tls_settings
+
+
+def ApplyCustomMetrics(args, backend_service):
+  """Applies the Custom Metrics argument to the backend service.
+
+  Args:
+    args: The arguments passed to the gcloud command.
+    backend_service: The backend service object.
+  """
+  if args.custom_metrics:
+    backend_service.customMetrics = args.custom_metrics
+  if args.custom_metrics_file:
+    backend_service.customMetrics = args.custom_metrics_file
+
+
+def IpPortDynamicForwarding(client, args, backend_service):
+  """Enables the Ip Port Dynamic Forwarding in the backend service.
+
+  Args:
+    client: The client used by gcloud.
+    args: The arguments passed to the gcloud command.
+    backend_service: The backend service object.
+  """
+
+  if args.ip_port_dynamic_forwarding:
+    dynamic_forwarding_config = (
+        client.messages.BackendServiceDynamicForwarding()
+    )
+    dynamic_forwarding_config.ipPortSelection = (
+        client.messages.BackendServiceDynamicForwardingIpPortSelection()
+    )
+    dynamic_forwarding_config.ipPortSelection.enabled = True
+    backend_service.dynamicForwarding = dynamic_forwarding_config
+
+
+def HasZonalAffinityArgs(args):
+  """Returns true if at least one of the zonal affinity args is defined.
+
+  Args:
+    args: The arguments passed to the gcloud command.
+  """
+  if args.IsSpecified('zonal_affinity_spillover') or args.IsSpecified(
+      'zonal_affinity_spillover_ratio'
+  ):
+    return True
+  else:
+    return False
+
+
+def ZonalAffinity(client, args, backend_service):
+  """Applies the Zonal Affinity related aguments in the backend service.
+
+  Args:
+    client: The client used by gcloud.
+    args: The arguments passed to the gcloud command.
+    backend_service: The backend service object.
+  """
+
+  if HasZonalAffinityArgs(args):
+    if backend_service.networkPassThroughLbTrafficPolicy is not None:
+      network_pass_through_lb_traffic_policy = encoding.CopyProtoMessage(
+          backend_service.networkPassThroughLbTrafficPolicy
+      )
+    else:
+      network_pass_through_lb_traffic_policy = (
+          client.messages.BackendServiceNetworkPassThroughLbTrafficPolicy()
+      )
+
+    if network_pass_through_lb_traffic_policy.zonalAffinity is not None:
+      zonal_affinity = encoding.CopyProtoMessage(
+          network_pass_through_lb_traffic_policy.zonalAffinity
+      )
+    else:
+      zonal_affinity = (
+          client.messages.BackendServiceNetworkPassThroughLbTrafficPolicyZonalAffinity()
+      )
+
+    if args.zonal_affinity_spillover:
+      zonal_affinity.spillover = client.messages.BackendServiceNetworkPassThroughLbTrafficPolicyZonalAffinity.SpilloverValueValuesEnum(
+          args.zonal_affinity_spillover
+      )
+
+    if args.zonal_affinity_spillover_ratio:
+      zonal_affinity.spilloverRatio = args.zonal_affinity_spillover_ratio
+
+    network_pass_through_lb_traffic_policy.zonalAffinity = zonal_affinity
+
+    backend_service.networkPassThroughLbTrafficPolicy = (
+        network_pass_through_lb_traffic_policy
+    )
 
 
 def SendGetRequest(client, backend_service_ref):

@@ -31,6 +31,7 @@ from googlecloudsdk.core import log
 from googlecloudsdk.core.console import console_io
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
 class Delete(base.Command):
   """Delete a service."""
@@ -63,10 +64,14 @@ class Delete(base.Command):
   def Args(parser):
     Delete.CommonArgs(parser)
 
+  def _ConnectionContext(self, args):
+    return connection_context.GetConnectionContext(
+        args, flags.Product.RUN, self.ReleaseTrack()
+    )
+
   def Run(self, args):
     """Delete a service."""
-    conn_context = connection_context.GetConnectionContext(
-        args, flags.Product.RUN, self.ReleaseTrack())
+    conn_context = self._ConnectionContext(args)
     service_ref = args.CONCEPTS.service.Parse()
     flags.ValidateResource(service_ref)
     console_io.PromptContinue(

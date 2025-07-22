@@ -22,11 +22,12 @@ from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.api_lib.compute import csek_utils
 from googlecloudsdk.api_lib.compute import image_utils
 from googlecloudsdk.api_lib.compute import kms_utils
+from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
 from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.compute import flags as compute_flags
 from googlecloudsdk.command_lib.compute.images import flags
-from googlecloudsdk.command_lib.compute.kms import resource_args as kms_resource_args
+from googlecloudsdk.command_lib.kms import resource_args as kms_resource_args
 from googlecloudsdk.command_lib.util.args import labels_util
 from googlecloudsdk.core import resources
 import six
@@ -34,10 +35,13 @@ import six
 POLL_TIMEOUT = 36000  # 10 hours is recommended by PD team b/131850402#comment20
 
 
-def _Args(parser,
-          messages,
-          supports_force_create=False,
-          support_user_licenses=False):
+def _Args(
+    parser,
+    messages,
+    supports_force_create=False,
+    support_user_licenses=False,
+    supports_rollout_override=False,
+):
   """Set Args based on Release Track."""
   # GA Args
   parser.display_info.AddFormat(flags.LIST_FORMAT)
@@ -93,9 +97,42 @@ def _Args(parser,
     * After the VM is created, you can't attach any secondary disk
     * After the VM is deleted, the attached boot disk can't be retained
     """)
+
+  # Alpha args
+  spec = {
+      'default_rollout_time': str,
+      'location_rollout_policies': arg_parsers.ArgDict(),
+  }
+
+  if supports_rollout_override:
+    parser.add_argument(
+        '--rollout-override',
+        type=arg_parsers.ArgDict(spec=spec),
+        help="""\
+        A rollout policy for the image. A rollout policy is used to restrict
+        the zones where this image is accessible when using a zonal image
+        family reference. When specified, the rollout policy overrides per-zone
+        references to the image through the associated image family. When the
+        rollout policy does not include the user specified zone, or if the zone
+        is rolled out, this image is accessible.
+
+          default_rollout_time
+            This is an optional RFC3339 timestamp on or after which
+            the update is considered rolled out to any zone that is not
+            explicitly stated.
+
+          location_rollout_policies
+            Location based rollout policies to apply to the resource.
+            Currently only zone names are supported as the key and must be
+            represented as valid URLs, like: zones/us-central1-a.
+            The value expects an RFC3339 timestamp on or after which the update
+            is considered rolled out to the specified location.
+    """,
+    )
   compute_flags.AddShieldedInstanceInitialStateKeyArg(parser)
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create Compute Engine images."""
@@ -113,7 +150,9 @@ class Create(base.CreateCommand):
   def Run(self, args):
     return self._Run(args)
 
-  def _Run(self, args, support_user_licenses=False):
+  def _Run(
+      self, args, support_user_licenses=False, supports_rollout_override=False
+  ):
     """Returns a list of requests necessary for adding images."""
     holder = self._GetApiHolder()
     client = holder.client
@@ -141,6 +180,24 @@ class Create(base.CreateCommand):
           client.apitools_client)
     image.imageEncryptionKey = kms_utils.MaybeGetKmsKey(
         args, messages, image.imageEncryptionKey)
+    if supports_rollout_override and args.IsSpecified('rollout_override'):
+      location_rollout_policies = None
+      if 'location_rollout_policies' in args.rollout_override:
+        location_rollout_policies = messages.RolloutPolicy.LocationRolloutPoliciesValue(
+            additionalProperties=[
+                messages.RolloutPolicy.LocationRolloutPoliciesValue.AdditionalProperty(
+                    key=k, value=v
+                )
+                for k, v in args.rollout_override[
+                    'location_rollout_policies'
+                ].items()
+            ]
+        )
+      default_rollout_time = args.rollout_override.get('default_rollout_time')
+      image.rolloutOverride = messages.RolloutPolicy(
+          locationRolloutPolicies=location_rollout_policies,
+          defaultRolloutTime=default_rollout_time,
+      )
 
     # Validate parameters.
     if args.source_disk_zone and not args.source_disk:
@@ -211,8 +268,9 @@ class Create(base.CreateCommand):
         guest_os_feature_messages.append(guest_os_feature)
       image.guestOsFeatures = guest_os_feature_messages
 
-    initial_state, has_set =\
-        image_utils.CreateInitialStateConfig(args, messages)
+    initial_state, has_set = image_utils.CreateInitialStateConfig(
+        args, messages
+    )
     if has_set:
       image.shieldedInstanceInitialState = initial_state
 
@@ -241,6 +299,7 @@ class Create(base.CreateCommand):
                                  request)], timeout=POLL_TIMEOUT)
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
 class CreateBeta(Create):
   """Create Compute Engine images."""
@@ -252,13 +311,16 @@ class CreateBeta(Create):
         parser,
         messages,
         supports_force_create=True,
-        support_user_licenses=True)
+        support_user_licenses=True,
+        supports_rollout_override=False,
+    )
     parser.display_info.AddCacheUpdater(flags.ImagesCompleter)
 
   def Run(self, args):
     return self._Run(args, support_user_licenses=True)
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class CreateAlpha(Create):
   """Create Compute Engine images."""
@@ -270,11 +332,15 @@ class CreateAlpha(Create):
         parser,
         messages,
         supports_force_create=True,
-        support_user_licenses=True)
+        support_user_licenses=True,
+        supports_rollout_override=True,
+    )
     parser.display_info.AddCacheUpdater(flags.ImagesCompleter)
 
   def Run(self, args):
-    return self._Run(args, support_user_licenses=True)
+    return self._Run(
+        args, support_user_licenses=True, supports_rollout_override=True
+    )
 
 
 Create.detailed_help = {

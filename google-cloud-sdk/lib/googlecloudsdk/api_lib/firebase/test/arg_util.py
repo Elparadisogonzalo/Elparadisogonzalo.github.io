@@ -298,7 +298,7 @@ def AddAndroidTestArgs(parser):
       targets). Each target filter must be fully qualified with the package
       name, class name, or test annotation desired. Any test filter supported by
       `am instrument -e ...` is supported. See
-       https://developer.android.com/reference/android/support/test/runner/AndroidJUnitRunner
+       https://developer.android.com/reference/androidx/test/runner/AndroidJUnitRunner
        for more information. Examples:
 
          * `--test-targets "package com.my.package.name"`
@@ -307,7 +307,8 @@ def AddAndroidTestArgs(parser):
          * `--test-targets "notClass com.foo.ClassName#testMethodToSkip"`
          * `--test-targets "annotation com.foo.AnnotationToRun"`
          * `--test-targets "size large notAnnotation com.foo.AnnotationToSkip"`
-      """)
+      """,
+  )
   parser.add_argument(
       '--use-orchestrator',
       category=ANDROID_INSTRUMENTATION_TEST,
@@ -323,6 +324,24 @@ def AddAndroidTestArgs(parser):
 
   # The following args are specific to Android Robo tests.
 
+  parser.add_argument(
+      '--resign',
+      category=ANDROID_ROBO_TEST,
+      action='store_true',
+      default=None,
+      help=(
+          'Make Robo re-sign the app-under-test APK for a higher quality crawl.'
+          ' If your app cannot properly function when re-signed, disable this'
+          ' feature. When an app-under-test APK is not re-signed, Robo crawl is'
+          ' slower and Robo has access to less information about the state of'
+          ' the crawled app, which reduces crawl quality. Consequently, if your'
+          ' Roboscript has actions on elements of RecyclerView or AdapterView,'
+          ' and you disable APK re-signing, those actions might require manual'
+          ' tweaking because Robo does not identify RecyclerView and'
+          ' AdapterView in this mode. Enabled by default, use `--no-resign` to'
+          ' disable.'
+      ),
+  )
   parser.add_argument(
       '--robo-directives',
       metavar='TYPE:RESOURCE_NAME=INPUT',
@@ -572,20 +591,6 @@ def AddAndroidBetaArgs(parser):
       'begins. By default, all permissions are granted.',
       default=None,
       choices=['all', 'none'])
-  parser.add_argument(
-      '--resign',
-      category=ANDROID_ROBO_TEST,
-      action='store_true',
-      default=None,
-      help='Make Robo re-sign the app-under-test APK for a higher quality '
-      'crawl. If your app cannot properly function when re-signed, disable '
-      'this feature. When an app-under-test APK is not re-signed, Robo crawl '
-      'is slower and Robo has access to less information about the state of '
-      'the crawled app, which reduces crawl quality. Consequently, if your '
-      'Roboscript has actions on elements of RecyclerView or AdapterView, and '
-      'you disable APK re-signing, those actions might require manual tweaking '
-      'because Robo does not identify RecyclerView and AdapterView in this '
-      'mode. Enabled by default, use `--no-resign` to disable.')
 
 
 def AddIosBetaArgs(parser):

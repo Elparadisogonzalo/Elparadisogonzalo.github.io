@@ -238,6 +238,20 @@ class PocoFlags:
         ),
     )
 
+  def add_no_content(self):
+    """Adds handling for no content enablement.
+
+    This prevents the template library from being installed.
+    """
+    self.parser.add_argument(
+        '--no-content',
+        action='store_true',
+        help=(
+            'If set, Policy content, including the template library and policy'
+            ' bundles, will not be installed.'
+        ),
+    )
+
   def add_no_default_bundles(self):
     self.parser.add_argument(
         '--no-default-bundles',
@@ -324,6 +338,14 @@ class PocoFlagParser:
       hub_cfg.mutationEnabled = False
     return hub_cfg
 
+  def update_no_content(self, hub_cfg: messages.Message) -> messages.Message:
+    if self.args.no_content:
+      hub_cfg.policyContent = self.messages.PolicyControllerPolicyContentSpec()
+      hub_cfg.policyContent.templateLibrary = self.messages.PolicyControllerTemplateLibraryConfig(
+          installation=self.messages.PolicyControllerTemplateLibraryConfig.InstallationValueValuesEnum.NOT_INSTALLED
+      )
+    return hub_cfg
+
   def update_referential_rules(
       self, hub_cfg: messages.Message
   ) -> messages.Message:
@@ -392,7 +414,7 @@ class PocoFlagParser:
       A modified hub_config, adding the default bundle; or unmodified if the
       --no-default-bundles flag is specified.
     """
-    if self.args.no_default_bundles:
+    if self.args.no_content or self.args.no_default_bundles:
       return hub_cfg
 
     policy_content_spec = self._get_policy_content(hub_cfg)
@@ -447,6 +469,25 @@ class PocoFlagParser:
   def set_default_cfg(
       self, feature: messages.Message, membership: messages.Message
   ) -> messages.Message:
+    """Sets membership to the default fleet configuration.
+
+    Args:
+      feature: The feature spec for the project.
+      membership: The membership spec being updated.
+
+    Returns:
+      Updated MembershipFeatureSpec.
+    Raises:
+      MissingFleetDefaultMemberConfig: If none exists on the feature.
+    """
+    if feature.fleetDefaultMemberConfig is None:
+      # Use second entity token of the feature's uri path (project name).
+      project = feature.name.split('/')[1]
+      msg = (
+          'No fleet default member config specified for project {}. Use'
+          " '... enable --fleet-default-member-config=config.yaml'."
+      )
+      raise exceptions.MissingFleetDefaultMemberConfig(msg.format(project))
     self.set_origin_fleet(membership)
     membership.policycontroller = (
         feature.fleetDefaultMemberConfig.policycontroller

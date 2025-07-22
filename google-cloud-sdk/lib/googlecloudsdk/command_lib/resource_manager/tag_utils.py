@@ -20,10 +20,13 @@ from __future__ import unicode_literals
 
 import re
 
+from apitools.base.py import exceptions as apitools_exceptions
 from googlecloudsdk.api_lib.compute import base_classes
+from googlecloudsdk.api_lib.iam import util as iam_api
 from googlecloudsdk.api_lib.resource_manager import tags
 from googlecloudsdk.api_lib.resource_manager.exceptions import ResourceManagerError
 from googlecloudsdk.calliope import exceptions
+from googlecloudsdk.command_lib.iam import iam_util
 from googlecloudsdk.command_lib.resource_manager import endpoint_utils as endpoints
 from googlecloudsdk.core import exceptions as core_exceptions
 
@@ -52,9 +55,7 @@ GetByNamespacedNameRequests = {
 ListRequests = {
     TAG_KEYS: tags.TagMessages().CloudresourcemanagerTagKeysListRequest,
     TAG_VALUES: tags.TagMessages().CloudresourcemanagerTagValuesListRequest,
-    TAG_BINDINGS: (
-        tags.TagMessages().CloudresourcemanagerTagBindingsListRequest
-    ),
+    TAG_BINDINGS: tags.TagMessages().CloudresourcemanagerTagBindingsListRequest,
 }
 
 Services = {
@@ -157,7 +158,28 @@ def GetCanonicalResourceName(resource_name, location, release_track):
 
   Returns:
     resource_name: either the original resource name, or correct canonical name
+
+  Raises:
+    InvalidArgumentException: if the location is not specified
   """
+  service_account_resource_name_pattern = (
+      r'iam.*/projects/[^/]+/serviceAccounts/([^/]+)'
+  )
+  service_account_search = re.search(
+      service_account_resource_name_pattern, resource_name
+  )
+
+  if service_account_search:
+    service_account_name = service_account_search.group(1)
+    # Call IAM's service account describe API to get the service account's
+    # unique id.
+    if re.search('.*@.*.gserviceaccount.com', service_account_name):
+      resource_name = resource_name.replace(
+          'serviceAccounts/%s' % service_account_name,
+          'serviceAccounts/%s'
+          % _GetServiceAccountUniqueId(service_account_name),
+      )
+    return resource_name
 
   # [a-z]([-a-z0-9]*[a-z0-9] is the instance name regex, as per
   # https://cloud.google.com/compute/docs/reference/rest/v1/instances
@@ -192,6 +214,25 @@ def GetCanonicalResourceName(resource_name, location, release_track):
   return resource_name
 
 
+def _GetServiceAccountUniqueId(service_account_email):
+  """Returns the unique id for the given service account email.
+
+  Args:
+    service_account_email: email of the service account.
+
+  Returns:
+    The unique id of the service account.
+  """
+  client, messages = iam_api.GetClientAndMessages()
+  try:
+    res = client.projects_serviceAccounts.Get(
+        messages.IamProjectsServiceAccountsGetRequest(
+            name=iam_util.EmailToAccountResourceName(service_account_email)))
+    return str(res.uniqueId)
+  except apitools_exceptions.HttpError as e:
+    raise exceptions.HttpException(e)
+
+
 def _GetGceInstanceCanonicalName(
     project_identifier, instance_identifier, location, release_track
 ):
@@ -224,3 +265,58 @@ def _GetGceInstanceCanonicalName(
   if errors_to_collect:
     raise core_exceptions.MultiError(errors_to_collect)
   return str(instances[0].id)
+
+
+def ParseTagGroup(args, original):
+  """Parses the tag keys and values into a map to be used for update."""
+
+  if args.IsSpecified('clear_tags'):
+    return {}
+
+  tags_map_to_update = {}
+
+  if args.IsSpecified('update_tags'):
+    tags_dict = args.update_tags
+
+    tag_group = ExtractExistingTags(original, {})
+
+    for tag_key, tag_value in tags_dict.items():
+      tag_group[tag_key] = tag_value
+
+    tags_map_to_update = tag_group
+
+  if args.IsSpecified('remove_tags'):
+    tags_list = args.remove_tags
+    tag_group = tags_map_to_update
+
+    tag_group = ExtractExistingTags(original, tag_group)
+
+    for tag_key in tags_list:
+      if '=' in tag_key:
+        raise exceptions.InvalidArgumentException(
+            '--remove_tags',
+            'Please specify the tag key only in the namespaced format. i.e'
+            ' --remove-tags=foo/bar,foo2/bar2',
+        )
+      if tag_key in tag_group:
+        unused_removed_tag = tag_group.pop(tag_key)
+        # remove the tag from the original tags
+    tags_map_to_update.update(tag_group)
+
+  if args.IsSpecified('replace_tags'):
+    tags_dict = args.replace_tags
+    tag_group = {}
+    for tag_key, tag_value in tags_dict.items():
+      tag_group[tag_key] = tag_value
+    tags_map_to_update = tag_group
+
+  return tags_map_to_update
+
+
+def ExtractExistingTags(original, tag_group):
+  """Extracts the existing tags from the original tags."""
+  if original.tags:
+    additional_property = original.tags.additionalProperties
+    for property_item in additional_property:
+      tag_group[property_item.key] = property_item.value
+  return tag_group

@@ -15,6 +15,21 @@ from apitools.base.py import extra_types
 package = 'storage'
 
 
+class AdvanceRelocateBucketOperationRequest(_messages.Message):
+  r"""An AdvanceRelocateBucketOperation request.
+
+  Fields:
+    expireTime: Specifies the time when the relocation will revert to the sync
+      stage if the relocation hasn't succeeded.
+    ttl: Specifies the duration after which the relocation will revert to the
+      sync stage if the relocation hasn't succeeded. Optional, if not
+      supplied, a default value of 12h will be used.
+  """
+
+  expireTime = _message_types.DateTimeField(1)
+  ttl = _messages.StringField(2)
+
+
 class AnywhereCache(_messages.Message):
   r"""An Anywhere Cache instance.
 
@@ -79,10 +94,17 @@ class Bucket(_messages.Message):
     CustomPlacementConfigValue: The bucket's custom placement configuration
       for Custom Dual Regions.
     EncryptionValue: Encryption configuration for a bucket.
+    HierarchicalNamespaceValue: The bucket's hierarchical namespace
+      configuration.
     IamConfigurationValue: The bucket's IAM configuration.
+    IpFilterValue: The bucket's IP filter configuration. Specifies the network
+      sources that are allowed to access the operations on the bucket, as well
+      as its underlying objects. Only enforced when the mode is set to
+      'Enabled'.
     LabelsValue: User-provided labels, in key/value pairs.
-    LifecycleValue: The bucket's lifecycle configuration. See lifecycle
-      management for more information.
+    LifecycleValue: The bucket's lifecycle configuration. See [Lifecycle
+      Management](https://cloud.google.com/storage/docs/lifecycle) for more
+      information.
     LoggingValue: The bucket's logging configuration, which defines the
       destination bucket and optional name prefix for the current bucket's
       logs.
@@ -104,7 +126,8 @@ class Bucket(_messages.Message):
     VersioningValue: The bucket's versioning configuration.
     WebsiteValue: The bucket's website configuration, controlling how the
       service behaves when accessing bucket contents as a web site. See the
-      Static Website Examples for more information.
+      [Static Website Examples](https://cloud.google.com/storage/docs/static-
+      website) for more information.
 
   Fields:
     acl: Access controls on the bucket.
@@ -130,17 +153,27 @@ class Bucket(_messages.Message):
       ACL is provided.
     encryption: Encryption configuration for a bucket.
     etag: HTTP 1.1 Entity tag for the bucket.
+    generation: The generation of this bucket.
+    hardDeleteTime: The hard delete time of the bucket in RFC 3339 format.
+    hierarchicalNamespace: The bucket's hierarchical namespace configuration.
     iamConfiguration: The bucket's IAM configuration.
     id: The ID of the bucket. For buckets, the id and name properties are the
       same.
+    ipFilter: The bucket's IP filter configuration. Specifies the network
+      sources that are allowed to access the operations on the bucket, as well
+      as its underlying objects. Only enforced when the mode is set to
+      'Enabled'.
     kind: The kind of item this is. For buckets, this is always
       storage#bucket.
     labels: User-provided labels, in key/value pairs.
-    lifecycle: The bucket's lifecycle configuration. See lifecycle management
-      for more information.
+    lifecycle: The bucket's lifecycle configuration. See [Lifecycle
+      Management](https://cloud.google.com/storage/docs/lifecycle) for more
+      information.
     location: The location of the bucket. Object data for objects in the
       bucket resides in physical storage within this region. Defaults to US.
-      See the developer's guide for the authoritative list.
+      See the [Developer's
+      Guide](https://cloud.google.com/storage/docs/locations) for the
+      authoritative list.
     locationType: The type of the bucket location.
     logging: The bucket's logging configuration, which defines the destination
       bucket and optional name prefix for the current bucket's logs.
@@ -161,24 +194,28 @@ class Bucket(_messages.Message):
       locked retention policy will result in a PERMISSION_DENIED error.
     rpo: The Recovery Point Objective (RPO) of this bucket. Set to ASYNC_TURBO
       to turn on Turbo Replication on a bucket.
+    satisfiesPZI: Reserved for future use.
     satisfiesPZS: Reserved for future use.
     selfLink: The URI of this bucket.
     softDeletePolicy: The bucket's soft delete policy, which defines the
       period of time that soft-deleted objects will be retained, and cannot be
       permanently deleted.
+    softDeleteTime: The soft delete time of the bucket in RFC 3339 format.
     storageClass: The bucket's default storage class, used whenever no
       storageClass is specified for a newly-created object. This defines how
       objects in the bucket are stored and determines the SLA and the cost of
       storage. Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE,
       COLDLINE, ARCHIVE, and DURABLE_REDUCED_AVAILABILITY. If this value is
       not specified when the bucket is created, it will default to STANDARD.
-      For more information, see storage classes.
+      For more information, see [Storage
+      Classes](https://cloud.google.com/storage/docs/storage-classes).
     timeCreated: The creation time of the bucket in RFC 3339 format.
     updated: The modification time of the bucket in RFC 3339 format.
     versioning: The bucket's versioning configuration.
     website: The bucket's website configuration, controlling how the service
-      behaves when accessing bucket contents as a web site. See the Static
-      Website Examples for more information.
+      behaves when accessing bucket contents as a web site. See the [Static
+      Website Examples](https://cloud.google.com/storage/docs/static-website)
+      for more information.
   """
 
   class AutoclassValue(_messages.Message):
@@ -250,6 +287,16 @@ class Bucket(_messages.Message):
 
     defaultKmsKeyName = _messages.StringField(1)
 
+  class HierarchicalNamespaceValue(_messages.Message):
+    r"""The bucket's hierarchical namespace configuration.
+
+    Fields:
+      enabled: When set to true, hierarchical namespace is enabled for this
+        bucket.
+    """
+
+    enabled = _messages.BooleanField(1)
+
   class IamConfigurationValue(_messages.Message):
     r"""The bucket's IAM configuration.
 
@@ -317,6 +364,60 @@ class Bucket(_messages.Message):
     publicAccessPrevention = _messages.StringField(2)
     uniformBucketLevelAccess = _messages.MessageField('UniformBucketLevelAccessValue', 3)
 
+  class IpFilterValue(_messages.Message):
+    r"""The bucket's IP filter configuration. Specifies the network sources
+    that are allowed to access the operations on the bucket, as well as its
+    underlying objects. Only enforced when the mode is set to 'Enabled'.
+
+    Messages:
+      PublicNetworkSourceValue: The public network source of the bucket's IP
+        filter.
+      VpcNetworkSourcesValueListEntry: A VpcNetworkSourcesValueListEntry
+        object.
+
+    Fields:
+      allowAllServiceAgentAccess: Whether to allow all service agents to
+        access the bucket regardless of the IP filter configuration.
+      allowCrossOrgVpcs: Whether to allow cross-org VPCs in the bucket's IP
+        filter configuration.
+      mode: The mode of the IP filter. Valid values are 'Enabled' and
+        'Disabled'.
+      publicNetworkSource: The public network source of the bucket's IP
+        filter.
+      vpcNetworkSources: The list of [VPC
+        network](https://cloud.google.com/vpc/docs/vpc) sources of the
+        bucket's IP filter.
+    """
+
+    class PublicNetworkSourceValue(_messages.Message):
+      r"""The public network source of the bucket's IP filter.
+
+      Fields:
+        allowedIpCidrRanges: The list of public IPv4, IPv6 cidr ranges that
+          are allowed to access the bucket.
+      """
+
+      allowedIpCidrRanges = _messages.StringField(1, repeated=True)
+
+    class VpcNetworkSourcesValueListEntry(_messages.Message):
+      r"""A VpcNetworkSourcesValueListEntry object.
+
+      Fields:
+        allowedIpCidrRanges: The list of IPv4, IPv6 cidr ranges subnetworks
+          that are allowed to access the bucket.
+        network: Name of the network. Format:
+          projects/{PROJECT_ID}/global/networks/{NETWORK_NAME}
+      """
+
+      allowedIpCidrRanges = _messages.StringField(1, repeated=True)
+      network = _messages.StringField(2)
+
+    allowAllServiceAgentAccess = _messages.BooleanField(1)
+    allowCrossOrgVpcs = _messages.BooleanField(2)
+    mode = _messages.StringField(3)
+    publicNetworkSource = _messages.MessageField('PublicNetworkSourceValue', 4)
+    vpcNetworkSources = _messages.MessageField('VpcNetworkSourcesValueListEntry', 5, repeated=True)
+
   @encoding.MapUnrecognizedFields('additionalProperties')
   class LabelsValue(_messages.Message):
     r"""User-provided labels, in key/value pairs.
@@ -342,8 +443,9 @@ class Bucket(_messages.Message):
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   class LifecycleValue(_messages.Message):
-    r"""The bucket's lifecycle configuration. See lifecycle management for
-    more information.
+    r"""The bucket's lifecycle configuration. See [Lifecycle
+    Management](https://cloud.google.com/storage/docs/lifecycle) for more
+    information.
 
     Messages:
       RuleValueListEntry: A RuleValueListEntry object.
@@ -535,8 +637,9 @@ class Bucket(_messages.Message):
 
   class WebsiteValue(_messages.Message):
     r"""The bucket's website configuration, controlling how the service
-    behaves when accessing bucket contents as a web site. See the Static
-    Website Examples for more information.
+    behaves when accessing bucket contents as a web site. See the [Static
+    Website Examples](https://cloud.google.com/storage/docs/static-website)
+    for more information.
 
     Fields:
       mainPageSuffix: If the requested object path is missing, the service
@@ -561,29 +664,35 @@ class Bucket(_messages.Message):
   defaultObjectAcl = _messages.MessageField('ObjectAccessControl', 7, repeated=True)
   encryption = _messages.MessageField('EncryptionValue', 8)
   etag = _messages.StringField(9)
-  iamConfiguration = _messages.MessageField('IamConfigurationValue', 10)
-  id = _messages.StringField(11)
-  kind = _messages.StringField(12, default='storage#bucket')
-  labels = _messages.MessageField('LabelsValue', 13)
-  lifecycle = _messages.MessageField('LifecycleValue', 14)
-  location = _messages.StringField(15)
-  locationType = _messages.StringField(16)
-  logging = _messages.MessageField('LoggingValue', 17)
-  metageneration = _messages.IntegerField(18)
-  name = _messages.StringField(19)
-  objectRetention = _messages.MessageField('ObjectRetentionValue', 20)
-  owner = _messages.MessageField('OwnerValue', 21)
-  projectNumber = _messages.IntegerField(22, variant=_messages.Variant.UINT64)
-  retentionPolicy = _messages.MessageField('RetentionPolicyValue', 23)
-  rpo = _messages.StringField(24)
-  satisfiesPZS = _messages.BooleanField(25)
-  selfLink = _messages.StringField(26)
-  softDeletePolicy = _messages.MessageField('SoftDeletePolicyValue', 27)
-  storageClass = _messages.StringField(28)
-  timeCreated = _message_types.DateTimeField(29)
-  updated = _message_types.DateTimeField(30)
-  versioning = _messages.MessageField('VersioningValue', 31)
-  website = _messages.MessageField('WebsiteValue', 32)
+  generation = _messages.IntegerField(10)
+  hardDeleteTime = _message_types.DateTimeField(11)
+  hierarchicalNamespace = _messages.MessageField('HierarchicalNamespaceValue', 12)
+  iamConfiguration = _messages.MessageField('IamConfigurationValue', 13)
+  id = _messages.StringField(14)
+  ipFilter = _messages.MessageField('IpFilterValue', 15)
+  kind = _messages.StringField(16, default='storage#bucket')
+  labels = _messages.MessageField('LabelsValue', 17)
+  lifecycle = _messages.MessageField('LifecycleValue', 18)
+  location = _messages.StringField(19)
+  locationType = _messages.StringField(20)
+  logging = _messages.MessageField('LoggingValue', 21)
+  metageneration = _messages.IntegerField(22)
+  name = _messages.StringField(23)
+  objectRetention = _messages.MessageField('ObjectRetentionValue', 24)
+  owner = _messages.MessageField('OwnerValue', 25)
+  projectNumber = _messages.IntegerField(26, variant=_messages.Variant.UINT64)
+  retentionPolicy = _messages.MessageField('RetentionPolicyValue', 27)
+  rpo = _messages.StringField(28)
+  satisfiesPZI = _messages.BooleanField(29)
+  satisfiesPZS = _messages.BooleanField(30)
+  selfLink = _messages.StringField(31)
+  softDeletePolicy = _messages.MessageField('SoftDeletePolicyValue', 32)
+  softDeleteTime = _message_types.DateTimeField(33)
+  storageClass = _messages.StringField(34)
+  timeCreated = _message_types.DateTimeField(35)
+  updated = _message_types.DateTimeField(36)
+  versioning = _messages.MessageField('VersioningValue', 37)
+  website = _messages.MessageField('WebsiteValue', 38)
 
 
 class BucketAccessControl(_messages.Message):
@@ -648,6 +757,53 @@ class BucketAccessControls(_messages.Message):
 
   items = _messages.MessageField('BucketAccessControl', 1, repeated=True)
   kind = _messages.StringField(2, default='storage#bucketAccessControls')
+
+
+class BucketStorageLayout(_messages.Message):
+  r"""The storage layout configuration of a bucket.
+
+  Messages:
+    CustomPlacementConfigValue: The bucket's custom placement configuration
+      for Custom Dual Regions.
+    HierarchicalNamespaceValue: The bucket's hierarchical namespace
+      configuration.
+
+  Fields:
+    bucket: The name of the bucket.
+    customPlacementConfig: The bucket's custom placement configuration for
+      Custom Dual Regions.
+    hierarchicalNamespace: The bucket's hierarchical namespace configuration.
+    kind: The kind of item this is. For storage layout, this is always
+      storage#storageLayout.
+    location: The location of the bucket.
+    locationType: The type of the bucket location.
+  """
+
+  class CustomPlacementConfigValue(_messages.Message):
+    r"""The bucket's custom placement configuration for Custom Dual Regions.
+
+    Fields:
+      dataLocations: The list of regional locations in which data is placed.
+    """
+
+    dataLocations = _messages.StringField(1, repeated=True)
+
+  class HierarchicalNamespaceValue(_messages.Message):
+    r"""The bucket's hierarchical namespace configuration.
+
+    Fields:
+      enabled: When set to true, hierarchical namespace is enabled for this
+        bucket.
+    """
+
+    enabled = _messages.BooleanField(1)
+
+  bucket = _messages.StringField(1)
+  customPlacementConfig = _messages.MessageField('CustomPlacementConfigValue', 2)
+  hierarchicalNamespace = _messages.MessageField('HierarchicalNamespaceValue', 3)
+  kind = _messages.StringField(4, default='storage#storageLayout')
+  location = _messages.StringField(5)
+  locationType = _messages.StringField(6)
 
 
 class Buckets(_messages.Message):
@@ -830,10 +986,76 @@ class Expr(_messages.Message):
   title = _messages.StringField(4)
 
 
+class Folder(_messages.Message):
+  r"""A folder. Only available in buckets with hierarchical namespace enabled.
+
+  Messages:
+    PendingRenameInfoValue: Only present if the folder is part of an ongoing
+      rename folder operation. Contains information which can be used to query
+      the operation status.
+
+  Fields:
+    bucket: The name of the bucket containing this folder.
+    createTime: The creation time of the folder in RFC 3339 format.
+    id: The ID of the folder, including the bucket name, folder name.
+    kind: The kind of item this is. For folders, this is always
+      storage#folder.
+    metageneration: The version of the metadata for this folder. Used for
+      preconditions and for detecting changes in metadata.
+    name: The name of the folder. Required if not specified by URL parameter.
+    pendingRenameInfo: Only present if the folder is part of an ongoing rename
+      folder operation. Contains information which can be used to query the
+      operation status.
+    selfLink: The link to this folder.
+    updateTime: The modification time of the folder metadata in RFC 3339
+      format.
+  """
+
+  class PendingRenameInfoValue(_messages.Message):
+    r"""Only present if the folder is part of an ongoing rename folder
+    operation. Contains information which can be used to query the operation
+    status.
+
+    Fields:
+      operationId: The ID of the rename folder operation.
+    """
+
+    operationId = _messages.StringField(1)
+
+  bucket = _messages.StringField(1)
+  createTime = _message_types.DateTimeField(2)
+  id = _messages.StringField(3)
+  kind = _messages.StringField(4, default='storage#folder')
+  metageneration = _messages.IntegerField(5)
+  name = _messages.StringField(6)
+  pendingRenameInfo = _messages.MessageField('PendingRenameInfoValue', 7)
+  selfLink = _messages.StringField(8)
+  updateTime = _message_types.DateTimeField(9)
+
+
+class Folders(_messages.Message):
+  r"""A list of folders.
+
+  Fields:
+    items: The list of items.
+    kind: The kind of item this is. For lists of folders, this is always
+      storage#folders.
+    nextPageToken: The continuation token, used to page through large result
+      sets. Provide this value in a subsequent request to return the next page
+      of results.
+  """
+
+  items = _messages.MessageField('Folder', 1, repeated=True)
+  kind = _messages.StringField(2, default='storage#folders')
+  nextPageToken = _messages.StringField(3)
+
+
 class GoogleLongrunningListOperationsResponse(_messages.Message):
   r"""The response message for storage.buckets.operations.list.
 
   Fields:
+    kind: The kind of item this is. For lists of operations, this is always
+      storage#operations.
     nextPageToken: The continuation token, used to page through large result
       sets. Provide this value in a subsequent request to return the next page
       of results.
@@ -841,8 +1063,9 @@ class GoogleLongrunningListOperationsResponse(_messages.Message):
       request.
   """
 
-  nextPageToken = _messages.StringField(1)
-  operations = _messages.MessageField('GoogleLongrunningOperation', 2, repeated=True)
+  kind = _messages.StringField(1, default='storage#operations')
+  nextPageToken = _messages.StringField(2)
+  operations = _messages.MessageField('GoogleLongrunningOperation', 3, repeated=True)
 
 
 class GoogleLongrunningOperation(_messages.Message):
@@ -869,6 +1092,8 @@ class GoogleLongrunningOperation(_messages.Message):
       "response" is available.
     error: The error result of the operation in case of failure or
       cancellation.
+    kind: The kind of item this is. For operations, this is always
+      storage#operation.
     metadata: Service-specific metadata associated with the operation. It
       typically contains progress information and common metadata such as
       create time. Some services might not provide such metadata. Any method
@@ -885,6 +1110,7 @@ class GoogleLongrunningOperation(_messages.Message):
       methods, the response should have the type "XxxResponse", where "Xxx" is
       the original method name. For example, if the original method name is
       "TakeSnapshot()", the inferred response type is "TakeSnapshotResponse".
+    selfLink: The link to this long running operation.
   """
 
   @encoding.MapUnrecognizedFields('additionalProperties')
@@ -948,9 +1174,11 @@ class GoogleLongrunningOperation(_messages.Message):
 
   done = _messages.BooleanField(1)
   error = _messages.MessageField('GoogleRpcStatus', 2)
-  metadata = _messages.MessageField('MetadataValue', 3)
-  name = _messages.StringField(4)
-  response = _messages.MessageField('ResponseValue', 5)
+  kind = _messages.StringField(3, default='storage#operation')
+  metadata = _messages.MessageField('MetadataValue', 4)
+  name = _messages.StringField(5)
+  response = _messages.MessageField('ResponseValue', 6)
+  selfLink = _messages.StringField(7)
 
 
 class GoogleRpcStatus(_messages.Message):
@@ -1216,7 +1444,8 @@ class Object(_messages.Message):
       without a Content-Type, it is served as application/octet-stream.
     crc32c: CRC32c checksum, as described in RFC 4960, Appendix B; encoded
       using base64 in big-endian byte order. For more information about using
-      the CRC32c checksum, see Hashes and ETags: Best Practices.
+      the CRC32c checksum, see [Data Validation and Change
+      Detection](https://cloud.google.com/storage/docs/data-validation).
     customTime: A timestamp in RFC 3339 format specified by the user for an
       object.
     customerEncryption: Metadata of customer-supplied encryption key, if the
@@ -1246,7 +1475,8 @@ class Object(_messages.Message):
     kmsKeyName: Not currently supported. Specifying the parameter causes the
       request to fail with status code 400 - Bad Request.
     md5Hash: MD5 hash of the data; encoded using base64. For more information
-      about using the MD5 hash, see Hashes and ETags: Best Practices.
+      about using the MD5 hash, see [Data Validation and Change
+      Detection](https://cloud.google.com/storage/docs/data-validation).
     mediaLink: Media download link.
     metadata: User-provided metadata, in key/value pairs.
     metageneration: The version of the metadata for this object at this
@@ -1256,6 +1486,9 @@ class Object(_messages.Message):
     name: The name of the object. Required if not specified by URL parameter.
     owner: The owner of the object. This will always be the uploader of the
       object.
+    restoreToken: Restore token used to differentiate deleted objects with the
+      same name and generation. This field is only returned for deleted
+      objects in hierarchical namespace buckets.
     retention: A collection of object level retention parameters.
     retentionExpirationTime: A server-determined value that specifies the
       earliest time that the object's retention period expires. This value is
@@ -1279,6 +1512,7 @@ class Object(_messages.Message):
     timeDeleted: The time at which the object became noncurrent in RFC 3339
       format. Will be returned if and only if this version of the object has
       been deleted.
+    timeFinalized: The time when the object was finalized.
     timeStorageClassUpdated: The time at which the object's storage class was
       last changed. When the object is initially created, it will be set to
       timeCreated.
@@ -1375,17 +1609,19 @@ class Object(_messages.Message):
   metageneration = _messages.IntegerField(22)
   name = _messages.StringField(23)
   owner = _messages.MessageField('OwnerValue', 24)
-  retention = _messages.MessageField('RetentionValue', 25)
-  retentionExpirationTime = _message_types.DateTimeField(26)
-  selfLink = _messages.StringField(27)
-  size = _messages.IntegerField(28, variant=_messages.Variant.UINT64)
-  softDeleteTime = _message_types.DateTimeField(29)
-  storageClass = _messages.StringField(30)
-  temporaryHold = _messages.BooleanField(31)
-  timeCreated = _message_types.DateTimeField(32)
-  timeDeleted = _message_types.DateTimeField(33)
-  timeStorageClassUpdated = _message_types.DateTimeField(34)
-  updated = _message_types.DateTimeField(35)
+  restoreToken = _messages.StringField(25)
+  retention = _messages.MessageField('RetentionValue', 26)
+  retentionExpirationTime = _message_types.DateTimeField(27)
+  selfLink = _messages.StringField(28)
+  size = _messages.IntegerField(29, variant=_messages.Variant.UINT64)
+  softDeleteTime = _message_types.DateTimeField(30)
+  storageClass = _messages.StringField(31)
+  temporaryHold = _messages.BooleanField(32)
+  timeCreated = _message_types.DateTimeField(33)
+  timeDeleted = _message_types.DateTimeField(34)
+  timeFinalized = _message_types.DateTimeField(35)
+  timeStorageClassUpdated = _message_types.DateTimeField(36)
+  updated = _message_types.DateTimeField(37)
 
 
 class ObjectAccessControl(_messages.Message):
@@ -1561,6 +1797,36 @@ class Policy(_messages.Message):
   version = _messages.IntegerField(5, variant=_messages.Variant.INT32)
 
 
+class RelocateBucketRequest(_messages.Message):
+  r"""A Relocate Bucket request.
+
+  Messages:
+    DestinationCustomPlacementConfigValue: The bucket's new custom placement
+      configuration if relocating to a Custom Dual Region.
+
+  Fields:
+    destinationCustomPlacementConfig: The bucket's new custom placement
+      configuration if relocating to a Custom Dual Region.
+    destinationLocation: The new location the bucket will be relocated to.
+    validateOnly: If true, validate the operation, but do not actually
+      relocate the bucket.
+  """
+
+  class DestinationCustomPlacementConfigValue(_messages.Message):
+    r"""The bucket's new custom placement configuration if relocating to a
+    Custom Dual Region.
+
+    Fields:
+      dataLocations: The list of regional locations in which data is placed.
+    """
+
+    dataLocations = _messages.StringField(1, repeated=True)
+
+  destinationCustomPlacementConfig = _messages.MessageField('DestinationCustomPlacementConfigValue', 1)
+  destinationLocation = _messages.StringField(2)
+  validateOnly = _messages.BooleanField(3)
+
+
 class RewriteResponse(_messages.Message):
   r"""A rewrite response.
 
@@ -1629,8 +1895,10 @@ class StandardQueryParameters(_messages.Message):
 
     Values:
       json: Responses with Content-Type of application/json
+      media: Responses containing object data
     """
     json = 0
+    media = 1
 
   alt = _messages.EnumField('AltValueValuesEnum', 1, default='json')
   fields = _messages.StringField(2)
@@ -1672,7 +1940,7 @@ class StorageAnywhereCachesListRequest(_messages.Message):
 
   Fields:
     bucket: Name of the parent bucket.
-    pageSize: Maximum number of items return in a single page of responses.
+    pageSize: Maximum number of items to return in a single page of responses.
       Maximum 1000.
     pageToken: A previously-returned page token representing part of the
       larger set of results to view.
@@ -1863,12 +2131,17 @@ class StorageBucketsGetRequest(_messages.Message):
 
   Fields:
     bucket: Name of a bucket.
+    generation: If present, specifies the generation of the bucket. This is
+      required if softDeleted is true.
     ifMetagenerationMatch: Makes the return of the bucket metadata conditional
       on whether the bucket's current metageneration matches the given value.
     ifMetagenerationNotMatch: Makes the return of the bucket metadata
       conditional on whether the bucket's current metageneration does not
       match the given value.
     projection: Set of properties to return. Defaults to noAcl.
+    softDeleted: If true, return the soft-deleted version of this bucket. The
+      default is false. For more information, see [Soft
+      Delete](https://cloud.google.com/storage/docs/soft-delete).
     userProject: The project to be billed for this request. Required for
       Requester Pays buckets.
   """
@@ -1884,10 +2157,26 @@ class StorageBucketsGetRequest(_messages.Message):
     noAcl = 1
 
   bucket = _messages.StringField(1, required=True)
-  ifMetagenerationMatch = _messages.IntegerField(2)
-  ifMetagenerationNotMatch = _messages.IntegerField(3)
-  projection = _messages.EnumField('ProjectionValueValuesEnum', 4)
-  userProject = _messages.StringField(5)
+  generation = _messages.IntegerField(2)
+  ifMetagenerationMatch = _messages.IntegerField(3)
+  ifMetagenerationNotMatch = _messages.IntegerField(4)
+  projection = _messages.EnumField('ProjectionValueValuesEnum', 5)
+  softDeleted = _messages.BooleanField(6)
+  userProject = _messages.StringField(7)
+
+
+class StorageBucketsGetStorageLayoutRequest(_messages.Message):
+  r"""A StorageBucketsGetStorageLayoutRequest object.
+
+  Fields:
+    bucket: Name of a bucket.
+    prefix: An optional prefix used for permission check. It is useful when
+      the caller only has storage.objects.list permission under a specific
+      prefix.
+  """
+
+  bucket = _messages.StringField(1, required=True)
+  prefix = _messages.StringField(2)
 
 
 class StorageBucketsInsertRequest(_messages.Message):
@@ -1995,6 +2284,9 @@ class StorageBucketsListRequest(_messages.Message):
     prefix: Filter results to buckets whose names begin with this prefix.
     project: A valid API project identifier.
     projection: Set of properties to return. Defaults to noAcl.
+    softDeleted: If true, only soft-deleted bucket versions will be returned.
+      The default is false. For more information, see [Soft
+      Delete](https://cloud.google.com/storage/docs/soft-delete).
     userProject: The project to be billed for this request.
   """
 
@@ -2013,7 +2305,8 @@ class StorageBucketsListRequest(_messages.Message):
   prefix = _messages.StringField(3)
   project = _messages.StringField(4, required=True)
   projection = _messages.EnumField('ProjectionValueValuesEnum', 5)
-  userProject = _messages.StringField(6)
+  softDeleted = _messages.BooleanField(6)
+  userProject = _messages.StringField(7)
 
 
 class StorageBucketsLockRetentionPolicyRequest(_messages.Message):
@@ -2030,6 +2323,26 @@ class StorageBucketsLockRetentionPolicyRequest(_messages.Message):
   bucket = _messages.StringField(1, required=True)
   ifMetagenerationMatch = _messages.IntegerField(2, required=True)
   userProject = _messages.StringField(3)
+
+
+class StorageBucketsOperationsAdvanceRelocateBucketRequest(_messages.Message):
+  r"""A StorageBucketsOperationsAdvanceRelocateBucketRequest object.
+
+  Fields:
+    advanceRelocateBucketOperationRequest: A
+      AdvanceRelocateBucketOperationRequest resource to be passed as the
+      request body.
+    bucket: Name of the bucket to advance the relocate for.
+    operationId: ID of the operation resource.
+  """
+
+  advanceRelocateBucketOperationRequest = _messages.MessageField('AdvanceRelocateBucketOperationRequest', 1)
+  bucket = _messages.StringField(2, required=True)
+  operationId = _messages.StringField(3, required=True)
+
+
+class StorageBucketsOperationsAdvanceRelocateBucketResponse(_messages.Message):
+  r"""An empty StorageBucketsOperationsAdvanceRelocateBucket response."""
 
 
 class StorageBucketsOperationsCancelRequest(_messages.Message):
@@ -2169,6 +2482,49 @@ class StorageBucketsPatchRequest(_messages.Message):
   predefinedDefaultObjectAcl = _messages.EnumField('PredefinedDefaultObjectAclValueValuesEnum', 6)
   projection = _messages.EnumField('ProjectionValueValuesEnum', 7)
   userProject = _messages.StringField(8)
+
+
+class StorageBucketsRelocateRequest(_messages.Message):
+  r"""A StorageBucketsRelocateRequest object.
+
+  Fields:
+    bucket: Name of the bucket to be moved.
+    relocateBucketRequest: A RelocateBucketRequest resource to be passed as
+      the request body.
+  """
+
+  bucket = _messages.StringField(1, required=True)
+  relocateBucketRequest = _messages.MessageField('RelocateBucketRequest', 2)
+
+
+class StorageBucketsRestoreRequest(_messages.Message):
+  r"""A StorageBucketsRestoreRequest object.
+
+  Enums:
+    ProjectionValueValuesEnum: Set of properties to return. Defaults to full.
+
+  Fields:
+    bucket: Name of a bucket.
+    generation: Generation of a bucket.
+    projection: Set of properties to return. Defaults to full.
+    userProject: The project to be billed for this request. Required for
+      Requester Pays buckets.
+  """
+
+  class ProjectionValueValuesEnum(_messages.Enum):
+    r"""Set of properties to return. Defaults to full.
+
+    Values:
+      full: Include all properties.
+      noAcl: Omit owner, acl and defaultObjectAcl properties.
+    """
+    full = 0
+    noAcl = 1
+
+  bucket = _messages.StringField(1, required=True)
+  generation = _messages.IntegerField(2, required=True)
+  projection = _messages.EnumField('ProjectionValueValuesEnum', 3)
+  userProject = _messages.StringField(4)
 
 
 class StorageBucketsSetIamPolicyRequest(_messages.Message):
@@ -2408,10 +2764,122 @@ class StorageDefaultObjectAccessControlsUpdateRequest(_messages.Message):
   userProject = _messages.StringField(4)
 
 
+class StorageFoldersDeleteRequest(_messages.Message):
+  r"""A StorageFoldersDeleteRequest object.
+
+  Fields:
+    bucket: Name of the bucket in which the folder resides.
+    folder: Name of a folder.
+    ifMetagenerationMatch: If set, only deletes the folder if its
+      metageneration matches this value.
+    ifMetagenerationNotMatch: If set, only deletes the folder if its
+      metageneration does not match this value.
+  """
+
+  bucket = _messages.StringField(1, required=True)
+  folder = _messages.StringField(2, required=True)
+  ifMetagenerationMatch = _messages.IntegerField(3)
+  ifMetagenerationNotMatch = _messages.IntegerField(4)
+
+
+class StorageFoldersDeleteResponse(_messages.Message):
+  r"""An empty StorageFoldersDelete response."""
+
+
+class StorageFoldersGetRequest(_messages.Message):
+  r"""A StorageFoldersGetRequest object.
+
+  Fields:
+    bucket: Name of the bucket in which the folder resides.
+    folder: Name of a folder.
+    ifMetagenerationMatch: Makes the return of the folder metadata conditional
+      on whether the folder's current metageneration matches the given value.
+    ifMetagenerationNotMatch: Makes the return of the folder metadata
+      conditional on whether the folder's current metageneration does not
+      match the given value.
+  """
+
+  bucket = _messages.StringField(1, required=True)
+  folder = _messages.StringField(2, required=True)
+  ifMetagenerationMatch = _messages.IntegerField(3)
+  ifMetagenerationNotMatch = _messages.IntegerField(4)
+
+
+class StorageFoldersInsertRequest(_messages.Message):
+  r"""A StorageFoldersInsertRequest object.
+
+  Fields:
+    bucket: Name of the bucket in which the folder resides.
+    folder: A Folder resource to be passed as the request body.
+    recursive: If true, any parent folder which doesn't exist will be created
+      automatically.
+  """
+
+  bucket = _messages.StringField(1, required=True)
+  folder = _messages.MessageField('Folder', 2)
+  recursive = _messages.BooleanField(3)
+
+
+class StorageFoldersListRequest(_messages.Message):
+  r"""A StorageFoldersListRequest object.
+
+  Fields:
+    bucket: Name of the bucket in which to look for folders.
+    delimiter: Returns results in a directory-like mode. The only supported
+      value is '/'. If set, items will only contain folders that either
+      exactly match the prefix, or are one level below the prefix.
+    endOffset: Filter results to folders whose names are lexicographically
+      before endOffset. If startOffset is also set, the folders listed will
+      have names between startOffset (inclusive) and endOffset (exclusive).
+    pageSize: Maximum number of items to return in a single page of responses.
+    pageToken: A previously-returned page token representing part of the
+      larger set of results to view.
+    prefix: Filter results to folders whose paths begin with this prefix. If
+      set, the value must either be an empty string or end with a '/'.
+    startOffset: Filter results to folders whose names are lexicographically
+      equal to or after startOffset. If endOffset is also set, the folders
+      listed will have names between startOffset (inclusive) and endOffset
+      (exclusive).
+  """
+
+  bucket = _messages.StringField(1, required=True)
+  delimiter = _messages.StringField(2)
+  endOffset = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  prefix = _messages.StringField(6)
+  startOffset = _messages.StringField(7)
+
+
+class StorageFoldersRenameRequest(_messages.Message):
+  r"""A StorageFoldersRenameRequest object.
+
+  Fields:
+    bucket: Name of the bucket in which the folders are in.
+    destinationFolder: Name of the destination folder.
+    ifSourceMetagenerationMatch: Makes the operation conditional on whether
+      the source object's current metageneration matches the given value.
+    ifSourceMetagenerationNotMatch: Makes the operation conditional on whether
+      the source object's current metageneration does not match the given
+      value.
+    sourceFolder: Name of the source folder.
+  """
+
+  bucket = _messages.StringField(1, required=True)
+  destinationFolder = _messages.StringField(2, required=True)
+  ifSourceMetagenerationMatch = _messages.IntegerField(3)
+  ifSourceMetagenerationNotMatch = _messages.IntegerField(4)
+  sourceFolder = _messages.StringField(5, required=True)
+
+
 class StorageManagedFoldersDeleteRequest(_messages.Message):
   r"""A StorageManagedFoldersDeleteRequest object.
 
   Fields:
+    allowNonEmpty: Allows the deletion of a managed folder even if it is not
+      empty. A managed folder is empty if there are no objects or managed
+      folders that it applies to. Callers must have
+      storage.managedFolders.setIamPolicy permission.
     bucket: Name of the bucket containing the managed folder.
     ifMetagenerationMatch: If set, only deletes the managed folder if its
       metageneration matches this value.
@@ -2420,10 +2888,11 @@ class StorageManagedFoldersDeleteRequest(_messages.Message):
     managedFolder: The managed folder name/path.
   """
 
-  bucket = _messages.StringField(1, required=True)
-  ifMetagenerationMatch = _messages.IntegerField(2)
-  ifMetagenerationNotMatch = _messages.IntegerField(3)
-  managedFolder = _messages.StringField(4, required=True)
+  allowNonEmpty = _messages.BooleanField(1)
+  bucket = _messages.StringField(2, required=True)
+  ifMetagenerationMatch = _messages.IntegerField(3)
+  ifMetagenerationNotMatch = _messages.IntegerField(4)
+  managedFolder = _messages.StringField(5, required=True)
 
 
 class StorageManagedFoldersDeleteResponse(_messages.Message):
@@ -2475,7 +2944,7 @@ class StorageManagedFoldersListRequest(_messages.Message):
 
   Fields:
     bucket: Name of the bucket containing the managed folder.
-    pageSize: Maximum number of items return in a single page of responses.
+    pageSize: Maximum number of items to return in a single page of responses.
     pageToken: A previously-returned page token representing part of the
       larger set of results to view.
     prefix: The managed folder name/path prefix to filter the output list of
@@ -3018,8 +3487,14 @@ class StorageObjectsGetRequest(_messages.Message):
       Parts](https://cloud.google.com/storage/docs/request-
       endpoints#encoding).
     projection: Set of properties to return. Defaults to noAcl.
+    restoreToken: Restore token used to differentiate soft-deleted objects
+      with the same name and generation. Only applicable for hierarchical
+      namespace buckets and if softDeleted is set to true. This parameter is
+      optional, and is only required in the rare case when there are multiple
+      soft-deleted objects with the same name and generation.
     softDeleted: If true, only soft-deleted object versions will be listed.
-      The default is false. For more information, see Soft Delete.
+      The default is false. For more information, see [Soft
+      Delete](https://cloud.google.com/storage/docs/soft-delete).
     userProject: The project to be billed for this request. Required for
       Requester Pays buckets.
   """
@@ -3042,8 +3517,9 @@ class StorageObjectsGetRequest(_messages.Message):
   ifMetagenerationNotMatch = _messages.IntegerField(6)
   object = _messages.StringField(7, required=True)
   projection = _messages.EnumField('ProjectionValueValuesEnum', 8)
-  softDeleted = _messages.BooleanField(9)
-  userProject = _messages.StringField(10)
+  restoreToken = _messages.StringField(9)
+  softDeleted = _messages.BooleanField(10)
+  userProject = _messages.StringField(11)
 
 
 class StorageObjectsInsertRequest(_messages.Message):
@@ -3174,7 +3650,8 @@ class StorageObjectsListRequest(_messages.Message):
     prefix: Filter results to objects whose names begin with this prefix.
     projection: Set of properties to return. Defaults to noAcl.
     softDeleted: If true, only soft-deleted object versions will be listed.
-      The default is false. For more information, see Soft Delete.
+      The default is false. For more information, see [Soft
+      Delete](https://cloud.google.com/storage/docs/soft-delete).
     startOffset: Filter results to objects whose names are lexicographically
       equal to or after startOffset. If endOffset is also set, the objects
       listed will have names between startOffset (inclusive) and endOffset
@@ -3182,7 +3659,8 @@ class StorageObjectsListRequest(_messages.Message):
     userProject: The project to be billed for this request. Required for
       Requester Pays buckets.
     versions: If true, lists all versions of an object as distinct results.
-      The default is false. For more information, see Object Versioning.
+      The default is false. For more information, see [Object
+      Versioning](https://cloud.google.com/storage/docs/object-versioning).
   """
 
   class ProjectionValueValuesEnum(_messages.Enum):
@@ -3209,6 +3687,95 @@ class StorageObjectsListRequest(_messages.Message):
   startOffset = _messages.StringField(12)
   userProject = _messages.StringField(13)
   versions = _messages.BooleanField(14)
+
+
+class StorageObjectsMoveRequest(_messages.Message):
+  r"""A StorageObjectsMoveRequest object.
+
+  Enums:
+    ProjectionValueValuesEnum: Set of properties to return. Defaults to noAcl.
+
+  Fields:
+    bucket: Name of the bucket in which the object resides.
+    destinationObject: Name of the destination object. For information about
+      how to URL encode object names to be path safe, see [Encoding URI Path
+      Parts](https://cloud.google.com/storage/docs/request-
+      endpoints#encoding).
+    ifGenerationMatch: Makes the operation conditional on whether the
+      destination object's current generation matches the given value. Setting
+      to 0 makes the operation succeed only if there are no live versions of
+      the object. `ifGenerationMatch` and `ifGenerationNotMatch` conditions
+      are mutually exclusive: it's an error for both of them to be set in the
+      request.
+    ifGenerationNotMatch: Makes the operation conditional on whether the
+      destination object's current generation does not match the given value.
+      If no live object exists, the precondition fails. Setting to 0 makes the
+      operation succeed only if there is a live version of the
+      object.`ifGenerationMatch` and `ifGenerationNotMatch` conditions are
+      mutually exclusive: it's an error for both of them to be set in the
+      request.
+    ifMetagenerationMatch: Makes the operation conditional on whether the
+      destination object's current metageneration matches the given value.
+      `ifMetagenerationMatch` and `ifMetagenerationNotMatch` conditions are
+      mutually exclusive: it's an error for both of them to be set in the
+      request.
+    ifMetagenerationNotMatch: Makes the operation conditional on whether the
+      destination object's current metageneration does not match the given
+      value. `ifMetagenerationMatch` and `ifMetagenerationNotMatch` conditions
+      are mutually exclusive: it's an error for both of them to be set in the
+      request.
+    ifSourceGenerationMatch: Makes the operation conditional on whether the
+      source object's current generation matches the given value.
+      `ifSourceGenerationMatch` and `ifSourceGenerationNotMatch` conditions
+      are mutually exclusive: it's an error for both of them to be set in the
+      request.
+    ifSourceGenerationNotMatch: Makes the operation conditional on whether the
+      source object's current generation does not match the given value.
+      `ifSourceGenerationMatch` and `ifSourceGenerationNotMatch` conditions
+      are mutually exclusive: it's an error for both of them to be set in the
+      request.
+    ifSourceMetagenerationMatch: Makes the operation conditional on whether
+      the source object's current metageneration matches the given value.
+      `ifSourceMetagenerationMatch` and `ifSourceMetagenerationNotMatch`
+      conditions are mutually exclusive: it's an error for both of them to be
+      set in the request.
+    ifSourceMetagenerationNotMatch: Makes the operation conditional on whether
+      the source object's current metageneration does not match the given
+      value. `ifSourceMetagenerationMatch` and
+      `ifSourceMetagenerationNotMatch` conditions are mutually exclusive: it's
+      an error for both of them to be set in the request.
+    projection: Set of properties to return. Defaults to noAcl.
+    sourceObject: Name of the source object. For information about how to URL
+      encode object names to be path safe, see [Encoding URI Path
+      Parts](https://cloud.google.com/storage/docs/request-
+      endpoints#encoding).
+    userProject: The project to be billed for this request. Required for
+      Requester Pays buckets.
+  """
+
+  class ProjectionValueValuesEnum(_messages.Enum):
+    r"""Set of properties to return. Defaults to noAcl.
+
+    Values:
+      full: Include all properties.
+      noAcl: Omit the owner, acl property.
+    """
+    full = 0
+    noAcl = 1
+
+  bucket = _messages.StringField(1, required=True)
+  destinationObject = _messages.StringField(2, required=True)
+  ifGenerationMatch = _messages.IntegerField(3)
+  ifGenerationNotMatch = _messages.IntegerField(4)
+  ifMetagenerationMatch = _messages.IntegerField(5)
+  ifMetagenerationNotMatch = _messages.IntegerField(6)
+  ifSourceGenerationMatch = _messages.IntegerField(7)
+  ifSourceGenerationNotMatch = _messages.IntegerField(8)
+  ifSourceMetagenerationMatch = _messages.IntegerField(9)
+  ifSourceMetagenerationNotMatch = _messages.IntegerField(10)
+  projection = _messages.EnumField('ProjectionValueValuesEnum', 11)
+  sourceObject = _messages.StringField(12, required=True)
+  userProject = _messages.StringField(13)
 
 
 class StorageObjectsPatchRequest(_messages.Message):
@@ -3318,9 +3885,15 @@ class StorageObjectsRestoreRequest(_messages.Message):
     ifMetagenerationNotMatch: Makes the operation conditional on whether none
       of the object's live metagenerations match the given value.
     object: Name of the object. For information about how to URL encode object
-      names to be path safe, see Encoding URI Path Parts.
-    objectResource: A Object resource to be passed as the request body.
+      names to be path safe, see [Encoding URI Path
+      Parts](https://cloud.google.com/storage/docs/request-
+      endpoints#encoding).
     projection: Set of properties to return. Defaults to full.
+    restoreToken: Restore token used to differentiate sof-deleted objects with
+      the same name and generation. Only applicable for hierarchical namespace
+      buckets. This parameter is optional, and is only required in the rare
+      case when there are multiple soft-deleted objects with the same name and
+      generation.
     userProject: The project to be billed for this request. Required for
       Requester Pays buckets.
   """
@@ -3343,8 +3916,8 @@ class StorageObjectsRestoreRequest(_messages.Message):
   ifMetagenerationMatch = _messages.IntegerField(6)
   ifMetagenerationNotMatch = _messages.IntegerField(7)
   object = _messages.StringField(8, required=True)
-  objectResource = _messages.MessageField('Object', 9)
-  projection = _messages.EnumField('ProjectionValueValuesEnum', 10)
+  projection = _messages.EnumField('ProjectionValueValuesEnum', 9)
+  restoreToken = _messages.StringField(10)
   userProject = _messages.StringField(11)
 
 
@@ -3642,7 +4215,8 @@ class StorageObjectsWatchAllRequest(_messages.Message):
     userProject: The project to be billed for this request. Required for
       Requester Pays buckets.
     versions: If true, lists all versions of an object as distinct results.
-      The default is false. For more information, see Object Versioning.
+      The default is false. For more information, see [Object
+      Versioning](https://cloud.google.com/storage/docs/object-versioning).
   """
 
   class ProjectionValueValuesEnum(_messages.Enum):

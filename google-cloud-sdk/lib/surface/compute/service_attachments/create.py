@@ -63,27 +63,23 @@ class CreateHelper(object):
   PRODUCER_FORWARDING_RULE_ARG = None
   NAT_SUBNETWORK_ARG = None
 
-  def __init__(self, holder, support_propagated_connection_limit):
+  def __init__(self, holder):
     self._holder = holder
-    self._support_propagated_connection_limit = (
-        support_propagated_connection_limit
-    )
 
   @classmethod
-  def Args(cls, parser, support_propagated_connection_limit):
+  def Args(cls, parser):
     """Create a Google Compute Engine service attachment.
 
     Args:
       parser: the parser that parses the input from the user.
-      support_propagated_connection_limit: whether propagated_connection_limit
-        is supported.
     """
     cls.SERVICE_ATTACHMENT_ARG = flags.ServiceAttachmentArgument()
     cls.SERVICE_ATTACHMENT_ARG.AddArgument(parser, operation_type='create')
-    cls.PRODUCER_FORWARDING_RULE_ARG = forwarding_rule_flags.ForwardingRuleArgumentForServiceAttachment(
+    cls.PRODUCER_FORWARDING_RULE_ARG = (
+        forwarding_rule_flags.ForwardingRuleArgumentForServiceAttachment()
     )
-    cls.PRODUCER_FORWARDING_RULE_ARG.AddArgument(parser)
-    cls.NAT_SUBNETWORK_ARG = subnetwork_flags.SubnetworkArgumentForServiceAttachment(
+    cls.NAT_SUBNETWORK_ARG = (
+        subnetwork_flags.SubnetworkArgumentForServiceAttachment()
     )
     cls.NAT_SUBNETWORK_ARG.AddArgument(parser)
 
@@ -91,14 +87,14 @@ class CreateHelper(object):
     parser.display_info.AddCacheUpdater(flags.ServiceAttachmentsCompleter)
 
     flags.AddDescription(parser)
+    flags.AddTargetServiceAndProducerForwardingRuleArgs(parser)
     flags.AddConnectionPreference(parser, is_update=False)
     flags.AddEnableProxyProtocolForCreate(parser)
     flags.AddReconcileConnectionsForCreate(parser)
     flags.AddConsumerRejectList(parser)
     flags.AddConsumerAcceptList(parser)
     flags.AddDomainNames(parser)
-    if support_propagated_connection_limit:
-      flags.AddPropagatedConnectionLimit(parser)
+    flags.AddPropagatedConnectionLimit(parser)
 
   def Run(self, args):
     """Issue a service attachment INSERT request."""
@@ -110,9 +106,17 @@ class CreateHelper(object):
     )
     producer_forwarding_rule_ref = (
         self.PRODUCER_FORWARDING_RULE_ARG.ResolveAsResource(
-            args, self._holder.resources
+            args,
+            self._holder.resources,
+            default_scope=compute_scope.ScopeEnum.REGION,
         )
     )
+    if target_service_args := args.target_service:
+      target_service = target_service_args
+      producer_forwarding_rule = None
+    elif producer_forwarding_rule_ref:
+      producer_forwarding_rule = producer_forwarding_rule_ref.SelfLink()
+      target_service = producer_forwarding_rule_ref.SelfLink()
     nat_subnetwork_refs = self.NAT_SUBNETWORK_ARG.ResolveAsResource(
         args,
         self._holder.resources,
@@ -133,8 +137,9 @@ class CreateHelper(object):
         natSubnets=nat_subnetworks,
         connectionPreference=connection_preference,
         enableProxyProtocol=enable_proxy_protocol,
-        producerForwardingRule=producer_forwarding_rule_ref.SelfLink(),
-        targetService=producer_forwarding_rule_ref.SelfLink())
+        producerForwardingRule=producer_forwarding_rule,
+        targetService=target_service,
+    )
 
     if args.IsSpecified('consumer_reject_list'):
       service_attachment.consumerRejectLists = args.consumer_reject_list
@@ -146,9 +151,7 @@ class CreateHelper(object):
       service_attachment.domainNames = args.domain_names
     if args.IsSpecified('reconcile_connections'):
       service_attachment.reconcileConnections = args.reconcile_connections
-    if self._support_propagated_connection_limit and args.IsSpecified(
-        'propagated_connection_limit'
-    ):
+    if args.IsSpecified('propagated_connection_limit'):
       service_attachment.propagatedConnectionLimit = (
           args.propagated_connection_limit
       )
@@ -161,25 +164,31 @@ class CreateHelper(object):
     return client.MakeRequests([(collection, 'Insert', request)])
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(
-    base.ReleaseTrack.BETA,
     base.ReleaseTrack.GA,
 )
 class Create(base.CreateCommand):
   """Create a Google Compute Engine service attachment."""
 
-  _support_propagated_connection_limit = False
   detailed_help = _DetailedHelp()
 
   @classmethod
   def Args(cls, parser):
-    CreateHelper.Args(parser, cls._support_propagated_connection_limit)
+    CreateHelper.Args(parser)
 
   def Run(self, args):
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
-    return CreateHelper(holder, self._support_propagated_connection_limit).Run(
-        args
-    )
+    return CreateHelper(holder).Run(args)
+
+
+@base.ReleaseTracks(
+    base.ReleaseTrack.BETA,
+)
+class CreateBeta(Create):
+  """Create a Google Compute Engine service attachment."""
+
+  detailed_help = _DetailedHelp()
 
 
 @base.ReleaseTracks(
@@ -188,5 +197,4 @@ class Create(base.CreateCommand):
 class CreateAlpha(Create):
   """Create a Google Compute Engine service attachment."""
 
-  _support_propagated_connection_limit = True
   detailed_help = _DetailedHelp()

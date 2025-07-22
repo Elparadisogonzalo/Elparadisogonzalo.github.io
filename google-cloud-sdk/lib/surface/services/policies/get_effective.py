@@ -15,9 +15,6 @@
 
 # TODO: b/300099033 - Capitalize and turn into a sentence.
 """services policies get-effective-policy command."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import collections
 
@@ -34,8 +31,9 @@ _ORGANIZATION_RESOURCE = 'organizations/{}'
 
 
 # TODO: b/321801975 - Make command public after suv2 launch.
+@base.UniverseCompatible
 @base.Hidden
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
 class GetEffectivePolicy(base.Command):
   """Get effective policy for a project, folder or organization.
 
@@ -98,25 +96,28 @@ class GetEffectivePolicy(base.Command):
       project = properties.VALUES.core.project.Get(required=True)
       resource_name = _PROJECT_RESOURCE.format(project)
 
-    response = serviceusage.GetEffectivePolicyV2Alpha(
+    response = serviceusage.GetEffectivePolicyV2Beta(
         resource_name + '/effectivePolicy', args.view
     )
 
-    log.status.Print('EnabledRules:')
-    for enable_rule in response.enableRules:
-      log.status.Print(' Services:')
-      for service in enable_rule.services:
-        log.status.Print('  - %s' % service)
+    if args.IsSpecified('format'):
+      return response
+    else:
+      log.status.Print('EnabledRules:')
+      for enable_rule in response.enableRules:
+        log.status.Print(' Services:')
+        for service in enable_rule.services:
+          log.status.Print('  - %s' % service)
 
-    if args.view == 'FULL':
-      log.status.Print('\nMetadata of effective policy:')
-      result = []
+      if args.view == 'FULL':
+        log.status.Print('\nMetadata of effective policy:')
+        result = []
 
-      resources = collections.namedtuple(
-          'serviceSources', ['EnabledService', 'EnabledPolicies']
-      )
+        resources = collections.namedtuple(
+            'serviceSources', ['EnabledService', 'EnabledPolicies']
+        )
 
-      for metadata in response.enableRuleMetadata:
-        for values in metadata.serviceSources.additionalProperties:
-          result.append(resources(values.key, values.value.policies))
-      return result
+        for metadata in response.enableRuleMetadata:
+          for values in metadata.serviceSources.additionalProperties:
+            result.append(resources(values.key, values.value.policies))
+        return result

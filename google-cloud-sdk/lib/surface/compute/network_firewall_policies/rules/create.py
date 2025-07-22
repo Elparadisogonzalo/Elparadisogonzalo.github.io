@@ -23,10 +23,12 @@ from googlecloudsdk.api_lib.compute import firewall_policy_rule_utils as rule_ut
 from googlecloudsdk.api_lib.compute.network_firewall_policies import client
 from googlecloudsdk.api_lib.compute.network_firewall_policies import region_client
 from googlecloudsdk.calliope import base
+from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.compute.network_firewall_policies import flags
 from googlecloudsdk.command_lib.compute.network_firewall_policies import secure_tags_utils
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   r"""Creates a Compute Engine network firewall policy rule.
@@ -35,8 +37,8 @@ class Create(base.CreateCommand):
   """
 
   NETWORK_FIREWALL_POLICY_ARG = None
-  _support_ips = False
-  _support_ips_with_tls = False
+  support_network_scopes = False
+  support_target_type = False
 
   @classmethod
   def Args(cls, parser):
@@ -44,7 +46,7 @@ class Create(base.CreateCommand):
         required=True, operation='create'
     )
     cls.NETWORK_FIREWALL_POLICY_ARG.AddArgument(parser, operation_type='create')
-    flags.AddAction(parser, support_ips=cls._support_ips)
+    flags.AddAction(parser)
     flags.AddRulePriority(parser, operation='inserted')
     flags.AddSrcIpRanges(parser)
     flags.AddDestIpRanges(parser)
@@ -54,20 +56,40 @@ class Create(base.CreateCommand):
     flags.AddDisabled(parser)
     flags.AddTargetServiceAccounts(parser)
     flags.AddDescription(parser)
-    flags.AddSrcSecureTags(parser)
+    flags.AddSrcSecureTags(
+        parser,
+        required=False,
+        support_network_scopes=cls.support_network_scopes,
+    )
     flags.AddTargetSecureTags(parser)
     flags.AddSrcAddressGroups(parser)
     flags.AddDestAddressGroups(parser)
     flags.AddSrcFqdns(parser)
     flags.AddDestFqdns(parser)
-    flags.AddSrcRegionCodes(parser)
-    flags.AddDestRegionCodes(parser)
-    flags.AddSrcThreatIntelligence(parser)
-    flags.AddDestThreatIntelligence(parser)
-    if cls._support_ips:
-      flags.AddSecurityProfileGroup(parser)
-      if cls._support_ips_with_tls:
-        flags.AddTlsInspect(parser)
+    flags.AddSrcRegionCodes(
+        parser, support_network_scopes=cls.support_network_scopes
+    )
+    flags.AddDestRegionCodes(
+        parser, support_network_scopes=cls.support_network_scopes
+    )
+    flags.AddSrcThreatIntelligence(
+        parser, support_network_scopes=cls.support_network_scopes
+    )
+    flags.AddDestThreatIntelligence(
+        parser, support_network_scopes=cls.support_network_scopes
+    )
+    flags.AddSecurityProfileGroup(parser)
+    flags.AddTlsInspect(parser)
+    if cls.support_network_scopes:
+      flags.AddSrcNetworkScope(parser)
+      flags.AddSrcNetworks(parser)
+      flags.AddDestNetworkScope(parser)
+      flags.AddSrcNetworkType(parser)
+      flags.AddDestNetworkType(parser)
+    if cls.support_target_type:
+      flags.AddTargetType(parser)
+      flags.AddTargetForwardingRules(parser)
+
     parser.display_info.AddCacheUpdater(flags.NetworkFirewallPoliciesCompleter)
 
   def Run(self, args):
@@ -95,6 +117,12 @@ class Create(base.CreateCommand):
     disabled = False
     src_secure_tags = []
     target_secure_tags = []
+    src_network_scope = None
+    src_networks = []
+    dest_network_scope = None
+    target_type = None
+    target_forwarding_rules = []
+
     if args.IsSpecified('src_ip_ranges'):
       src_ip_ranges = args.src_ip_ranges
     if args.IsSpecified('dest_ip_ranges'):
@@ -117,23 +145,90 @@ class Create(base.CreateCommand):
               holder.client, args.target_secure_tags
           )
       )
-    if self._support_ips and args.IsSpecified('security_profile_group'):
+    if args.IsSpecified('security_profile_group'):
       security_profile_group = args.security_profile_group
-    if (
-        self._support_ips
-        and self._support_ips_with_tls
-        and args.IsSpecified('tls_inspect')
-    ):
+    if args.IsSpecified('tls_inspect'):
       tls_inspect = args.tls_inspect
+
+    if self.support_network_scopes:
+      if args.IsSpecified('src_network_scope') and args.IsSpecified(
+          'src_network_type'
+      ):
+        raise exceptions.ToolException(
+            'At most one of src_network_scope and src_network_type can be'
+            ' specified.'
+        )
+      if args.IsSpecified('dest_network_scope') and args.IsSpecified(
+          'dest_network_type'
+      ):
+        raise exceptions.ToolException(
+            'At most one of dest_network_scope and dest_network_type can be'
+            ' specified.'
+        )
+      if args.IsSpecified('src_network_scope'):
+        if not args.src_network_scope:
+          src_network_scope = (
+              holder.client.messages.FirewallPolicyRuleMatcher.SrcNetworkScopeValueValuesEnum.UNSPECIFIED
+          )
+        else:
+          src_network_scope = holder.client.messages.FirewallPolicyRuleMatcher.SrcNetworkScopeValueValuesEnum(
+              args.src_network_scope
+          )
+      if args.IsSpecified('src_networks'):
+        src_networks = args.src_networks
+      if args.IsSpecified('dest_network_scope'):
+        if not args.dest_network_scope:
+          dest_network_scope = (
+              holder.client.messages.FirewallPolicyRuleMatcher.DestNetworkScopeValueValuesEnum.UNSPECIFIED
+          )
+        else:
+          dest_network_scope = holder.client.messages.FirewallPolicyRuleMatcher.DestNetworkScopeValueValuesEnum(
+              args.dest_network_scope
+          )
+      if args.IsSpecified('src_network_type'):
+        # src_network_type and src_network_scope are mutually exclusive so only
+        # one of them can be specified.
+        if not args.src_network_type:
+          src_network_scope = (
+              holder.client.messages.FirewallPolicyRuleMatcher.SrcNetworkScopeValueValuesEnum.UNSPECIFIED
+          )
+        else:
+          src_network_scope = holder.client.messages.FirewallPolicyRuleMatcher.SrcNetworkScopeValueValuesEnum(
+              args.src_network_type
+          )
+      if args.IsSpecified('dest_network_type'):
+        # dest_network_type and dest_network_scope are mutually exclusive so
+        # only one of them can be specified.
+        if not args.dest_network_type:
+          dest_network_scope = (
+              holder.client.messages.FirewallPolicyRuleMatcher.DestNetworkScopeValueValuesEnum.UNSPECIFIED
+          )
+        else:
+          dest_network_scope = holder.client.messages.FirewallPolicyRuleMatcher.DestNetworkScopeValueValuesEnum(
+              args.dest_network_type
+          )
+
     layer4_config_list = rule_utils.ParseLayer4Configs(
         layer4_configs, holder.client.messages
     )
-    matcher = holder.client.messages.FirewallPolicyRuleMatcher(
-        srcIpRanges=src_ip_ranges,
-        destIpRanges=dest_ip_ranges,
-        layer4Configs=layer4_config_list,
-        srcSecureTags=src_secure_tags,
-    )
+    if self.support_network_scopes:
+      matcher = holder.client.messages.FirewallPolicyRuleMatcher(
+          srcIpRanges=src_ip_ranges,
+          destIpRanges=dest_ip_ranges,
+          layer4Configs=layer4_config_list,
+          srcSecureTags=src_secure_tags,
+          srcNetworkScope=src_network_scope,
+          srcNetworks=src_networks,
+          destNetworkScope=dest_network_scope,
+      )
+    else:
+      matcher = holder.client.messages.FirewallPolicyRuleMatcher(
+          srcIpRanges=src_ip_ranges,
+          destIpRanges=dest_ip_ranges,
+          layer4Configs=layer4_config_list,
+          srcSecureTags=src_secure_tags,
+      )
+
     if args.IsSpecified('src_address_groups'):
       matcher.srcAddressGroups = args.src_address_groups
     if args.IsSpecified('dest_address_groups'):
@@ -162,49 +257,34 @@ class Create(base.CreateCommand):
         traffic_direct = (
             holder.client.messages.FirewallPolicyRule.DirectionValueValuesEnum.EGRESS
         )
-
-    if self._support_ips:
-      if self._support_ips_with_tls:
-        firewall_policy_rule = holder.client.messages.FirewallPolicyRule(
-            priority=rule_utils.ConvertPriorityToInt(args.priority),
-            action=args.action,
-            match=matcher,
-            direction=traffic_direct,
-            targetServiceAccounts=target_service_accounts,
-            description=args.description,
-            enableLogging=enable_logging,
-            disabled=disabled,
-            targetSecureTags=target_secure_tags,
-            securityProfileGroup=security_profile_group,
-            tlsInspect=tls_inspect,
+    if self.support_target_type:
+      if args.IsSpecified('target_type'):
+        target_type = (
+            holder.client.messages.FirewallPolicyRule.TargetTypeValueValuesEnum(
+                args.target_type
+            )
         )
-      else:
-        firewall_policy_rule = holder.client.messages.FirewallPolicyRule(
-            priority=rule_utils.ConvertPriorityToInt(args.priority),
-            action=args.action,
-            match=matcher,
-            direction=traffic_direct,
-            targetServiceAccounts=target_service_accounts,
-            description=args.description,
-            enableLogging=enable_logging,
-            disabled=disabled,
-            targetSecureTags=target_secure_tags,
-            securityProfileGroup=security_profile_group,
-        )
-    else:
-      firewall_policy_rule = holder.client.messages.FirewallPolicyRule(
-          priority=rule_utils.ConvertPriorityToInt(args.priority),
-          action=args.action,
-          match=matcher,
-          direction=traffic_direct,
-          targetServiceAccounts=target_service_accounts,
-          description=args.description,
-          enableLogging=enable_logging,
-          disabled=disabled,
-          targetSecureTags=target_secure_tags,
-      )
+      if args.IsSpecified('target_forwarding_rules'):
+        target_forwarding_rules = args.target_forwarding_rules
 
-    return network_firewall_policy_rule_client.Create(
+    firewall_policy_rule = holder.client.messages.FirewallPolicyRule(
+        priority=rule_utils.ConvertPriorityToInt(args.priority),
+        action=args.action,
+        match=matcher,
+        direction=traffic_direct,
+        targetServiceAccounts=target_service_accounts,
+        description=args.description,
+        enableLogging=enable_logging,
+        disabled=disabled,
+        targetSecureTags=target_secure_tags,
+        securityProfileGroup=security_profile_group,
+        tlsInspect=tls_inspect,
+    )
+    if self.support_target_type:
+      firewall_policy_rule.targetType = target_type
+      firewall_policy_rule.targetForwardingRules = target_forwarding_rules
+
+    return network_firewall_policy_rule_client.CreateRule(
         firewall_policy=args.firewall_policy,
         firewall_policy_rule=firewall_policy_rule,
     )
@@ -216,8 +296,9 @@ class CreateBeta(Create):
 
   *{command}* is used to create network firewall policy rules.
   """
-  _support_ips = True
-  _support_ips_with_tls = True
+
+  support_network_scopes = True
+  support_target_type = False
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
@@ -226,8 +307,9 @@ class CreateAlpha(Create):
 
   *{command}* is used to create network firewall policy rules.
   """
-  _support_ips = True
-  _support_ips_with_tls = True
+
+  support_network_scopes = True
+  support_target_type = True
 
 
 Create.detailed_help = {

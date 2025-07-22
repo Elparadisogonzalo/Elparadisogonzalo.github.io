@@ -52,13 +52,18 @@ EXAMPLE_FORMAT = """\
     """
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
+@base.UniverseCompatible
+@base.ReleaseTracks(base.ReleaseTrack.GA)
 class List(base.ListCommand):
   """List Compute Engine virtual machine instances."""
 
   @staticmethod
   def Args(parser):
-    parser.display_info.AddFormat(flags.DEFAULT_LIST_FORMAT)
+    parser.display_info.AddFormat(flags.DEFAULT_LIST_FORMAT_WITH_IPV6)
+    parser.display_info.AddTransforms({
+        'external_ip': flags.TransformInstanceExternalIp,
+        'internal_ip': flags.TransformInstanceInternalIp,
+    })
     parser.display_info.AddUriFunc(utils.MakeGetUriFunc())
     lister.AddZonalListerArgs(parser)
     parser.display_info.AddCacheUpdater(completers.InstancesCompleter)
@@ -77,27 +82,35 @@ class List(base.ListCommand):
     return lister.Invoke(request_data, list_implementation)
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class ListAlpha(base.ListCommand):
+@base.UniverseCompatible
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+class ListBeta(base.ListCommand):
   """List Compute Engine virtual machine instances."""
 
   @staticmethod
   def Args(parser):
-    parser.display_info.AddFormat(flags.DEFAULT_LIST_FORMAT)
+    parser.display_info.AddFormat(flags.DEFAULT_LIST_FORMAT_WITH_IPV6)
+    parser.display_info.AddTransforms({
+        'external_ip': flags.TransformInstanceExternalIp,
+        'internal_ip': flags.TransformInstanceInternalIp,
+    })
     parser.display_info.AddUriFunc(utils.MakeGetUriFunc())
     lister.AddZonalListerArgs(parser)
     parser.display_info.AddCacheUpdater(completers.InstancesCompleter)
     parser.add_argument(
         '--view',
         choices={
-            'FULL': 'Include everything in instance',
+            'FULL': (
+                'Output contains all configuration details of the instance'
+                ', including partner metadata.'
+            ),
             'BASIC': (
-                'Default view of instance, Including everything except Partner'
-                ' Metadata.'
+                'Default output view. Output contains all configuration details'
+                ' of the instance, except partner metadata.'
             ),
         },
         type=arg_utils.ChoiceToEnumName,
-        help='specify Instance view',
+        help='Specifies the information that the output should contain.',
     )
 
   def _GetInstanceView(self, view, request_message):
@@ -129,7 +142,7 @@ List.detailed_help = DETAILED_HELP.copy()
 List.detailed_help['EXAMPLES'] = EXAMPLE_FORMAT.format(
     RESOURCE_TYPE, flags.IPV6_INFO_LIST_FORMAT
 )
-ListAlpha.detailed_help = DETAILED_HELP.copy()
-ListAlpha.detailed_help['EXAMPLES'] = EXAMPLE_FORMAT.format(
+ListBeta.detailed_help = DETAILED_HELP.copy()
+ListBeta.detailed_help['EXAMPLES'] = EXAMPLE_FORMAT.format(
     RESOURCE_TYPE, flags.IPV6_INFO_LIST_FORMAT
 )

@@ -52,6 +52,7 @@ DETAILED_HELP = {
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.UniverseCompatible
 class Create(base.CreateCommand):
   """Create a VMware Engine private cloud."""
 
@@ -141,6 +142,18 @@ class Create(base.CreateCommand):
         private cloud.
         """,
     )
+    parser.add_argument(
+        '--service-subnet',
+        required=False,
+        hidden=True,
+        action='append',
+        help="""\
+        A non-overlapping CIDR range and prefix length for the service subnets.
+        The service subnets are used for appliance or service deployment, such as storage,
+        backup, disaster recovery, and media streaming.
+        """,
+    )
+    flags.AddAutoscalingSettingsFlagsToParser(parser)
 
   def Run(self, args):
     privatecloud = args.CONCEPTS.private_cloud.Parse()
@@ -148,6 +161,23 @@ class Create(base.CreateCommand):
     is_async = args.async_
 
     nodes_configs = util.ParseNodesConfigsParameters(args.node_type_config)
+    autoscaling_settings = None
+    if args.autoscaling_settings_from_file:
+      autoscaling_settings = util.ParseAutoscalingSettingsFromFileFormat(
+          args.autoscaling_settings_from_file
+      )
+    if (
+        args.autoscaling_min_cluster_node_count
+        or args.autoscaling_max_cluster_node_count
+        or args.autoscaling_cool_down_period
+        or args.autoscaling_policy
+    ):
+      autoscaling_settings = util.ParseAutoscalingSettingsFromInlinedFormat(
+          args.autoscaling_min_cluster_node_count,
+          args.autoscaling_max_cluster_node_count,
+          args.autoscaling_cool_down_period,
+          args.autoscaling_policy,
+      )
 
     operation = client.Create(
         privatecloud,
@@ -159,6 +189,8 @@ class Create(base.CreateCommand):
         private_cloud_type=args.type,
         preferred_zone=args.preferred_zone,
         secondary_zone=args.secondary_zone,
+        autoscaling_settings=autoscaling_settings,
+        service_subnet=args.service_subnet,
     )
     if is_async:
       log.CreatedResource(operation.name, kind='private cloud', is_async=True)

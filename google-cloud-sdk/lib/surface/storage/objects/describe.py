@@ -33,6 +33,7 @@ from googlecloudsdk.command_lib.storage.resources import gsutil_json_printer
 from googlecloudsdk.command_lib.storage.resources import resource_util
 
 
+@base.UniverseCompatible
 class Describe(base.DescribeCommand):
   """Describe a Cloud Storage object."""
 
@@ -79,7 +80,7 @@ class Describe(base.DescribeCommand):
     client = api_factory.get_api(url.scheme)
     resource = client.get_object_metadata(
         url.bucket_name,
-        url.object_name,
+        url.resource_name,
         generation=url.generation,
         fields_scope=cloud_api.FieldsScope.FULL,
         soft_deleted=args.soft_deleted,

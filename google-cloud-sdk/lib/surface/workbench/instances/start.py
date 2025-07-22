@@ -26,7 +26,7 @@ from googlecloudsdk.command_lib.workbench import flags
 DETAILED_HELP = {
     'DESCRIPTION':
         """
-        Request for starting workbench instances.
+        Starts a workbench instance.
     """,
     'EXAMPLES':
         """
@@ -37,9 +37,10 @@ DETAILED_HELP = {
 }
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
 class Start(base.Command):
-  """Request for starting instances."""
+  """Starts a workbench instance."""
 
   @staticmethod
   def Args(parser):

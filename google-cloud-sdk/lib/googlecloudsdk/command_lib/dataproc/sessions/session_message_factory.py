@@ -36,7 +36,6 @@ class SessionMessageFactory(object):
   """
 
   INVALID_SESSION_TYPE_ERR_MSG = 'Invalid session type: {}.'
-  INVALID_ENGINE_TYPE_ERR_MSG = 'Invalid engine type: {}.'
 
   def __init__(self, dataproc, runtime_config_factory_override=None,
                environment_config_factory_override=None,
@@ -60,7 +59,6 @@ class SessionMessageFactory(object):
 
     # Construct available session type to keyword mapping.
     self._session2key = {self.dataproc.messages.JupyterConfig: 'jupyterSession'}
-    self._engine2key = {self.dataproc.messages.SparkConfig: 'spark'}
 
     self.runtime_config_factory = (
         runtime_config_factory_override or
@@ -92,9 +90,7 @@ class SessionMessageFactory(object):
     """
     kwargs = {}
     session_config = self.jupyter_config_factory.GetMessage(args)
-    engine_config = self.dataproc.messages.SparkConfig()
     kwargs[self._session2key[type(session_config)]] = session_config
-    kwargs[self._engine2key[type(engine_config)]] = engine_config
 
     if args.labels:
       kwargs['labels'] = labels_util.ParseCreateArgs(
@@ -109,9 +105,6 @@ class SessionMessageFactory(object):
       kwargs['environmentConfig'] = environment_config
 
     kwargs['name'] = args.CONCEPTS.session.Parse().RelativeName()
-
-    if args.user:
-      kwargs['user'] = args.user
 
     if args.session_template:
       kwargs['sessionTemplate'] = args.session_template
@@ -131,29 +124,6 @@ def AddArguments(parser):
   Args:
     parser: A argument parser.
   """
-  personal_auth_group = parser.add_group(
-      required=False,
-      help='Enable personal authentication for the session.',
-      hidden=True
-  )
-
-  # If enable-credentials-injection flag is used, we set authentication_type as
-  # CREDENTIALS_INJECTION, else, the default is SERVICE_ACCOUNT.
-  personal_auth_group.add_argument(
-      '--enable-credentials-injection',
-      action='store_true',
-      help="""\
-        Enable injection of user credentials for authentication.
-        """,
-      required=True
-  )
-  personal_auth_group.add_argument(
-      '--user',
-      help="""The email address of the user who owns the session. The session
-          will be authenticated as this user if credentials injection is
-          enabled.""",
-      required=True
-  )
   parser.add_argument(
       '--session_template',
       help="""The session template to use for creating the session.""",

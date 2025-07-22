@@ -66,10 +66,20 @@ def ValidateAutoscalingMetricSpecs(specs):
                   constants.OP_AUTOSCALING_METRIC_NAME_MAPPER.keys())
           ])))
 
-    if value <= 0 or value > 100:
+    if key == 'request-counts-per-minute':
+      if value <= 0:
+        raise exceptions.InvalidArgumentException(
+            '--autoscaling-metric-specs',
+            'Metric target for request-counts-per-minute must be a positive'
+            ' value.',
+        )
+    elif value <= 0 or value > 100:
       raise exceptions.InvalidArgumentException(
           '--autoscaling-metric-specs',
-          'Metric target value %s is not between 0 and 100.' % value)
+          'Metric target value {} for {} is not between 0 and 100.'.format(
+              value, key
+          ),
+      )
 
 
 def ValidateSharedResourceArgs(shared_resources_ref=None,
@@ -122,4 +132,27 @@ def ValidateEndpointArgs(network=None, public_endpoint_enabled=None):
         'Please either set --network for private endpoint, or set'
         ' --public-endpoint-enabled',
         'for public enpdoint.',
+    )
+
+
+def ValidateModelGardenModelArgs(args):
+  """Validates the model garden model args."""
+  if args.model is not None and not args.model:
+    raise exceptions.InvalidArgumentException(
+        '--model',
+        'Model name should not be empty.',
+    )
+
+  if (
+      len(args.model.split('/')) != 2
+      or len(args.model.split('/')[1].split('@')) > 2
+  ):
+    raise exceptions.InvalidArgumentException(
+        '--model',
+        'Model name should be in the format of Model Garden, e.g.'
+        ' `{publisher_name}/{model_name}@{model_version_name}, e.g.'
+        ' `google/gemma2@gemma-2-2b` or in the format of Hugging Face'
+        ' convention, e.g. `meta-llama/Meta-Llama-3-8B`. You can use the'
+        ' `gcloud ai model-garden models list` command to find supported'
+        ' models.',
     )

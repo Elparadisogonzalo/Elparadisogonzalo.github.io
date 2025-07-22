@@ -38,9 +38,9 @@ from googlecloudsdk.command_lib.compute import flags
 from googlecloudsdk.command_lib.compute import scope as compute_scope
 from googlecloudsdk.command_lib.compute.disks import create
 from googlecloudsdk.command_lib.compute.disks import flags as disks_flags
-from googlecloudsdk.command_lib.compute.kms import resource_args as kms_resource_args
 from googlecloudsdk.command_lib.compute.resource_policies import flags as resource_flags
 from googlecloudsdk.command_lib.compute.resource_policies import util as resource_util
+from googlecloudsdk.command_lib.kms import resource_args as kms_resource_args
 from googlecloudsdk.command_lib.util.apis import arg_utils
 from googlecloudsdk.command_lib.util.args import labels_util
 from googlecloudsdk.core import log
@@ -82,7 +82,7 @@ DETAILED_HELP = {
 }
 
 
-def _SourceArgs(parser, source_instant_snapshot_enabled=False):
+def _SourceArgs(parser, support_source_snapshot_region):
   """Add mutually exclusive source args."""
   source_parent_group = parser.add_group()
   source_group = source_parent_group.add_mutually_exclusive_group()
@@ -115,10 +115,13 @@ def _SourceArgs(parser, source_instant_snapshot_enabled=False):
         version of an image is needed.
         """)
   image_utils.AddImageFamilyScopeFlag(source_parent_group)
-
-  disks_flags.SOURCE_SNAPSHOT_ARG.AddArgument(source_group)
-  if source_instant_snapshot_enabled:
-    disks_flags.SOURCE_INSTANT_SNAPSHOT_ARG.AddArgument(source_group)
+  if support_source_snapshot_region:
+    disks_flags.SOURCE_SNAPSHOT_ARG_ALPHA.AddArgument(
+        parser, mutex_group=source_group
+    )
+  else:
+    disks_flags.SOURCE_SNAPSHOT_ARG.AddArgument(source_group)
+  disks_flags.SOURCE_INSTANT_SNAPSHOT_ARG.AddArgument(source_group)
   disks_flags.SOURCE_DISK_ARG.AddArgument(parser, mutex_group=source_group)
   disks_flags.ASYNC_PRIMARY_DISK_ARG.AddArgument(
       parser, mutex_group=source_group
@@ -132,11 +135,10 @@ def _CommonArgs(
     parser,
     include_physical_block_size_support=False,
     vss_erase_enabled=False,
-    source_instant_snapshot_enabled=False,
     support_pd_interface=False,
     support_user_licenses=False,
-    support_storage_pool=False,
-    support_access_mode=False,
+    support_source_snapshot_region=False,
+    support_gmi_restore=False,
 ):
   """Add arguments used for parsing in all command tracks."""
   Create.disks_arg.AddArgument(parser, operation_type='create')
@@ -193,18 +195,20 @@ def _CommonArgs(
             'be added onto the created disks to indicate the licensing and '
             'billing policies.'))
 
-  _SourceArgs(parser, source_instant_snapshot_enabled)
+  _SourceArgs(parser, support_source_snapshot_region)
 
   disks_flags.AddProvisionedIopsFlag(parser, arg_parsers)
   disks_flags.AddArchitectureFlag(parser, messages)
 
   disks_flags.AddProvisionedThroughputFlag(parser, arg_parsers)
 
-  if support_storage_pool:
-    disks_flags.STORAGE_POOL_ARG.AddArgument(parser)
+  disks_flags.STORAGE_POOL_ARG.AddArgument(parser)
 
-  if support_access_mode:
-    disks_flags.AddAccessModeFlag(parser, messages)
+  disks_flags.AddAccessModeFlag(parser, messages)
+
+  if support_gmi_restore:
+    disks_flags.AddSourceMachineImageNameArg(parser)
+    disks_flags.AddSourceMachineImageDiskDeviceNameArg(parser)
 
   if support_user_licenses:
     parser.add_argument(
@@ -257,11 +261,10 @@ def _ParseGuestOsFeaturesToMessages(args, client_messages):
   return guest_os_feature_messages
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.Command):
   """Create Compute Engine persistent disks."""
-
-  source_instant_snapshot_enabled = False
 
   @classmethod
   def Args(cls, parser):
@@ -290,16 +293,12 @@ class Create(base.Command):
     return []
 
   def ValidateAndParseDiskRefs(self, args, compute_holder):
-    return _ValidateAndParseDiskRefsRegionalReplica(
-        args, compute_holder, self.source_instant_snapshot_enabled
-    )
+    return _ValidateAndParseDiskRefsRegionalReplica(args, compute_holder)
 
   def GetFromImage(self, args):
     return args.image or args.image_family
 
   def GetFromSourceInstantSnapshot(self, args):
-    if not self.source_instant_snapshot_enabled:
-      return False
     return args.source_instant_snapshot
 
   def GetDiskSizeGb(self, args, from_image):
@@ -374,9 +373,21 @@ class Create(base.Command):
     region_resource_fetcher.WarnForRegionalCreation(
         (ref for ref in disk_refs if ref.Collection() == 'compute.regionDisks'))
 
-  def GetSnapshotUri(self, args, compute_holder):
-    snapshot_ref = disks_flags.SOURCE_SNAPSHOT_ARG.ResolveAsResource(
-        args, compute_holder.resources)
+  def GetSnapshotUri(
+      self, args, compute_holder, support_source_snapshot_region
+  ):
+    if not support_source_snapshot_region:
+      snapshot_ref = disks_flags.SOURCE_SNAPSHOT_ARG.ResolveAsResource(
+          args,
+          compute_holder.resources,
+      )
+    else:
+      snapshot_ref = disks_flags.SOURCE_SNAPSHOT_ARG_ALPHA.ResolveAsResource(
+          args,
+          compute_holder.resources,
+          scope_lister=flags.GetDefaultScopeLister(compute_holder.client),
+          default_scope=compute_scope.ScopeEnum.GLOBAL,
+      )
     if snapshot_ref:
       return snapshot_ref.SelfLink()
     return None
@@ -446,27 +457,6 @@ class Create(base.Command):
       ])
     return labels
 
-  def GetDiskTypeUri(self, args, disk_ref, compute_holder):
-    if args.type:
-      if disk_ref.Collection() == 'compute.disks':
-        type_ref = compute_holder.resources.Parse(
-            args.type,
-            collection='compute.diskTypes',
-            params={
-                'project': disk_ref.project,
-                'zone': disk_ref.zone
-            })
-      elif disk_ref.Collection() == 'compute.regionDisks':
-        type_ref = compute_holder.resources.Parse(
-            args.type,
-            collection='compute.regionDiskTypes',
-            params={
-                'project': disk_ref.project,
-                'region': disk_ref.region
-            })
-      return type_ref.SelfLink()
-    return None
-
   def GetReplicaZones(self, args, compute_holder, disk_ref):
     result = []
     for zone in args.replica_zones:
@@ -494,8 +484,8 @@ class Create(base.Command):
       support_pd_interface=False,
       support_user_licenses=False,
       support_enable_confidential_compute=True,
-      support_storage_pool=False,
-      support_access_mode=False,
+      support_source_snapshot_region=False,
+      support_gmi_restore=False,
   ):
     compute_holder = self._GetApiHolder()
     client = compute_holder.client
@@ -504,9 +494,8 @@ class Create(base.Command):
                                         args.IsSpecified('image_family') or
                                         args.IsSpecified('source_snapshot') or
                                         args.IsSpecified('source_disk'))
-    if self.source_instant_snapshot_enabled:
-      self.show_unformated_message = self.show_unformated_message and not (
-          args.IsSpecified('source_instant_snapshot'))
+    self.show_unformated_message = self.show_unformated_message and not (
+        args.IsSpecified('source_instant_snapshot'))
 
     disk_refs = self.ValidateAndParseDiskRefs(args, compute_holder)
     from_image = self.GetFromImage(args)
@@ -514,7 +503,9 @@ class Create(base.Command):
     self.WarnAboutScopeDeprecationsAndMaintenance(disk_refs, client)
     project_to_source_image = self.GetProjectToSourceImageDict(
         args, disk_refs, compute_holder, from_image)
-    snapshot_uri = self.GetSnapshotUri(args, compute_holder)
+    snapshot_uri = self.GetSnapshotUri(
+        args, compute_holder, support_source_snapshot_region
+    )
 
     labels = self.GetLabels(args, client)
 
@@ -532,7 +523,7 @@ class Create(base.Command):
 
     requests = []
     for disk_ref in disk_refs:
-      type_uri = self.GetDiskTypeUri(args, disk_ref, compute_holder)
+      type_uri = disks_util.GetDiskTypeUri(args.type, disk_ref, compute_holder)
 
       kwargs = {}
       if csek_keys:
@@ -596,9 +587,8 @@ class Create(base.Command):
           physicalBlockSizeBytes=physical_block_size_bytes,
           **kwargs)
       disk.sourceDisk = self.GetSourceDiskUri(args, disk_ref, compute_holder)
-      if self.source_instant_snapshot_enabled:
-        disk.sourceInstantSnapshot = self.GetSourceInstantSnapshotUri(
-            args, compute_holder)
+      disk.sourceInstantSnapshot = self.GetSourceInstantSnapshotUri(
+          args, compute_holder)
 
       if (support_multiwriter_disk and
           disk_ref.Collection() in ['compute.disks', 'compute.regionDisks'] and
@@ -619,7 +609,7 @@ class Create(base.Command):
       disk.licenses = self.ParseLicenses(args)
 
       if args.IsSpecified('provisioned_iops'):
-        if type_uri and disks_util.IsProvisioingTypeIops(type_uri):
+        if type_uri and disks_util.IsProvisioningTypeIops(type_uri):
           disk.provisionedIops = args.provisioned_iops
         else:
           raise exceptions.InvalidArgumentException(
@@ -639,7 +629,7 @@ class Create(base.Command):
       if args.IsSpecified('architecture'):
         disk.architecture = disk.ArchitectureValueValuesEnum(args.architecture)
 
-      if support_access_mode and args.IsSpecified('access_mode'):
+      if args.IsSpecified('access_mode'):
         disk.accessMode = disk.AccessModeValueValuesEnum(args.access_mode)
 
       if support_user_licenses and args.IsSpecified('user_licenses'):
@@ -648,8 +638,11 @@ class Create(base.Command):
       if args.IsSpecified('location_hint'):
         disk.locationHint = args.location_hint
 
-      if support_storage_pool and args.IsSpecified('storage_pool'):
+      if args.IsSpecified('storage_pool'):
         disk.storagePool = self.GetStoragePoolUri(args, compute_holder)
+
+      if support_gmi_restore:
+        _SetSourceMachineImageOptions(args, disk)
 
       if disk_ref.Collection() == 'compute.disks':
         request = client.messages.ComputeDisksInsertRequest(
@@ -682,11 +675,10 @@ class Create(base.Command):
       log.status.Print(textwrap.dedent(message))
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
 class CreateBeta(Create):
   """Create Compute Engine persistent disks."""
-
-  source_instant_snapshot_enabled = True
 
   @classmethod
   def Args(cls, parser):
@@ -697,8 +689,8 @@ class CreateBeta(Create):
         parser,
         include_physical_block_size_support=True,
         vss_erase_enabled=True,
-        source_instant_snapshot_enabled=True,
         support_pd_interface=True,
+        support_source_snapshot_region=True,
     )
     image_utils.AddGuestOsFeaturesArg(parser, messages)
     _AddReplicaZonesArg(parser)
@@ -715,14 +707,15 @@ class CreateBeta(Create):
         support_vss_erase=True,
         support_multiwriter_disk=True,
         support_pd_interface=True,
-        support_enable_confidential_compute=True)
+        support_enable_confidential_compute=True,
+        support_source_snapshot_region=True,
+    )
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class CreateAlpha(CreateBeta):
   """Create Compute Engine persistent disks."""
-
-  source_instant_snapshot_enabled = True
 
   @classmethod
   def Args(cls, parser):
@@ -733,11 +726,10 @@ class CreateAlpha(CreateBeta):
         parser,
         include_physical_block_size_support=True,
         vss_erase_enabled=True,
-        source_instant_snapshot_enabled=True,
         support_pd_interface=True,
         support_user_licenses=True,
-        support_storage_pool=True,
-        support_access_mode=True,
+        support_source_snapshot_region=True,
+        support_gmi_restore=True,
     )
     image_utils.AddGuestOsFeaturesArg(parser, messages)
     _AddReplicaZonesArg(parser)
@@ -756,13 +748,13 @@ class CreateAlpha(CreateBeta):
         support_pd_interface=True,
         support_user_licenses=True,
         support_enable_confidential_compute=True,
-        support_storage_pool=True,
-        support_access_mode=True,
+        support_source_snapshot_region=True,
+        support_gmi_restore=True,
     )
 
 
 def _ValidateAndParseDiskRefsRegionalReplica(
-    args, compute_holder, source_instant_snapshot_enabled
+    args, compute_holder
 ):
   """Validate flags and parse disks references.
 
@@ -771,7 +763,6 @@ def _ValidateAndParseDiskRefsRegionalReplica(
   Args:
     args: The argument namespace
     compute_holder: base_classes.ComputeApiHolder instance
-    source_instant_snapshot_enabled: True if source instant snapshot is enabled
 
   Returns:
     List of compute.regionDisks resources.
@@ -779,8 +770,7 @@ def _ValidateAndParseDiskRefsRegionalReplica(
   if (
       not args.IsSpecified('replica_zones')
       and args.IsSpecified('region')
-      and not (source_instant_snapshot_enabled
-               and args.IsSpecified('source_instant_snapshot'))
+      and not (args.IsSpecified('source_instant_snapshot'))
   ):
     raise exceptions.RequiredArgumentException(
         '--replica-zones',
@@ -800,8 +790,7 @@ def _ValidateAndParseDiskRefsRegionalReplica(
   for disk_ref in disk_refs:
     if (
         disk_ref.Collection() == 'compute.regionDisks'
-        and not (source_instant_snapshot_enabled
-                 and args.IsSpecified('source_instant_snapshot'))
+        and not args.IsSpecified('source_instant_snapshot')
     ):
       raise exceptions.RequiredArgumentException(
           '--replica-zones',
@@ -810,5 +799,43 @@ def _ValidateAndParseDiskRefsRegionalReplica(
 
   return disk_refs
 
+
+def _SetSourceMachineImageOptions(args, disk):
+  """Sets source machine image options on the disk.
+
+  Args:
+    args: The arguments namespace.
+    disk: The disk message.
+
+  Raises:
+    exceptions.RequiredArgumentException: If only one of the source machine
+      image arguments is specified.
+  """
+
+  has_source_machine_image = args.IsSpecified('source_machine_image')
+  has_disk_device_name = args.IsSpecified(
+      'source_machine_image_disk_device_name'
+  )
+  if has_source_machine_image ^ has_disk_device_name:
+    missing_option = (
+        '--source-machine-image-disk-device-name'
+        if has_source_machine_image
+        else '--source-machine-image'
+    )
+    provided_option = (
+        '--source-machine-image'
+        if has_source_machine_image
+        else '--source-machine-image-disk-device-name'
+    )
+    raise exceptions.RequiredArgumentException(
+        missing_option,
+        f'{missing_option} must be specified when {provided_option} is'
+        ' specified.',
+    )
+  elif has_source_machine_image and has_disk_device_name:
+    disk.sourceMachineImageDiskDeviceName = (
+        args.source_machine_image_disk_device_name
+    )
+    disk.sourceMachineImage = args.source_machine_image
 
 Create.detailed_help = DETAILED_HELP

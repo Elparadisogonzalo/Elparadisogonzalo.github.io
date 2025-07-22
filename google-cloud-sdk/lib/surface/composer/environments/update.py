@@ -46,16 +46,15 @@ Cannot specify --{opt} with Composer 1.X.
 """
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Update(base.Command):
   """Update properties of a Cloud Composer environment."""
 
   detailed_help = DETAILED_HELP
   _support_autoscaling = True
-  _support_composer3flags = False
   _support_maintenance_window = True
   _support_environment_size = True
-  _support_cloud_data_lineage_integration = False
 
   @staticmethod
   def Args(parser, release_track=base.ReleaseTrack.GA):
@@ -90,14 +89,21 @@ class Update(base.Command):
         Update.update_type_group)
 
     flags.AIRFLOW_DATABASE_RETENTION_DAYS.AddToParser(
-        Update.update_type_group.add_argument_group(hidden=True)
+        Update.update_type_group.add_argument_group()
     )
 
     flags.AddScheduledSnapshotFlagsToGroup(Update.update_type_group)
 
-    flags.AddMaintenanceWindowFlagsGroup(Update.update_type_group)
+    flags.AddMaintenanceWindowFlagsUpdateGroup(Update.update_type_group)
+    flags.AddCloudDataLineageIntegrationUpdateFlagsToGroup(
+        Update.update_type_group)
 
-  def _ConstructPatch(self, env_ref, args, support_environment_upgrades=False):
+    # Environment upgrade arguments
+    flags.AddEnvUpgradeFlagsToGroup(Update.update_type_group, release_track)
+
+    flags.AddComposer3FlagsToGroup(Update.update_type_group)
+
+  def _ConstructPatch(self, env_ref, args):
     env_obj = environments_api_util.Get(
         env_ref, release_track=self.ReleaseTrack())
     is_composer_v1 = image_versions_command_util.IsImageVersionStringComposerV1(
@@ -125,10 +131,9 @@ class Update(base.Command):
         release_track=self.ReleaseTrack(),
     )
 
-    if support_environment_upgrades:
-      params['update_image_version'] = self._getImageVersion(
-          args, env_ref, env_obj
-      )
+    params['update_image_version'] = self._getImageVersion(
+        args, env_ref, env_obj, self.ReleaseTrack()
+    )
     params['update_web_server_access_control'] = (
         environments_api_util.BuildWebServerAllowedIps(
             args.update_web_server_allow_ip,
@@ -268,6 +273,7 @@ class Update(base.Command):
     self._addTriggererFields(params, args, env_obj)
 
     if self._support_maintenance_window:
+      params['clear_maintenance_window'] = args.clear_maintenance_window
       params['maintenance_window_start'] = args.maintenance_window_start
       params['maintenance_window_end'] = args.maintenance_window_end
       params[
@@ -293,10 +299,6 @@ class Update(base.Command):
     command_util.ValidateMasterAuthorizedNetworks(
         args.master_authorized_networks)
     params['master_authorized_networks'] = args.master_authorized_networks
-    if self._support_cloud_data_lineage_integration:
-      if args.enable_cloud_data_lineage_integration or args.disable_cloud_data_lineage_integration:
-        params[
-            'cloud_data_lineage_integration_enabled'] = True if args.enable_cloud_data_lineage_integration else False
 
     if args.enable_high_resilience or args.disable_high_resilience:
       if is_composer_v1:
@@ -325,25 +327,52 @@ class Update(base.Command):
           args.enable_logs_in_cloud_logging_only
       )
 
-    if self._support_composer3flags:
-      self._addComposer3Fields(params, args, env_obj)
+    if (
+        args.enable_cloud_data_lineage_integration
+        or args.disable_cloud_data_lineage_integration
+    ):
+      if is_composer_v1:
+        raise command_util.InvalidUserInputError(
+            _INVALID_OPTION_FOR_V1_ERROR_MSG.format(
+                opt='enable-cloud-data-lineage-integration'
+                if args.enable_cloud_data_lineage_integration
+                else 'disable-cloud-data-lineage-integration'
+            )
+        )
+      params['cloud_data_lineage_integration_enabled'] = bool(
+          args.enable_cloud_data_lineage_integration
+      )
+
+    self._addComposer3Fields(params, args, env_obj)
     return patch_util.ConstructPatch(**params)
 
-  def _getImageVersion(self, args, env_ref, env_obj):
-    if (
-        args.airflow_version or args.image_version
-    ) and image_versions_command_util.IsDefaultImageVersion(args.image_version):
-      message = image_versions_command_util.BuildDefaultComposerVersionWarning(
-          args.image_version, args.airflow_version
+  def _getImageVersion(self, args, env_ref, env_obj, release_track):
+    if release_track != base.ReleaseTrack.GA:
+      is_composer_3 = image_versions_command_util.IsVersionComposer3Compatible(
+          env_obj.config.softwareConfig.imageVersion
       )
-      log.warning(message)
 
-    if args.airflow_version:
-      args.image_version = (
-          image_versions_command_util.ImageVersionFromAirflowVersion(
-              args.airflow_version, env_obj.config.softwareConfig.imageVersion
+      if (
+          (args.image_version or (args.airflow_version and not is_composer_3))
+          and (
+              image_versions_command_util.IsDefaultImageVersion(
+                  args.image_version
+              )
           )
-      )
+      ):
+        message = (
+            image_versions_command_util.BuildDefaultComposerVersionWarning(
+                args.image_version, args.airflow_version
+            )
+        )
+        log.warning(message)
+
+      if args.airflow_version:
+        args.image_version = (
+            image_versions_command_util.ImageVersionFromAirflowVersion(
+                args.airflow_version, env_obj.config.softwareConfig.imageVersion
+            )
+        )
     # Checks validity of image_version upgrade request.
     if args.image_version:
       upgrade_validation = (
@@ -373,6 +402,7 @@ class Update(base.Command):
         'disable-private-environment': args.disable_private_environment,
         'network': args.network,
         'subnetwork': args.subnetwork,
+        'clear-maintenance-window': args.clear_maintenance_window,
     }
     for k, v in possible_args.items():
       if v is not None and not is_composer3:
@@ -517,27 +547,19 @@ class Update(base.Command):
         release_track=self.ReleaseTrack())
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
 class UpdateBeta(Update):
   """Update properties of a Cloud Composer environment."""
 
   _support_autoscaling = True
-  _support_composer3flags = True
   _support_maintenance_window = True
   _support_environment_size = True
-  _support_cloud_data_lineage_integration = True
 
   @staticmethod
   def AlphaAndBetaArgs(parser, release_track=base.ReleaseTrack.BETA):
     """Arguments available only in both alpha and beta."""
     Update.Args(parser, release_track=release_track)
-
-    # Environment upgrade arguments
-    UpdateBeta.support_environment_upgrades = True
-    flags.AddEnvUpgradeFlagsToGroup(Update.update_type_group)
-    flags.AddCloudDataLineageIntegrationUpdateFlagsToGroup(
-        Update.update_type_group)
-    flags.AddComposer3FlagsToGroup(Update.update_type_group)
 
   @staticmethod
   def Args(parser):
@@ -553,8 +575,7 @@ class UpdateBeta(Update):
       flags.ValidateIpRanges(
           [acl['ip_range'] for acl in args.update_web_server_allow_ip])
 
-    field_mask, patch = self._ConstructPatch(
-        env_ref, args, UpdateBeta.support_environment_upgrades)
+    field_mask, patch = self._ConstructPatch(env_ref, args)
 
     return patch_util.Patch(
         env_ref,
@@ -564,6 +585,7 @@ class UpdateBeta(Update):
         release_track=self.ReleaseTrack())
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class UpdateAlpha(UpdateBeta):
   """Update properties of a Cloud Composer environment."""

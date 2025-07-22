@@ -26,7 +26,7 @@ class Collections(enum.Enum):
 
   DATASETS = (
       'datasets',
-      'projects/{projectId}/datasets/{datasetId}',
+      'projects/{+projectId}/datasets/{+datasetId}',
       {
           '':
               'projects/{projectId}/datasets/{datasetId}',
@@ -36,8 +36,11 @@ class Collections(enum.Enum):
   )
   JOBS = (
       'jobs',
-      'projects/{projectId}/jobs/{jobId}',
-      {},
+      'projects/{+projectId}/jobs/{+jobId}',
+      {
+          '':
+              'projects/{projectId}/jobs/{jobId}',
+      },
       ['projectId', 'jobId'],
       True
   )
@@ -69,6 +72,18 @@ class Collections(enum.Enum):
       ['projectId', 'datasetId', 'routineId'],
       True
   )
+  ROWACCESSPOLICIES = (
+      'rowAccessPolicies',
+      'projects/{+projectId}/datasets/{+datasetId}/tables/{+tableId}/'
+      'rowAccessPolicies/{+policyId}',
+      {
+          '':
+              'projects/{projectsId}/datasets/{datasetsId}/tables/{tablesId}/'
+              'rowAccessPolicies/{rowAccessPoliciesId}',
+      },
+      ['projectId', 'datasetId', 'tableId', 'policyId'],
+      True
+  )
   TABLEDATA = (
       'tabledata',
       'projects/{projectId}/datasets/{datasetId}/tables/{tableId}',
@@ -78,8 +93,11 @@ class Collections(enum.Enum):
   )
   TABLES = (
       'tables',
-      'projects/{projectId}/datasets/{datasetId}/tables/{tableId}',
-      {},
+      'projects/{+projectId}/datasets/{+datasetId}/tables/{+tableId}',
+      {
+          '':
+              'projects/{projectId}/datasets/{datasetId}/tables/{tableId}',
+      },
       ['projectId', 'datasetId', 'tableId'],
       True
   )

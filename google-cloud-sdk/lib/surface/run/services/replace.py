@@ -43,8 +43,8 @@ from googlecloudsdk.core import resources
 from googlecloudsdk.core.console import progress_tracker
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
-                    base.ReleaseTrack.GA)
+@base.UniverseCompatible
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
 class Replace(base.Command):
   """Create or replace a service from a YAML service specification."""
 
@@ -63,23 +63,22 @@ class Replace(base.Command):
   }
 
   @classmethod
-  def Args(cls, parser):
+  def CommonArgs(cls, parser):
     # Flags specific to connecting to a cluster
-    cluster_group = flags.GetClusterArgGroup(parser)
     namespace_presentation = presentation_specs.ResourcePresentationSpec(
         '--namespace',
         resource_args.GetNamespaceResourceSpec(),
         'Namespace to replace service.',
         required=True,
-        prefixes=False)
+        prefixes=False,
+        hidden=True)
     concept_parsers.ConceptParser([namespace_presentation
-                                  ]).AddToParser(cluster_group)
+                                  ]).AddToParser(parser)
 
     # Flags not specific to any platform
     flags.AddAsyncFlag(parser)
     flags.AddClientNameAndVersionFlags(parser)
-    if cls.ReleaseTrack() in [base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA]:
-      flags.AddDryRunFlag(parser)
+    flags.AddDryRunFlag(parser)
     parser.add_argument(
         'FILE',
         action='store',
@@ -90,10 +89,48 @@ class Replace(base.Command):
     # No output by default, can be overridden by --format
     parser.display_info.AddFormat('none')
 
+  @classmethod
+  def Args(cls, parser):
+    cls.CommonArgs(parser)
+
+  def _ConnectionContext(self, args, region_label):
+    return connection_context.GetConnectionContext(
+        args, flags.Product.RUN, self.ReleaseTrack(), region_label=region_label
+    )
+
+  def _GetBaseChanges(
+      self, new_service, args):  # used by child - pylint: disable=unused-argument
+    return [
+        config_changes.ReplaceServiceChange(new_service),
+        config_changes.SetLaunchStageAnnotationChange(self.ReleaseTrack()),
+    ]
+
+  def _PrintSuccessMessage(self, service_obj, dry_run, args):
+    if args.async_:
+      pretty_print.Success(
+          'New configuration for [{{bold}}{serv}{{reset}}] is being applied '
+          'asynchronously.'.format(serv=service_obj.name)
+      )
+    elif dry_run:
+      pretty_print.Success(
+          'New configuration has been validated for service '
+          '[{{bold}}{serv}{{reset}}].'.format(serv=service_obj.name)
+      )
+    else:
+      pretty_print.Success(
+          'New configuration has been applied to service '
+          '[{{bold}}{serv}{{reset}}].\n'
+          'URL: {{bold}}{url}{{reset}}'.format(
+              serv=service_obj.name, url=service_obj.domain
+          )
+      )
+
   def Run(self, args):
     """Create or Update service from YAML."""
-    run_messages = apis.GetMessagesModule(global_methods.SERVERLESS_API_NAME,
-                                          global_methods.SERVERLESS_API_VERSION)
+    run_messages = apis.GetMessagesModule(
+        global_methods.SERVERLESS_API_NAME,
+        global_methods.SERVERLESS_API_VERSION,
+    )
     service_dict = dict(args.FILE)
     # Clear the status to make migration from k8s deployments easier.
     # Since a Deployment status will have several fields that Cloud Run doesn't
@@ -108,6 +145,7 @@ class Replace(base.Command):
     if namespace is not None and not isinstance(namespace, str):
       service_dict['metadata']['namespace'] = str(namespace)
 
+    new_service = None  # this avoids a lot of errors.
     try:
       raw_service = messages_util.DictToMessageWithErrorCheck(
           service_dict, run_messages.Service)
@@ -117,7 +155,7 @@ class Replace(base.Command):
           e,
           help_text='Please make sure that the YAML file matches the Knative '
           'service definition spec in https://kubernetes.io/docs/'
-          'reference/kubernetes-api/services-resources/service-v1/'
+          'reference/kubernetes-api/service-resources/service-v1/'
           '#Service.')
 
     # If managed, namespace must match project (or will default to project if
@@ -140,10 +178,7 @@ class Replace(base.Command):
               'Cloud Run (fully managed).'.format(project, project_number))
     new_service.metadata.namespace = namespace
 
-    changes = [
-        config_changes.ReplaceServiceChange(new_service),
-        config_changes.SetLaunchStageAnnotationChange(self.ReleaseTrack())
-    ]
+    changes = self._GetBaseChanges(new_service, args)
     service_ref = resources.REGISTRY.Parse(
         new_service.metadata.name,
         params={'namespacesId': new_service.metadata.namespace},
@@ -151,8 +186,7 @@ class Replace(base.Command):
 
     region_label = new_service.region if new_service.is_managed else None
 
-    conn_context = connection_context.GetConnectionContext(
-        args, flags.Product.RUN, self.ReleaseTrack(), region_label=region_label)
+    conn_context = self._ConnectionContext(args, region_label)
     dry_run = args.dry_run if hasattr(args, 'dry_run') else False
 
     action = (
@@ -190,18 +224,16 @@ class Replace(base.Command):
             for_replace=True,
             dry_run=dry_run,
         )
-      if args.async_:
-        pretty_print.Success(
-            'New configuration for [{{bold}}{serv}{{reset}}] is being applied '
-            'asynchronously.'.format(serv=service_obj.name))
-      elif dry_run:
-        pretty_print.Success(
-            'New configuration has been validated for service '
-            '[{{bold}}{serv}{{reset}}].'.format(serv=service_obj.name)
-        )
-      else:
-        pretty_print.Success('New configuration has been applied to service '
-                             '[{{bold}}{serv}{{reset}}].\n'
-                             'URL: {{bold}}{url}{{reset}}'.format(
-                                 serv=service_obj.name, url=service_obj.domain))
+      self._PrintSuccessMessage(service_obj, dry_run, args)
       return service_obj
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class AlphaReplace(Replace):
+
+  @classmethod
+  def Args(cls, parser):
+    Replace.CommonArgs(parser)
+
+
+AlphaReplace.__doc__ = Replace.__doc__

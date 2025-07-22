@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from typing import Optional
+
 from apitools.base.protorpclite import messages
 from googlecloudsdk.api_lib.container.backup_restore import util as api_util
 from googlecloudsdk.calliope import exceptions
@@ -25,7 +27,6 @@ from googlecloudsdk.command_lib.export import util as export_util
 from googlecloudsdk.core import log
 from googlecloudsdk.core.console import console_io
 
-CLUSTER_RESOURCE_RESTORE_SCOPE = 'cluster_resource_restore_scope'
 CLUSTER_RESOURCE_SELECTED_GROUP_KINDS = 'cluster_resource_selected_group_kinds'
 CLUSTER_RESOURCE_EXCLUDED_GROUP_KINDS = 'cluster_resource_excluded_group_kinds'
 CLUSTER_RESOURCE_ALL_GROUP_KINDS = 'cluster_resource_all_group_kinds'
@@ -42,7 +43,7 @@ def AddForceToDeleteRequest(ref, args, request):
   return request
 
 
-def ParseGroupKinds(group_kinds, flag='--cluster-resource-restore-scope'):
+def ParseGroupKinds(group_kinds, flag):
   """Process list of group kinds."""
   if not group_kinds:
     return None
@@ -59,12 +60,12 @@ def ParseGroupKinds(group_kinds, flag='--cluster-resource-restore-scope'):
       else:
         raise exceptions.InvalidArgumentException(
             flag,
-            'Cluster resource restore scope is invalid.',
+            'Cluster resource scope selected group kinds is invalid.',
         )
       if not kind:
         raise exceptions.InvalidArgumentException(
             flag,
-            'Cluster resource restore scope kind is empty.')
+            'Cluster resource scope selected group kinds is empty.')
       gk = message.GroupKind()
       gk.resourceGroup = group
       gk.resourceKind = kind
@@ -73,14 +74,7 @@ def ParseGroupKinds(group_kinds, flag='--cluster-resource-restore-scope'):
   except ValueError:
     raise exceptions.InvalidArgumentException(
         flag,
-        'Cluster resource restore scope is invalid.')
-
-
-def ProcessClusterResourceRestoreScope(group_kinds):
-  message = api_util.GetMessagesModule()
-  crrs = message.ClusterResourceRestoreScope()
-  crrs.selectedGroupKinds.extend(ParseGroupKinds(group_kinds))
-  return crrs
+        'Cluster resource scope selected group kinds is invalid.')
 
 
 def ProcessSelectedGroupKinds(group_kinds):
@@ -187,7 +181,7 @@ def PreprocessUpdateBackupPlan(ref, args, request):
   """Preprocesses request and update mask for backup update command."""
   del ref
 
-  # Clear other fields in the backup scope mutex group.
+  # Clear other fields in the backup scope and backup schedule mutex group.
   if args.IsSpecified('selected_namespaces'):
     request.backupPlan.backupConfig.selectedApplications = None
     request.backupPlan.backupConfig.allNamespaces = None
@@ -198,16 +192,36 @@ def PreprocessUpdateBackupPlan(ref, args, request):
     request.backupPlan.backupConfig.selectedApplications = None
     request.backupPlan.backupConfig.selectedNamespaces = None
 
-  # Correct update mask for backup scope mutex group.
-  new_masks = []
+  # Unlike creation, update with both flags can result in both fields cleared
+  # using the below logic, so we need to catch and error out here early.
+  if (args.IsSpecified('target_rpo_minutes') and
+      args.IsSpecified('cron_schedule')):
+    raise exceptions.InvalidArgumentException(
+        '--cron-schedule',
+        'Cannot specify both --target_rpo_minutes and --cron_schedule.')
+
+  if args.IsSpecified('target_rpo_minutes'):
+    request.backupPlan.backupSchedule.cronSchedule = None
+  if args.IsSpecified('cron_schedule'):
+    request.backupPlan.backupSchedule.rpoConfig = None
+
+  # Correct update mask for backup scope and backup schedule mutex group.
+  new_masks = set()
   for mask in request.updateMask.split(','):
     if mask.startswith('backupConfig.selectedNamespaces'):
-      mask = 'backupConfig.selectedNamespaces'
+      new_masks.add('backupConfig.selectedNamespaces')
     elif mask.startswith('backupConfig.selectedApplications'):
-      mask = 'backupConfig.selectedApplications'
-    # Other masks are unchanged.
-    new_masks.append(mask)
-  request.updateMask = ','.join(new_masks)
+      new_masks.add('backupConfig.selectedApplications')
+    elif mask.startswith('backupSchedule.cronSchedule'):
+      new_masks.add('backupSchedule.cronSchedule')
+      new_masks.add('backupSchedule.rpoConfig')
+    elif mask.startswith('backupSchedule.rpoConfig.targetRpoMinutes'):
+      new_masks.add('backupSchedule.rpoConfig.targetRpoMinutes')
+      new_masks.add('backupSchedule.cronSchedule')
+    else:
+      new_masks.add(mask)
+  # use set to dedup and canonicalize
+  request.updateMask = ','.join(sorted(new_masks))
   return request
 
 
@@ -216,12 +230,6 @@ def PreprocessUpdateRestorePlan(ref, args, request):
   del ref
 
   # Guarded by argparser group with mutex=true.
-  if hasattr(args, CLUSTER_RESOURCE_RESTORE_SCOPE) and args.IsSpecified(
-      CLUSTER_RESOURCE_RESTORE_SCOPE
-  ):
-    request.restorePlan.restoreConfig.clusterResourceRestoreScope = (
-        ProcessClusterResourceRestoreScope(args.cluster_resource_restore_scope)
-    )
   if hasattr(
       args, CLUSTER_RESOURCE_SELECTED_GROUP_KINDS
   ) and args.IsSpecified(CLUSTER_RESOURCE_SELECTED_GROUP_KINDS):
@@ -278,7 +286,7 @@ def PreprocessUpdateRestorePlan(ref, args, request):
 
   if (
       args.IsSpecified('substitution_rules_file')
-      and len(request.restorePlan.restoreConfig.transformationRules) > 0
+      and bool(request.restorePlan.restoreConfig.transformationRules)
   ):
     console_io.PromptContinue(
         """
@@ -296,7 +304,7 @@ def PreprocessUpdateRestorePlan(ref, args, request):
 
   if (
       args.IsSpecified('transformation_rules_file')
-      and len(request.restorePlan.restoreConfig.substitutionRules) > 0
+      and bool(request.restorePlan.restoreConfig.substitutionRules)
   ):
     console_io.PromptContinue(
         """
@@ -363,3 +371,73 @@ def ReadTransformationRuleFile(file_arg):
       ),
   )
   return temp_restore_config.transformationRules
+
+
+def ReadRestoreOrderFile(file_arg):
+  """Reads content of the restore order file specified in file_arg."""
+  if not file_arg:
+    return None
+  data = console_io.ReadFromFileOrStdin(file_arg, binary=False)
+  ms = api_util.GetMessagesModule()
+  temp_restore_order = export_util.Import(
+      message_type=ms.RestoreOrder,
+      stream=data,
+      schema_path=export_util.GetSchemaPath(
+          'gkebackup', 'v1', 'RestoreOrder'
+      ),
+  )
+  return temp_restore_order
+
+
+def ReadExclusionWindowsFile(file_arg):
+  """Reads content of the exclusion window file specified in file_arg."""
+  if not file_arg:
+    return None
+  data = console_io.ReadFromFileOrStdin(file_arg, binary=False)
+  ms = api_util.GetMessagesModule()
+  temp_rpo_config = export_util.Import(
+      message_type=ms.RpoConfig,
+      stream=data,
+      schema_path=export_util.GetSchemaPath(
+          'gkebackup', 'v1', 'ExclusionWindows'
+      ),
+  )
+  return temp_rpo_config.exclusionWindows
+
+
+def ReadVolumeDataRestorePolicyOverridesFile(
+    file_arg: Optional[str]
+) -> Optional[api_util.VolumeDataRestorePolicyOverrides]:
+  """Reads the volume data restore policy overrides file."""
+  if not file_arg:
+    return None
+  data = console_io.ReadFromFileOrStdin(file_arg, binary=False)
+  ms = api_util.GetMessagesModule()
+  return export_util.Import(
+      message_type=ms.Restore,
+      stream=data,
+      schema_path=export_util.GetSchemaPath(
+          'gkebackup', 'v1', 'VolumeDataRestorePolicyOverrides'
+      ),
+  ).volumeDataRestorePolicyOverrides
+
+
+def ReadRestoreFilterFile(file_arg):
+  """Reads content of the restore filter file specified in file_arg."""
+  if not file_arg:
+    return None
+  data = console_io.ReadFromFileOrStdin(file_arg, binary=False)
+  try:
+    restore_filter = export_util.Import(
+        message_type=api_util.GetMessagesModule().Filter,
+        stream=data,
+        schema_path=export_util.GetSchemaPath(
+            'gkebackup', 'v1', 'Filter'
+        ),
+    )
+  except Exception as e:
+    raise exceptions.InvalidArgumentException(
+        '--filter-file',
+        '{0}'.format(e))
+
+  return restore_filter

@@ -25,6 +25,7 @@ from googlecloudsdk.core import log
 from googlecloudsdk.core.console import console_io
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(
     base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA
 )
@@ -86,7 +87,13 @@ class Create(base.CreateCommand):
   def Args(parser):
     """Register flags for this command."""
     parser.add_argument('sink_name', help='The name for the sink.')
-    parser.add_argument('destination', help='The destination for the sink.')
+    parser.add_argument(
+        'destination',
+        help=arg_parsers.UniverseHelpText(
+            default='The destination for the sink.',
+            universe_help='Some destination types are not supported\n.',
+        ),
+    )
     parser.add_argument(
         '--log-filter',
         required=False,
@@ -99,6 +106,15 @@ class Create(base.CreateCommand):
         help=('Whether to export logs from all child projects and folders. '
               'Only applies to sinks for organizations and folders.'))
     parser.add_argument(
+        '--intercept-children',
+        required=False,
+        action='store_true',
+        help=(
+            'Whether to intercept logs from all child projects and folders. '
+            'Only applies to sinks for organizations and folders.'
+        ),
+    )
+    parser.add_argument(
         '--custom-writer-identity',
         metavar='SERVICE_ACCOUNT_EMAIL',
         help=(
@@ -106,7 +122,8 @@ class Create(base.CreateCommand):
             'destination is a log bucket in a different project. The writer '
             'identity is automatically generated when it is not provided for '
             'a sink.'
-        ))
+        ),
+    )
     bigquery_group = parser.add_argument_group(
         help='Settings for sink exporting data to BigQuery.')
     bigquery_group.add_argument(
@@ -169,18 +186,33 @@ class Create(base.CreateCommand):
       console_io.PromptContinue(
           'Sink with empty filter matches all entries.', cancel_on_no=True)
 
-    if args.include_children and not (args.organization or args.folder):
-      log.warning('include-children only has an effect for sinks at the folder '
-                  'or organization level')
+    if not (args.organization or args.folder):
+      if args.include_children:
+        log.warning(
+            'include-children only has an effect for sinks at the folder '
+            'or organization level'
+        )
+      if args.intercept_children:
+        log.warning(
+            'intercept-children only has an effect for sinks at the folder '
+            'or organization level'
+        )
 
     sink_ref = util.GetSinkReference(args.sink_name, args)
 
     sink_data = {
         'name': sink_ref.sinksId,
         'destination': args.destination,
-        'filter': args.log_filter,
-        'includeChildren': args.include_children
     }
+
+    if args.IsSpecified('include_children'):
+      sink_data['includeChildren'] = args.include_children
+
+    if args.IsSpecified('intercept_children'):
+      sink_data['interceptChildren'] = args.intercept_children
+
+    if args.IsSpecified('log_filter'):
+      sink_data['filter'] = args.log_filter
 
     if args.IsSpecified('use_partitioned_tables'):
       bigquery_options = {}

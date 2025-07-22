@@ -1,0 +1,91 @@
+2025-07-22 02:56:53,689 DEBUG    root            Loaded Command Group: ['gcloud', 'functions']
+2025-07-22 02:56:54,246 DEBUG    root            Loaded Command Group: ['gcloud', 'functions', 'deploy']
+2025-07-22 02:56:54,345 DEBUG    root            Running [gcloud.functions.deploy] with arguments: [--allow-unauthenticated: "True", --region: "us-central1", --runtime: "nodejs20", --trigger-http: "True", NAME: "helloWorld"]
+2025-07-22 02:56:54,376 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): cloudfunctions.googleapis.com:443
+2025-07-22 02:56:55,662 DEBUG    urllib3.connectionpool https://cloudfunctions.googleapis.com:443 "GET /v2/projects/elparadisogonzalo-dev/locations/us-central1/functions/helloWorld?alt=json HTTP/11" 403 None
+2025-07-22 02:56:55,674 DEBUG    root            (gcloud.functions.deploy) ResponseError: status=[403], code=[Ok], message=[Permission denied: Consumer 'projects/elparadisogonzalo-dev' has been suspended.]
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/functions/v1/util.py", line 387, in CatchHTTPErrorRaiseHTTPExceptionFn
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/functions/v2/client.py", line 94, in GetFunction
+    return self.client.projects_locations_functions.Get(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/generated_clients/apis/cloudfunctions/v2/cloudfunctions_v2_client.py", line 257, in Get
+    return self._RunMethod(
+           ^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 747, in _RunMethod
+    return self.ProcessHttpResponse(method_config, http_response, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 753, in ProcessHttpResponse
+    self.__ProcessHttpResponse(method_config, http_response, request))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 612, in __ProcessHttpResponse
+    raise exceptions.HttpError.FromResponse(
+apitools.base.py.exceptions.HttpForbiddenError: HttpError accessing <https://cloudfunctions.googleapis.com/v2/projects/elparadisogonzalo-dev/locations/us-central1/functions/helloWorld?alt=json>: response: <{'vary': 'Origin, X-Origin, Referer', 'content-type': 'application/json; charset=UTF-8', 'content-encoding': 'gzip', 'date': 'Tue, 22 Jul 2025 01:56:55 GMT', 'server': 'ESF', 'x-xss-protection': '0', 'x-frame-options': 'SAMEORIGIN', 'x-content-type-options': 'nosniff', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000', 'transfer-encoding': 'chunked', 'status': 403}>, content <{
+  "error": {
+    "code": 403,
+    "message": "Permission denied: Consumer 'projects/elparadisogonzalo-dev' has been suspended.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "CONSUMER_SUSPENDED",
+        "domain": "googleapis.com",
+        "metadata": {
+          "containerInfo": "projects/elparadisogonzalo-dev",
+          "service": "cloudfunctions",
+          "consumer": "projects/958787376532"
+        }
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.LocalizedMessage",
+        "locale": "en-US",
+        "message": "Permission denied: Consumer 'projects/elparadisogonzalo-dev' has been suspended."
+      }
+    ]
+  }
+}
+>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 985, in Execute
+    resources = calliope_command.Run(cli=self, args=args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 945, in Run
+    resources = command_instance.Run(args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/functions/v1/util.py", line 387, in CatchHTTPErrorRaiseHTTPExceptionFn
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/command_lib/functions/util.py", line 76, in Run
+    self._v2_function = client.GetFunction(
+                        ^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/functions/v1/util.py", line 389, in CatchHTTPErrorRaiseHTTPExceptionFn
+    core_exceptions.reraise(
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/exceptions.py", line 149, in reraise
+    six.reraise(type(exc_value), exc_value, tb)
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/six/__init__.py", line 718, in reraise
+    raise value.with_traceback(tb)
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/functions/v1/util.py", line 387, in CatchHTTPErrorRaiseHTTPExceptionFn
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/functions/v2/client.py", line 94, in GetFunction
+    return self.client.projects_locations_functions.Get(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/generated_clients/apis/cloudfunctions/v2/cloudfunctions_v2_client.py", line 257, in Get
+    return self._RunMethod(
+           ^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 747, in _RunMethod
+    return self.ProcessHttpResponse(method_config, http_response, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 753, in ProcessHttpResponse
+    self.__ProcessHttpResponse(method_config, http_response, request))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 612, in __ProcessHttpResponse
+    raise exceptions.HttpError.FromResponse(
+googlecloudsdk.calliope.exceptions.HttpException: ResponseError: status=[403], code=[Ok], message=[Permission denied: Consumer 'projects/elparadisogonzalo-dev' has been suspended.]
+2025-07-22 02:56:55,693 ERROR    root            (gcloud.functions.deploy) ResponseError: status=[403], code=[Ok], message=[Permission denied: Consumer 'projects/elparadisogonzalo-dev' has been suspended.]
+2025-07-22 02:56:55,717 DEBUG    root            Metrics reporting process started...

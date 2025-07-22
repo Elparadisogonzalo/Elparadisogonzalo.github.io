@@ -50,7 +50,7 @@ class BuildType(enum.Enum):
   BUILDPACKS = 'Buildpacks'
 
 
-def ContainerArgGroup():
+def ContainerArgGroup(release_track=base.ReleaseTrack.GA):
   """Returns an argument group with all per-container deploy args."""
 
   help_text = """
@@ -62,15 +62,19 @@ Container Flags
   group = base.ArgumentGroup(help=help_text)
   group.AddArgument(
       flags.SourceAndImageFlags(
-          image='us-docker.pkg.dev/cloudrun/container/job:latest'
+          image='us-docker.pkg.dev/cloudrun/container/job:latest',
+          release_track=release_track,
       )
   )
-  group.AddArgument(flags.MutexEnvVarsFlags())
+  group.AddArgument(flags.MutexEnvVarsFlags(release_track=release_track))
   group.AddArgument(flags.MemoryFlag())
   group.AddArgument(flags.CpuFlag())
+  if release_track in [base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA]:
+    group.AddArgument(flags.GpuFlag(hidden=False))
   group.AddArgument(flags.ArgsFlag())
   group.AddArgument(flags.SecretsFlags())
   group.AddArgument(flags.CommandFlag())
+  group.AddArgument(flags.DependsOnFlag())
   group.AddArgument(flags.AddVolumeMountFlag())
   group.AddArgument(flags.RemoveVolumeMountFlag())
   group.AddArgument(flags.ClearVolumeMountsFlag())
@@ -78,6 +82,7 @@ Container Flags
   return group
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Deploy(base.Command):
   """Create or update a Cloud Run job."""
@@ -98,8 +103,8 @@ class Deploy(base.Command):
           """,
   }
 
-  @staticmethod
-  def CommonArgs(parser, add_container_args=True):
+  @classmethod
+  def CommonArgs(cls, parser):
     job_presentation = presentation_specs.ResourcePresentationSpec(
         'JOB',
         resource_args.GetJobResourceSpec(prompt=True),
@@ -112,26 +117,18 @@ class Deploy(base.Command):
     flags.AddTasksFlag(parser)
     flags.AddMaxRetriesFlag(parser)
     flags.AddTaskTimeoutFlags(parser)
-    flags.AddServiceAccountFlag(parser, managed_only=True)
+    flags.AddServiceAccountFlag(parser)
     flags.AddSetCloudSQLFlag(parser)
     flags.AddVpcConnectorArg(parser)
+    flags.AddVpcNetworkGroupFlagsForUpdate(parser, resource_kind='job')
     flags.AddEgressSettingsFlag(parser)
-    if add_container_args:
-      flags.AddMutexEnvVarsFlags(parser)
-      flags.AddSetSecretsFlag(parser)
-      flags.AddMemoryFlag(parser)
-      flags.AddCpuFlag(parser, managed_only=True)
-      flags.AddCommandFlag(parser)
-      flags.AddArgsFlag(parser)
-      flags.AddSourceAndImageFlags(
-          parser, image='us-docker.pkg.dev/cloudrun/container/job:latest'
-      )
     flags.AddClientNameAndVersionFlags(parser)
     flags.AddBinAuthzPolicyFlags(parser, with_clear=False)
     flags.AddBinAuthzBreakglassFlag(parser)
     flags.AddCmekKeyFlag(parser, with_clear=False)
     flags.AddSandboxArg(parser, hidden=True)
     flags.AddGeneralAnnotationFlags(parser)
+    flags.AddVolumesFlags(parser, cls.ReleaseTrack())
 
     polling_group = parser.add_mutually_exclusive_group()
     flags.AddAsyncFlag(polling_group)
@@ -149,6 +146,9 @@ class Deploy(base.Command):
   @staticmethod
   def Args(parser):
     Deploy.CommonArgs(parser)
+    container_args = ContainerArgGroup()
+    container_parser.AddContainerFlags(parser, container_args)
+    flags.RemoveContainersFlag().AddToParser(parser)
 
   def Run(self, args):
     """Deploy a Job to Cloud Run."""
@@ -260,7 +260,7 @@ class Deploy(base.Command):
       ).format(build_type=build_type.value)
       pretty_print.Info(
           messages_util.GetBuildEquivalentForSourceRunMessage(
-              job_ref.jobsId, pack, source, is_job=True
+              job_ref.jobsId, pack, source, subgroup='jobs '
           )
       )
 
@@ -358,14 +358,12 @@ class BetaDeploy(Deploy):
 
   @classmethod
   def Args(cls, parser):
-    Deploy.CommonArgs(parser)
-    flags.AddVpcNetworkGroupFlagsForUpdate(parser, resource_kind='job')
-    flags.AddVolumesFlags(parser, cls.ReleaseTrack())
-    group = base.ArgumentGroup()
-    group.AddArgument(flags.AddVolumeMountFlag())
-    group.AddArgument(flags.RemoveVolumeMountFlag())
-    group.AddArgument(flags.ClearVolumeMountsFlag())
-    group.AddToParser(parser)
+    cls.CommonArgs(parser)
+    flags.AddGpuTypeFlag(parser, hidden=False)
+    flags.GpuZonalRedundancyFlag(parser, hidden=False)
+    container_args = ContainerArgGroup(release_track=base.ReleaseTrack.BETA)
+    container_parser.AddContainerFlags(parser, container_args)
+    flags.RemoveContainersFlag().AddToParser(parser)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
@@ -374,9 +372,9 @@ class AlphaDeploy(BetaDeploy):
 
   @classmethod
   def Args(cls, parser):
-    Deploy.CommonArgs(parser, add_container_args=False)
-    container_args = ContainerArgGroup()
+    cls.CommonArgs(parser)
+    flags.AddGpuTypeFlag(parser, hidden=False)
+    flags.GpuZonalRedundancyFlag(parser, hidden=False)
+    container_args = ContainerArgGroup(release_track=base.ReleaseTrack.ALPHA)
     container_parser.AddContainerFlags(parser, container_args)
-    flags.AddVpcNetworkGroupFlagsForUpdate(parser, resource_kind='job')
-    flags.AddVolumesFlags(parser, cls.ReleaseTrack())
     flags.RemoveContainersFlag().AddToParser(parser)

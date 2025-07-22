@@ -14,10 +14,6 @@
 # limitations under the License.
 """Utilities for building the dataproc clusters CLI."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import collections
 import re
 import textwrap
@@ -66,7 +62,7 @@ def ArgsForClusterRef(
     beta: whether or not this is a beta command (may affect flag visibility)
     alpha: whether or not this is a alpha command (may affect flag visibility)
     include_deprecated: whether deprecated flags should be included
-    include_ttl_config: whether to include Scheduled Delete(TTL) args
+    include_ttl_config: whether to include Scheduled Delete and Stop (TTL) args
     include_gke_platform_args: whether to include GKE-based cluster args
     include_driver_pool_args: whether to include driver pool cluster args
   """
@@ -90,6 +86,17 @@ def ArgsForClusterRef(
       help=(
           'Metadata to be made available to the guest operating system '
           'running on the instances'
+      ),
+      metavar='KEY=VALUE',
+  )
+  gce_platform_group.add_argument(
+      '--resource-manager-tags',
+      type=arg_parsers.ArgDict(min_length=1),
+      action='append',
+      default=None,
+      help=(
+          'Specifies a list of resource manager tags to apply to each cluster'
+          ' node (master and worker nodes). '
       ),
       metavar='KEY=VALUE',
   )
@@ -138,7 +145,7 @@ def ArgsForClusterRef(
           'Minimum fraction of worker nodes required to create the cluster.'
           ' If it is not met, cluster creation will fail. Must be a decimal'
           ' value between 0 and 1. The number of required workers will be'
-          ' calcualted by ceil(min-worker-fraction * num_workers).'
+          ' calculated by ceil(min-worker-fraction * num_workers).'
       ),
   )
   worker_group.add_argument(
@@ -168,20 +175,55 @@ def ArgsForClusterRef(
       help='The number of secondary worker nodes in the cluster.',
   )
 
-  parser.add_argument(
+  master_machine_type_group = parser.add_argument_group(mutex=True)
+  master_machine_type_group.add_argument(
       '--master-machine-type',
       help=(
           'The type of machine to use for the master. Defaults to '
           'server-specified.'
       ),
   )
-  parser.add_argument(
+  master_machine_type_group.add_argument(
+      '--master-machine-types',
+      help=(
+          'Types of machines with optional rank for master nodes to use. '
+          'Defaults to server-specified.'
+          'eg. --master-machine-types="type=e2-standard-8,type=t2d-standard-8,rank=0"'
+      ),
+      metavar='type=MACHINE_TYPE[,type=MACHINE_TYPE...][,rank=RANK]',
+      type=ArgMultiValueDict(),
+      hidden=True,
+      action=arg_parsers.FlattenAction(),
+  )
+
+  worker_machine_type_group = parser.add_argument_group(mutex=True)
+  worker_machine_type_group.add_argument(
       '--worker-machine-type',
       help=(
-          'The type of machine to use for workers. Defaults to '
+          'The type of machine to use for primary workers. Defaults to '
           'server-specified.'
       ),
   )
+  worker_machine_type_group.add_argument(
+      '--worker-machine-types',
+      help=(
+          '[Machine'
+          ' types](https://cloud.google.com/dataproc/docs/concepts/compute/supported-machine-types)'
+          ' for primary worker nodes to use with optional rank. A lower rank'
+          ' number is given higher preference. Based on availablilty, Dataproc'
+          ' tries to create primary worker VMs using the worker machine type'
+          ' with the lowest rank, and then tries to use machine types with'
+          ' higher ranks as necessary. Machine types with the same rank are'
+          ' given the same preference. Example use:'
+          ' --worker-machine-types="type=e2-standard-8,type=n2-standard-8,rank=0".'
+          ' For more information, see [Dataproc Flexible'
+          ' VMs](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/flexible-vms)'
+      ),
+      metavar='type=MACHINE_TYPE[,type=MACHINE_TYPE...][,rank=RANK]',
+      type=ArgMultiValueDict(),
+      action=arg_parsers.FlattenAction(),
+  )
+
   parser.add_argument(
       '--min-secondary-worker-fraction',
       help=(
@@ -195,13 +237,32 @@ def ArgsForClusterRef(
   )
   kms_resource_args.AddKmsKeyResourceArg(parser, 'cluster', name='--kms-key')
 
-  if alpha:
-    parser.add_argument(
-        '--secondary-worker-standard-capacity-base',
-        hidden=False,
-        type=int,
-        help='The number of standard VMs in the Spot and Standard Mix feature.',
-    )
+  parser.add_argument(
+      '--secondary-worker-standard-capacity-base',
+      type=int,
+      help=(
+          'This flag sets the base number of Standard VMs to use for [secondary'
+          ' workers](https://cloud.google.com/dataproc/docs/concepts/compute/secondary-vms#preemptible_and_non-preemptible_secondary_workers).'
+          ' Dataproc will create only standard VMs until it reaches this'
+          ' number, then it will mix Spot and Standard VMs according to'
+          " ``SECONDARY_WORKER_STANDARD_CAPACITY_PERCENT_ABOVE_BASE''."
+      ),
+  )
+
+  parser.add_argument(
+      '--secondary-worker-standard-capacity-percent-above-base',
+      type=int,
+      help=(
+          'When combining Standard and Spot VMs for'
+          ' [secondary-workers](https://cloud.google.com/dataproc/docs/concepts/compute/secondary-vms#preemptible_and_non-preemptible_secondary_workers)'
+          ' once the number of Standard VMs specified by'
+          " ``SECONDARY_WORKER_STANDARD_CAPACITY_BASE'' has been used, this"
+          ' flag specifies the percentage of the total number of additional'
+          ' Standard VMs secondary workers will use. Spot VMs will be used for'
+          ' the remaining percentage.'
+      ),
+  )
+
   parser.add_argument(
       '--secondary-worker-machine-types',
       help=(
@@ -213,6 +274,21 @@ def ArgsForClusterRef(
       type=ArgMultiValueDict(),
       action=arg_parsers.FlattenAction(),
   )
+
+  parser.add_argument(
+      '--cluster-type',
+      metavar='TYPE',
+      choices=['standard', 'single-node', 'zero-scale'],
+      help='The type of cluster.',
+  )
+
+  parser.add_argument(
+      '--tier',
+      metavar='TIER',
+      choices=['premium', 'standard'],
+      help='Cluster tier',
+  )
+
   image_parser = parser.add_mutually_exclusive_group()
   # TODO(b/73291743): Add external doc link to --image
   image_parser.add_argument(
@@ -501,6 +577,54 @@ If you want to enable all scopes use the 'cloud-platform' scope.
       '--secondary-worker-boot-disk-type', help=boot_disk_type_detailed_help
   )
 
+  boot_disk_provisioned_iops_detailed_help = """\
+      Indicates the [IOPS](https://cloud.google.com/compute/docs/disks/hyperdisks#iops)
+      to provision for the disk. This sets the limit for disk I/O operations per
+      second. This is only supported if the bootdisk type is
+      [hyperdisk-balanced](https://cloud.google.com/compute/docs/disks/hyperdisks).
+      """
+
+  parser.add_argument(
+      '--master-boot-disk-provisioned-iops',
+      help=boot_disk_provisioned_iops_detailed_help,
+      type=int,
+  )
+  parser.add_argument(
+      '--worker-boot-disk-provisioned-iops',
+      help=boot_disk_provisioned_iops_detailed_help,
+      type=int,
+  )
+  parser.add_argument(
+      '--secondary-worker-boot-disk-provisioned-iops',
+      help=boot_disk_provisioned_iops_detailed_help,
+      type=int,
+      hidden=True,
+  )
+
+  boot_disk_provisioned_throughput_detailed_help = """\
+      Indicates the [throughput](https://cloud.google.com/compute/docs/disks/hyperdisks#throughput)
+      to provision for the disk. This sets the limit for throughput in MiB per
+      second. This is only supported if the bootdisk type is
+      [hyperdisk-balanced](https://cloud.google.com/compute/docs/disks/hyperdisks).
+      """
+
+  parser.add_argument(
+      '--master-boot-disk-provisioned-throughput',
+      help=boot_disk_provisioned_throughput_detailed_help,
+      type=int,
+  )
+  parser.add_argument(
+      '--worker-boot-disk-provisioned-throughput',
+      help=boot_disk_provisioned_throughput_detailed_help,
+      type=int,
+  )
+  parser.add_argument(
+      '--secondary-worker-boot-disk-provisioned-throughput',
+      help=boot_disk_provisioned_throughput_detailed_help,
+      type=int,
+      hidden=True,
+  )
+
   if include_driver_pool_args:
     flags.AddDriverPoolId(parser)
     parser.add_argument(
@@ -586,7 +710,8 @@ If you want to enable all scopes use the 'cloud-platform' scope.
         and the image is SEV Compatible.
         """,
     )
-  parser.add_argument(
+  metastore_group = parser.add_argument_group(mutex=True)  # Mutually exclusive
+  metastore_group.add_argument(
       '--dataproc-metastore',
       help="""\
       Specify the name of a Dataproc Metastore service to be used as an
@@ -594,6 +719,28 @@ If you want to enable all scopes use the 'cloud-platform' scope.
       "projects/{project-id}/locations/{region}/services/{service-name}".
       """,
   )
+  # Not mutually exclusive
+  if alpha or beta:
+    bqms_group = metastore_group.add_argument_group(help='BQMS flags')
+    bqms_group.add_argument(
+        '--bigquery-metastore-project-id',
+        help="""\
+      The project ID of the  BigQuery metastore database to be used as an external metastore.
+        """,
+    )
+    bqms_group.add_argument(
+        '--bigquery-metastore-database-location',
+        help="""\
+      Location of the  BigQuery metastore database to be used as an external metastore.
+        """,
+    )
+    bqms_group.add_argument(
+        '--bigquery-metastore',
+        action='store_true',
+        help="""\
+        Indicates that BigQuery metastore is to be used.
+        """,
+    )
 
   parser.add_argument(
       '--enable-node-groups',
@@ -610,12 +757,23 @@ If you want to enable all scopes use the 'cloud-platform' scope.
   )
 
   if include_ttl_config:
-    parser.add_argument(
+    auto_delete_idle_group = parser.add_mutually_exclusive_group()
+    auto_delete_idle_group.add_argument(
         '--max-idle',
         type=arg_parsers.Duration(),
+        hidden=True,
         help="""\
-          The duration before cluster is auto-deleted after last job completes,
-          such as "2h" or "1d".
+          The duration after the last job completes to autto-delete the
+          cluster, such as "2h" or "1d".
+          See $ gcloud topic datetimes for information on duration formats.
+          """,
+    )
+    auto_delete_idle_group.add_argument(
+        '--delete-max-idle',
+        type=arg_parsers.Duration(),
+        help="""\
+          The duration after the last job completes to auto-delete the
+          cluster, such as "2h" or "1d".
           See $ gcloud topic datetimes for information on duration formats.
           """,
     )
@@ -624,9 +782,10 @@ If you want to enable all scopes use the 'cloud-platform' scope.
     auto_delete_group.add_argument(
         '--max-age',
         type=arg_parsers.Duration(),
+        hidden=True,
         help="""\
-          The lifespan of the cluster before it is auto-deleted, such as
-          "2h" or "1d".
+          The lifespan of the cluster, with auto-deletion upon completion,
+          such as "2h" or "1d".
           See $ gcloud topic datetimes for information on duration formats.
           """,
     )
@@ -634,10 +793,59 @@ If you want to enable all scopes use the 'cloud-platform' scope.
     auto_delete_group.add_argument(
         '--expiration-time',
         type=arg_parsers.Datetime.Parse,
+        hidden=True,
         help="""\
-          The time when cluster will be auto-deleted, such as
+          The time when the cluster will be auto-deleted, such as
           "2017-08-29T18:52:51.142Z." See $ gcloud topic datetimes for
           information on time formats.
+          """,
+    )
+
+    auto_delete_group.add_argument(
+        '--delete-max-age',
+        type=arg_parsers.Duration(),
+        help="""\
+          The lifespan of the cluster, with auto-deletion upon completion,
+          such as "2h" or "1d".
+          See $ gcloud topic datetimes for information on duration formats.
+          """,
+    )
+    auto_delete_group.add_argument(
+        '--delete-expiration-time',
+        type=arg_parsers.Datetime.Parse,
+        help="""\
+          The time when the cluster will be auto-deleted, such as
+          "2017-08-29T18:52:51.142Z."
+          See $ gcloud topic datetimes for information on time formats.
+          """,
+    )
+
+    parser.add_argument(
+        '--stop-max-idle',
+        type=arg_parsers.Duration(),
+        help="""\
+          The duration after the last job completes to auto-stop the cluster,
+          such as "2h" or "1d".
+          See $ gcloud topic datetimes for information on duration formats.
+          """,
+    )
+    auto_stop_group = parser.add_mutually_exclusive_group()
+    auto_stop_group.add_argument(
+        '--stop-max-age',
+        type=arg_parsers.Duration(),
+        help="""\
+          The lifespan of the cluster, with auto-stop upon completion,
+          such as "2h" or "1d".
+          See $ gcloud topic datetimes for information on duration formats.
+          """,
+    )
+    auto_stop_group.add_argument(
+        '--stop-expiration-time',
+        type=arg_parsers.Datetime.Parse,
+        help="""\
+          The time when the cluster will be auto-stopped, such as
+          "2017-08-29T18:52:51.142Z."
+          See $ gcloud topic datetimes for information on time formats.
           """,
     )
 
@@ -760,7 +968,7 @@ def _AddAcceleratorArgs(parser, include_driver_pool_args=False):
       """
   accelerator_help_fmt += """
       *type*::: The specific type of accelerator to attach to the instances,
-      such as `nvidia-tesla-k80` for NVIDIA Tesla K80. Use `gcloud compute
+      such as `nvidia-tesla-t4` for NVIDIA T4. Use `gcloud compute
       accelerator-types list` to display available accelerator types.
 
       *count*::: The number of accelerators to attach to each instance. The default value is 1.
@@ -1157,6 +1365,18 @@ def GetClusterConfig(
   if args.tags:
     gce_cluster_config.tags = args.tags
 
+  if args.resource_manager_tags:
+    flat_tags = collections.OrderedDict()
+    for entry in args.resource_manager_tags:
+      for k, v in entry.items():
+        flat_tags[k] = v
+    gce_cluster_config.resourceManagerTags = (
+        encoding.DictToAdditionalPropertyMessage(
+            flat_tags,
+            dataproc.messages.GceClusterConfig.ResourceManagerTagsValue,
+        )
+    )
+
   if args.metadata:
     flat_metadata = collections.OrderedDict()
     for entry in args.metadata:
@@ -1202,6 +1422,8 @@ def GetClusterConfig(
   cluster_config = dataproc.messages.ClusterConfig(
       configBucket=args.bucket,
       tempBucket=args.temp_bucket,
+      clusterType=_GetCusterType(dataproc, args.cluster_type),
+      clusterTier=_GetClusterTier(dataproc, args.tier),
       gceClusterConfig=gce_cluster_config,
       masterConfig=dataproc.messages.InstanceGroupConfig(
           numInstances=args.num_masters,
@@ -1214,8 +1436,14 @@ def GetClusterConfig(
               master_boot_disk_size_gb,
               args.num_master_local_ssds,
               args.master_local_ssd_interface,
+              'Master',
+              args.master_boot_disk_provisioned_iops,
+              args.master_boot_disk_provisioned_throughput,
           ),
           minCpuPlatform=args.master_min_cpu_platform,
+          instanceFlexibilityPolicy=GetInstanceFlexibilityPolicy(
+              dataproc, None, args.master_machine_types, 'master'
+          ),
       ),
       workerConfig=dataproc.messages.InstanceGroupConfig(
           numInstances=args.num_workers,
@@ -1229,8 +1457,14 @@ def GetClusterConfig(
               worker_boot_disk_size_gb,
               args.num_worker_local_ssds,
               args.worker_local_ssd_interface,
+              'Worker',
+              args.worker_boot_disk_provisioned_iops,
+              args.worker_boot_disk_provisioned_throughput,
           ),
           minCpuPlatform=args.worker_min_cpu_platform,
+          instanceFlexibilityPolicy=GetInstanceFlexibilityPolicy(
+              dataproc, None, args.worker_machine_types, 'worker'
+          ),
       ),
       initializationActions=init_actions,
       softwareConfig=software_config,
@@ -1324,10 +1558,25 @@ def GetClusterConfig(
     cluster_config.metastoreConfig = dataproc.messages.MetastoreConfig(
         dataprocMetastoreService=args.dataproc_metastore
     )
+  elif (alpha or beta) and (
+      args.bigquery_metastore_project_id is not None
+      or args.bigquery_metastore_database_location is not None
+      or args.bigquery_metastore
+  ):
+    bigquery_metastore_config = GetBigQueryConfig(
+        dataproc,
+        args,
+    )
+    cluster_config.metastoreConfig = dataproc.messages.MetastoreConfig(
+        bigqueryMetastoreConfig=bigquery_metastore_config
+    )
 
   if include_ttl_config:
     lifecycle_config = dataproc.messages.LifecycleConfig()
     changed_config = False
+    # Flags max_age, expiration_time and max_idle are hidden, but still
+    # supported. They are replaced with new flags delete_max_age,
+    # delete_expiration_time and delete_max_idle.
     if args.max_age is not None:
       lifecycle_config.autoDeleteTtl = six.text_type(args.max_age) + 's'
       changed_config = True
@@ -1339,6 +1588,35 @@ def GetClusterConfig(
     if args.max_idle is not None:
       lifecycle_config.idleDeleteTtl = six.text_type(args.max_idle) + 's'
       changed_config = True
+
+    if args.delete_max_age is not None:
+      lifecycle_config.autoDeleteTtl = (
+          six.text_type(args.delete_max_age) + 's'
+      )
+      changed_config = True
+    if args.delete_expiration_time is not None:
+      lifecycle_config.autoDeleteTime = times.FormatDateTime(
+          args.delete_expiration_time
+      )
+      changed_config = True
+    if args.delete_max_idle is not None:
+      lifecycle_config.idleDeleteTtl = (
+          six.text_type(args.delete_max_idle) + 's'
+      )
+      changed_config = True
+    # Process scheduled stop args.
+    if args.stop_max_age is not None:
+      lifecycle_config.autoStopTtl = six.text_type(args.stop_max_age) + 's'
+      changed_config = True
+    if args.stop_expiration_time is not None:
+      lifecycle_config.autoStopTime = times.FormatDateTime(
+          args.stop_expiration_time
+      )
+      changed_config = True
+    if args.stop_max_idle is not None:
+      lifecycle_config.idleStopTtl = six.text_type(args.stop_max_idle) + 's'
+      changed_config = True
+
     if changed_config:
       cluster_config.lifecycleConfig = lifecycle_config
 
@@ -1371,9 +1649,7 @@ def GetClusterConfig(
           'kms-keyring',
       ]:
         if getattr(args, keyword.replace('-', '_'), None):
-          raise exceptions.ArgumentError(
-              '--kms-key was not fully specified.'
-          )
+          raise exceptions.ArgumentError('--kms-key was not fully specified.')
   if encryption_config.gcePdKmsKeyName or encryption_config.kmsKey:
     cluster_config.encryptionConfig = encryption_config
 
@@ -1402,8 +1678,16 @@ def GetClusterConfig(
       or args.min_secondary_worker_fraction is not None
   ):
     instance_flexibility_policy = GetInstanceFlexibilityPolicy(
-        dataproc, args, alpha
+        dataproc,
+        GetProvisioningModelMix(
+            dataproc,
+            args.secondary_worker_standard_capacity_base,
+            args.secondary_worker_standard_capacity_percent_above_base,
+        ),
+        args.secondary_worker_machine_types,
+        'secondary-worker',
     )
+
     startup_config = GetStartupConfig(dataproc, args)
     cluster_config.secondaryWorkerConfig = (
         dataproc.messages.InstanceGroupConfig(
@@ -1415,6 +1699,9 @@ def GetClusterConfig(
                 secondary_worker_boot_disk_size_gb,
                 num_secondary_worker_local_ssds,
                 args.secondary_worker_local_ssd_interface,
+                'Secondary worker',
+                args.secondary_worker_boot_disk_provisioned_iops,
+                args.secondary_worker_boot_disk_provisioned_throughput,
             ),
             minCpuPlatform=args.worker_min_cpu_platform,
             preemptibility=_GetInstanceGroupPreemptibility(
@@ -1448,6 +1735,7 @@ def GetClusterConfig(
                             driver_pool_boot_disk_size_gb,
                             args.num_driver_pool_local_ssds,
                             args.driver_pool_local_ssd_interface,
+                            'Driver pool',
                         ),
                         minCpuPlatform=args.driver_pool_min_cpu_platform,
                     ),
@@ -1595,6 +1883,67 @@ def _GetInstanceGroupPreemptibility(dataproc, secondary_worker_type):
   return None
 
 
+def _GetCusterType(dataproc, cluster_type):
+  """Get ClusterType enum value.
+
+  Converts cluster_type argument value to
+  ClusterType API enum value.
+
+  Args:
+    dataproc: Dataproc API definition
+    cluster_type: argument value
+
+  Returns:
+    ClusterType API enum value
+  """
+  if cluster_type == 'standard':
+    return dataproc.messages.ClusterConfig.ClusterTypeValueValuesEnum(
+        'STANDARD'
+    )
+  if cluster_type == 'single-node':
+    return dataproc.messages.ClusterConfig.ClusterTypeValueValuesEnum(
+        'SINGLE_NODE'
+    )
+  if cluster_type == 'zero-scale':
+    return dataproc.messages.ClusterConfig.ClusterTypeValueValuesEnum(
+        'ZERO_SCALE'
+    )
+  if cluster_type is None:
+    return None
+  raise exceptions.ArgumentError(
+      'Unsupported --cluster-type flag value: '
+      + cluster_type
+  )
+
+
+def _GetClusterTier(dataproc, cluster_tier):
+  """Get ClusterTier enum value.
+
+  Converts cluster_tier argument value to
+  ClusterTier API enum value.
+
+  Args:
+    dataproc: Dataproc API definition
+    cluster_tier: argument value
+
+  Returns:
+    ClusterTier API enum value
+  """
+  if cluster_tier == 'premium':
+    return dataproc.messages.ClusterConfig.ClusterTierValueValuesEnum(
+        'CLUSTER_TIER_PREMIUM'
+    )
+  if cluster_tier == 'standard':
+    return dataproc.messages.ClusterConfig.ClusterTierValueValuesEnum(
+        'CLUSTER_TIER_STANDARD'
+    )
+  if cluster_tier is None:
+    return None
+  raise exceptions.ArgumentError(
+      'Unsupported --cluster-tier flag value: ' + cluster_tier
+  )
+
+
 def _GetPrivateIpv6GoogleAccess(dataproc, private_ipv6_google_access_type):
   """Get PrivateIpv6GoogleAccess enum value.
 
@@ -1628,12 +1977,31 @@ def _GetPrivateIpv6GoogleAccess(dataproc, private_ipv6_google_access_type):
   )
 
 
+def GetBigQueryConfig(dataproc, args):
+  """Get BigQuery config.
+
+  Args:
+    dataproc: Dataproc object that contains client, messages, and resources
+    args: arguments of the request
+
+  Returns:
+    bigquery_config: BigQuery config.
+  """
+  return dataproc.messages.BigqueryMetastoreConfig(
+      projectId=args.bigquery_metastore_project_id,
+      location=args.bigquery_metastore_database_location,
+  )
+
+
 def GetDiskConfig(
     dataproc,
     boot_disk_type,
     boot_disk_size,
     num_local_ssds,
     local_ssd_interface,
+    node_type,
+    boot_disk_provisioned_iops=None,
+    boot_disk_provisioned_throughput=None,
 ):
   """Get dataproc cluster disk configuration.
 
@@ -1643,48 +2011,120 @@ def GetDiskConfig(
     boot_disk_size: Size of the boot disk
     num_local_ssds: Number of the Local SSDs
     local_ssd_interface: Interface used to attach local SSDs
+    node_type: Type of the dataproc node. One of Master, Worker, Secondary
+      worker, Driver pool
+    boot_disk_provisioned_iops: Provisioned IOPS of the boot disk
+    boot_disk_provisioned_throughput: Provisioned throughput of the boot disk
 
   Returns:
     disk_config: Dataproc cluster disk configuration
+  Raises:
+    exceptions.ArgumentError: If boot_disk_provisioned_iops or
+      boot_disk_provisioned_throughput is specified with boot_disk_type other
+      than hyperdisk-balanced or if the value is not positive.
   """
+
+  if boot_disk_provisioned_iops is not None:
+    if boot_disk_type is not None and boot_disk_type != 'hyperdisk-balanced':
+      raise exceptions.ArgumentError(
+          f'{node_type} bootdisk IOPS can be specified only with bootdisk type'
+          f' hyperdisk-balanced, provided {boot_disk_type}.'
+      )
+
+    if boot_disk_provisioned_iops <= 0:
+      raise exceptions.ArgumentError(
+          f'{node_type} bootdisk IOPS must be positive, provided'
+          f' {boot_disk_provisioned_iops}.'
+      )
+
+  if boot_disk_provisioned_throughput is not None:
+    if boot_disk_type is not None and boot_disk_type != 'hyperdisk-balanced':
+      raise exceptions.ArgumentError(
+          f'{node_type} bootdisk throughput can be specified only with bootdisk'
+          f' type hyperdisk-balanced, provided {boot_disk_type}.'
+      )
+
+    if boot_disk_provisioned_throughput <= 0:
+      raise exceptions.ArgumentError(
+          f'{node_type} bootdisk throughput must be positive, provided'
+          f' {boot_disk_provisioned_throughput}.'
+      )
 
   return dataproc.messages.DiskConfig(
       bootDiskType=boot_disk_type,
       bootDiskSizeGb=boot_disk_size,
+      bootDiskProvisionedIops=boot_disk_provisioned_iops,
+      bootDiskProvisionedThroughput=boot_disk_provisioned_throughput,
       numLocalSsds=num_local_ssds,
       localSsdInterface=local_ssd_interface,
   )
 
 
-def GetInstanceFlexibilityPolicy(dataproc, args, alpha):
+def GetInstanceFlexibilityPolicy(
+    dataproc,
+    provisioning_model_mix,
+    machine_types,
+    node_type,
+):
   """Get instance flexibility policy.
 
   Args:
     dataproc: Dataproc object that contains client, messages, and resources
-    args: arguments of the request
-    alpha: checks if the release track is alpha
+    provisioning_model_mix: Provisioning model mix for instance flexibility
+      policy
+    machine_types: Machine types with rank for instance selection
+    node_type: Type of the dataproc node. One of master, worker,
+      secondary-worker
 
   Returns:
     InstanceFlexibilityPolicy of the secondary worker group.
   """
 
-  if alpha and args.secondary_worker_standard_capacity_base is None:
+  if provisioning_model_mix is None and machine_types is None:
     return None
-  provisioning_model_mix = None
+
   instance_selection_list = []
-  if alpha:
-    provisioning_model_mix = dataproc.messages.ProvisioningModelMix(
-        standardCapacityBase=args.secondary_worker_standard_capacity_base
+
+  if machine_types:
+    instance_selection_list = GetInstanceSelectionList(
+        dataproc, machine_types, node_type
     )
-  else:
-    instance_selection_list = GetInstanceSelectionList(dataproc, args)
-  if provisioning_model_mix is None and not instance_selection_list:
-    return None
-  instance_flexibility_policy = dataproc.messages.InstanceFlexibilityPolicy(
+
+  return dataproc.messages.InstanceFlexibilityPolicy(
       instanceSelectionList=instance_selection_list,
       provisioningModelMix=provisioning_model_mix,
   )
-  return instance_flexibility_policy
+
+
+def GetProvisioningModelMix(
+    dataproc,
+    standard_capacity_base,
+    standard_capacity_percent_above_base,
+):
+  """Get provisioning model mix from given parameters.
+
+  Args:
+    dataproc: Dataproc object that contains client, messages, and resources
+    standard_capacity_base: Standard capacity base for provisioning model mix
+    standard_capacity_percent_above_base: Standard capacity percent above base
+      for provisioning model mix
+
+  Returns:
+    ProvisioningModelMix of with given parameters.
+  """
+
+  if (
+      standard_capacity_base is None
+      and standard_capacity_percent_above_base is None
+  ):
+    return None
+
+  return dataproc.messages.ProvisioningModelMix(
+      standardCapacityBase=(standard_capacity_base or 0),
+      standardCapacityPercentAboveBase=(
+          standard_capacity_percent_above_base or 0
+      ),
+  )
 
 
 def GetStartupConfig(dataproc, args):
@@ -2245,15 +2685,15 @@ def ParseSecureMultiTenancyUserServiceAccountMappingString(
   return user_service_account_mapping
 
 
-def GetInstanceSelectionList(dataproc, args):
+def GetInstanceSelectionList(dataproc, machine_types, node_type):
   """Build List of InstanceSelection from the given flags."""
-  if args.secondary_worker_machine_types is None:
+  if machine_types is None:
     return []
   instance_selection_list = []
-  for machine_type_config in args.secondary_worker_machine_types:
+  for machine_type_config in machine_types:
     if 'type' not in machine_type_config or not machine_type_config['type']:
       raise exceptions.ArgumentError(
-          'Missing machine type for secondary-worker-machine-types'
+          f'Missing machine type for {node_type}-machine-types'
       )
     machine_types = machine_type_config['type']
 
@@ -2263,7 +2703,7 @@ def GetInstanceSelectionList(dataproc, args):
       rank = machine_type_config['rank']
       if len(rank) != 1 or not rank[0].isdigit():
         raise exceptions.ArgumentError(
-            'Invalid value for rank in secondary-worker-machine-types'
+            f'Invalid value for rank in {node_type}-machine-types'
         )
       rank = int(rank[0])
 

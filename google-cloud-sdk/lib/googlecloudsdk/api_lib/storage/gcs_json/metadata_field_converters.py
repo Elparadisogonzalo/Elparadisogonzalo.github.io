@@ -25,13 +25,13 @@ from apitools.base.protorpclite import protojson
 from apitools.base.py import encoding
 from googlecloudsdk.api_lib.storage import gcs_iam_util
 from googlecloudsdk.api_lib.storage import metadata_util
+from googlecloudsdk.api_lib.storage import storage_util
 from googlecloudsdk.api_lib.util import apis
 from googlecloudsdk.api_lib.util import messages as messages_util
 from googlecloudsdk.command_lib.storage import errors
 from googlecloudsdk.command_lib.storage import storage_url
 from googlecloudsdk.command_lib.storage import user_request_args_factory
 from googlecloudsdk.core import properties
-from googlecloudsdk.core.util import iso_duration
 
 
 def get_bucket_or_object_acl_class(is_bucket=False):
@@ -94,6 +94,12 @@ def process_default_storage_class(default_storage_class):
   return default_storage_class
 
 
+def process_hierarchical_namespace(enabled=None):
+  """Converts Heirarchical Namespace boolean to Apitools object."""
+  messages = apis.GetMessagesModule('storage', 'v1')
+  return messages.Bucket.HierarchicalNamespaceValue(enabled=enabled)
+
+
 def process_iam_file(file_path, custom_etag=None):
   """Converts IAM file to Apitools objects."""
   if (
@@ -137,6 +143,26 @@ def process_bucket_iam_configuration(existing_iam_metadata,
             enabled=uniform_bucket_level_access_boolean))
 
   return iam_metadata
+
+
+def process_ip_filter(file_path):
+  """Converts IP filter file to Apitools object."""
+  messages = apis.GetMessagesModule('storage', 'v1')
+
+  if file_path == user_request_args_factory.CLEAR:
+    return messages.Bucket.IpFilterValue(
+        mode='Disabled'
+        )
+  ip_filter_dict = metadata_util.cached_read_yaml_json_file(file_path)
+  ip_filter = ip_filter_dict.get('ip_filter_config', ip_filter_dict)
+  try:
+    return messages_util.DictToMessageWithErrorCheck(
+        ip_filter, messages.Bucket.IpFilterValue
+    )
+  except messages_util.DecodeError:
+    raise errors.InvalidUrlError(
+        'Found invalid JSON/YAML for the IP filter rule.'
+    )
 
 
 def process_labels(existing_labels_object, file_path):
@@ -266,18 +292,21 @@ def process_retention_period(retention_period_string):
 
   messages = apis.GetMessagesModule('storage', 'v1')
   return messages.Bucket.RetentionPolicyValue(
-      retentionPeriod=int(iso_duration.Duration().Parse(
-          retention_period_string).total_seconds))
+      retentionPeriod=int(
+          storage_util.ObjectLockRetentionDuration()
+          .Parse(retention_period_string)
+          .total_seconds
+      )
+  )
 
 
 def process_soft_delete_duration(soft_delete_duration):
   """Converts retention_period int to Apitools object."""
-  if soft_delete_duration == user_request_args_factory.CLEAR:
-    return None
-
   messages = apis.GetMessagesModule('storage', 'v1')
   return messages.Bucket.SoftDeletePolicyValue(
-      retentionDurationSeconds=soft_delete_duration
+      retentionDurationSeconds=0
+      if soft_delete_duration == user_request_args_factory.CLEAR
+      else soft_delete_duration
   )
 
 

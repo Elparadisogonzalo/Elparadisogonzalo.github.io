@@ -178,9 +178,9 @@ class AttestationSource(_messages.Message):
   r"""Specifies the locations for fetching the provenance attestations.
 
   Fields:
-    containerAnalysisAttestationProjects: The IDs of the GCP projects storing
-      the SLSA attestations as Container Analysis Occurrences, in the format
-      `projects/[PROJECT_ID]`. Maximum number of
+    containerAnalysisAttestationProjects: The IDs of the Google Cloud projects
+      that store the SLSA attestations as Container Analysis Occurrences, in
+      the format `projects/[PROJECT_ID]`. Maximum number of
       `container_analysis_attestation_projects` allowed in each
       `AttestationSource` is 10.
   """
@@ -436,11 +436,14 @@ class BinaryauthorizationProjectsPlatformsPoliciesDeleteRequest(_messages.Messag
   r"""A BinaryauthorizationProjectsPlatformsPoliciesDeleteRequest object.
 
   Fields:
+    etag: Optional. Used to prevent deleting the policy when another request
+      has updated it since it was retrieved.
     name: Required. The name of the platform policy to delete, in the format
       `projects/*/platforms/*/policies/*`.
   """
 
-  name = _messages.StringField(1, required=True)
+  etag = _messages.StringField(1)
+  name = _messages.StringField(2, required=True)
 
 
 class BinaryauthorizationProjectsPlatformsPoliciesGetRequest(_messages.Message):
@@ -677,7 +680,7 @@ class CheckResult(_messages.Message):
   r"""Result of evaluating one check.
 
   Fields:
-    allowlistResult: If the image was exempted by an allowlist_pattern in the
+    allowlistResult: If the image was exempted by an allow_pattern in the
       check, contains the pattern that the image name matched.
     displayName: The name of the check.
     evaluationResult: If a check was evaluated, contains the result of the
@@ -739,7 +742,7 @@ class CheckSetResult(_messages.Message):
   r"""Result of evaluating one check set.
 
   Fields:
-    allowlistResult: If the image was exempted by an allowlist_pattern in the
+    allowlistResult: If the image was exempted by an allow_pattern in the
       check set, contains the pattern that the image name matched.
     checkResults: If checks were evaluated, contains the results of evaluating
       each check.
@@ -828,7 +831,7 @@ class EvaluateGkePolicyResponse(_messages.Message):
     VerdictValueValuesEnum: The result of evaluating all Pods in the request.
 
   Fields:
-    attestations: If AttestationMode is set to GENERATE_DEPLOY and the top-
+    attestations: If AttestationMode is set to `GENERATE_DEPLOY` and the top-
       level verdict is conformant, an attestation will be returned for each
       image in the request. Attestations are in the form of websafe base64
       encoded JSON DSSEs (https://github.com/secure-systems-
@@ -1116,16 +1119,13 @@ class ImageResult(_messages.Message):
     VerdictValueValuesEnum: The result of evaluating this image.
 
   Fields:
-    allowlistResult: If the image was exempted by a top-level
-      allowlist_pattern, contains the allowlist pattern that the image name
-      matched.
+    allowlistResult: If the image was exempted by a top-level allow_pattern,
+      contains the allowlist pattern that the image name matched.
     checkSetResult: If a check set was evaluated, contains the result of the
       check set. Empty if there were no check sets.
     explanation: Explanation of this image result. Only populated if no check
       sets were evaluated.
     imageUri: Image URI from the request.
-    systemPolicyResult: If the image was exempted by the system policy,
-      contains the allowlist pattern that was matched in the system policy.
     verdict: The result of evaluating this image.
   """
 
@@ -1136,7 +1136,7 @@ class ImageResult(_messages.Message):
       IMAGE_VERDICT_UNSPECIFIED: Not specified. This should never be used.
       CONFORMANT: Image conforms to the policy.
       NON_CONFORMANT: Image does not conform to the policy.
-      ERROR: Error evaluating the image. Non-conformance has precedance over
+      ERROR: Error evaluating the image. Non-conformance has precedence over
         errors.
     """
     IMAGE_VERDICT_UNSPECIFIED = 0
@@ -1148,8 +1148,7 @@ class ImageResult(_messages.Message):
   checkSetResult = _messages.MessageField('CheckSetResult', 2)
   explanation = _messages.StringField(3)
   imageUri = _messages.StringField(4)
-  systemPolicyResult = _messages.MessageField('SystemPolicyResult', 5)
-  verdict = _messages.EnumField('VerdictValueValuesEnum', 6)
+  verdict = _messages.EnumField('VerdictValueValuesEnum', 5)
 
 
 class InlineAttestor(_messages.Message):
@@ -1267,14 +1266,14 @@ class PkixPublicKey(_messages.Message):
   Fields:
     keyId: Optional. The ID of this public key. Signatures verified by Binary
       Authorization must include the ID of the public key that can be used to
-      verify them, and that ID must match the contents of this field exactly.
-      This may be explicitly provided by the caller, but it MUST be a valid
-      RFC3986 URI. If `key_id` is left blank and this `PkixPublicKey` is not
-      used in the context of a wrapper (see next paragraph), a default key ID
-      will be computed based on the digest of the DER encoding of the public
-      key. If this `PkixPublicKey` is used in the context of a wrapper that
-      has its own notion of key ID (e.g. `AttestorPublicKey`), then this field
-      can either: * Match that value exactly. * Or be left blank, in which
+      verify them. The ID must match exactly contents of the `key_id` field
+      exactly. The ID may be explicitly provided by the caller, but it MUST be
+      a valid RFC3986 URI. If `key_id` is left blank and this `PkixPublicKey`
+      is not used in the context of a wrapper (see next paragraph), a default
+      key ID will be computed based on the digest of the DER encoding of the
+      public key. If this `PkixPublicKey` is used in the context of a wrapper
+      that has its own notion of key ID (e.g. `AttestorPublicKey`), then this
+      field can either match that value exactly, or be left blank, in which
       case it behaves exactly as though it is equal to that wrapper value.
     publicKeyPem: A PEM-encoded public key, as described in
       https://tools.ietf.org/html/rfc7468#section-13
@@ -1372,6 +1371,8 @@ class PlatformPolicy(_messages.Message):
   Fields:
     cloudRunPolicy: Optional. Cloud Run platform-specific policy.
     description: Optional. A description comment about the policy.
+    etag: Optional. Used to prevent updating the policy when another request
+      has updated it since it was retrieved.
     gkePolicy: Optional. GKE platform-specific policy.
     name: Output only. The relative resource name of the Binary Authorization
       platform policy, in the form of `projects/*/platforms/*/policies/*`.
@@ -1380,9 +1381,10 @@ class PlatformPolicy(_messages.Message):
 
   cloudRunPolicy = _messages.MessageField('InlineCloudRunPolicy', 1)
   description = _messages.StringField(2)
-  gkePolicy = _messages.MessageField('GkePolicy', 3)
-  name = _messages.StringField(4)
-  updateTime = _messages.StringField(5)
+  etag = _messages.StringField(3)
+  gkePolicy = _messages.MessageField('GkePolicy', 4)
+  name = _messages.StringField(5)
+  updateTime = _messages.StringField(6)
 
 
 class PodResult(_messages.Message):
@@ -1407,8 +1409,8 @@ class PodResult(_messages.Message):
       CONFORMANT: All images conform to the policy.
       NON_CONFORMANT: At least one image does not conform to the policy.
       ERROR: Encountered at least one error evaluating an image and all other
-        images conform to the policy. Non-conformance has precedance over
-        errors.
+        images with non-error verdicts conform to the policy. Non-conformance
+        has precedence over errors.
     """
     POD_VERDICT_UNSPECIFIED = 0
     CONFORMANT = 1
@@ -1433,11 +1435,15 @@ class Policy(_messages.Message):
       specified inside a global admission policy.
 
   Messages:
-    ClusterAdmissionRulesValue: Optional. Per-cluster admission rules. Cluster
-      spec format: `location.clusterId`. There can be at most one admission
-      rule per cluster spec. A `location` is either a compute zone (e.g. us-
-      central1-a) or a region (e.g. us-central1). For `clusterId` syntax
-      restrictions see https://cloud.google.com/container-
+    ClusterAdmissionRulesValue: Optional. A valid policy has only one of the
+      following rule maps non-empty, i.e. only one of
+      `cluster_admission_rules`, `kubernetes_namespace_admission_rules`,
+      `kubernetes_service_account_admission_rules`, or
+      `istio_service_identity_admission_rules` can be non-empty. Per-cluster
+      admission rules. Cluster spec format: `location.clusterId`. There can be
+      at most one admission rule per cluster spec. A `location` is either a
+      compute zone (e.g. us-central1-a) or a region (e.g. us-central1). For
+      `clusterId` syntax restrictions see https://cloud.google.com/container-
       engine/reference/rest/v1/projects.zones.clusters.
     IstioServiceIdentityAdmissionRulesValue: Optional. Per-istio-service-
       identity admission rules. Istio service identity spec format:
@@ -1455,11 +1461,15 @@ class Policy(_messages.Message):
       matching admission request will always be permitted. This feature is
       typically used to exclude Google or third-party infrastructure images
       from Binary Authorization policies.
-    clusterAdmissionRules: Optional. Per-cluster admission rules. Cluster spec
-      format: `location.clusterId`. There can be at most one admission rule
-      per cluster spec. A `location` is either a compute zone (e.g. us-
-      central1-a) or a region (e.g. us-central1). For `clusterId` syntax
-      restrictions see https://cloud.google.com/container-
+    clusterAdmissionRules: Optional. A valid policy has only one of the
+      following rule maps non-empty, i.e. only one of
+      `cluster_admission_rules`, `kubernetes_namespace_admission_rules`,
+      `kubernetes_service_account_admission_rules`, or
+      `istio_service_identity_admission_rules` can be non-empty. Per-cluster
+      admission rules. Cluster spec format: `location.clusterId`. There can be
+      at most one admission rule per cluster spec. A `location` is either a
+      compute zone (e.g. us-central1-a) or a region (e.g. us-central1). For
+      `clusterId` syntax restrictions see https://cloud.google.com/container-
       engine/reference/rest/v1/projects.zones.clusters.
     defaultAdmissionRule: Required. Default admission rule for a cluster
       without a per-cluster, per- kubernetes-service-account, or per-istio-
@@ -1505,11 +1515,15 @@ class Policy(_messages.Message):
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class ClusterAdmissionRulesValue(_messages.Message):
-    r"""Optional. Per-cluster admission rules. Cluster spec format:
-    `location.clusterId`. There can be at most one admission rule per cluster
-    spec. A `location` is either a compute zone (e.g. us-central1-a) or a
-    region (e.g. us-central1). For `clusterId` syntax restrictions see
-    https://cloud.google.com/container-
+    r"""Optional. A valid policy has only one of the following rule maps non-
+    empty, i.e. only one of `cluster_admission_rules`,
+    `kubernetes_namespace_admission_rules`,
+    `kubernetes_service_account_admission_rules`, or
+    `istio_service_identity_admission_rules` can be non-empty. Per-cluster
+    admission rules. Cluster spec format: `location.clusterId`. There can be
+    at most one admission rule per cluster spec. A `location` is either a
+    compute zone (e.g. us-central1-a) or a region (e.g. us-central1). For
+    `clusterId` syntax restrictions see https://cloud.google.com/container-
     engine/reference/rest/v1/projects.zones.clusters.
 
     Messages:
@@ -1708,9 +1722,9 @@ class Signature(_messages.Message):
 
 
 class SigstoreAuthority(_messages.Message):
-  r"""A Sigstore authority, used to verify signatures created by Sigstore. An
-  authority is analogous to an attestation authenticator, verifying that a
-  signature is valid or invalid.
+  r"""A Sigstore authority, used to verify signatures that are created by
+  Sigstore. An authority is analogous to an attestation authenticator,
+  verifying that a signature is valid or invalid.
 
   Fields:
     displayName: Optional. A user-provided name for this `SigstoreAuthority`.
@@ -1777,10 +1791,11 @@ class SimpleSigningAttestationCheck(_messages.Message):
       `projects/[PROJECT_ID]`. Only one attestation needs to successfully
       verify an image for this check to pass, so a single verified attestation
       found in any of `container_analysis_attestation_projects` is sufficient
-      for the check to pass. When fetching Occurrences from Container
-      Analysis, only `AttestationOccurrence` kinds are considered. In the
-      future, additional Occurrence kinds may be added to the query. Maximum
-      number of `container_analysis_attestation_projects` allowed in each
+      for the check to pass. A project ID must be used, not a project number.
+      When fetching Occurrences from Container Analysis, only
+      `AttestationOccurrence` kinds are considered. In the future, additional
+      Occurrence kinds may be added to the query. Maximum number of
+      `container_analysis_attestation_projects` allowed in each
       `SimpleSigningAttestationCheck` is 10.
   """
 
@@ -1864,16 +1879,6 @@ class StandardQueryParameters(_messages.Message):
   upload_protocol = _messages.StringField(12)
 
 
-class SystemPolicyResult(_messages.Message):
-  r"""Result of evaluating the system policy.
-
-  Fields:
-    matchedPattern: The allowlist pattern that the image matched.
-  """
-
-  matchedPattern = _messages.StringField(1)
-
-
 class TestIamPermissionsRequest(_messages.Message):
   r"""Request message for `TestIamPermissions` method.
 
@@ -1942,9 +1947,10 @@ class UserOwnedGrafeasNote(_messages.Message):
       use an email based on a different naming pattern.
     noteReference: Required. The Grafeas resource name of a
       Attestation.Authority Note, created by the user, in the format:
-      `projects/*/notes/*`. This field may not be updated. An attestation by
-      this attestor is stored as a Grafeas Attestation.Authority Occurrence
-      that names a container image and that links to this Note. Grafeas is an
+      `projects/[PROJECT_ID]/notes/*`. This field may not be updated. A
+      project ID must be used, not a project number. An attestation by this
+      attestor is stored as a Grafeas Attestation.Authority Occurrence that
+      names a container image and that links to this Note. Grafeas is an
       external dependency.
     publicKeys: Optional. Public keys that verify attestations signed by this
       attestor. This field may be updated. If this field is non-empty, one of
@@ -2182,3 +2188,7 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    BinaryauthorizationProjectsAttestorsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    BinaryauthorizationProjectsPolicyGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

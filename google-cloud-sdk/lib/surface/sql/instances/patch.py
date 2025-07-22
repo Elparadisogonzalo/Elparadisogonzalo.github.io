@@ -83,19 +83,37 @@ def _PrintAndConfirmWarningMessage(args, database_version):
         'WARNING: This patch modifies database flag values, which may require '
         'your instance to be restarted. Check the list of supported flags - '
         '{} - to see if your instance will be restarted when this patch '
-        'is submitted.'.format(flag_docs_url))
+        'is submitted.'.format(flag_docs_url)
+    )
   else:
     if any([args.follow_gae_app, args.gce_zone]):
-      continue_msg = ('WARNING: This patch modifies the zone your instance '
-                      'is set to run in, which may require it to be moved. '
-                      'Submitting this patch will restart your instance '
-                      'if it is running in a different zone.')
+      continue_msg = (
+          'WARNING: This patch modifies the zone your instance '
+          'is set to run in, which may require it to be moved. '
+          'Submitting this patch will restart your instance '
+          'if it is running in a different zone.'
+      )
+
+  if 'time_zone' in args and args.time_zone is not None:
+    time_zone_warning_msg = (
+        'WARNING: This patch modifies the time zone for your instance which may'
+        ' cause inconsistencies in your data.'
+    )
+    log.warning(
+        'This patch modifies the time zone for your instance which may cause'
+        ' inconsistencies in your data.'
+    )
+    if continue_msg:
+      continue_msg = continue_msg + '\n' + time_zone_warning_msg
+    else:
+      continue_msg = time_zone_warning_msg
 
   if continue_msg and not console_io.PromptContinue(continue_msg):
     raise exceptions.CancelledError('canceled by the user.')
 
 
 def WithoutKind(message, inline=False):
+  """Remove the kind field from a proto message."""
   result = message if inline else copy.deepcopy(message)
   for field in result.all_fields():
     if field.name == 'kind':
@@ -127,13 +145,32 @@ def _GetConfirmedClearedFields(args, patch_instance, original_instance):
     cleared_fields.append('settings.passwordValidationPolicy')
   if args.IsKnownAndSpecified('clear_allowed_psc_projects'):
     cleared_fields.append(
-        'settings.ipConfiguration.pscConfig.allowedConsumerProjects')
+        'settings.ipConfiguration.pscConfig.allowedConsumerProjects'
+    )
+  if args.IsKnownAndSpecified('clear_psc_auto_connections'):
+    cleared_fields.append(
+        'settings.ipConfiguration.pscConfig.pscAutoConnections'
+    )
+  if args.IsKnownAndSpecified('clear_custom_subject_alternative_names'):
+    cleared_fields.append(
+        'settings.ipConfiguration.customSubjectAlternativeNames'
+    )
+  if args.IsKnownAndSpecified('clear_connection_pool_flags'):
+    cleared_fields.append('settings.connectionPoolConfig.flags')
+  if args.IsKnownAndSpecified('clear_psc_network_attachment_uri'):
+    cleared_fields.append(
+        'settings.ipConfiguration.pscConfig.networkAttachmentUri'
+    )
 
   log.status.write(
-      'The following message will be used for the patch API method.\n')
+      'The following message will be used for the patch API method.\n'
+  )
   log.status.write(
       encoding.MessageToJson(
-          WithoutKind(patch_instance), include_fields=cleared_fields) + '\n')
+          WithoutKind(patch_instance), include_fields=cleared_fields
+      )
+      + '\n'
+  )
 
   _PrintAndConfirmWarningMessage(args, original_instance.databaseVersion)
 
@@ -257,18 +294,35 @@ def AddBaseArgs(parser):
   flags.AddNetwork(parser)
   flags.AddMaintenanceVersion(parser)
   flags.AddSqlServerAudit(parser)
+  flags.AddSqlServerTimeZone(parser)
   flags.AddDeletionProtection(parser)
   flags.AddConnectorEnforcement(parser)
   flags.AddEnableGooglePrivatePath(parser, show_negated_in_help=True)
   flags.AddThreadsPerCore(parser)
-  flags.AddEnableDataCache(parser, show_negated_in_help=False)
+  flags.AddEnableDataCache(parser)
   flags.AddRecreateReplicasOnPrimaryCrash(parser)
   psc_update_group = parser.add_mutually_exclusive_group()
   flags.AddAllowedPscProjects(psc_update_group)
   flags.AddClearAllowedPscProjects(psc_update_group)
+  ip_update_custom_sans_group = parser.add_mutually_exclusive_group()
+  flags.AddCustomSubjectAlternativeNames(ip_update_custom_sans_group)
+  flags.AddClearCustomSubjectAlternativeNames(ip_update_custom_sans_group)
   flags.AddSslMode(parser)
+  flags.AddEnableGoogleMLIntegration(parser)
+  flags.AddEnableDataplexIntegration(parser)
   flags.AddUpgradeSqlNetworkArchitecture(parser)
   flags.AddSimulateMaintenanceEvent(parser)
+  flags.AddSwitchTransactionLogsToCloudStorage(parser)
+  flags.AddFailoverDrReplicaName(parser)
+  flags.AddClearFailoverDrReplicaName(parser)
+  flags.AddIncludeReplicasForMajorVersionUpgrade(parser)
+  flags.AddRetainBackupsOnDelete(parser)
+  flags.AddStorageProvisionedIops(parser)
+  flags.AddStorageProvisionedThroughput(parser)
+  flags.AddEnablePrivateServiceConnect(parser, show_negated_in_help=True)
+  psc_na_uri_update_group = parser.add_mutually_exclusive_group(hidden=True)
+  flags.AddPSCNetworkAttachmentUri(psc_na_uri_update_group, hidden=True)
+  flags.AddClearPSCNetworkAttachmentUri(psc_na_uri_update_group, hidden=True)
 
 
 def AddBetaArgs(parser):
@@ -277,12 +331,31 @@ def AddBetaArgs(parser):
   flags.AddAllocatedIpRangeName(parser)
   labels_util.AddUpdateLabelsFlags(parser, enable_clear=True)
   flags.AddReplicationLagMaxSecondsForRecreate(parser)
-  flags.AddEnableGoogleMLIntegration(parser)
+  psc_update_auto_connections_group = parser.add_mutually_exclusive_group()
+  flags.AddPscAutoConnections(psc_update_auto_connections_group)
+  flags.AddClearPscAutoConnections(psc_update_auto_connections_group)
+  flags.AddEnableConnectionPooling(parser)
+  connection_pool_flags_group = parser.add_mutually_exclusive_group()
+  flags.AddConnectionPoolFlags(connection_pool_flags_group)
+  flags.AddClearConnectionPoolFlags(connection_pool_flags_group)
+  flags.AddInstanceType(parser)
+  flags.AddNodeCount(parser)
+  flags.AddFinalBackup(parser)
+  flags.AddFinalbackupRetentionDays(parser, hidden=True)
+  flags.AddReconcilePsaNetworking(parser)
 
 
 def AddAlphaArgs(unused_parser):
   """Adds alpha args and flags to the parser."""
   pass
+
+
+def IsBetaOrNewer(release_track):
+  """Returns true if the release track is beta or newer."""
+  return (
+      release_track == base.ReleaseTrack.BETA
+      or release_track == base.ReleaseTrack.ALPHA
+  )
 
 
 def RunBasePatchCommand(args, release_track):
@@ -339,6 +412,12 @@ def RunBasePatchCommand(args, release_track):
           '`--enable-point-in-time-recovery` cannot be specified when '
           '--no-backup is specified')
 
+  if args.IsKnownAndSpecified('failover_dr_replica_name'):
+    if args.IsKnownAndSpecified('clear_failover_dr_replica_name'):
+      raise exceptions.ArgumentError(
+          '`--failover-dr-replica-name` cannot be specified when '
+          '--clear-failover-dr-replica-name is specified')
+
   # If --authorized-networks is used, confirm that the user knows the networks
   # will get overwritten.
   if args.authorized_networks:
@@ -347,6 +426,31 @@ def RunBasePatchCommand(args, release_track):
   original_instance_resource = sql_client.instances.Get(
       sql_messages.SqlInstancesGetRequest(
           project=instance_ref.project, instance=instance_ref.instance))
+
+  if IsBetaOrNewer(release_track) and args.IsSpecified(
+      'reconcile_psa_networking'
+  ):
+    if (
+        not original_instance_resource.settings.ipConfiguration
+        or not original_instance_resource.settings.ipConfiguration.privateNetwork
+    ):
+      raise exceptions.ArgumentError(
+          'argument --reconcile-psa-networking can be used only with instances'
+          ' that have a private network'
+      )
+    # Do not allow reconcile-psa-networking flag to be specified with other
+    # arguments.
+    for key in args.GetSpecifiedArgsDict():
+      # positional argument does not have a flag argument
+      if key == 'instance':
+        continue
+      if key == 'reconcile_psa_networking':
+        continue
+      if not args.GetFlagArgument(key).is_global:
+        raise exceptions.ArgumentError(
+            'argument --reconcile-psa-networking cannot be specified with other'
+            ' arguments excluding gcloud wide flags'
+        )
 
   patch_instance = command_util.InstancesV1Beta4.ConstructPatchInstanceFromArgs(
       sql_messages,
@@ -361,6 +465,9 @@ def RunBasePatchCommand(args, release_track):
   # beta only
   if args.maintenance_window_any:
     cleared_fields.append('settings.maintenanceWindow')
+
+  if args.IsKnownAndSpecified('clear_failover_dr_replica_name'):
+    cleared_fields.append('replicationCluster')
 
   with sql_client.IncludeFields(cleared_fields):
     result_operation = sql_client.instances.Patch(
@@ -390,6 +497,7 @@ def RunBasePatchCommand(args, release_track):
   return _Result(changed_instance_resource, original_instance_resource)
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Patch(base.UpdateCommand):
   """Updates the settings of a Cloud SQL instance."""
@@ -408,6 +516,7 @@ class Patch(base.UpdateCommand):
     flags.AddDatabaseVersion(parser, support_default_version=False)
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
 class PatchBeta(base.UpdateCommand):
   """Updates the settings of a Cloud SQL instance."""
@@ -430,6 +539,7 @@ class PatchBeta(base.UpdateCommand):
         support_default_version=False)
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class PatchAlpha(base.UpdateCommand):
   """Updates the settings of a Cloud SQL instance."""

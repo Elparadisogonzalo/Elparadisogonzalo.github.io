@@ -21,7 +21,6 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.apphub import utils as api_lib_utils
 from googlecloudsdk.api_lib.apphub.applications import services as apis
 from googlecloudsdk.calliope import base
-from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.apphub import flags
 
 
@@ -37,27 +36,60 @@ _DETAILED_HELP = {
 }
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class Create(base.CreateCommand):
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class CreateGA(base.CreateCommand):
   """Create an Apphub application service."""
 
   detailed_help = _DETAILED_HELP
 
   @staticmethod
   def Args(parser):
-    flags.AddCreateApplicationServiceFlags(parser)
+    flags.AddCreateApplicationServiceFlags(
+        parser, release_track=base.ReleaseTrack.GA
+    )
 
   def Run(self, args):
     """Run the create command."""
-    client = apis.ServicesClient()
-    service_ref = args.CONCEPTS.service.Parse()
-    dis_service_ref = args.CONCEPTS.discovered_service.Parse()
+    client = apis.ServicesClient(release_track=base.ReleaseTrack.GA)
+    service_ref = api_lib_utils.GetApplicationServiceRef(args)
+    dis_service_ref = api_lib_utils.GetDiscoveredServiceRef(args)
     parent_ref = service_ref.Parent()
-    if not service_ref.Name():
-      raise exceptions.InvalidArgumentException(
-          'service', 'service id must be non-empty.'
-      )
-    attributes = api_lib_utils.PopulateAttributes(args)
+    attributes = api_lib_utils.PopulateAttributes(
+        args, release_track=base.ReleaseTrack.GA
+    )
+
+    return client.Create(
+        service_id=service_ref.Name(),
+        parent=parent_ref.RelativeName(),
+        async_flag=args.async_,
+        discovered_service=dis_service_ref.RelativeName(),
+        display_name=args.display_name,
+        description=args.description,
+        attributes=attributes,
+    )
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class CreateAlpha(base.CreateCommand):
+  """Create an Apphub application service."""
+
+  detailed_help = _DETAILED_HELP
+
+  @staticmethod
+  def Args(parser):
+    flags.AddCreateApplicationServiceFlags(
+        parser, release_track=base.ReleaseTrack.ALPHA
+    )
+
+  def Run(self, args):
+    """Run the create command."""
+    client = apis.ServicesClient(release_track=base.ReleaseTrack.ALPHA)
+    service_ref = api_lib_utils.GetApplicationServiceRef(args)
+    dis_service_ref = api_lib_utils.GetDiscoveredServiceRef(args)
+    parent_ref = service_ref.Parent()
+    attributes = api_lib_utils.PopulateAttributes(
+        args, release_track=base.ReleaseTrack.ALPHA
+    )
 
     return client.Create(
         service_id=service_ref.Name(),

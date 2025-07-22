@@ -218,6 +218,15 @@ def AddTimeoutFlag(parser):
       action=actions.StoreProperty(properties.VALUES.builds.timeout))
 
 
+def AddPollingIntervalFlag(parser):
+  """Add a polling interval flag."""
+  parser.add_argument(
+      '--polling-interval',
+      default=1,
+      type=int,
+      help='Amount of time in seconds to wait between polling build status.')
+
+
 def AddAsyncFlag(parser):
   """Add an async flag."""
   base.ASYNC_FLAG.AddToParser(parser)
@@ -252,21 +261,19 @@ def AddConfigFlags(parser):
       help='The YAML or JSON file to use as the build configuration file.')
   build_config.add_argument(
       '--pack',
-      type=arg_parsers.ArgDict(spec={
-          'image': str,
-          'builder': str,
-          'env': str
-      }),
+      type=arg_parsers.ArgDict(spec={'image': str, 'builder': str, 'env': str}),
       action='append',
-      help='Uses CNCF [buildpack](https://buildpacks.io/) to create image.  '
-      'The "image" key/value must be provided.  The image name must be in the '
-      '*gcr.io* or *pkg.dev* namespace. By default '
-      '```gcr.io/buildpacks/builder``` will be used. To specify your own builder '
-      'image use the optional "builder" key/value argument.  To pass '
-      'environment variables to the builder use the optional "env" key/value '
-      'argument where value is a list of key values using '
-      '[escaping](https://cloud.google.com/sdk/gcloud/reference/topic/escaping) '
-      'if necessary.'
+      help=(
+          'Uses CNCF [buildpack](https://buildpacks.io/) to create the app'
+          ' image.  The app "image" key/value must be provided.  The app image'
+          ' name must be in the *gcr.io* or *pkg.dev* namespace. To specify'
+          ' your own builder image use the optional "builder" key/value'
+          ' argument. By default ```gcr.io/buildpacks/builder``` is used.   To'
+          ' pass environment variables to the builder use the optional "env"'
+          ' key/value argument where value is a list of key values using'
+          ' [escaping](https://cloud.google.com/sdk/gcloud/reference/topic/escaping)'
+          ' if necessary.'
+      ),
   )
 
 
@@ -330,3 +337,19 @@ def GetDefaultBuckestBehavior(buckets_behavior_flag):
   return GetDefaultBucketsBehaviorFlagMapper().GetEnumForChoice(
       buckets_behavior_flag
   )
+
+
+def AddServiceAccountFlag(parser, hidden=False, required=False):
+  """Adds a flag to define a service account to run the build with.
+
+  Args:
+    parser: The argparse parser to add the arg to.
+    hidden: If true, retain help but do not display it.
+    required: If true, the field must be set or will raise an exception.
+  """
+  parser.add_argument(
+      '--service-account',
+      hidden=hidden,
+      required=required,
+      help='The service account to use with this build. \n'
+      'If unset, the default service account will be used.')

@@ -27,8 +27,6 @@ import time
 from typing import Dict
 import uuid
 
-from google.auth import _cloud_sdk
-from google.auth import environment_vars
 import googlecloudsdk
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core.configurations import named_configs
@@ -500,10 +498,15 @@ class SqliteConfigStore(object):
 
     Returns:
       The JSON value for this attribute or None.
+
+    Raises:
+      sqlite3.DataError: if the attribute value is None.
     """
     attr_value = self._LoadAttribute(config_attr, required)
     if attr_value is None:
-      return None
+      raise sqlite3.DataError(
+          'The attribute [{attr}] is not set.'.format(attr=config_attr)
+      )
     try:
       return json.loads(attr_value)
     except ValueError:
@@ -536,33 +539,40 @@ class SqliteConfigStore(object):
     except OSError as e:
       logging.warning('Could not delete config from cache: %s', str(e))
 
-  def _DeleteAttribute(self, config_attr: str):
-    """Deletes a specified attribute from the config."""
-    try:
-      self._Execute(
-          'DELETE FROM config WHERE config_attr = ?',
-          (config_attr,),
-      )
-      # Check if deletion itself was successful
-      with self._cursor as cur:
-        if cur.RowCount() < 1:
-          logging.warning(
-              'Could not delete attribute [%s] from cache in config store'
-              ' [%s].',
-              config_attr,
-              self._config_name,
-          )
+  def _DeleteAttribute(self, config_attr: str) -> bool:
+    """Deletes a specified attribute from the config.
 
-    except sqlite3.OperationalError as e:
-      logging.warning(
-          'Could not delete attribute [%s] from cache: %s',
-          config_attr,
-          str(e),
-      )
+    Args:
+      config_attr: string, the primary key of the attribute to delete.
 
-  def Remove(self, config_attr):
-    """Removes an attribute from the config."""
-    self._DeleteAttribute(config_attr)
+    Returns:
+      Whether the attribute was successfully deleted.
+
+    Raises:
+      sqlite3.OperationalError: if the attribute could not be deleted.
+    """
+    self._Execute(
+        'DELETE FROM config WHERE config_attr = ?',
+        (config_attr,),
+    )
+    # Check if deletion itself was successful
+    if self._cursor.RowCount() < 1:
+      raise sqlite3.OperationalError(
+          'Could not delete attribute [%s] from config store [%s].'
+          % (config_attr, self._config_name)
+      )
+    return True
+
+  def Remove(self, config_attr: str) -> bool:
+    """Removes an attribute from the config.
+
+    Args:
+      config_attr: string, the primary key of the attribute to remove.
+
+    Returns:
+      Whether the attribute was successfully removed.
+    """
+    return self._DeleteAttribute(config_attr)
 
 
 def _GetSqliteStore(config_name) -> SqliteConfigStore:
@@ -606,9 +616,14 @@ class Paths(object):
 
   CLOUDSDK_STATE_DIR = '.install'
   CLOUDSDK_PROPERTIES_NAME = 'properties'
+  _global_config_dir = None
 
   def __init__(self):
-    self.global_config_dir = _GetGlobalConfigDir()
+    self._global_config_dir = _GetGlobalConfigDir()
+
+  @property
+  def global_config_dir(self):
+    return self._global_config_dir
 
   @property
   def sdk_root(self):
@@ -938,6 +953,9 @@ def CertConfigDefaultFilePath():
     str, The default path to the config file.
     exist.
   """
+  # pylint: disable=g-import-not-at-top
+  from google.auth import _cloud_sdk
+  # pylint: enable=g-import-not-at-top
   # pylint:disable=protected-access
   config_path = os.path.join(
       _cloud_sdk.get_config_path(), 'certificate_config.json'
@@ -951,6 +969,9 @@ def ADCFilePath():
   Returns:
     str, The path to the default ADC file.
   """
+  # pylint: disable=g-import-not-at-top
+  from google.auth import _cloud_sdk
+  # pylint: enable=g-import-not-at-top
   # pylint:disable=protected-access
   return _cloud_sdk.get_application_default_credentials_path()
 
@@ -961,6 +982,9 @@ def ADCEnvVariable():
   Returns:
     str, The value of the env var or None if unset.
   """
+  # pylint: disable=g-import-not-at-top
+  from google.auth import environment_vars
+  # pylint: enable=g-import-not-at-top
   return encoding.GetEncodedValue(
       os.environ, environment_vars.CREDENTIALS, None
   )

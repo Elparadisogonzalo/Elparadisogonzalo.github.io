@@ -22,8 +22,8 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import enum
-
 from googlecloudsdk.calliope import arg_parsers
+from googlecloudsdk.calliope import base
 
 _POSIX_SOURCE_OR_DESTINATION_HELP_TEXT = (
     'POSIX filesystem - Specify the `posix://` scheme followed by the absolute'
@@ -32,6 +32,15 @@ _POSIX_SOURCE_OR_DESTINATION_HELP_TEXT = (
     '* posix:///path/directory/\n\n'
     'A file transfer agent must be installed on the POSIX filesystem, and you'
     ' need an agent pool flag on this `jobs` command to activate the agent.')
+_HDFS_SOURCE_HELP_TEXT = (
+    'Hadoop Distributed File System (HDFS) - Specify the `hdfs://` scheme'
+    ' followed by the absolute path to the desired directory, starting from the'
+    ' root of the file system (denoted by a leading slash). For example:\n'
+    '* hdfs:///path/directory/\n\n'
+    'Namenode details should not be included in the path specification, as they'
+    ' are required separately during the agent installation process.\n\n'
+    'A file transfer agent must be installed, and you need an agent pool flag'
+    ' on this `jobs` command to activate the agent.')
 _SOURCE_HELP_TEXT = (
     'The source of your data. Available sources and formatting information:\n\n'
     'Public clouds -\n'
@@ -40,10 +49,11 @@ _SOURCE_HELP_TEXT = (
     '* [Azure Blob Storage or Data Lake Storage] http://examplestorageaccount.'
     'blob.core.windows.net/examplecontainer/examplefolder\n\n'
     '{}\n\n'
+    '{}\n\n'
     'Publicly-accessible objects - Specify the URL of a TSV file containing a'
     ' list of URLs of publicly-accessible objects. For example:\n'
     '* http://example.com/tsvfile'
-).format(_POSIX_SOURCE_OR_DESTINATION_HELP_TEXT)
+).format(_POSIX_SOURCE_OR_DESTINATION_HELP_TEXT, _HDFS_SOURCE_HELP_TEXT)
 _DESTINATION_HELP_TEXT = (
     'The destination of your transferred data. Available destinations and '
     ' formatting information:\n\n'
@@ -79,6 +89,7 @@ class LogAction(enum.Enum):
 class LogActionState(enum.Enum):
   FAILED = 'failed'
   SUCCEEDED = 'succeeded'
+  SKIPPED = 'skipped'
 
 
 class PreserveMetadataField(enum.Enum):
@@ -130,7 +141,7 @@ def add_source_creds_flag(parser):
       'v1/TransferSpec#AzureCredentials\n\n')
 
 
-def setup_parser(parser, is_update=False):
+def setup_parser(parser, is_update=False, release_track=None):
   """Adds flags to job create and job update commands."""
   # Flags and arg groups appear in help text in the order they are added here.
   # The order was designed by UX, so please do not modify.
@@ -185,6 +196,7 @@ def setup_parser(parser, is_update=False):
       '--description',
       help='An optional description to help identify the job using details'
       " that don't fit in its name.")
+
   add_source_creds_flag(job_information)
   job_information.add_argument(
       '--source-agent-pool',
@@ -210,6 +222,20 @@ def setup_parser(parser, is_update=False):
       ' (e.g., `source://path/to/manfest.csv` or'
       ' `destination://path/to/manifest.csv`). For manifest file formatting,'
       ' see https://cloud.google.com/storage-transfer/docs/manifest.')
+
+  if not is_update and release_track is base.ReleaseTrack.ALPHA:
+    replication_group = parser.add_group(help='REPLICATION OPTIONS')
+    replication_group.add_argument(
+        '--replication',
+        action='store_true',
+        help=(
+            'Enable replication to automatically copy all new and existing'
+            ' objects from the source to the destination. Important: Objects'
+            ' deleted from the source bucket will not be deleted from the'
+            ' destination bucket. Please note that it is an event-driven'
+            ' transfer.'
+        ),
+    )
 
   event_stream = parser.add_group(
       help=('EVENT STREAM\n\nConfigure an event stream to transfer data'
@@ -396,6 +422,7 @@ def setup_parser(parser, is_update=False):
         '--clear-custom-storage-class',
         action='store_true',
         help='Reverts to using destination default storage class.')
+
   transfer_options.add_argument(
       '--overwrite-when',
       choices=sorted(option.value for option in OverwriteOption),
@@ -554,6 +581,16 @@ def setup_parser(parser, is_update=False):
       ' of the URL. For example, https://s3.region.amazonaws.com/bucket-name'
       '/key-name for path style and Ex. https://bucket-name.s3.region.'
       'amazonaws.com/key-name for virtual-hosted style.')
+  additional_options.add_argument(
+      '--s3-cloudfront-domain',
+      help=(
+          'For transfers from S3, optionally route egress traffic through a'
+          ' CloudFront instance. Supply the endpoint of the CloudFront'
+          ' instance: https://example.cloudfront.net. See documentation'
+          ' (https://cloud.google.com/storage-transfer/docs/s3-cloudfront)'
+          ' for more information.'
+      ),
+  )
   if is_update:
     additional_options.add_argument(
         '--clear-source-endpoint',
@@ -579,6 +616,11 @@ def setup_parser(parser, is_update=False):
         '--clear-source-request-model',
         action='store_true',
         help='Removes source request model.')
+    additional_options.add_argument(
+        '--clear-s3-cloudfront-domain',
+        action='store_true',
+        help='Removes S3 CloudFront domain.',
+    )
 
   if not is_update:
     execution_options = parser.add_group(

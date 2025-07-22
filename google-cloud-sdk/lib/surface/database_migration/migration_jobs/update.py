@@ -67,7 +67,7 @@ class _Update(object):
     mj_flags.AddNoAsyncFlag(parser)
     mj_flags.AddDisplayNameFlag(parser)
     mj_flags.AddTypeFlag(parser)
-    mj_flags.AddDumpPathFlag(parser)
+    mj_flags.AddDumpGroupFlag(parser)
     mj_flags.AddConnectivityGroupFlag(parser, mj_flags.ApiType.UPDATE)
     flags.AddLabelsUpdateFlags(parser)
 
@@ -87,8 +87,8 @@ class _Update(object):
     source_ref = args.CONCEPTS.source.Parse()
     destination_ref = args.CONCEPTS.destination.Parse()
 
-    cp_client = migration_jobs.MigrationJobsClient(self.ReleaseTrack())
-    result_operation = cp_client.Update(migration_job_ref.RelativeName(),
+    mj_client = migration_jobs.MigrationJobsClient(self.ReleaseTrack())
+    result_operation = mj_client.Update(migration_job_ref.RelativeName(),
                                         source_ref, destination_ref, args)
 
     client = api_util.GetClientInstance(self.ReleaseTrack())
@@ -128,6 +128,12 @@ class UpdateGA(_Update, base.Command):
   def Args(parser):
     _Update.Args(parser)
     mj_flags.AddDumpParallelLevelFlag(parser)
+    mj_flags.AddDumpTypeFlag(parser)
+    mj_flags.AddFilterFlag(parser)
+    mj_flags.AddCommitIdFlag(parser)
+    mj_flags.AddSqlServerHomogeneousMigrationConfigFlag(parser, is_update=True)
+    mj_flags.AddMigrationJobObjectsConfigFlagForCreateAndUpdate(parser)
+    mj_flags.AddHeterogeneousMigrationConfigFlag(parser, is_update=True)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)

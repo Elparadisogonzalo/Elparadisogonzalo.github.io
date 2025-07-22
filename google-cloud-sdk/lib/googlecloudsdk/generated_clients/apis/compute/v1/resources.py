@@ -179,6 +179,14 @@ class Collections(enum.Enum):
       ['project', 'image'],
       True
   )
+  INSTANCEGROUPMANAGERRESIZEREQUESTS = (
+      'instanceGroupManagerResizeRequests',
+      'projects/{project}/zones/{zone}/instanceGroupManagers/'
+      '{instanceGroupManager}/resizeRequests/{resizeRequest}',
+      {},
+      ['project', 'zone', 'instanceGroupManager', 'resizeRequest'],
+      True
+  )
   INSTANCEGROUPMANAGERS = (
       'instanceGroupManagers',
       'projects/{project}/zones/{zone}/instanceGroupManagers/'
@@ -192,6 +200,13 @@ class Collections(enum.Enum):
       'projects/{project}/zones/{zone}/instanceGroups/{instanceGroup}',
       {},
       ['project', 'zone', 'instanceGroup'],
+      True
+  )
+  INSTANCESETTINGS = (
+      'instanceSettings',
+      'projects/{project}/zones/{zone}/instanceSettings',
+      {},
+      ['project', 'zone'],
       True
   )
   INSTANCETEMPLATES = (
@@ -208,12 +223,34 @@ class Collections(enum.Enum):
       ['project', 'zone', 'instance'],
       True
   )
+  INSTANTSNAPSHOTS = (
+      'instantSnapshots',
+      'projects/{project}/zones/{zone}/instantSnapshots/{instantSnapshot}',
+      {},
+      ['project', 'zone', 'instantSnapshot'],
+      True
+  )
+  INTERCONNECTATTACHMENTGROUPS = (
+      'interconnectAttachmentGroups',
+      'projects/{project}/global/interconnectAttachmentGroups/'
+      '{interconnectAttachmentGroup}',
+      {},
+      ['project', 'interconnectAttachmentGroup'],
+      True
+  )
   INTERCONNECTATTACHMENTS = (
       'interconnectAttachments',
       'projects/{project}/regions/{region}/interconnectAttachments/'
       '{interconnectAttachment}',
       {},
       ['project', 'region', 'interconnectAttachment'],
+      True
+  )
+  INTERCONNECTGROUPS = (
+      'interconnectGroups',
+      'projects/{project}/global/interconnectGroups/{interconnectGroup}',
+      {},
+      ['project', 'interconnectGroup'],
       True
   )
   INTERCONNECTLOCATIONS = (
@@ -295,6 +332,13 @@ class Collections(enum.Enum):
       'projects/{project}/global/firewallPolicies/{firewallPolicy}',
       {},
       ['project', 'firewallPolicy'],
+      True
+  )
+  NETWORKPROFILES = (
+      'networkProfiles',
+      'projects/{project}/global/networkProfiles/{networkProfile}',
+      {},
+      ['project', 'networkProfile'],
       True
   )
   NETWORKS = (
@@ -435,6 +479,13 @@ class Collections(enum.Enum):
       ['project', 'region', 'instanceTemplate'],
       True
   )
+  REGIONINSTANTSNAPSHOTS = (
+      'regionInstantSnapshots',
+      'projects/{project}/regions/{region}/instantSnapshots/{instantSnapshot}',
+      {},
+      ['project', 'region', 'instantSnapshot'],
+      True
+  )
   REGIONNETWORKENDPOINTGROUPS = (
       'regionNetworkEndpointGroups',
       'projects/{project}/regions/{region}/networkEndpointGroups/'
@@ -531,6 +582,22 @@ class Collections(enum.Enum):
       ['project', 'region'],
       True
   )
+  RESERVATIONBLOCKS = (
+      'reservationBlocks',
+      'projects/{project}/zones/{zone}/reservations/{reservation}/'
+      'reservationBlocks/{reservationBlock}',
+      {},
+      ['project', 'zone', 'reservation', 'reservationBlock'],
+      True
+  )
+  RESERVATIONSUBBLOCKS = (
+      'reservationSubBlocks',
+      'projects/{project}/zones/{zone}/{parentName}/reservationSubBlocks/'
+      '{reservationSubBlock}',
+      {},
+      ['project', 'zone', 'parentName', 'reservationSubBlock'],
+      True
+  )
   RESERVATIONS = (
       'reservations',
       'projects/{project}/zones/{zone}/reservations/{reservation}',
@@ -608,6 +675,20 @@ class Collections(enum.Enum):
       'projects/{project}/global/sslPolicies/{sslPolicy}',
       {},
       ['project', 'sslPolicy'],
+      True
+  )
+  STORAGEPOOLTYPES = (
+      'storagePoolTypes',
+      'projects/{project}/zones/{zone}/storagePoolTypes/{storagePoolType}',
+      {},
+      ['project', 'zone', 'storagePoolType'],
+      True
+  )
+  STORAGEPOOLS = (
+      'storagePools',
+      'projects/{project}/zones/{zone}/storagePools/{storagePool}',
+      {},
+      ['project', 'zone', 'storagePool'],
       True
   )
   SUBNETWORKS = (
@@ -705,7 +786,10 @@ class Collections(enum.Enum):
   ZONES = (
       'zones',
       'projects/{project}/zones/{zone}',
-      {},
+      {
+          '':
+              'projects/{project}/zones/{zone}',
+      },
       ['project', 'zone'],
       True
   )

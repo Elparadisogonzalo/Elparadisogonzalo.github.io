@@ -34,6 +34,7 @@ DEFAULT_LIST_FORMAT = """\
       version:label=DIGEST,
       createTime.date(tz=LOCAL),
       updateTime.date(tz=LOCAL),
+      metadata.imageSizeBytes:label=SIZE,
       {}
     )""".format(format_util.CONTAINER_ANALYSIS_METADATA_FORMAT)
 
@@ -41,15 +42,17 @@ EXTENDED_LIST_FORMAT = """\
     table(
       package:label=IMAGE,
       version:label=DIGEST,
-      tags,
+      tags.list(),
       createTime.date(tz=LOCAL),
       updateTime.date(tz=LOCAL),
+      metadata.imageSizeBytes:label=SIZE,
       {}
     )""".format(format_util.CONTAINER_ANALYSIS_METADATA_FORMAT)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
                     base.ReleaseTrack.GA)
+@base.UniverseCompatible
 class List(base.ListCommand):
   """List Artifact Registry container images.
 

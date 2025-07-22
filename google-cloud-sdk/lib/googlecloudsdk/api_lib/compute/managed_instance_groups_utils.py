@@ -23,9 +23,11 @@ import random
 import re
 import string
 import sys
+import types
+
+from apitools.base.protorpclite import protojson
 from apitools.base.py import encoding
 from apitools.base.py import list_pager
-
 from googlecloudsdk.api_lib.compute import exceptions
 from googlecloudsdk.api_lib.compute import instance_utils
 from googlecloudsdk.api_lib.compute import lister
@@ -35,6 +37,7 @@ from googlecloudsdk.api_lib.compute import utils
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
 from googlecloudsdk.calliope import exceptions as calliope_exceptions
+from googlecloudsdk.calliope import parser_extensions
 from googlecloudsdk.command_lib.compute import flags as compute_flags
 from googlecloudsdk.command_lib.compute.managed_instance_groups import auto_healing_utils
 from googlecloudsdk.command_lib.compute.managed_instance_groups import update_instances_utils
@@ -47,20 +50,32 @@ from six.moves import range  # pylint: disable=redefined-builtin
 
 
 _ALLOWED_UTILIZATION_TARGET_TYPES = [
-    'DELTA_PER_MINUTE', 'DELTA_PER_SECOND', 'GAUGE']
+    'DELTA_PER_MINUTE',
+    'DELTA_PER_SECOND',
+    'GAUGE',
+]
 
 _ALLOWED_UTILIZATION_TARGET_TYPES_LOWER = [
-    'delta-per-minute', 'delta-per-second', 'gauge']
+    'delta-per-minute',
+    'delta-per-second',
+    'gauge',
+]
 
 ARGS_CONFLICTING_WITH_AUTOSCALING_FILE_BETA = [
-    'max_num_replicas', 'cool_down_period', 'custom_metric_utilization',
-    'description', 'min_num_replicas',
-    'scale_based_on_cpu', 'scale_based_on_load_balancing',
-    'target_cpu_utilization', 'target_load_balancing_utilization'
+    'max_num_replicas',
+    'cool_down_period',
+    'custom_metric_utilization',
+    'description',
+    'min_num_replicas',
+    'scale_based_on_cpu',
+    'scale_based_on_load_balancing',
+    'target_cpu_utilization',
+    'target_load_balancing_utilization',
 ]
 
 ARGS_CONFLICTING_WITH_AUTOSCALING_FILE_ALPHA = (
-    ARGS_CONFLICTING_WITH_AUTOSCALING_FILE_BETA)
+    ARGS_CONFLICTING_WITH_AUTOSCALING_FILE_BETA
+)
 
 
 _MAX_AUTOSCALER_NAME_LENGTH = 63
@@ -91,10 +106,7 @@ class ResourceCannotBeResolvedException(Error):
   """The user uses invalid / partial name to resolve URI for the resource."""
 
 
-def AddAutoscalerArgs(
-    parser,
-    autoscaling_file_enabled=False,
-    patch_args=False):
+def AddAutoscalerArgs(parser, autoscaling_file_enabled=False, patch_args=False):
   """Adds commandline arguments to parser."""
   parser.add_argument(
       '--cool-down-period',
@@ -111,26 +123,37 @@ def AddAutoscalerArgs(
           ' for information on duration formats. Initialization periods might'
           ' vary because of numerous factors. We recommend that you test how'
           ' long your application may take to initialize. To do this, create a'
-          ' VM and time your application\'s startup process.'
+          " VM and time your application's startup process."
       ),
   )
   parser.add_argument('--description', help='Notes about Autoscaler.')
   AddMinMaxControl(parser, max_required=not autoscaling_file_enabled)
-  parser.add_argument('--scale-based-on-cpu',
-                      action='store_true',
-                      help='Autoscaler will be based on CPU utilization.')
-  parser.add_argument('--scale-based-on-load-balancing',
-                      action='store_true',
-                      help=('Use autoscaling based on load balancing '
-                            'utilization.'))
-  parser.add_argument('--target-cpu-utilization',
-                      type=arg_parsers.BoundedFloat(0.0, 1.0),
-                      help='Autoscaler aims to maintain CPU utilization at '
-                      'target level (0.0 to 1.0).')
-  parser.add_argument('--target-load-balancing-utilization',
-                      type=arg_parsers.BoundedFloat(0.0, None),
-                      help='Autoscaler aims to maintain the load balancing '
-                      'utilization level (greater than 0.0).')
+  parser.add_argument(
+      '--scale-based-on-cpu',
+      action='store_true',
+      help='Autoscaler will be based on CPU utilization.',
+  )
+  parser.add_argument(
+      '--scale-based-on-load-balancing',
+      action='store_true',
+      help='Use autoscaling based on load balancing utilization.',
+  )
+  parser.add_argument(
+      '--target-cpu-utilization',
+      type=arg_parsers.BoundedFloat(0.0, 1.0),
+      help=(
+          'Autoscaler aims to maintain CPU utilization at '
+          'target level (0.0 to 1.0).'
+      ),
+  )
+  parser.add_argument(
+      '--target-load-balancing-utilization',
+      type=arg_parsers.BoundedFloat(0.0, None),
+      help=(
+          'Autoscaler aims to maintain the load balancing '
+          'utilization level (greater than 0.0).'
+      ),
+  )
   custom_metric_utilization_help = """\
 Adds a target metric value for the Autoscaler to use.
 
@@ -160,61 +183,82 @@ Mutually exclusive with `--update-stackdriver-metric`.
     parser.add_argument(
         '--autoscaling-file',
         metavar='PATH',
-        help=('Path of the file from which autoscaling configuration will be '
-              'loaded. This flag allows you to atomically setup complex '
-              'autoscalers.'))
+        help=(
+            'Path of the file from which autoscaling configuration will be '
+            'loaded. This flag allows you to atomically setup complex '
+            'autoscalers.'
+        ),
+    )
   parser.add_argument(
       '--remove-stackdriver-metric',
       metavar='METRIC',
-      help=('Stackdriver metric to remove from autoscaling configuration. '
-            'If the metric is the only input used for autoscaling the '
-            'command will fail.'))
+      help=(
+          'Stackdriver metric to remove from autoscaling configuration. '
+          'If the metric is the only input used for autoscaling the '
+          'command will fail.'
+      ),
+  )
   parser.add_argument(
       '--update-stackdriver-metric',
       metavar='METRIC',
-      help=('Stackdriver metric to use as an input for autoscaling. '
-            'When using this flag, the target value of the metric must also be '
-            'specified by using the following flags: '
-            '`--stackdriver-metric-single-instance-assignment` or '
-            '`--stackdriver-metric-utilization-target` and '
-            '`--stackdriver-metric-utilization-target-type`. '
-            'Mutually exclusive with `--custom-metric-utilization`.'))
+      help=(
+          'Stackdriver metric to use as an input for autoscaling. '
+          'When using this flag, the target value of the metric must also be '
+          'specified by using the following flags: '
+          '`--stackdriver-metric-single-instance-assignment` or '
+          '`--stackdriver-metric-utilization-target` and '
+          '`--stackdriver-metric-utilization-target-type`. '
+          'Mutually exclusive with `--custom-metric-utilization`.'
+      ),
+  )
   parser.add_argument(
       '--stackdriver-metric-filter',
       metavar='FILTER',
-      help=('Expression for filtering samples used to autoscale, see '
-            'https://cloud.google.com/monitoring/api/v3/filters.'))
+      help=(
+          'Expression for filtering samples used to autoscale, see '
+          'https://cloud.google.com/monitoring/api/v3/filters.'
+      ),
+  )
   parser.add_argument(
       '--stackdriver-metric-utilization-target',
       metavar='TARGET',
       type=float,
-      help=('Value of the metric Autoscaler aims to maintain. When '
-            'specifying this flag you must also provide '
-            '`--stackdriver-metric-utilization-target-type`. Mutually '
-            'exclusive with '
-            '`--stackdriver-metric-single-instance-assignment` and '
-            '`--custom-metric-utilization`.'))
+      help=(
+          'Value of the metric Autoscaler aims to maintain. When '
+          'specifying this flag you must also provide '
+          '`--stackdriver-metric-utilization-target-type`. Mutually '
+          'exclusive with '
+          '`--stackdriver-metric-single-instance-assignment` and '
+          '`--custom-metric-utilization`.'
+      ),
+  )
 
   parser.add_argument(
       '--stackdriver-metric-utilization-target-type',
       metavar='TARGET_TYPE',
       choices=_ALLOWED_UTILIZATION_TARGET_TYPES_LOWER,
-      help=('Value of the metric Autoscaler aims to maintain. When '
-            'specifying this flag you must also provide '
-            '`--stackdriver-metric-utilization-target`. Mutually '
-            'exclusive with '
-            '`--stackdriver-metric-single-instance-assignment` and '
-            '`--custom-metric-utilization`.'))
+      help=(
+          'Value of the metric Autoscaler aims to maintain. When '
+          'specifying this flag you must also provide '
+          '`--stackdriver-metric-utilization-target`. Mutually '
+          'exclusive with '
+          '`--stackdriver-metric-single-instance-assignment` and '
+          '`--custom-metric-utilization`.'
+      ),
+  )
   parser.add_argument(
       '--stackdriver-metric-single-instance-assignment',
       metavar='ASSIGNMENT',
       type=float,
-      help=('Value that indicates the amount of work that each instance is '
-            'expected to handle. Autoscaler maintains enough VMs by dividing '
-            'the available work by this value. Mutually exclusive with '
-            '`-stackdriver-metric-utilization-target-type`, '
-            '`-stackdriver-metric-utilization-target-type`, and '
-            '`--custom-metric-utilization`.'))
+      help=(
+          'Value that indicates the amount of work that each instance is '
+          'expected to handle. Autoscaler maintains enough VMs by dividing '
+          'the available work by this value. Mutually exclusive with '
+          '`-stackdriver-metric-utilization-target-type`, '
+          '`-stackdriver-metric-utilization-target-type`, and '
+          '`--custom-metric-utilization`.'
+      ),
+  )
 
   GetModeFlag().AddToParser(parser)
 
@@ -225,13 +269,17 @@ Mutually exclusive with `--update-stackdriver-metric`.
 
 def AddMinMaxControl(parser, max_required=True):
   """Adds min and max num replicas controls to a given parser."""
-  parser.add_argument('--min-num-replicas',
-                      type=arg_parsers.BoundedInt(0, sys.maxsize),
-                      help='Minimum number of replicas Autoscaler can set.')
-  parser.add_argument('--max-num-replicas',
-                      type=arg_parsers.BoundedInt(0, sys.maxsize),
-                      required=max_required,
-                      help='Maximum number of replicas Autoscaler can set.')
+  parser.add_argument(
+      '--min-num-replicas',
+      type=arg_parsers.BoundedInt(0, sys.maxsize),
+      help='Minimum number of replicas Autoscaler can set.',
+  )
+  parser.add_argument(
+      '--max-num-replicas',
+      type=arg_parsers.BoundedInt(0, sys.maxsize),
+      required=max_required,
+      help='Maximum number of replicas Autoscaler can set.',
+  )
 
 
 def GetModeFlag():
@@ -240,18 +288,18 @@ def GetModeFlag():
   return base.ChoiceArgument(
       '--mode',
       {
-          'on': ('Permits autoscaling to scale out and in (default for '
-                 'new autoscalers).'),
-          'only-scale-out': ('Permits autoscaling to scale only out and '
-                             'not in.'),
-          'only-up': ("""
+          'on': (
+              'Permits autoscaling to scale out and in (default for '
+              'new autoscalers).'
+          ),
+          'only-scale-out': 'Permits autoscaling to scale only out and not in.',
+          'only-up': """
               (DEPRECATED) Permits autoscaling to scale only out and not in.
 
               Value `only-up` is deprecated. Use `--mode only-scale-out`
               instead.
-          """),
-          'off': ('Turns off autoscaling, while keeping the new '
-                  'configuration.')
+          """,
+          'off': 'Turns off autoscaling, while keeping the new configuration.',
       },
       help_str="""\
           Set the mode of an autoscaler for a managed instance group.
@@ -261,7 +309,8 @@ def GetModeFlag():
           persists while the activities are turned off or restricted, and the
           activities resume when the autoscaler is turned on again or when the
           restrictions are lifted.
-      """)
+      """,
+  )
 
 
 def AddScaleInControlFlag(parser, include_clear=False):
@@ -276,7 +325,8 @@ def AddScaleInControlFlag(parser, include_clear=False):
         help="""\
           If specified, the scale-in-control field will be cleared. Using this
           flag will remove any configuration set by `--scale-in-control` flag.
-        """)
+        """,
+    )
   arg_group.add_argument(
       '--scale-in-control',
       type=arg_parsers.ArgDict(
@@ -284,7 +334,8 @@ def AddScaleInControlFlag(parser, include_clear=False):
               'max-scaled-in-replicas': str,
               'max-scaled-in-replicas-percent': str,
               'time-window': int,
-          },),
+          },
+      ),
       help="""\
         Configuration that allows slower scale in so that even if Autoscaler
         recommends an abrupt scale in of a managed instance group, it will be
@@ -306,7 +357,8 @@ def AddScaleInControlFlag(parser, include_clear=False):
         recommendations. The autoscaler will not resize below the maximum
         allowed deduction subtracted from the peak size observed in this
         period. Measured in seconds.
-        """)
+        """,
+  )
 
 
 def AddClearScaleDownControlFlag(parser):
@@ -320,7 +372,8 @@ def AddClearScaleDownControlFlag(parser):
         flag will remove any configuration set by the now-deprecated
         `--scale-down-control` flag. This is only useful if the MIG
         configuration had scale-down-control set in the past.
-      """)
+      """,
+  )
 
 
 def AddPredictiveAutoscaling(parser, standard=True):
@@ -334,7 +387,7 @@ instances.
 Predictive autoscaling predicts the future values of the
 scaling metric and scales the group in advance to ensure that new
 VM instances are ready in time to cover the predicted peak.
-"""
+""",
   }
   if standard:
     choices['standard'] = """
@@ -358,11 +411,13 @@ def AddScheduledAutoscaling(parser, patch_args):
     arg_group.add_argument(
         '--set-schedule',
         metavar='SCHEDULE_NAME',
-        help='A unique name for the scaling schedule to be configured.')
+        help='A unique name for the scaling schedule to be configured.',
+    )
     arg_group.add_argument(
         '--update-schedule',
         metavar='SCHEDULE_NAME',
-        help='Name of the scaling schedule to be updated.')
+        help='Name of the scaling schedule to be updated.',
+    )
     arg_group.add_argument(
         '--remove-schedule',
         metavar='SCHEDULE_NAME',
@@ -390,7 +445,8 @@ def AddScheduledAutoscaling(parser, patch_args):
         Name of the scaling schedule to be enabled.
 
         See --disable-schedule for details.
-        """)
+        """,
+    )
     arg_group.add_argument(
         '--disable-schedule',
         metavar='SCHEDULE_NAME',
@@ -416,7 +472,8 @@ def AddScheduledAutoscaling(parser, patch_args):
     parser.add_argument(
         '--set-schedule',
         metavar='SCHEDULE_NAME',
-        help='Unique name for the scaling schedule.')
+        help='Unique name for the scaling schedule.',
+    )
     AddScheduledAutoscalingConfigurationArguments(parser.add_group())
 
 
@@ -434,7 +491,8 @@ def AddScheduledAutoscalingConfigurationArguments(arg_group):
         example if your workload takes 10 minutes from VM creation to start
         serving then set the start time 10 minutes earlier than the time you
         need VMs to be ready.
-        """)
+        """,
+  )
   arg_group.add_argument(
       '--schedule-duration-sec',
       metavar='DURATION',
@@ -471,7 +529,8 @@ def AddScheduledAutoscalingConfigurationArguments(arg_group):
         This configuration does not change autoscaling minimum and maximum
         instance limits which are always in effect. Autoscaler does not create
         more than the maximum number of instances configured for a group.
-        """)
+        """,
+  )
   arg_group.add_argument(
       '--schedule-time-zone',
       metavar='TIME_ZONE',
@@ -485,41 +544,47 @@ def AddScheduledAutoscalingConfigurationArguments(arg_group):
 
         See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for
         the list of valid timezones.
-        """)
+        """,
+  )
   arg_group.add_argument(
       '--schedule-description',
       metavar='DESCRIPTION',
-      help='A verbose description of the scaling schedule.')
+      help='A verbose description of the scaling schedule.',
+  )
 
 
 def ValidateConflictsWithAutoscalingFile(args, conflicting_args):
-  if (hasattr(args, 'autoscaling_file') and
-      args.IsSpecified('autoscaling_file')):
+  if hasattr(args, 'autoscaling_file') and args.IsSpecified('autoscaling_file'):
     for arg in conflicting_args:
       if args.IsSpecified(arg):
         conflicting_flags = [
-            '--' + a.replace('_', '-')
-            for a in conflicting_args
+            '--' + a.replace('_', '-') for a in conflicting_args
         ]
         raise calliope_exceptions.ConflictingArgumentsException(
-            *(['--autoscaling-file'] + conflicting_flags))
+            *(['--autoscaling-file'] + conflicting_flags)
+        )
 
 
 def _ValidateCustomMetricUtilizationVsUpdateStackdriverMetric(args):
-  if (args.IsSpecified('custom_metric_utilization') and
-      args.IsSpecified('update_stackdriver_metric')):
+  if args.IsSpecified('custom_metric_utilization') and args.IsSpecified(
+      'update_stackdriver_metric'
+  ):
     raise calliope_exceptions.ConflictingArgumentsException(
-        '--custom-metric-utilization', '--update-stackdriver-metric')
+        '--custom-metric-utilization', '--update-stackdriver-metric'
+    )
 
 
 def _ValidateRemoveStackdriverMetricVsUpdateStackdriverMetric(args):
-  if (args.IsSpecified('update_stackdriver_metric') and
-      args.IsSpecified('remove_stackdriver_metric') and
-      args.update_stackdriver_metric == args.remove_stackdriver_metric):
+  if (
+      args.IsSpecified('update_stackdriver_metric')
+      and args.IsSpecified('remove_stackdriver_metric')
+      and args.update_stackdriver_metric == args.remove_stackdriver_metric
+  ):
     raise calliope_exceptions.InvalidArgumentException(
         '--update-stackdriver-metric',
         'You can not remove Stackdriver metric you are updating with '
-        '[--update-stackdriver-metric] flag.')
+        '[--update-stackdriver-metric] flag.',
+    )
 
 
 def _ValidateRequiringUpdateStackdriverMetric(args):  # pylint:disable=missing-docstring
@@ -534,21 +599,25 @@ def _ValidateRequiringUpdateStackdriverMetric(args):  # pylint:disable=missing-d
       if args.IsSpecified(f):
         raise calliope_exceptions.RequiredArgumentException(
             '--' + f.replace('_', '-'),
-            '[--update-stackdriver-metric] required to use this flag.')
+            '[--update-stackdriver-metric] required to use this flag.',
+        )
 
 
 def _ValidateRequiredByUpdateStackdriverMetric(args):  # pylint:disable=missing-docstring
   if args.IsSpecified('update_stackdriver_metric'):
     one_of_required = [
         'stackdriver_metric_single_instance_assignment',
-        'stackdriver_metric_utilization_target',]
+        'stackdriver_metric_utilization_target',
+    ]
     if not any([args.IsSpecified(f) for f in one_of_required]):
-      flags = [
-          '[--{}]'.format(f.replace('_', '--')) for f in one_of_required]
-      msg = ('You must provide one of {} with '
-             '[--update-stackdriver-metric].'.format(', '.join(flags)))
+      flags = ['[--{}]'.format(f.replace('_', '--')) for f in one_of_required]
+      msg = (
+          'You must provide one of {} with '
+          '[--update-stackdriver-metric].'.format(', '.join(flags))
+      )
       raise calliope_exceptions.RequiredArgumentException(
-          '--update-stackdriver-metric', msg)
+          '--update-stackdriver-metric', msg
+      )
 
 
 def _ValidateSingleInstanceAssignmentVsUtilizationTarget(args):  # pylint:disable=missing-docstring
@@ -561,19 +630,24 @@ def _ValidateSingleInstanceAssignmentVsUtilizationTarget(args):  # pylint:disabl
     if any(conflicting):
       assignment_flag = '--stackdriver-metric-single-instance-assignment'
       conflicting_flags = [
-          '[--{}]'.format(f.replace('_', '-')) for f in conflicting]
+          '[--{}]'.format(f.replace('_', '-')) for f in conflicting
+      ]
       raise calliope_exceptions.ConflictingArgumentsException(
           assignment_flag,
           'You cannot use any of {} with `{}`'.format(
-              conflicting_flags, assignment_flag))
+              conflicting_flags, assignment_flag
+          ),
+      )
 
 
 def _ValidateUtilizationTargetHasType(args):
-  if (args.IsSpecified('stackdriver_metric_utilization_target') and
-      not args.IsSpecified('stackdriver_metric_utilization_target_type')):
+  if args.IsSpecified(
+      'stackdriver_metric_utilization_target'
+  ) and not args.IsSpecified('stackdriver_metric_utilization_target_type'):
     raise calliope_exceptions.RequiredArgumentException(
         '--stackdriver-metric-utilization-target-type',
-        'Required with [--stackdriver-metric-utilization-target].')
+        'Required with [--stackdriver-metric-utilization-target].',
+    )
 
 
 def ValidateStackdriverMetricsFlags(args):
@@ -587,15 +661,18 @@ def ValidateStackdriverMetricsFlags(args):
 
 
 def ValidateGeneratedAutoscalerIsValid(args, autoscaler):
-  if (args.IsSpecified('remove_stackdriver_metric') and
-      not autoscaler.autoscalingPolicy.customMetricUtilizations and
-      not autoscaler.autoscalingPolicy.cpuUtilization and
-      not autoscaler.autoscalingPolicy.loadBalancingUtilization):
+  if (
+      args.IsSpecified('remove_stackdriver_metric')
+      and not autoscaler.autoscalingPolicy.customMetricUtilizations
+      and not autoscaler.autoscalingPolicy.cpuUtilization
+      and not autoscaler.autoscalingPolicy.loadBalancingUtilization
+  ):
     raise calliope_exceptions.InvalidArgumentException(
         '--remove-stackdriver-metric',
         'This would remove the only signal used for autoscaling. If you want '
         'to stop autoscaling the Managed Instance Group use `stop-autoscaling` '
-        'command instead.')
+        'command instead.',
+    )
 
 
 def ValidateAutoscalerArgs(args):
@@ -603,17 +680,20 @@ def ValidateAutoscalerArgs(args):
   if args.min_num_replicas and args.max_num_replicas:
     if args.min_num_replicas > args.max_num_replicas:
       raise calliope_exceptions.InvalidArgumentException(
-          '--max-num-replicas', 'can\'t be less than min num replicas.')
+          '--max-num-replicas', "can't be less than min num replicas."
+      )
 
   if args.custom_metric_utilization:
     for custom_metric_utilization in args.custom_metric_utilization:
       for field in ('utilization-target', 'metric', 'utilization-target-type'):
         if field not in custom_metric_utilization:
           raise calliope_exceptions.InvalidArgumentException(
-              '--custom-metric-utilization', field + ' not present.')
+              '--custom-metric-utilization', field + ' not present.'
+          )
       if custom_metric_utilization['utilization-target'] < 0:
         raise calliope_exceptions.InvalidArgumentException(
-            '--custom-metric-utilization utilization-target', 'less than 0.')
+            '--custom-metric-utilization utilization-target', 'less than 0.'
+        )
 
 
 def GetInstanceGroupManagerOrThrow(igm_ref, client):
@@ -622,6 +702,7 @@ def GetInstanceGroupManagerOrThrow(igm_ref, client):
   Args:
     igm_ref: reference to the Instance Group Manager.
     client: The compute client.
+
   Returns:
     Instance Group Manager object.
   """
@@ -636,12 +717,16 @@ def GetInstanceGroupManagerOrThrow(igm_ref, client):
   errors = []
   # Run through the generator to actually make the requests and get potential
   # errors.
-  igm_details = client.MakeRequests([(service, 'Get', request)],
-                                    errors_to_collect=errors)
+  igm_details = client.MakeRequests(
+      [(service, 'Get', request)], errors_to_collect=errors
+  )
 
   if errors or len(igm_details) != 1:
-    utils.RaiseException(errors, ResourceNotFoundException,
-                         error_message='Could not fetch resource:')
+    utils.RaiseException(
+        errors,
+        ResourceNotFoundException,
+        error_message='Could not fetch resource:',
+    )
   return igm_details[0]
 
 
@@ -649,18 +734,18 @@ def CreateZoneRef(resources, data):
   """Create zone reference from object with project and zone fields."""
   return resources.Parse(
       None,
-      params={'project': data.project,
-              'zone': data.zone},
-      collection='compute.zones')
+      params={'project': data.project, 'zone': data.zone},
+      collection='compute.zones',
+  )
 
 
 def CreateRegionRef(resources, data):
   """Create region reference from object with project and region fields."""
   return resources.Parse(
       None,
-      params={'project': data.project,
-              'region': data.region},
-      collection='compute.regions')
+      params={'project': data.project, 'region': data.region},
+      collection='compute.regions',
+  )
 
 
 def GroupByProject(locations):
@@ -673,8 +758,9 @@ def GroupByProject(locations):
   return result
 
 
-def AutoscalersForLocations(zones, regions, client,
-                            fail_when_api_not_supported=True):
+def AutoscalersForLocations(
+    zones, regions, client, fail_when_api_not_supported=True
+):
   """Finds all Autoscalers defined for a given project and locations.
 
   Args:
@@ -682,7 +768,8 @@ def AutoscalersForLocations(zones, regions, client,
     regions: iterable of target region references
     client: The compute client.
     fail_when_api_not_supported: If true, raise tool exception if API does not
-        support autoscaling.
+      support autoscaling.
+
   Returns:
     A list of Autoscaler objects.
   """
@@ -699,7 +786,8 @@ def AutoscalersForLocations(zones, regions, client,
         project=project,
         scopes=sorted(set([zone_ref.zone for zone_ref in zones])),
         scope_name='zone',
-        filter_expr=None)
+        filter_expr=None,
+    )
 
   if regions:
     if hasattr(client.apitools_client, 'regionAutoscalers'):
@@ -709,20 +797,21 @@ def AutoscalersForLocations(zones, regions, client,
             project=project,
             scopes=sorted(set([region_ref.region for region_ref in regions])),
             scope_name='region',
-            filter_expr=None)
+            filter_expr=None,
+        )
     else:
       if fail_when_api_not_supported:
         errors.append((None, 'API does not support regional autoscaling'))
 
-  autoscalers = client.MakeRequests(
-      requests=requests,
-      errors_to_collect=errors)
+  autoscalers = client.MakeRequests(requests=requests, errors_to_collect=errors)
 
   if errors:
     utils.RaiseToolException(
         errors,
-        error_message='Could not check if the Managed Instance Group is '
-        'Autoscaled.')
+        error_message=(
+            'Could not check if the Managed Instance Group is Autoscaled.'
+        ),
+    )
 
   return autoscalers
 
@@ -733,21 +822,25 @@ def AutoscalersForMigs(migs, autoscalers):
   Args:
     migs: List of triples (IGM name, scope type, location reference).
     autoscalers: A list of Autoscalers to search among.
+
   Returns:
     A list of all Autoscalers with target on mig_names list.
   """
   igm_url_regexes = []
-  for (name, scope_type, location) in migs:
+  for name, scope_type, location in migs:
     igm_url_regexes.append(
         '/projects/{project}/{scopeType}/{scopeName}/'
-        'instanceGroupManagers/{name}$'
-        .format(project=location.project,
-                scopeType=(scope_type + 's'),
-                scopeName=getattr(location, scope_type),
-                name=name))
+        'instanceGroupManagers/{name}$'.format(
+            project=location.project,
+            scopeType=(scope_type + 's'),
+            scopeName=getattr(location, scope_type),
+            name=name,
+        )
+    )
   igm_url_regex = re.compile('(' + ')|('.join(igm_url_regexes) + ')')
   result = [
-      autoscaler for autoscaler in autoscalers
+      autoscaler
+      for autoscaler in autoscalers
       if igm_url_regex.search(autoscaler.target)
   ]
   return result
@@ -760,6 +853,7 @@ def AutoscalerForMigByRef(client, resources, igm_ref):
     client: a GCE client
     resources: a GCE resource registry
     igm_ref: reference to instance group manager
+
   Returns:
     Autoscaler message with autoscaler targeting the IGM refferenced by
     igm_ref or None if there isn't one.
@@ -778,15 +872,15 @@ def AutoscalerForMigByRef(client, resources, igm_ref):
     raise ValueError('Unknown reference type {0}'.format(igm_ref.Collection()))
 
   autoscalers = AutoscalersForLocations(
-      regions=regions,
-      zones=zones,
-      client=client)
+      regions=regions, zones=zones, client=client
+  )
 
   return AutoscalerForMig(
       mig_name=igm_ref.Name(),
       autoscalers=autoscalers,
       location=location,
-      scope_type=scope_type)
+      scope_type=scope_type,
+  )
 
 
 def AutoscalerForMig(mig_name, autoscalers, location, scope_type):
@@ -797,6 +891,7 @@ def AutoscalerForMig(mig_name, autoscalers, location, scope_type):
     autoscalers: A list of Autoscalers to search among.
     location: Target location reference.
     scope_type: Target scope type.
+
   Returns:
     Autoscaler object for autoscaling the given Instance Group Manager or None
     when such Autoscaler does not exist.
@@ -804,7 +899,8 @@ def AutoscalerForMig(mig_name, autoscalers, location, scope_type):
     InvalidArgumentError: if more than one autoscaler provided
   """
   autoscalers = AutoscalersForMigs(
-      [(mig_name, scope_type, location)], autoscalers)
+      [(mig_name, scope_type, location)], autoscalers
+  )
   if autoscalers:
     # For each Instance Group Manager there can be at most one Autoscaler having
     # the Manager as a target, so when one is found it can be returned as it is
@@ -812,38 +908,39 @@ def AutoscalerForMig(mig_name, autoscalers, location, scope_type):
     if len(autoscalers) == 1:
       return autoscalers[0]
     else:
-      raise InvalidArgumentError(
-          'More than one Autoscaler with given target.')
+      raise InvalidArgumentError('More than one Autoscaler with given target.')
   return None
 
 
-def AddAutoscalersToMigs(migs_iterator,
-                         client,
-                         resources,
-                         fail_when_api_not_supported=True):
+def AddAutoscalersToMigs(
+    migs_iterator, client, resources, fail_when_api_not_supported=True
+):
   """Add Autoscaler to each IGM object if autoscaling is enabled for it."""
+
   def ParseZone(zone_link):
     return resources.Parse(
         zone_link,
         params={'project': properties.VALUES.core.project.GetOrFail},
-        collection='compute.zones')
+        collection='compute.zones',
+    )
 
   def ParseRegion(region_link):
     return resources.Parse(
         region_link,
         params={'project': properties.VALUES.core.project.GetOrFail},
-        collection='compute.regions')
+        collection='compute.regions',
+    )
 
   migs = list(migs_iterator)
   zones = set([ParseZone(mig['zone']) for mig in migs if 'zone' in mig])
-  regions = set(
-      [ParseRegion(mig['region']) for mig in migs if 'region' in mig])
+  regions = set([ParseRegion(mig['region']) for mig in migs if 'region' in mig])
   autoscalers = {}
   all_autoscalers = AutoscalersForLocations(
       zones=zones,
       regions=regions,
       client=client,
-      fail_when_api_not_supported=fail_when_api_not_supported)
+      fail_when_api_not_supported=fail_when_api_not_supported,
+  )
 
   for location in list(zones) + list(regions):
     autoscalers[location.Name()] = []
@@ -874,7 +971,8 @@ def AddAutoscalersToMigs(migs_iterator,
           mig_name=mig['name'],
           autoscalers=autoscalers[location.Name()],
           location=location,
-          scope_type=scope_type)
+          scope_type=scope_type,
+      )
     if autoscaler:
       mig['autoscaler'] = autoscaler
     yield mig
@@ -882,35 +980,39 @@ def AddAutoscalersToMigs(migs_iterator,
 
 def _BuildCpuUtilization(args, messages):
   """Builds the CPU Utilization message given relevant arguments."""
-  flags_to_check = ['target_cpu_utilization', 'scale_based_on_cpu',
-                    'cpu_utilization_predictive_method']
+  flags_to_check = [
+      'target_cpu_utilization',
+      'scale_based_on_cpu',
+      'cpu_utilization_predictive_method',
+  ]
 
   if instance_utils.IsAnySpecified(args, *flags_to_check):
     cpu_message = messages.AutoscalingPolicyCpuUtilization()
     if args.target_cpu_utilization:
       cpu_message.utilizationTarget = args.target_cpu_utilization
     if args.cpu_utilization_predictive_method:
-      cpu_predictive_enum = messages.AutoscalingPolicyCpuUtilization.PredictiveMethodValueValuesEnum
+      cpu_predictive_enum = (
+          messages.AutoscalingPolicyCpuUtilization.PredictiveMethodValueValuesEnum
+      )
       cpu_message.predictiveMethod = arg_utils.ChoiceToEnum(
-          args.cpu_utilization_predictive_method, cpu_predictive_enum)
+          args.cpu_utilization_predictive_method, cpu_predictive_enum
+      )
     return cpu_message
   return None
 
 
 def _BuildCustomMetricUtilizationsFromCustomMetricUtilizationFlag(
-    flag, messages):
+    flag, messages
+):
   """Translate --custom-metric-utilization flag to API message."""
   result = []
   for custom_metric_utilization in flag:
     result.append(
         messages.AutoscalingPolicyCustomMetricUtilization(
-            utilizationTarget=custom_metric_utilization[
-                'utilization-target'],
+            utilizationTarget=custom_metric_utilization['utilization-target'],
             metric=custom_metric_utilization['metric'],
             utilizationTargetType=(
-                messages
-                .AutoscalingPolicyCustomMetricUtilization
-                .UtilizationTargetTypeValueValuesEnum(
+                messages.AutoscalingPolicyCustomMetricUtilization.UtilizationTargetTypeValueValuesEnum(
                     custom_metric_utilization['utilization-target-type'],
                 )
             ),
@@ -927,7 +1029,8 @@ def _RemoveMetricFromList(metrics, to_remove):
 
 
 def _UpdateCustomMetricUtilizationsFromStackoverflowFlags(
-    args, messages, original):
+    args, messages, original
+):
   """Take apply stackdriver flags to customMetricUtilizations."""
   if original:
     result = original.autoscalingPolicy.customMetricUtilizations
@@ -938,12 +1041,10 @@ def _UpdateCustomMetricUtilizationsFromStackoverflowFlags(
   if args.update_stackdriver_metric:
     _RemoveMetricFromList(result, args.update_stackdriver_metric)
     if args.stackdriver_metric_utilization_target_type:
-      target_type = (
-          messages.AutoscalingPolicyCustomMetricUtilization
-          .UtilizationTargetTypeValueValuesEnum(
-              args.stackdriver_metric_utilization_target_type.upper().
-              replace('-', '_'),
-          )
+      target_type = messages.AutoscalingPolicyCustomMetricUtilization.UtilizationTargetTypeValueValuesEnum(
+          args.stackdriver_metric_utilization_target_type.upper().replace(
+              '-', '_'
+          ),
       )
     else:
       target_type = None
@@ -952,9 +1053,10 @@ def _UpdateCustomMetricUtilizationsFromStackoverflowFlags(
       log.warning(
           "The provided filter contains a single quote character ('). While "
           "valid as a metric/resource label value, it's not a control "
-          "character that is part of the filtering language; if you meant "
-          "to use it to quote a string value, you need to use a double quote "
-          "character (\") instead.")
+          'character that is part of the filtering language; if you meant '
+          'to use it to quote a string value, you need to use a double quote '
+          'character (") instead.'
+      )
     result.append(
         messages.AutoscalingPolicyCustomMetricUtilization(
             utilizationTarget=args.stackdriver_metric_utilization_target,
@@ -976,15 +1078,18 @@ def _BuildCustomMetricUtilizations(args, messages, original):
     args: command line arguments.
     messages: module containing message classes.
     original: original autoscaler message.
+
   Returns:
     AutoscalingPolicyCustomMetricUtilization list.
   """
   if args.custom_metric_utilization:
     return _BuildCustomMetricUtilizationsFromCustomMetricUtilizationFlag(
-        args.custom_metric_utilization, messages)
+        args.custom_metric_utilization, messages
+    )
   if hasattr(args, 'stackdriver_metric_filter'):
     return _UpdateCustomMetricUtilizationsFromStackoverflowFlags(
-        args, messages, original)
+        args, messages, original
+    )
 
 
 def _BuildLoadBalancingUtilization(args, messages):
@@ -999,7 +1104,8 @@ def _BuildLoadBalancingUtilization(args, messages):
 
 def ParseModeString(mode, messages):
   return messages.AutoscalingPolicy.ModeValueValuesEnum(
-      mode.upper().replace('-', '_'))
+      mode.upper().replace('-', '_')
+  )
 
 
 def _BuildMode(args, messages, original):
@@ -1014,6 +1120,7 @@ def BuildScaleIn(args, messages):
   Args:
     args: command line arguments.
     messages: module containing message classes.
+
   Returns:
     AutoscalingPolicyScaleInControl message object.
   Raises:
@@ -1023,11 +1130,13 @@ def BuildScaleIn(args, messages):
   if args.IsSpecified('scale_in_control'):
     replicas_arg = args.scale_in_control.get('max-scaled-in-replicas')
     replicas_arg_percent = args.scale_in_control.get(
-        'max-scaled-in-replicas-percent')
+        'max-scaled-in-replicas-percent'
+    )
     if replicas_arg and replicas_arg_percent:
       raise InvalidArgumentError(
           'max-scaled-in-replicas and max-scaled-in-replicas-percent'
-          'are mutually exclusive, you can\'t specify both')
+          "are mutually exclusive, you can't specify both"
+      )
     elif replicas_arg_percent:
       max_replicas = messages.FixedOrPercent(percent=int(replicas_arg_percent))
     else:
@@ -1035,7 +1144,8 @@ def BuildScaleIn(args, messages):
 
     return messages.AutoscalingPolicyScaleInControl(
         maxScaledInReplicas=max_replicas,
-        timeWindowSec=args.scale_in_control.get('time-window'))
+        timeWindowSec=args.scale_in_control.get('time-window'),
+    )
 
 
 def _RemoveScheduleEncoder(message, unused_encoder=None):
@@ -1047,6 +1157,7 @@ def _RemoveScheduleEncoder(message, unused_encoder=None):
 
   Args:
     message: an instance of AutoscalingPolicy.ScalingSchedulesValue.
+
   Returns:
     Schedule removal request JSON dumped to string.
   """
@@ -1060,8 +1171,9 @@ def _RemoveScheduleDecoder(unused_data, unused_decoder=None):
   It's passed when registering message codec, but it will never be used as
   removing schedules is a write-only operation.
   """
-  raise NotImplementedError("This should never be called, it's a write-only"
-                            " operation.")
+  raise NotImplementedError(
+      "This should never be called, it's a write-only operation."
+  )
 
 
 def BuildSchedules(args, messages):
@@ -1070,6 +1182,7 @@ def BuildSchedules(args, messages):
   Args:
     args: command line arguments.
     messages: module containing message classes.
+
   Returns:
     Dict containing an AutoscalingPolicyScalingSchedule message object.
   Raises:
@@ -1080,8 +1193,13 @@ def BuildSchedules(args, messages):
   # The following method uses getattr instead of args.IsSpecified because the
   # latter doesn't work before the parameter is available in GA, raising
   # googlecloudsdk.calliope.parser_errors.UnknownDestinationException.
-  mutex_group = {'set_schedule', 'update_schedule', 'remove_schedule',
-                 'enable_schedule', 'disable_schedule'}
+  mutex_group = {
+      'set_schedule',
+      'update_schedule',
+      'remove_schedule',
+      'enable_schedule',
+      'disable_schedule',
+  }
   count = 0
   for possible_argument in mutex_group:
     if getattr(args, possible_argument, None) is not None:
@@ -1092,10 +1210,12 @@ def BuildSchedules(args, messages):
     raise InvalidArgumentError(
         '--set-schedule, --update-schedule, --remove-schedule, '
         '--enable-schedule, --disable-schedule are mutually exclusive, only '
-        'one can be specified.')
+        'one can be specified.'
+    )
 
-  scaling_schedule_wrapper = (messages.AutoscalingPolicy.
-                              ScalingSchedulesValue.AdditionalProperty)
+  scaling_schedule_wrapper = (
+      messages.AutoscalingPolicy.ScalingSchedulesValue.AdditionalProperty
+  )
   field_mapping = {
       'schedule_cron': 'schedule',
       'schedule_duration_sec': 'durationSec',
@@ -1109,31 +1229,37 @@ def BuildSchedules(args, messages):
         additionalProperties=[
             scaling_schedule_wrapper(
                 key=args.enable_schedule,
-                value=messages.AutoscalingPolicyScalingSchedule(
-                    disabled=False))])
+                value=messages.AutoscalingPolicyScalingSchedule(disabled=False),
+            )
+        ]
+    )
   if getattr(args, 'disable_schedule', None) is not None:
     return messages.AutoscalingPolicy.ScalingSchedulesValue(
         additionalProperties=[
             scaling_schedule_wrapper(
                 key=args.disable_schedule,
-                value=messages.AutoscalingPolicyScalingSchedule(
-                    disabled=True))])
+                value=messages.AutoscalingPolicyScalingSchedule(disabled=True),
+            )
+        ]
+    )
   if getattr(args, 'remove_schedule', None) is not None:
     # Register a custom message codec to properly encode AdditionalProperty's
     # None value into nulls.
     encoding.RegisterCustomMessageCodec(
-        encoder=_RemoveScheduleEncoder,
-        decoder=_RemoveScheduleDecoder)(
-            messages.AutoscalingPolicy.ScalingSchedulesValue)
+        encoder=_RemoveScheduleEncoder, decoder=_RemoveScheduleDecoder
+    )(messages.AutoscalingPolicy.ScalingSchedulesValue)
     return messages.AutoscalingPolicy.ScalingSchedulesValue(
         additionalProperties=[
-            scaling_schedule_wrapper(
-                key=args.remove_schedule,
-                value=None)])
+            scaling_schedule_wrapper(key=args.remove_schedule, value=None)
+        ]
+    )
   if getattr(args, 'set_schedule', None) is not None:
     policy_name = args.set_schedule
-    required = {'schedule_cron', 'schedule_duration_sec',
-                'schedule_min_required_replicas'}
+    required = {
+        'schedule_cron',
+        'schedule_duration_sec',
+        'schedule_min_required_replicas',
+    }
     # Set-shedule should clear pre-existing fields, so we set them to None.
     scaling_schedule = {field: None for field in field_mapping.values()}
   else:
@@ -1149,14 +1275,19 @@ def BuildSchedules(args, messages):
       raise InvalidArgumentError(
           '--set-schedule argument requires --schedule-duration-sec, '
           '--schedule-cron, and --schedule-min-required-replicas to be '
-          'specified.')
+          'specified.'
+      )
 
   return messages.AutoscalingPolicy.ScalingSchedulesValue(
       additionalProperties=[
           scaling_schedule_wrapper(
               key=policy_name,
               value=messages.AutoscalingPolicyScalingSchedule(
-                  **scaling_schedule))])
+                  **scaling_schedule
+              ),
+          )
+      ]
+  )
 
 
 def _BuildAutoscalerPolicy(args, messages, original):
@@ -1166,6 +1297,7 @@ def _BuildAutoscalerPolicy(args, messages, original):
     args: command line arguments.
     messages: module containing message classes.
     original: original autoscaler message.
+
   Returns:
     AutoscalingPolicy message object.
   """
@@ -1173,9 +1305,11 @@ def _BuildAutoscalerPolicy(args, messages, original):
       'coolDownPeriodSec': args.cool_down_period,
       'cpuUtilization': _BuildCpuUtilization(args, messages),
       'customMetricUtilizations': _BuildCustomMetricUtilizations(
-          args, messages, original),
+          args, messages, original
+      ),
       'loadBalancingUtilization': _BuildLoadBalancingUtilization(
-          args, messages),
+          args, messages
+      ),
       'maxNumReplicas': args.max_num_replicas,
       'minNumReplicas': args.min_num_replicas,
   }
@@ -1184,8 +1318,12 @@ def _BuildAutoscalerPolicy(args, messages, original):
   policy_dict['scalingSchedules'] = BuildSchedules(args, messages)
 
   return messages.AutoscalingPolicy(
-      **dict((key, value) for key, value in six.iteritems(policy_dict)
-             if value is not None))  # Filter out None values.
+      **dict(
+          (key, value)
+          for key, value in six.iteritems(policy_dict)
+          if value is not None
+      )
+  )  # Filter out None values.
 
 
 def AdjustAutoscalerNameForCreation(autoscaler_resource, igm_ref):
@@ -1203,7 +1341,8 @@ def AdjustAutoscalerNameForCreation(autoscaler_resource, igm_ref):
   if autoscaler_resource.name is None:
     autoscaler_resource.name = igm_ref.Name()
   trimmed_name = autoscaler_resource.name[
-      0:(_MAX_AUTOSCALER_NAME_LENGTH - _NUM_RANDOM_CHARACTERS_IN_AS_NAME - 1)]
+      0 : (_MAX_AUTOSCALER_NAME_LENGTH - _NUM_RANDOM_CHARACTERS_IN_AS_NAME - 1)
+  ]
   random_characters = [
       random.choice(string.ascii_lowercase + string.digits)
       for _ in range(_NUM_RANDOM_CHARACTERS_IN_AS_NAME)
@@ -1213,17 +1352,10 @@ def AdjustAutoscalerNameForCreation(autoscaler_resource, igm_ref):
   autoscaler_resource.name = new_name
 
 
-def BuildAutoscaler(args,
-                    messages,
-                    igm_ref,
-                    name,
-                    original):
+def BuildAutoscaler(args, messages, igm_ref, name, original):
   """Builds autoscaler message protocol buffer."""
   autoscaler = messages.Autoscaler(
-      autoscalingPolicy=_BuildAutoscalerPolicy(
-          args,
-          messages,
-          original),
+      autoscalingPolicy=_BuildAutoscalerPolicy(args, messages, original),
       description=args.description,
       name=name,
       target=igm_ref.SelfLink(),
@@ -1243,8 +1375,9 @@ def CreateAutohealingPolicies(messages, health_check, initial_delay):
   return [policy]
 
 
-def ModifyAutohealingPolicies(current_policies, messages, args,
-                              health_check_url):
+def ModifyAutohealingPolicies(
+    current_policies, messages, args, health_check_url
+):
   """Modifies existing autohealing policy from args."""
   if args.clear_autohealing:
     return [messages.InstanceGroupManagerAutoHealingPolicy()]
@@ -1272,8 +1405,10 @@ def ValidateAutohealingPolicies(auto_healing_policies):
   # additional entries is unnecessary as an error will be returned.
   policy = auto_healing_policies[0]
   if not policy.healthCheck and policy.initialDelaySec:
-    message = ('WARNING: Health check should be provided when specifying '
-               'initial delay.')
+    message = (
+        'WARNING: Health check should be provided when specifying '
+        'initial delay.'
+    )
     console_io.PromptContinue(message=message, cancel_on_no=True)
 
 
@@ -1282,53 +1417,193 @@ def CreateInstanceLifecyclePolicy(messages, args):
   policy = messages.InstanceGroupManagerInstanceLifecyclePolicy()
   if args.IsSpecified('force_update_on_repair'):
     if args.force_update_on_repair:
-      policy.forceUpdateOnRepair = messages.InstanceGroupManagerInstanceLifecyclePolicy.ForceUpdateOnRepairValueValuesEnum.YES
+      policy.forceUpdateOnRepair = (
+          messages.InstanceGroupManagerInstanceLifecyclePolicy.ForceUpdateOnRepairValueValuesEnum.YES
+      )
     else:
-      policy.forceUpdateOnRepair = messages.InstanceGroupManagerInstanceLifecyclePolicy.ForceUpdateOnRepairValueValuesEnum.NO
+      policy.forceUpdateOnRepair = (
+          messages.InstanceGroupManagerInstanceLifecyclePolicy.ForceUpdateOnRepairValueValuesEnum.NO
+      )
 
   if args.IsKnownAndSpecified('default_action_on_vm_failure'):
     policy.defaultActionOnFailure = arg_utils.ChoiceToEnum(
         args.default_action_on_vm_failure,
-        messages.InstanceGroupManagerInstanceLifecyclePolicy.DefaultActionOnFailureValueValuesEnum)
+        messages.InstanceGroupManagerInstanceLifecyclePolicy.DefaultActionOnFailureValueValuesEnum,
+    )
+
+  if args.IsKnownAndSpecified('action_on_vm_failed_health_check'):
+    policy.onFailedHealthCheck = arg_utils.ChoiceToEnum(
+        args.action_on_vm_failed_health_check,
+        messages.InstanceGroupManagerInstanceLifecyclePolicy.OnFailedHealthCheckValueValuesEnum,
+    )
 
   return ValueOrNone(policy)
 
 
-def CreateInstanceFlexibilityPolicy(messages, args):
-  """Creates instance flexibility policy list from args."""
-  policy = messages.InstanceGroupManagerInstanceFlexibilityPolicy()
+def CreateInstanceFlexibilityPolicy(args, messages, igm_resource=None):
+  """Creates instance flexibility policy from args.
+
+  Args:
+    args: arguments of the request
+    messages: Compute API messages
+    igm_resource: instance group manager resource that is being patched
+
+  Returns:
+    InstanceFlexibilityPolicy.
+  """
+  instance_selections = CreateInstanceSelections(args, messages, igm_resource)
+
+  instance_flexibility_policy = (
+      messages.InstanceGroupManagerInstanceFlexibilityPolicy(
+          instanceSelections=instance_selections
+      )
+  )
+  return ValueOrNone(instance_flexibility_policy)
+
+
+def CreateResourcePolicies(
+    messages: types.ModuleType, args: parser_extensions.Namespace
+):
+  """Creates resource policies from args."""
+  policy = messages.InstanceGroupManagerResourcePolicies()
+  if args.IsKnownAndSpecified('workload_policy'):
+    policy.workloadPolicy = args.workload_policy
+  elif args.IsKnownAndSpecified('remove_workload_policy'):
+    RegisterResourcePoliciesPatchEncoders(messages)
+    return policy
+
+  return ValueOrNone(policy)
+
+
+def CreateInstanceSelections(args, messages, igm_resource):
+  """Build a list of InstanceSelection from the given flags."""
   instance_selections = []
+  if args.IsKnownAndSpecified(
+      'remove_instance_selections_all'
+  ) or args.IsKnownAndSpecified('remove_instance_selections'):
+    RegisterInstanceSelectionsPatchEncoders(messages)
+    existing_instance_selection_names = _GetExistingInstanceSelectionNames(
+        igm_resource
+    )
+
+    if args.IsKnownAndSpecified('remove_instance_selections_all'):
+      for instance_selection_name in existing_instance_selection_names:
+        instance_selections.append(
+            messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue.AdditionalProperty(
+                key=instance_selection_name,
+                value=None,
+            )
+        )
+    elif args.IsKnownAndSpecified('remove_instance_selections'):
+      for instance_selection_name in args.remove_instance_selections:
+        if instance_selection_name not in existing_instance_selection_names:
+          continue
+        if any(
+            instance_selection.key == instance_selection_name
+            for instance_selection in instance_selections
+        ):
+          continue
+        instance_selections.append(
+            messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue.AdditionalProperty(
+                key=instance_selection_name,
+                value=None,
+            )
+        )
+
   if args.IsKnownAndSpecified('instance_selection_machine_types'):
+    _AddInstanceSelection(
+        messages,
+        instance_selections,
+        'instance-selection-1',
+        args.instance_selection_machine_types,
+        1,
+    )
+
+  if args.IsKnownAndSpecified('instance_selection'):
+    for instance_selection in args.instance_selection:
+      if 'name' not in instance_selection:
+        raise InvalidArgumentError('Missing instance selection name.')
+      name = instance_selection['name'][0]
+
+      if (
+          'machine-type' not in instance_selection
+          or not instance_selection['machine-type']
+      ):
+        raise InvalidArgumentError(
+            'Missing machine type in instance selection.'
+        )
+      machine_types = instance_selection['machine-type']
+      rank = None
+      if 'rank' in instance_selection:
+        rank = instance_selection['rank'][0]
+        if not rank.isdigit():
+          raise InvalidArgumentError(
+              'Invalid value for rank in instance selection.'
+          )
+        rank = int(rank)
+      _AddInstanceSelection(
+          messages, instance_selections, name, machine_types, rank
+      )
+
+  if not instance_selections:
+    return None
+  return messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue(
+      additionalProperties=instance_selections
+  )
+
+
+def _AddInstanceSelection(
+    messages, instance_selections, instance_selection_name, machine_types, rank
+):
+  """Adds instance selection to instance selections list."""
+  for instance_selection in instance_selections:
+    if instance_selection.key == instance_selection_name:
+      if instance_selection.value is not None:
+        raise InvalidArgumentError(
+            'Attempt to add multiple instance selections with the same name.'
+        )
+      instance_selections.remove(
+          messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue.AdditionalProperty(
+              key=instance_selection_name,
+              value=None,
+          )
+      )
+  if rank is not None:
     instance_selections.append(
         messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue.AdditionalProperty(
-            key='instance-selection-1',
+            key=instance_selection_name,
             value=messages.InstanceGroupManagerInstanceFlexibilityPolicyInstanceSelection(
-                rank=1, machineTypes=args.instance_selection_machine_types
+                rank=rank, machineTypes=machine_types
             ),
         )
     )
-    if args.IsKnownAndSpecified('instance_selection_secondary_machine_types'):
-      instance_selections.append(
-          messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue.AdditionalProperty(
-              key='instance-selection-2',
-              value=messages.InstanceGroupManagerInstanceFlexibilityPolicyInstanceSelection(
-                  rank=2,
-                  machineTypes=args.instance_selection_secondary_machine_types,
-              )
-          )
-      )
-  elif args.IsKnownAndSpecified('instance_selection_secondary_machine_types'):
-    raise InvalidArgumentError(
-        '--instance-selection-secondary-machine-types requires'
-        ' --instance-selection-machine-types to be specified.'
-    )
   else:
-    return None
+    instance_selections.append(
+        messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue.AdditionalProperty(
+            key=instance_selection_name,
+            value=messages.InstanceGroupManagerInstanceFlexibilityPolicyInstanceSelection(
+                machineTypes=machine_types
+            ),
+        )
+    )
 
-  policy.instanceSelections = messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue(
-      additionalProperties=instance_selections
-  )
-  return ValueOrNone(policy)
+
+def _IsPreviouslyProcessed(intance_selection_name, instance_selections, is_add):
+  for instance_selection in instance_selections:
+    if instance_selection.key == intance_selection_name:
+      if instance_selection.value is not None and is_add:
+        raise InvalidArgumentError(
+            'Attempt to add multiple instance selections with the same name.'
+        )
+      return True
+  return False
+
+
+def _GetExistingInstanceSelectionNames(igm_resource):
+  return [
+      instance_selection.key
+      for instance_selection in igm_resource.instanceFlexibilityPolicy.instanceSelections.additionalProperties
+  ]
 
 
 def CreateStandbyPolicy(
@@ -1365,15 +1640,17 @@ def ValidateVersions(igm_info, new_versions, resources, force=False):
     igm_info: instance group manager resource.
     new_versions: list of new versions.
     force: if true, we allow any combination of instance templates, as long as
-    they are different. If false, only the following transitions are allowed: X
-      -> Y, X -> (X, Y), (X, Y) -> X, (X, Y) -> Y, (X, Y) -> (X, Y)
+      they are different. If false, only the following transitions are allowed:
+      X -> Y, X -> (X, Y), (X, Y) -> X, (X, Y) -> Y, (X, Y) -> (X, Y)
+
   Raises:
      InvalidArgumentError: if provided arguments are not complete or invalid.
   """
-  if (len(new_versions) == 2 and
-      new_versions[0].instanceTemplate == new_versions[1].instanceTemplate):
-    raise InvalidArgumentError(
-        'Provided instance templates must be different.')
+  if (
+      len(new_versions) == 2
+      and new_versions[0].instanceTemplate == new_versions[1].instanceTemplate
+  ):
+    raise InvalidArgumentError('Provided instance templates must be different.')
   if force:
     return
 
@@ -1392,7 +1669,8 @@ def ValidateVersions(igm_info, new_versions, resources, force=False):
   else:
     raise InvalidArgumentError(
         'Either versions or instance template must be specified for '
-        'managed instance group.')
+        'managed instance group.'
+    )
 
   new_templates = [
       resources.ParseURL(version.instanceTemplate).RelativeName()
@@ -1405,7 +1683,8 @@ def ValidateVersions(igm_info, new_versions, resources, force=False):
         'Update inconsistent with current state. '
         'The only allowed transitions between versions are: '
         'X -> Y, X -> (X, Y), (X, Y) -> X, (X, Y) -> Y, (X, Y) -> (X, Y). '
-        'Please check versions templates or use --force.')
+        'Please check versions templates or use --force.'
+    )
 
 
 def AddAutoscaledPropertyToMigs(migs, client, resources):
@@ -1433,7 +1712,8 @@ def AddAutoscaledPropertyToMigs(migs, client, resources):
       migs_iterator=_ComputeInstanceGroupSize(migs, client, resources),
       client=client,
       resources=resources,
-      fail_when_api_not_supported=False):
+      fail_when_api_not_supported=False,
+  ):
     status = ResolveAutoscalingStatusForMig(client, mig)
     if status == client.messages.Autoscaler.StatusValueValuesEnum.ERROR:
       had_errors = True
@@ -1457,8 +1737,11 @@ def ResolveAutoscalingStatusForMig(client, mig):
   if 'autoscaler' in mig and mig['autoscaler'] is not None:
     # status is present in autoscaler iff Autoscaler message has embedded
     # StatusValueValuesEnum defined.
-    if (hasattr(mig['autoscaler'], 'status') and mig['autoscaler'].status
-        == client.messages.Autoscaler.StatusValueValuesEnum.ERROR):
+    if (
+        hasattr(mig['autoscaler'], 'status')
+        and mig['autoscaler'].status
+        == client.messages.Autoscaler.StatusValueValuesEnum.ERROR
+    ):
       mig['autoscaled'] = 'yes (*)'
       return mig['autoscaler'].status
     else:
@@ -1477,13 +1760,19 @@ def _ComputeInstanceGroupSize(items, client, resources):
       resources.Parse(
           mig['zone'],
           params={'project': properties.VALUES.core.project.GetOrFail},
-          collection='compute.zones') for mig in items if 'zone' in mig
+          collection='compute.zones',
+      )
+      for mig in items
+      if 'zone' in mig
   ]
   region_refs = [
       resources.Parse(
           mig['region'],
           params={'project': properties.VALUES.core.project.GetOrFail},
-          collection='compute.regions') for mig in items if 'region' in mig
+          collection='compute.regions',
+      )
+      for mig in items
+      if 'region' in mig
   ]
 
   zonal_instance_groups = []
@@ -1496,7 +1785,9 @@ def _ComputeInstanceGroupSize(items, client, resources):
             filter_expr=None,
             http=client.apitools_client.http,
             batch_url=client.batch_url,
-            errors=errors))
+            errors=errors,
+        )
+    )
 
   regional_instance_groups = []
   if getattr(client.apitools_client, 'regionInstanceGroups', None):
@@ -1509,7 +1800,9 @@ def _ComputeInstanceGroupSize(items, client, resources):
               filter_expr=None,
               http=client.apitools_client.http,
               batch_url=client.batch_url,
-              errors=errors))
+              errors=errors,
+          )
+      )
 
   instance_groups = zonal_instance_groups + regional_instance_groups
   instance_group_uri_to_size = {ig.selfLink: ig.size for ig in instance_groups}
@@ -1519,8 +1812,9 @@ def _ComputeInstanceGroupSize(items, client, resources):
 
   for item in items:
     self_link = item['selfLink']
-    gm_self_link = self_link.replace('/instanceGroupManagers/',
-                                     '/instanceGroups/')
+    gm_self_link = self_link.replace(
+        '/instanceGroupManagers/', '/instanceGroups/'
+    )
 
     item['size'] = str(instance_group_uri_to_size.get(gm_self_link, ''))
     yield item
@@ -1532,18 +1826,21 @@ def GetHealthCheckUri(resources, args):
     ref = auto_healing_utils.HEALTH_CHECK_ARG.ResolveAsResource(
         args,
         resources,
-        default_scope=compute_flags.compute_scope.ScopeEnum.GLOBAL)
+        default_scope=compute_flags.compute_scope.ScopeEnum.GLOBAL,
+    )
     return ref.SelfLink()
   if args.http_health_check:
     return resources.Parse(
         args.http_health_check,
         params={'project': properties.VALUES.core.project.GetOrFail},
-        collection='compute.httpHealthChecks').SelfLink()
+        collection='compute.httpHealthChecks',
+    ).SelfLink()
   if args.https_health_check:
     return resources.Parse(
         args.https_health_check,
         params={'project': properties.VALUES.core.project.GetOrFail},
-        collection='compute.httpsHealthChecks').SelfLink()
+        collection='compute.httpsHealthChecks',
+    ).SelfLink()
 
 
 # TODO(b/70203649): improve/fix method (no silent errors, add optimizations)
@@ -1559,15 +1856,19 @@ def CreateInstanceReferences(holder, igm_ref, instance_names):
                   'project': igm_ref.project,
                   'zone': igm_ref.zone,
               },
-              collection='compute.instances'))
+              collection='compute.instances',
+          )
+      )
     return instance_refs
   elif igm_ref.Collection() == 'compute.regionInstanceGroupManagers':
     messages = holder.client.messages
     request = (
-        messages.ComputeRegionInstanceGroupManagersListManagedInstancesRequest)(
-            instanceGroupManager=igm_ref.Name(),
-            region=igm_ref.region,
-            project=igm_ref.project)
+        messages.ComputeRegionInstanceGroupManagersListManagedInstancesRequest
+    )(
+        instanceGroupManager=igm_ref.Name(),
+        region=igm_ref.region,
+        project=igm_ref.project,
+    )
     managed_instances = list_pager.YieldFromList(
         service=holder.client.apitools_client.regionInstanceGroupManagers,
         batch_size=500,
@@ -1577,9 +1878,10 @@ def CreateInstanceReferences(holder, igm_ref, instance_names):
     )
     instances_to_return = []
     for instance_ref in managed_instances:
-      if path_simplifier.Name(
-          instance_ref.instance
-      ) in instance_names or instance_ref.instance in instance_names:
+      if (
+          path_simplifier.Name(instance_ref.instance) in instance_names
+          or instance_ref.instance in instance_names
+      ):
         instances_to_return.append(instance_ref.instance)
     return instances_to_return
   else:
@@ -1588,29 +1890,37 @@ def CreateInstanceReferences(holder, igm_ref, instance_names):
 
 def GetDeviceNamesFromStatefulPolicy(stateful_policy):
   """Returns a list of device names from given StatefulPolicy message."""
-  if (not stateful_policy or not stateful_policy.preservedState
-      or not stateful_policy.preservedState.disks):
+  if (
+      not stateful_policy
+      or not stateful_policy.preservedState
+      or not stateful_policy.preservedState.disks
+  ):
     return []
-  return [disk.key
-          for disk in stateful_policy.preservedState.disks.additionalProperties]
+  return [
+      disk.key
+      for disk in stateful_policy.preservedState.disks.additionalProperties
+  ]
 
 
 def GetInterfaceNamesFromStatefulPolicyForInternalIPs(stateful_policy):
   """Returns a list of stateful internal IPs interface names."""
   return _GetInterfaceNamesFromStatefulPolicyForIPs(
       stateful_policy,
-      lambda stateful_policy: stateful_policy.preservedState.internalIPs)
+      lambda stateful_policy: stateful_policy.preservedState.internalIPs,
+  )
 
 
 def GetInterfaceNamesFromStatefulPolicyForExternalIPs(stateful_policy):
   """Returns a list of stateful external IPs interface names."""
   return _GetInterfaceNamesFromStatefulPolicyForIPs(
       stateful_policy,
-      lambda stateful_policy: stateful_policy.preservedState.externalIPs)
+      lambda stateful_policy: stateful_policy.preservedState.externalIPs,
+  )
 
 
-def _GetInterfaceNamesFromStatefulPolicyForIPs(stateful_policy,
-                                               ips_field_lambda):
+def _GetInterfaceNamesFromStatefulPolicyForIPs(
+    stateful_policy, ips_field_lambda
+):
   if not stateful_policy or not stateful_policy.preservedState:
     return []
   ips = ips_field_lambda(stateful_policy)
@@ -1630,47 +1940,58 @@ def PatchUpdatePolicy(client, args, update_policy):
     update_policy = client.messages.InstanceGroupManagerUpdatePolicy()
   if args.IsSpecified('instance_redistribution_type'):
     update_policy.instanceRedistributionType = (
-        client.messages.InstanceGroupManagerUpdatePolicy
-        .InstanceRedistributionTypeValueValuesEnum)(
-            args.instance_redistribution_type.upper())
+        client.messages.InstanceGroupManagerUpdatePolicy.InstanceRedistributionTypeValueValuesEnum
+    )(args.instance_redistribution_type.upper())
     result = update_policy
   if args.IsSpecified('update_policy_type'):
     update_policy.type = update_instances_utils.ParseUpdatePolicyType(
-        '--update-policy-update-type', args.update_policy_type, client.messages)
+        '--update-policy-update-type', args.update_policy_type, client.messages
+    )
     result = update_policy
   if args.IsSpecified('update_policy_max_surge'):
     update_policy.maxSurge = update_instances_utils.ParseFixedOrPercent(
-        '--update-policy-max-surge', 'max-surge', args.update_policy_max_surge,
-        client.messages)
+        '--update-policy-max-surge',
+        'max-surge',
+        args.update_policy_max_surge,
+        client.messages,
+    )
     result = update_policy
   if args.IsSpecified('update_policy_max_unavailable'):
     update_policy.maxUnavailable = update_instances_utils.ParseFixedOrPercent(
-        '--update-policy-max-unavailable', 'max-unavailable',
-        args.update_policy_max_unavailable, client.messages)
+        '--update-policy-max-unavailable',
+        'max-unavailable',
+        args.update_policy_max_unavailable,
+        client.messages,
+    )
     result = update_policy
   if args.IsSpecified('update_policy_minimal_action'):
     update_policy.minimalAction = (
-        update_instances_utils.ParseInstanceActionFlag)(
-            '--update-policy-minimal-action', args.update_policy_minimal_action,
-            client.messages.InstanceGroupManagerUpdatePolicy
-            .MinimalActionValueValuesEnum)
+        update_instances_utils.ParseInstanceActionFlag
+    )(
+        '--update-policy-minimal-action',
+        args.update_policy_minimal_action,
+        client.messages.InstanceGroupManagerUpdatePolicy.MinimalActionValueValuesEnum,
+    )
     result = update_policy
   if args.IsSpecified('update_policy_most_disruptive_action'):
     update_policy.mostDisruptiveAllowedAction = (
-        update_instances_utils.ParseInstanceActionFlag)(
-            '--update-policy-most-disruptive-action',
-            args.update_policy_most_disruptive_action,
-            client.messages.InstanceGroupManagerUpdatePolicy
-            .MostDisruptiveAllowedActionValueValuesEnum)
+        update_instances_utils.ParseInstanceActionFlag
+    )(
+        '--update-policy-most-disruptive-action',
+        args.update_policy_most_disruptive_action,
+        client.messages.InstanceGroupManagerUpdatePolicy.MostDisruptiveAllowedActionValueValuesEnum,
+    )
     result = update_policy
   if args.IsSpecified('update_policy_replacement_method'):
     replacement_method = update_instances_utils.ParseReplacementMethod(
-        args.update_policy_replacement_method, client.messages)
+        args.update_policy_replacement_method, client.messages
+    )
     update_policy.replacementMethod = replacement_method
     result = update_policy
   # min_ready is available in alpha and beta APIs only
   if hasattr(args, 'update_policy_min_ready') and args.IsSpecified(
-      'update_policy_min_ready'):
+      'update_policy_min_ready'
+  ):
     update_policy.minReadySec = args.update_policy_min_ready
     result = update_policy
   return result
@@ -1678,25 +1999,29 @@ def PatchUpdatePolicy(client, args, update_policy):
 
 def ListPerInstanceConfigs(client, igm_ref):
   """Lists per-instance-configs for a given IGM."""
-  if not hasattr(client.messages,
-                 'ComputeInstanceGroupManagersListPerInstanceConfigsRequest'):
+  if not hasattr(
+      client.messages,
+      'ComputeInstanceGroupManagersListPerInstanceConfigsRequest',
+  ):
     return []
   if igm_ref.Collection() == 'compute.instanceGroupManagers':
     service = client.apitools_client.instanceGroupManagers
-    request = (client.messages
-               .ComputeInstanceGroupManagersListPerInstanceConfigsRequest)(
-                   instanceGroupManager=igm_ref.Name(),
-                   project=igm_ref.project,
-                   zone=igm_ref.zone,
-               )
+    request = (
+        client.messages.ComputeInstanceGroupManagersListPerInstanceConfigsRequest
+    )(
+        instanceGroupManager=igm_ref.Name(),
+        project=igm_ref.project,
+        zone=igm_ref.zone,
+    )
   elif igm_ref.Collection() == 'compute.regionInstanceGroupManagers':
     service = client.apitools_client.regionInstanceGroupManagers
-    request = (client.messages.
-               ComputeRegionInstanceGroupManagersListPerInstanceConfigsRequest)(
-                   instanceGroupManager=igm_ref.Name(),
-                   project=igm_ref.project,
-                   region=igm_ref.region,
-               )
+    request = (
+        client.messages.ComputeRegionInstanceGroupManagersListPerInstanceConfigsRequest
+    )(
+        instanceGroupManager=igm_ref.Name(),
+        project=igm_ref.project,
+        region=igm_ref.region,
+    )
   else:
     raise ValueError('Unknown reference type {0}'.format(igm_ref.Collection()))
 
@@ -1706,7 +2031,9 @@ def ListPerInstanceConfigs(client, igm_ref):
           requests=[(service, 'ListPerInstanceConfigs', request)],
           http=client.apitools_client.http,
           batch_url=client.batch_url,
-          errors=errors))
+          errors=errors,
+      )
+  )
 
   if not results:
     return []
@@ -1728,27 +2055,29 @@ def ValidateIgmReadyForStatefulness(igm_resource, client):
     return
 
   client_update_policy = client.messages.InstanceGroupManagerUpdatePolicy
-  type_is_proactive = (
-      igm_resource.updatePolicy.type == (
-          client_update_policy.TypeValueValuesEnum.PROACTIVE))
+  type_is_proactive = igm_resource.updatePolicy.type == (
+      client_update_policy.TypeValueValuesEnum.PROACTIVE
+  )
   replacement_method_is_substitute = (
-      igm_resource.updatePolicy.replacementMethod == (
-          client_update_policy.ReplacementMethodValueValuesEnum.SUBSTITUTE))
-  instance_redistribution_type_is_proactive = (
-      igm_resource.updatePolicy.instanceRedistributionType == (
-          client_update_policy.InstanceRedistributionTypeValueValuesEnum
-          .PROACTIVE))
+      igm_resource.updatePolicy.replacementMethod
+      == (client_update_policy.ReplacementMethodValueValuesEnum.SUBSTITUTE)
+  )
+  instance_redistribution_type_is_proactive = igm_resource.updatePolicy.instanceRedistributionType == (
+      client_update_policy.InstanceRedistributionTypeValueValuesEnum.PROACTIVE
+  )
 
   if type_is_proactive and replacement_method_is_substitute:
     raise exceptions.Error(
         'Stateful IGMs cannot use SUBSTITUTE replacement method. '
         'Try `gcloud compute instance-groups managed '
-        'rolling-update stop-proactive-update')
+        'rolling-update stop-proactive-update'
+    )
   if instance_redistribution_type_is_proactive:
     raise exceptions.Error(
         'Stateful regional IGMs cannot use proactive instance redistribution. '
         'Try `gcloud compute instance-groups managed '
-        'update --instance-redistribution-type=NONE')
+        'update --instance-redistribution-type=NONE'
+    )
 
 
 def ValueOrNone(message):
@@ -1803,10 +2132,12 @@ def RegisterCustomInstancePropertiesPatchEncoders(client):
     py_object = json.loads(data)
     return client.messages.InstancePropertiesPatch.MetadataValue(
         additionalProperties=[
-            client.messages.InstancePropertiesPatch.MetadataValue
-            .AdditionalProperty(key=key, value=value)
+            client.messages.InstancePropertiesPatch.MetadataValue.AdditionalProperty(
+                key=key, value=value
+            )
             for key, value in py_object.items()
-        ])
+        ]
+    )
 
   def _NullLabelsDecoder(data):
     """Decoder for labels map entries.
@@ -1820,31 +2151,31 @@ def RegisterCustomInstancePropertiesPatchEncoders(client):
     py_object = json.loads(data)
     return client.messages.InstancePropertiesPatch.LabelsValue(
         additionalProperties=[
-            client.messages.InstancePropertiesPatch.LabelsValue
-            .AdditionalProperty(key=key, value=value)
+            client.messages.InstancePropertiesPatch.LabelsValue.AdditionalProperty(
+                key=key, value=value
+            )
             for key, value in py_object.items()
-        ])
+        ]
+    )
 
   encoding.RegisterCustomMessageCodec(
-      encoder=_NullValueEncoder, decoder=_NullMetadataDecoder)(
-          client.messages.InstancePropertiesPatch.MetadataValue)
+      encoder=_NullValueEncoder, decoder=_NullMetadataDecoder
+  )(client.messages.InstancePropertiesPatch.MetadataValue)
   encoding.RegisterCustomMessageCodec(
-      encoder=_NullValueEncoder, decoder=_NullLabelsDecoder)(
-          client.messages.InstancePropertiesPatch.LabelsValue)
+      encoder=_NullValueEncoder, decoder=_NullLabelsDecoder
+  )(client.messages.InstancePropertiesPatch.LabelsValue)
 
 
 def RegisterCustomStatefulIpsPatchEncoders(client):
   """Registers decoders and encoders that will handle null values for Internal and External IPs maps in StatefulPolicy message."""
 
   auto_delete_map = {
-      'NEVER':
-          client.messages.StatefulPolicyPreservedStateNetworkIp(
-              autoDelete=client.messages.StatefulPolicyPreservedStateNetworkIp
-              .AutoDeleteValueValuesEnum.NEVER),
-      'ON_PERMANENT_INSTANCE_DELETION':
-          client.messages.StatefulPolicyPreservedStateNetworkIp(
-              autoDelete=client.messages.StatefulPolicyPreservedStateNetworkIp
-              .AutoDeleteValueValuesEnum.ON_PERMANENT_INSTANCE_DELETION)
+      'NEVER': client.messages.StatefulPolicyPreservedStateNetworkIp(
+          autoDelete=client.messages.StatefulPolicyPreservedStateNetworkIp.AutoDeleteValueValuesEnum.NEVER
+      ),
+      'ON_PERMANENT_INSTANCE_DELETION': client.messages.StatefulPolicyPreservedStateNetworkIp(
+          autoDelete=client.messages.StatefulPolicyPreservedStateNetworkIp.AutoDeleteValueValuesEnum.ON_PERMANENT_INSTANCE_DELETION
+      ),
   }
 
   def _StatefulIpsValueEncoder(message):
@@ -1898,32 +2229,33 @@ def RegisterCustomStatefulIpsPatchEncoders(client):
 
   def _CommonStatefulIpsDecoder(data, ips_value):
     py_object = json.loads(data)
-    return ips_value(additionalProperties=[
-        ips_value.AdditionalProperty(
-            key=key, value=auto_delete_map[value['autoDelete']])
-        for key, value in py_object.items()
-    ])
+    return ips_value(
+        additionalProperties=[
+            ips_value.AdditionalProperty(
+                key=key, value=auto_delete_map[value['autoDelete']]
+            )
+            for key, value in py_object.items()
+        ]
+    )
 
   encoding.RegisterCustomMessageCodec(
-      encoder=_StatefulIpsValueEncoder, decoder=_InternalStatefulIpsDecoder)(
-          client.messages.StatefulPolicyPreservedState.InternalIPsValue)
+      encoder=_StatefulIpsValueEncoder, decoder=_InternalStatefulIpsDecoder
+  )(client.messages.StatefulPolicyPreservedState.InternalIPsValue)
   encoding.RegisterCustomMessageCodec(
-      encoder=_StatefulIpsValueEncoder, decoder=_ExternalStatefulIpsDecoder)(
-          client.messages.StatefulPolicyPreservedState.ExternalIPsValue)
+      encoder=_StatefulIpsValueEncoder, decoder=_ExternalStatefulIpsDecoder
+  )(client.messages.StatefulPolicyPreservedState.ExternalIPsValue)
 
 
 def RegisterCustomStatefulDisksPatchEncoders(client):
   """Registers decoders and encoders that will handle null values for Stateful Disks map in StatefulPolicy message."""
 
   auto_delete_map = {
-      'NEVER':
-          client.messages.StatefulPolicyPreservedStateDiskDevice(
-              autoDelete=client.messages.StatefulPolicyPreservedStateDiskDevice
-              .AutoDeleteValueValuesEnum.NEVER),
-      'ON_PERMANENT_INSTANCE_DELETION':
-          client.messages.StatefulPolicyPreservedStateDiskDevice(
-              autoDelete=client.messages.StatefulPolicyPreservedStateDiskDevice
-              .AutoDeleteValueValuesEnum.ON_PERMANENT_INSTANCE_DELETION)
+      'NEVER': client.messages.StatefulPolicyPreservedStateDiskDevice(
+          autoDelete=client.messages.StatefulPolicyPreservedStateDiskDevice.AutoDeleteValueValuesEnum.NEVER
+      ),
+      'ON_PERMANENT_INSTANCE_DELETION': client.messages.StatefulPolicyPreservedStateDiskDevice(
+          autoDelete=client.messages.StatefulPolicyPreservedStateDiskDevice.AutoDeleteValueValuesEnum.ON_PERMANENT_INSTANCE_DELETION
+      ),
   }
 
   def _StatefulDisksValueEncoder(message):
@@ -1960,12 +2292,126 @@ def RegisterCustomStatefulDisksPatchEncoders(client):
     """
     disk_device_value = client.messages.StatefulPolicyPreservedState.DisksValue
     py_object = json.loads(data)
-    return disk_device_value(additionalProperties=[
-        disk_device_value.AdditionalProperty(
-            key=key, value=auto_delete_map[value['autoDelete']])
-        for key, value in py_object.items()
-    ])
+    return disk_device_value(
+        additionalProperties=[
+            disk_device_value.AdditionalProperty(
+                key=key, value=auto_delete_map[value['autoDelete']]
+            )
+            for key, value in py_object.items()
+        ]
+    )
 
   encoding.RegisterCustomMessageCodec(
-      encoder=_StatefulDisksValueEncoder, decoder=_StatefulDisksDecoder)(
-          client.messages.StatefulPolicyPreservedState.DisksValue)
+      encoder=_StatefulDisksValueEncoder, decoder=_StatefulDisksDecoder
+  )(client.messages.StatefulPolicyPreservedState.DisksValue)
+
+
+def RegisterInstanceSelectionsPatchEncoders(messages):
+  """Registers encoders that will handle null values for Instance Selections in InstanceFlexibilityPolicy message."""
+
+  def _InstanceSelectionsValueEncoder(message):
+    """Encoder for Instance Selections map entries.
+
+    It works around issues with proto encoding of InstanceSelections
+    with null values by directly encoding a dict of keys with None values into
+    json, skipping proto-based encoding.
+
+    Args:
+      message: an instance of
+        InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue
+
+    Returns:
+      JSON string with null value.
+    """
+
+    def _GetInstanceSelectionValueOrNone(prop):
+      if prop.value is None:
+        return None
+      return {'rank': prop.value.rank, 'machineTypes': prop.value.machineTypes}
+
+    return json.dumps({
+        property.key: _GetInstanceSelectionValueOrNone(property)
+        for property in message.additionalProperties
+    })
+
+  def _InstanceSelectionsDecoder(data):
+    """Decoder for Instance Selections map entries.
+
+    Args:
+      data: JSON representation of Instance Selections.
+
+    Returns:
+      Instance of
+      InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue.
+    """
+    instance_selections_value = (
+        messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue
+    )
+    py_object = json.loads(data)
+    return instance_selections_value(
+        additionalProperties=[
+            instance_selections_value.AdditionalProperty(key=key, value=value)
+            for key, value in py_object.items()
+        ]
+    )
+
+  encoding.RegisterCustomMessageCodec(
+      encoder=_InstanceSelectionsValueEncoder,
+      decoder=_InstanceSelectionsDecoder,
+  )(
+      messages.InstanceGroupManagerInstanceFlexibilityPolicy.InstanceSelectionsValue
+  )
+
+
+def RegisterResourcePoliciesPatchEncoders(messages: types.ModuleType) -> None:
+  """Registers encoders that will handle null values for resource policies in ResourcePolicies message."""
+
+  def _ResourcePoliciesEncoder(message):
+    """Encoder for Resource Policies message.
+
+    It works around issues with proto encoding of ResourcePolicies
+    with null values by directly encoding a message with None value into
+    json, skipping proto-based encoding.
+
+    Args:
+      message: an instance of InstanceGroupManagerResourcePolicies
+
+    Returns:
+      JSON string with null value.
+    """
+
+    if message.workloadPolicy is None:
+      return 'null'
+    return protojson.encode_message(message)
+
+  def _ResourcePoliciesDecoder(data):
+    """Decoder for Resource Policies message.
+
+    Args:
+      data: JSON representation of Resource Policies.
+
+    Returns:
+      Instance of InstanceGroupManagerResourcePolicies.
+    """
+
+    return protojson.decode_message(
+        messages.InstanceGroupManagerResourcePolicies, data
+    )
+
+  encoding.RegisterCustomMessageCodec(
+      encoder=_ResourcePoliciesEncoder,
+      decoder=_ResourcePoliciesDecoder,
+  )(messages.InstanceGroupManagerResourcePolicies)
+
+
+def CreateTargetSizePolicy(messages, mode):
+  """Creates target size policy from args."""
+  target_size_policy = messages.InstanceGroupManagerTargetSizePolicy()
+  mode_enum = arg_utils.ChoiceToEnumName(mode)
+  target_size_policy.mode = (
+      messages.InstanceGroupManagerTargetSizePolicy.ModeValueValuesEnum(
+          mode_enum
+      )
+  )
+
+  return target_size_policy

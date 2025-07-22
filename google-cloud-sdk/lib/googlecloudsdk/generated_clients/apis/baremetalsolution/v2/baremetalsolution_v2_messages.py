@@ -196,8 +196,8 @@ class BaremetalsolutionProjectsLocationsInstancesDisableInteractiveSerialConsole
   name = _messages.StringField(2, required=True)
 
 
-class BaremetalsolutionProjectsLocationsInstancesEnableHypertheadingRequest(_messages.Message):
-  r"""A BaremetalsolutionProjectsLocationsInstancesEnableHypertheadingRequest
+class BaremetalsolutionProjectsLocationsInstancesEnableHyperthreadingRequest(_messages.Message):
+  r"""A BaremetalsolutionProjectsLocationsInstancesEnableHyperthreadingRequest
   object.
 
   Fields:
@@ -353,6 +353,8 @@ class BaremetalsolutionProjectsLocationsListRequest(_messages.Message):
   r"""A BaremetalsolutionProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -363,10 +365,11 @@ class BaremetalsolutionProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class BaremetalsolutionProjectsLocationsNetworkQuotasListRequest(_messages.Message):
@@ -1339,7 +1342,7 @@ class InstanceConfig(_messages.Message):
       InstanceConfig.multivlan_config is false.
     hyperthreading: Whether the instance should be provisioned with
       Hyperthreading enabled.
-    id: A transient unique identifier to idenfity an instance within an
+    id: A transient unique identifier to identify an instance within an
       ProvisioningConfig request.
     instanceType: Instance type. [Available
       types](https://cloud.google.com/bare-metal/docs/bms-
@@ -2043,9 +2046,13 @@ class NetworkConfig(_messages.Message):
     userNote: User note field, it can be used by customers to add additional
       information for the BMS Ops team .
     vlanAttachments: List of VLAN attachments. As of now there are always 2
-      attachments, but it is going to change in the future (multi vlan).
+      attachments, but it is going to change in the future (multi vlan). Use
+      only one of vlan_attachments or vrf
     vlanSameProject: Whether the VLAN attachment pair is located in the same
       project.
+    vrf: Optional. The name of a pre-existing Vrf that the network should be
+      attached to. Format is `vrfs/{vrf}`. If vrf is specified,
+      vlan_attachments must be empty.
   """
 
   class BandwidthValueValuesEnum(_messages.Enum):
@@ -2103,6 +2110,7 @@ class NetworkConfig(_messages.Message):
   userNote = _messages.StringField(9)
   vlanAttachments = _messages.MessageField('IntakeVlanAttachment', 10, repeated=True)
   vlanSameProject = _messages.BooleanField(11)
+  vrf = _messages.StringField(12)
 
 
 class NetworkMountPoint(_messages.Message):
@@ -2708,6 +2716,9 @@ class SnapshotSchedulePolicy(_messages.Message):
       backend.
     labels: Labels as key value pairs.
     name: Output only. The name of the snapshot schedule policy.
+    pod: Immutable. Pod name. Pod is an independent part of infrastructure.
+      SnapshotSchedulePolicies can only be connected to the volumes allocated
+      in the same pod.
     schedules: The snapshot schedules contained in this policy. You can
       specify a maximum of 5 schedules.
     state: The state of the snapshot schedule policy.
@@ -2751,8 +2762,9 @@ class SnapshotSchedulePolicy(_messages.Message):
   id = _messages.StringField(2)
   labels = _messages.MessageField('LabelsValue', 3)
   name = _messages.StringField(4)
-  schedules = _messages.MessageField('Schedule', 5, repeated=True)
-  state = _messages.EnumField('StateValueValuesEnum', 6)
+  pod = _messages.StringField(5)
+  schedules = _messages.MessageField('Schedule', 6, repeated=True)
+  state = _messages.EnumField('StateValueValuesEnum', 7)
 
 
 class StandardQueryParameters(_messages.Message):
@@ -3070,11 +3082,14 @@ class Volume(_messages.Message):
       VOLUME_PERFORMANCE_TIER_SHARED: Regular volumes, shared aggregates.
       VOLUME_PERFORMANCE_TIER_ASSIGNED: Assigned aggregates.
       VOLUME_PERFORMANCE_TIER_HT: High throughput aggregates.
+      VOLUME_PERFORMANCE_TIER_QOS2_PERFORMANCE: QoS 2.0 high performance
+        storage.
     """
     VOLUME_PERFORMANCE_TIER_UNSPECIFIED = 0
     VOLUME_PERFORMANCE_TIER_SHARED = 1
     VOLUME_PERFORMANCE_TIER_ASSIGNED = 2
     VOLUME_PERFORMANCE_TIER_HT = 3
+    VOLUME_PERFORMANCE_TIER_QOS2_PERFORMANCE = 4
 
   class ProtocolValueValuesEnum(_messages.Enum):
     r"""Output only. Storage protocol for the Volume.
@@ -3240,11 +3255,14 @@ class VolumeConfig(_messages.Message):
       VOLUME_PERFORMANCE_TIER_SHARED: Regular volumes, shared aggregates.
       VOLUME_PERFORMANCE_TIER_ASSIGNED: Assigned aggregates.
       VOLUME_PERFORMANCE_TIER_HT: High throughput aggregates.
+      VOLUME_PERFORMANCE_TIER_QOS2_PERFORMANCE: QoS 2.0 high performance
+        storage.
     """
     VOLUME_PERFORMANCE_TIER_UNSPECIFIED = 0
     VOLUME_PERFORMANCE_TIER_SHARED = 1
     VOLUME_PERFORMANCE_TIER_ASSIGNED = 2
     VOLUME_PERFORMANCE_TIER_HT = 3
+    VOLUME_PERFORMANCE_TIER_QOS2_PERFORMANCE = 4
 
   class ProtocolValueValuesEnum(_messages.Enum):
     r"""Volume protocol.

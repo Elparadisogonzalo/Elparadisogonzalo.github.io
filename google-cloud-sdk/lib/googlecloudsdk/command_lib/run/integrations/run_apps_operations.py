@@ -45,7 +45,6 @@ from googlecloudsdk.core import resources
 from googlecloudsdk.core import yaml
 from googlecloudsdk.core.console import progress_tracker
 from googlecloudsdk.generated_clients.apis.runapps.v1alpha1 import runapps_v1alpha1_messages
-import six
 
 
 types_utils.SERVICE_TYPE = 'service'
@@ -69,17 +68,36 @@ def Connect(args, release_track):
   Yields:
     A RunAppsOperations instance.
   """
-  # pylint: disable=protected-access
-  client = apis.GetClientInstance(_RUN_APPS_API_NAME, _RUN_APPS_API_VERSION)
 
   region = run_flags.GetRegion(args, prompt=True)
   service_account = flags.GetServiceAccount(args)
+  yield _GetRunAppsOperations(region, service_account, release_track)
+
+
+@contextlib.contextmanager
+def ConnectWithRegion(region, service_account, release_track):
+  """Provide a RunAppsOperations instance to use.
+
+  Arguments:
+    region: Region to connect to.
+    service_account: Service account to use.
+    release_track: the release track of the command.
+
+  Yields:
+    A RunAppsOperations instance.
+  """
+  # pylint: disable=protected-access
+  yield _GetRunAppsOperations(region, service_account, release_track)
+
+
+def _GetRunAppsOperations(region, service_account, release_track):
+  client = apis.GetClientInstance(_RUN_APPS_API_NAME, _RUN_APPS_API_VERSION)
   if not region:
     raise exceptions.ArgumentError(
         'You must specify a region. Either use the `--region` flag '
         'or set the run/region property.'
     )
-  yield RunAppsOperations(
+  return RunAppsOperations(
       client,
       _RUN_APPS_API_VERSION,
       region,
@@ -167,17 +185,6 @@ class RunAppsOperations(object):
       match_type_names.append({'type': parts[0], 'name': parts[1]})
       if parts[0] == 'redis':
         vpc = True
-
-    # try the POC manifest
-    if not match_type_names:
-      for res_type, res_configs in app_dict.items():
-        if res_type == 'name':
-          continue
-        for config in res_configs:
-          res_name = config['name']
-          match_type_names.append({'type': res_type, 'name': res_name})
-          if res_type == 'redis':
-            vpc = True
 
     if vpc:
       match_type_names.append({'type': 'vpc', 'name': '*'})
@@ -409,6 +416,23 @@ class RunAppsOperations(object):
         'Integration [{}] cannot be found'.format(name)
     )
 
+  def MaybeGetIntegrationGeneric(
+      self,
+      name: str,
+      res_type: Optional[str] = None,
+  ) -> Optional[runapps_v1alpha1_messages.Resource]:
+    """Get an integration, or None if not found.
+
+    Args:
+      name: the name of the resource.
+      res_type: type of the resource. If empty, will match any type.
+
+    Returns:
+      The integration config, if found.
+    """
+    appconfig = self.GetDefaultApp().config
+    return self._FindResource(appconfig, name, res_type)
+
   def _FindResource(
       self,
       appconfig: runapps_v1alpha1_messages.Config,
@@ -506,7 +530,11 @@ class RunAppsOperations(object):
     services = [service] if service else []
     services.extend(services_in_params)
     for svc in services:
-      match_type_names.append({'type': types_utils.SERVICE_TYPE, 'name': svc})
+      match_type_names.append({
+          'type': types_utils.SERVICE_TYPE,
+          'name': svc,
+          'ignoreResourceConfig': True,
+      })
 
     for svc in services:
       self.EnsureWorkloadResources(app.config, svc, types_utils.SERVICE_TYPE)
@@ -603,7 +631,10 @@ class RunAppsOperations(object):
       )
       # Specified services are always added to selector.
       self._AppendTypeMatcher(
-          match_type_names, types_utils.SERVICE_TYPE, service
+          match_type_names,
+          types_utils.SERVICE_TYPE,
+          service,
+          True,
       )
 
     if add_service:
@@ -654,7 +685,7 @@ class RunAppsOperations(object):
         ):
           # Non-specified services are only added to selector if it exists.
           self._AppendTypeMatcher(
-              match_type_names, types_utils.SERVICE_TYPE, service
+              match_type_names, types_utils.SERVICE_TYPE, service, True
           )
 
     deploy_message = typekit.GetDeployMessage()
@@ -716,9 +747,11 @@ class RunAppsOperations(object):
       if rid.type == types_utils.SERVICE_TYPE:
         if self.GetCloudRunService(rid.name):
           # Only configure service to unbind if it exists
-          unbind_match_type_names.append(
-              {'type': types_utils.SERVICE_TYPE, 'name': rid.name}
-          )
+          unbind_match_type_names.append({
+              'type': types_utils.SERVICE_TYPE,
+              'name': rid.name,
+              'ignoreResourceConfig': True,
+          })
     if typekit:
       delete_match_type_names = typekit.GetDeleteSelectors(name)
       resource_stages = typekit.GetDeleteComponentTypes(
@@ -907,6 +940,15 @@ class RunAppsOperations(object):
       )
     return output
 
+  def _GetResourceStatusMap(self, app_ref):
+    app_status = api_utils.GetApplicationStatus(self._client, app_ref)
+    if not app_status:
+      return {}
+    return {
+        (resource.id.type, resource.id.name): resource.state
+        for resource in app_status.resourceStatuses
+    }
+
   def _ParseResourcesForList(
       self,
       app: runapps_v1alpha1_messages.Application,
@@ -922,8 +964,8 @@ class RunAppsOperations(object):
       return []
 
     bindings = base.BindingFinder(app_resources)
-    # cache deployment so we don't pull the same one multiple times.
-    deployment_cache = {}
+
+    resource_statuses = self._GetResourceStatusMap(self.GetAppRef(app.name))
 
     # Filter by type and/or service.
     output = []
@@ -968,14 +1010,13 @@ class RunAppsOperations(object):
       if service_name_filter and service_name_filter not in services:
         continue
 
-      status = self._GetStatusFromLatestDeployment(
-          resource.latestDeployment, deployment_cache
-      )
-
       # region is parsed from the name, which has the following form:
       # projects/<proj-name>/locations/<location>/applications/default'
       region = app.name.split('/')[3]
 
+      resource_status = resource_statuses.get(
+          (resource.id.type, resource.id.name)
+      )
       output.append(
           integration_list_printer.Row(
               integration_name=resource.id.name,
@@ -983,7 +1024,7 @@ class RunAppsOperations(object):
               integration_type=integration_type,
               # sorting is done here to guarantee output for scenario tests
               services=','.join(sorted(services)),
-              latest_deployment_status=six.text_type(status),
+              latest_resource_status=resource_status,
           )
       )
 
@@ -1007,34 +1048,6 @@ class RunAppsOperations(object):
     bindings = base.BindingFinder(app_resources)
     return bindings.GetAllBindings()
 
-  def _GetStatusFromLatestDeployment(
-      self,
-      deployment: str,
-      deployment_cache: {str, runapps_v1alpha1_messages.Deployment},
-  ) -> runapps_v1alpha1_messages.DeploymentStatus.StateValueValuesEnum:
-    """Get status from latest deployment.
-
-    Args:
-      deployment: the name of the latest deployment
-      deployment_cache: a map of cached deployments
-
-    Returns:
-      status of the latest deployment.
-    """
-    status = (
-        runapps_v1alpha1_messages.DeploymentStatus.StateValueValuesEnum.STATE_UNSPECIFIED
-    )
-    if not deployment:
-      return status
-    if deployment_cache.get(deployment):
-      status = deployment_cache[deployment].status.state
-    else:
-      dep = api_utils.GetDeployment(self._client, deployment)
-      if dep:
-        status = dep.status.state
-        deployment_cache[deployment] = dep
-    return status
-
   def GetDefaultApp(self) -> runapps_v1alpha1_messages.Application:
     """Returns the default application.
 
@@ -1055,7 +1068,6 @@ class RunAppsOperations(object):
       app.config = runapps_v1alpha1_messages.Config(
           resourceList=[],
       )
-    app.config.resources = None
     return app
 
   def GetAppRef(self, name):
@@ -1205,12 +1217,20 @@ class RunAppsOperations(object):
       )
 
   def _AppendTypeMatcher(
-      self, type_matchers: MutableSequence[base.Selector], res_type, res_name
+      self,
+      type_matchers: MutableSequence[base.Selector],
+      res_type: str,
+      res_name: str,
+      ignore_resource_config: Optional[bool] = None,
   ):
     for matcher in type_matchers:
       if matcher['type'] == res_type and matcher['name'] == res_name:
         return
-    type_matchers.append({'type': res_type, 'name': res_name})
+    type_matchers.append({
+        'type': res_type,
+        'name': res_name,
+        'ignoreResourceConfig': ignore_resource_config,
+    })
 
   def VerifyLocation(self):
     app_ref = self.GetAppRef(_DEFAULT_APP_NAME)

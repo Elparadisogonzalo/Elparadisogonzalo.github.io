@@ -25,18 +25,25 @@
     ALPHA:
       api_version: v1alpha
       modify_request_hooks:
+      - googlecloudsdk.command_lib.metastore.services.util:UpdateScalingConfigForCreate
       - googlecloudsdk.command_lib.metastore.services.util:GenerateNetworkConfigFromSubnetList
       - googlecloudsdk.command_lib.metastore.services.util:GenerateAuxiliaryVersionsConfigFromList
       - googlecloudsdk.command_lib.metastore.validators:ValidateServiceMutexConfig
+      - googlecloudsdk.command_lib.metastore.validators:ValidateScheduledBackupConfigs
+      - googlecloudsdk.command_lib.metastore.validators:ValidateKmsKeys
     BETA:
       api_version: v1beta
       modify_request_hooks:
+      - googlecloudsdk.command_lib.metastore.services.util:UpdateScalingConfigForCreate
       - googlecloudsdk.command_lib.metastore.services.util:GenerateNetworkConfigFromSubnetList
       - googlecloudsdk.command_lib.metastore.services.util:GenerateAuxiliaryVersionsConfigFromList
       - googlecloudsdk.command_lib.metastore.validators:ValidateServiceMutexConfig
+      - googlecloudsdk.command_lib.metastore.validators:ValidateScheduledBackupConfigs
+      - googlecloudsdk.command_lib.metastore.validators:ValidateKmsKeys
     GA:
       api_version: v1
       modify_request_hooks:
+      - googlecloudsdk.command_lib.metastore.services.util:UpdateScalingConfigForCreate
       - googlecloudsdk.command_lib.metastore.services.util:GenerateNetworkConfigFromSubnetList
       - googlecloudsdk.command_lib.metastore.services.util:GenerateAuxiliaryVersionsConfigFromList
       - googlecloudsdk.command_lib.metastore.validators:ValidateServiceMutexConfigForV1
@@ -80,10 +87,8 @@
         - arg_name: scaling-factor
           api_field: service.scalingConfig.scalingFactor
           help_text: |
-            The scaling factor of the service. This should be a float in the range [0.1,6.0].
-            If the value is less than 1.0, then it should be a multiple of 0.1.
-            If the value is greater than 1.0, then it should be a whole number.
-            Float values should be formatted as `x.y`.
+            The scaling factor of the service.
+            Can be one of [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0].
           processor: googlecloudsdk.command_lib.metastore.validators:ValidateScalingFactor
         - arg_name: instance-size
           api_field: service.scalingConfig.instanceSize
@@ -110,6 +115,34 @@
             enum_value: EXTRA_LARGE
             help_text:  |
               Extra large instance size, maps to a scaling factor of 6.0.
+        - group:
+            help_text: |
+              The autoscaling configuration of the Dataproc Metastore instance.
+            params:
+            - arg_name: min-scaling-factor
+              api_field: service.scalingConfig.autoscalingConfig.limitConfig.minScalingFactor
+              help_text: |
+                The minimum scaling factor allowed by the autoscaler.
+                Can be one of [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0].
+                The default value is 0.1.
+              processor: googlecloudsdk.command_lib.metastore.validators:ValidateMinScalingFactor
+            - arg_name: max-scaling-factor
+              api_field: service.scalingConfig.autoscalingConfig.limitConfig.maxScalingFactor
+              help_text: |
+                The maximum scaling factor allowed by the autoscaler.
+                Can be one of [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0].
+                The default value is 6.0.
+              processor: googlecloudsdk.command_lib.metastore.validators:ValidateMaxScalingFactor
+    - arg_name: autoscaling-enabled
+      api_field: service.scalingConfig.autoscalingConfig.autoscalingEnabled
+      help_text: |
+        A boolean flag to determine whether Dataproc Metastore autoscaling should be enabled,
+        false if unspecified.
+
+        The default minimum and maximum scaling factors are 0.1 and 6.0, respectively.
+
+        The minimum and maximum scaling factors can be specified using --min-scaling-factor and
+        --max-scaling-factor.
     - arg_name: hive-metastore-version
       api_field: service.hiveMetastoreConfig.version
       help_text: |
@@ -125,6 +158,13 @@
         A boolean flag to determine whether Dataproc Metastore metadata sync
         to Data Catalog should be enabled, false if unspecified.
         Mutually exclusive with flag `--encryption-kms-key`.
+    - arg_name: deletion-protection
+      type: bool
+      api_field: service.deletionProtection
+      help_text: |
+        Flag that enables delete protection on Dataproc Metastore instance to prevent
+        accidental deletions of the instance.
+        Use --deletion-protection to enable.
     - arg_name: release-channel
       help_text: |
         The release channel of the service.
@@ -253,15 +293,30 @@
           processor: googlecloudsdk.command_lib.metastore.validators:ValidateHourOfDay
           help_text: |
             The hour of day (0-23) when the window starts.
-    - arg_name: encryption-kms-key
-      api_field: service.encryptionConfig.kmsKey
-      processor: googlecloudsdk.command_lib.metastore.parsers:ParseCloudKmsKey
-      help_text: |
-        The name of the Cloud KMS key to use for customer data encryption.
-        Cannot be changed once the service is created.
-        Mutually exclusive with flag `--data-catalog-sync`.
-        This can be provided as a fully-qualified URL, or a relative name in
-        the form `projects/{project_id}/locations/{location}/keyRings/{key_ring_id}/cryptoKeys/{crypto_key_id}`.
+    - group:
+        help_text: |
+          Encryption configuration for the metastore service.
+        mutex: true
+        params:
+        - arg_name: encryption-kms-keys
+          release_tracks: [ALPHA, BETA]
+          api_field: service.encryptionConfig.kmsKeys
+          help_text: |
+            Comma-separated list of the Cloud KMS keys to use for customer data encryption.
+            Cannot be changed once the service is created.
+            Mutually exclusive with flag `--data-catalog-sync` and `--encryption-kms-key`.
+            Each key can be provided as a fully-qualified URL, or a relative name in
+            the form `projects/{project_id}/locations/{location}/keyRings/{key_ring_id}/cryptoKeys/{crypto_key_id}`.
+          type: "arg_list"
+        - arg_name: encryption-kms-key
+          api_field: service.encryptionConfig.kmsKey
+          processor: googlecloudsdk.command_lib.metastore.parsers:ParseCloudKmsKey
+          help_text: |
+            The name of the Cloud KMS key to use for customer data encryption.
+            Cannot be changed once the service is created.
+            Mutually exclusive with flag `--data-catalog-sync`.
+            This can be provided as a fully-qualified URL, or a relative name in
+            the form `projects/{project_id}/locations/{location}/keyRings/{key_ring_id}/cryptoKeys/{crypto_key_id}`.
     - group:
         help_text: |
           Network configuration for the metastore service.
@@ -351,7 +406,124 @@
           The modernized `GRPC` protocol.
       default: thrift
       api_field: service.hiveMetastoreConfig.endpointProtocol
+    - group:
+        release_tracks: [ALPHA, BETA]
+        help_text: |
+          Custom region configuration for the metastore service.
+        params:
+        - arg_name: read-write-regions
+          api_field: service.multiRegionConfig.customRegionConfig.readWriteRegions
+          help_text: |
+            The list of read-write regions where the metastore service runs in. These regions
+            should be part (or subset) of the multi-region.
+          type: "arg_list"
+        - arg_name: read-only-regions
+          api_field: service.multiRegionConfig.customRegionConfig.readOnlyRegions
+          help_text: |
+            The list of read-only regions where the metastore service runs in. These regions
+            should be part (or subset) of the multi-region.
+          type: "arg_list"
+    - group:
+        mutex: true
+        help_text: |
+          Scheduled backup configurations to enable a scheduled backup of the metastore service.
+        params:
+        - arg_name: scheduled-backup-configs-from-file
+          api_field: service.scheduledBackup
+          type: "googlecloudsdk.calliope.arg_parsers:FileContents:"
+          processor: googlecloudsdk.command_lib.metastore.services.util:LoadScheduledBackupConfigsFromJsonFile
+          help_text: |
+            Path to a JSON file containing a mapping of scheduled backup configurations key-value pairs to apply to the scheduled backup.
+
+            For example:
+
+              backup_configs.json
+                  {
+                    "enabled": true,
+                    "cron_schedule": "0 * * * *",
+                    "backup_location": "gs://example-bucket",
+                    "time_zone": "UTC"
+                  }
+        - group:
+            help_text: |
+              Scheduled backup configurations to enable a scheduled backup of the metastore service.
+            params:
+            - arg_name: enable-scheduled-backup
+              api_field: service.scheduledBackup.enabled
+              action: store_true
+              help_text: |
+                Enable or disable scheduled backups for the Metastore service.
+            - arg_name: scheduled-backup-cron
+              api_field: service.scheduledBackup.cronSchedule
+              help_text: |
+                Specify the frequency of a scheduled backup of the metastore service.
+            - arg_name: scheduled-backup-location
+              api_field: service.scheduledBackup.backupLocation
+              help_text: |
+                Set the Cloud Storage URI to store the scheduled backups of the metastore service.
+    - arg_name: tags
+      api_field: service.tags.additionalProperties
+      metavar: KEY=VALUE
+      help_text: |
+        List of tag KEY=VALUE pairs to add.
+      type:
+        arg_dict:
+          flatten: true
+          spec:
+          - api_field: key
+          - api_field: value
+    - group:
+        release_tracks: [ALPHA, BETA]
+        hidden: true
+        help_text: |
+          Configuration required for migrating to BigQuery Metastore service.
+        params:
+        - arg_name: bigquery-project-id
+          api_field: service.bigqueryMetastoreMigrationConfig.bigqueryProjectId
+          help_text: |
+            Project ID where the BigQuery resources (e.g. datasets, tables, etc.)
+            should be created.
+          required: true
+        - arg_name: bigquery-dataset-location
+          api_field: service.bigqueryMetastoreMigrationConfig.bigqueryDatasetLocation
+          help_text: |
+            The location where the BigQuery resources (e.g. datasets, tables, etc.)
+            should be created (e.g. us-central1, us, eu, etc.).
+          required: true
+        - arg_name: desired-migration-state
+          api_field: service.bigqueryMetastoreMigrationConfig.desiredMigrationState
+          help_text: |
+            The desired state of the migration. Note that this also reflects the
+            current state of the migration. If an attempt to update to a new desired
+            state fails, the migration will revert to the previous state.
+          choices:
+          - arg_value: migrate
+            enum_value: MIGRATE
+            help_text:  |
+              By setting the desired migration state to `MIGRATE`, metadata updates in
+              Dataproc Metastore will be replicated to the BigQuery Metastore service,
+              ensuring that it remains consistently synchronized with Dataproc
+              Metastore. Note that this includes initial backfill of existing metadata.
+          - arg_value: cutover
+            enum_value: CUTOVER
+            help_text:  |
+              By setting the desired migration state to `CUTOVER`, all metadata
+              requests are routed to BigQuery Metastore service and Dataproc Metastore
+              only functions as a proxy. This state can be considered as the completion
+              of the migration.
+          - arg_value: cancel
+            enum_value: CANCEL
+            help_text:  |
+              By setting the desired migration state to `CANCEL`, the migration is
+              effectively cancelled. If the previous migration state was `MIGRATE`,
+              then replication to BigQuery Metastore will be cancelled. If the previous
+              state was `CUTOVER`, then metadata requests will now be served from
+              Dataproc Metastore instead of BigQuery Metastore. Note that existing
+              metadata changes replicated to BigQuery Metastore service are not rolled
+              back.
+          required: true
     labels:
       api_field: service.labels
+
   async:
     collection: metastore.projects.locations.operations

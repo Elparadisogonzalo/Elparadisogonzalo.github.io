@@ -36,6 +36,7 @@ from googlecloudsdk.api_lib.run import job
 from googlecloudsdk.api_lib.run import k8s_object
 from googlecloudsdk.api_lib.run import revision
 from googlecloudsdk.api_lib.run import service
+from googlecloudsdk.api_lib.run import worker_pool
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.run import exceptions
 from googlecloudsdk.command_lib.run import name_generator
@@ -44,6 +45,7 @@ from googlecloudsdk.command_lib.run import secrets_mapping
 from googlecloudsdk.command_lib.run import volumes
 from googlecloudsdk.command_lib.util.args import labels_util
 from googlecloudsdk.command_lib.util.args import repeated
+from googlecloudsdk.generated_clients.apis.run.v1 import run_v1_messages
 import six
 
 
@@ -121,7 +123,7 @@ class ContainerConfigChanger(TemplateConfigChanger):
     Args:
       resource: The resoure to modify.
     """
-    if self.container_name:
+    if self.container_name is not None:
       container = resource.template.containers[self.container_name]
     else:
       container = resource.template.container
@@ -272,6 +274,33 @@ class ReplaceServiceChange(NonTemplateConfigChanger):
     return self.new_service
 
 
+@dataclasses.dataclass(frozen=True)
+class ReplaceWorkerPoolChange(NonTemplateConfigChanger):
+  """Represents the user intent to replace the worker pool.
+
+  Attributes:
+    new_worker_pool: New worker pool that will replace the existing worker pool.
+  """
+
+  new_worker_pool: worker_pool.WorkerPool
+
+  def Adjust(self, resource):
+    """Returns a replacement for resource.
+
+    The returned worker pool is the worker pool provided to the constructor. If
+    resource.metadata.resourceVersion is not empty, has metadata.resourceVersion
+    of returned worker pool set to this value.
+
+    Args:
+      resource: worker_pool.WorkerPool, The worker pool to adjust.
+    """
+    if resource.metadata.resourceVersion:
+      self.new_worker_pool.metadata.resourceVersion = (
+          resource.metadata.resourceVersion
+      )
+    return self.new_worker_pool
+
+
 @dataclasses.dataclass(frozen=True, init=False)
 class EndpointVisibilityChange(LabelChanges):
   """Represents the user intent to modify the endpoint visibility.
@@ -369,6 +398,169 @@ class DeleteTemplateAnnotationChange(TemplateConfigChanger):
 
 
 @dataclasses.dataclass(frozen=True)
+class BaseImagesAnnotationChange(TemplateConfigChanger):
+  """Represents the user intent to update the 'base-images' template annotation.
+
+  The value of the annotation is a string representation of a json map of
+  container_name -> base_image_url. E.g.: '{"mycontainer":"my_base_image_url"}'.
+
+  Attributes:
+    updates: {container:url} map of values that need to be added/updated
+    deletes: List of containers whose base image url needs to be deleted.
+  """
+
+  updates: dict[str, str] = dataclasses.field(default_factory=dict)
+  deletes: list[str] = dataclasses.field(default_factory=list)
+
+  def _mergeBaseImageUrls(
+      self,
+      resource: revision.Revision,
+      existing_base_image_urls: dict[str, str],
+      updates: dict[str, str],
+      deletes: list[str],
+  ):
+
+    if deletes:
+      for container in deletes:
+        if container in existing_base_image_urls:
+          del existing_base_image_urls[container]
+    if updates:
+      for container, url in updates.items():
+        existing_base_image_urls[container] = url
+    return self._constructBaseImageUrls(resource, existing_base_image_urls)
+
+  def _constructBaseImageUrls(
+      self, resource: revision.Revision, urls: dict[str, str]
+  ):
+    containers = frozenset(
+        [x or '' for x in resource.template.containers.keys()]
+    )
+    base_images_str = ', '.join(
+        f'"{key}":"{value}"' for key, value in urls.items() if key in containers
+    )
+    return '{' + base_images_str + '}' if base_images_str else ''
+
+  def Adjust(self, resource: revision.Revision):
+    """Updates the revision to use automatic base image updates."""
+
+    annotations = resource.template.annotations
+    existing_value = annotations.get(revision.BASE_IMAGES_ANNOTATION, '')
+
+    if existing_value:
+      existing_base_image_urls = json.loads(existing_value)
+      new_value = self._mergeBaseImageUrls(
+          resource, existing_base_image_urls, self.updates, self.deletes
+      )
+    else:
+      new_value = self._constructBaseImageUrls(resource, self.updates)
+
+    if new_value:
+      resource.template.annotations[revision.BASE_IMAGES_ANNOTATION] = new_value
+      resource.template.spec.runtimeClassName = (
+          revision.BASE_IMAGE_UPDATE_RUNTIME_CLASS_NAME
+      )
+    elif revision.BASE_IMAGES_ANNOTATION in annotations:
+      del resource.template.annotations[revision.BASE_IMAGES_ANNOTATION]
+      if (
+          resource.template.spec.runtimeClassName
+          == revision.BASE_IMAGE_UPDATE_RUNTIME_CLASS_NAME
+      ):
+        resource.template.spec.runtimeClassName = ''
+    return resource
+
+
+@dataclasses.dataclass(frozen=True)
+class SourcesAnnotationChange(TemplateConfigChanger):
+  """Represents the user intent to update the 'sources' template annotation.
+
+  The value of the annotation is a string representation of a json map of
+  container_name -> GCS objects. E.g.: '{"foo":"gs://my-bucket/my-object"}'.
+
+  Attributes:
+    updates: {container:url} map of values that need to be added/updated
+    deletes: List of containers whose source needs to be deleted.
+  """
+
+  updates: dict[str, str] = dataclasses.field(default_factory=dict)
+  deletes: list[str] = dataclasses.field(default_factory=list)
+
+  def _mergeSources(
+      self,
+      resource: revision.Revision,
+      existing_sources: dict[str, str],
+      updates: dict[str, str],
+      deletes: list[str],
+  ):
+    if deletes:
+      for container in deletes:
+        if container in existing_sources:
+          del existing_sources[container]
+    if updates:
+      for container, url in updates.items():
+        existing_sources[container] = url
+    return self._constructSources(resource, existing_sources)
+
+  def _constructSources(
+      self, resource: revision.Revision, urls: dict[str, str]
+  ):
+    containers = frozenset(
+        [x or '' for x in resource.template.containers.keys()]
+    )
+    return json.dumps(
+        {x: y for x, y in urls.items() if x in containers},
+        separators=(',', ':'),
+    )
+
+  def Adjust(self, resource: revision.Revision):
+    """Updates the revision to use zip deploys."""
+
+    annotations = resource.template.annotations
+    existing_value = annotations.get(revision.SOURCES_ANNOTATION, '')
+
+    if existing_value:
+      existing_sources = json.loads(existing_value)
+      new_value = self._mergeSources(
+          resource, existing_sources, self.updates, self.deletes
+      )
+    else:
+      new_value = self._constructSources(resource, self.updates)
+
+    if new_value and new_value != '{}':
+      resource.template.annotations[revision.SOURCES_ANNOTATION] = new_value
+    elif revision.SOURCES_ANNOTATION in annotations:
+      del resource.template.annotations[revision.SOURCES_ANNOTATION]
+    return resource
+
+
+@dataclasses.dataclass(frozen=True)
+class IngressContainerBaseImagesAnnotationChange(BaseImagesAnnotationChange):
+  """Represents the user intent to update the 'base-images' template annotation.
+
+  The value of the annotation is a string representation of a json map of
+  container_name -> base_image_url. E.g.: '{"mycontainer":"my_base_image_url"}'.
+
+  This class changes the base image annotation for the default container, which
+  is either the container in a service with one container or the one with a port
+  set in a service with multiple containers.
+
+  Attributes:
+    base_image: url of the base image for the default container or None
+  """
+
+  base_image: str | None = None
+
+  def Adjust(self, resource: revision.Revision):
+    """Updates the revision to use automatic base image updates."""
+
+    if self.base_image:
+      self.updates[resource.template.container.name or ''] = self.base_image
+    else:
+      self.deletes.append(resource.template.container.name or '')
+
+    return super().Adjust(resource)
+
+
+@dataclasses.dataclass(frozen=True)
 class SetLaunchStageAnnotationChange(NonTemplateConfigChanger):
   """Sets launch stage annotation on a resource.
 
@@ -386,6 +578,69 @@ class SetLaunchStageAnnotationChange(NonTemplateConfigChanger):
           self.launch_stage.id
       )
       return resource
+
+
+@dataclasses.dataclass(frozen=True)
+class SetRegionsAnnotationChange(NonTemplateConfigChanger):
+  """Sets regions annotation on a resource.
+
+  Attributes:
+    regions: A comma-separated list of regions.
+  """
+
+  regions: str
+
+  def Adjust(self, resource):
+    resource.annotations[k8s_object.MULTI_REGION_REGIONS_ANNOTATION] = (
+        self.regions
+    )
+    return resource
+
+
+@dataclasses.dataclass(frozen=True)
+class RegionsChangeAnnotationChange(NonTemplateConfigChanger):
+  """Adds or removes regions annotation on an existing service.
+
+  Attributes:
+    existing: the existing Service.
+    to_add: A comma-separated list of regions to add to existing.
+    to_remove: A comma-separated list of regions to remove from existing.
+  """
+
+  to_add: str
+  to_remove: str
+
+  def Adjust(self, resource):
+    annotation = (
+        resource.annotations.get(k8s_object.MULTI_REGION_REGIONS_ANNOTATION)
+        or None
+    )
+    existing = annotation.split(',') if annotation else []
+    to_add = self.to_add.split(',') if self.to_add else []
+    to_remove = self.to_remove.split(',') if self.to_remove else []
+    final_list = [x for x in existing if x not in to_remove]
+    final_list.extend([x for x in to_add if x not in existing])
+    resource.annotations[k8s_object.MULTI_REGION_REGIONS_ANNOTATION] = ','.join(
+        final_list
+    )
+    return resource
+
+
+@dataclasses.dataclass(frozen=True)
+class MultiRegionDomainNameChange(NonTemplateConfigChanger):
+  """Sets a multi-region domain name annotation on the service.
+
+  Attributes:
+    domain_name: The sandbox annotation value to set.
+  """
+
+  domain_name: str
+
+  def Adjust(self, resource):
+    resource.annotations[k8s_object.GCLB_DOMAIN_NAME_ANNOTATION] = (
+        self.domain_name
+    )
+    return resource
 
 
 @dataclasses.dataclass(frozen=True)
@@ -757,7 +1012,117 @@ class ResourceChanges(ContainerConfigChanger):
     if self.cpu is not None:
       container.resource_limits['cpu'] = self.cpu
     if self.gpu is not None:
-      container.resource_limits['nvidia.com/gpu'] = self.gpu
+      if self.gpu == '0':
+        container.resource_limits.pop('nvidia.com/gpu', None)
+      else:
+        container.resource_limits['nvidia.com/gpu'] = self.gpu
+
+
+def _MakeProbe(
+    messages: types.ModuleType, settings: dict[str, str]
+) -> run_v1_messages.Probe:
+  """Creates a probe from the given settings.
+
+  Args:
+    messages: Run v1 messages module.
+    settings: a dict of settings for the probe.
+
+  Returns:
+    A new Run v1 probe.
+  """
+
+  def _ParseInt(settings, key):
+    if not settings[key]:
+      return None
+    try:
+      return int(settings[key])
+    except ValueError:
+      raise exceptions.ArgumentError(
+          'Value for key [{}] must be an integer.'.format(key)
+      )
+
+  probe = messages.Probe()
+  for key in settings:
+    if key.startswith('tcpSocket'):
+      probe.tcpSocket = messages.TCPSocketAction()
+    elif key.startswith('httpGet'):
+      probe.httpGet = messages.HTTPGetAction()
+    elif key.startswith('grpc'):
+      probe.grpc = messages.GRPCAction()
+    else:
+      # Set the basic fields directly.
+      setattr(probe, key, _ParseInt(settings, key))
+  # TCP
+  if 'tcpSocket.port' in settings:
+    probe.tcpSocket.port = _ParseInt(settings, 'tcpSocket.port')
+  # HTTP
+  if 'httpGet.port' in settings:
+    probe.httpGet.port = _ParseInt(settings, 'httpGet.port')
+  if 'httpGet.path' in settings:
+    probe.httpGet.path = settings['httpGet.path']
+  # gRPC
+  if 'grpc.port' in settings:
+    probe.grpc.port = _ParseInt(settings, 'grpc.port')
+  if 'grpc.service' in settings:
+    probe.grpc.service = settings['grpc.service']
+  return probe
+
+
+@dataclasses.dataclass(frozen=True)
+class StartupProbeChanges(ContainerConfigChanger):
+  """Represents the user intent to update startup probe settings.
+
+  Attributes:
+    settings: Values to set in the probe.
+    clear: If true, clear the startup probe.
+  """
+
+  settings: dict[str, str] = dataclasses.field(default_factory=dict)
+  clear: bool = False
+
+  def AdjustContainer(self, container, messages_mod):
+    if self.clear:
+      container.startupProbe = None
+      return
+    container.startupProbe = _MakeProbe(messages_mod, self.settings)
+
+
+@dataclasses.dataclass(frozen=True)
+class LivenessProbeChanges(ContainerConfigChanger):
+  """Represents the user intent to update liveness probe settings.
+
+  Attributes:
+    settings: values to set in the probe.
+    clear: If true, clear the liveness probe.
+  """
+
+  settings: dict[str, str] = dataclasses.field(default_factory=dict)
+  clear: bool = False
+
+  def AdjustContainer(self, container, messages_mod):
+    if self.clear:
+      container.livenessProbe = None
+      return
+    container.livenessProbe = _MakeProbe(messages_mod, self.settings)
+
+
+@dataclasses.dataclass(frozen=True)
+class ReadinessProbeChanges(ContainerConfigChanger):
+  """Represents the user intent to update readiness probe settings.
+
+  Attributes:
+    settings: values to set in the probe.
+    clear: If true, clear the readiness probe.
+  """
+
+  settings: dict[str, str] = dataclasses.field(default_factory=dict)
+  clear: bool = False
+
+  def AdjustContainer(self, container, messages_mod):
+    if self.clear:
+      container.readinessProbe = None
+      return
+    container.readinessProbe = _MakeProbe(messages_mod, self.settings)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -923,6 +1288,10 @@ class RevisionNameChanges(TemplateConfigChanger):
 
   def Adjust(self, resource):
     """Mutates the given config's revision name to match what's desired."""
+    if not self.revision_suffix:
+      resource.template.name = ''
+      return resource
+
     max_prefix_length = (
         _MAX_RESOURCE_NAME_LENGTH - len(self.revision_suffix) - 1
     )
@@ -1481,7 +1850,7 @@ class HealthCheckChange(TemplateConfigChanger):
 
 
 @dataclasses.dataclass(frozen=True)
-class DefaultUrlChange(TemplateConfigChanger):
+class DefaultUrlChange(NonTemplateConfigChanger):
   """Sets the default-url-disabled annotation on the service.
 
   Attributes:
@@ -1491,14 +1860,14 @@ class DefaultUrlChange(TemplateConfigChanger):
   default_url: bool
 
   def Adjust(self, resource):
-    resource.annotations[container_resource.DISABLE_URL_ANNOTATION] = (
-        str(not self.default_url)
+    resource.annotations[container_resource.DISABLE_URL_ANNOTATION] = str(
+        not self.default_url
     )
     return resource
 
 
 @dataclasses.dataclass(frozen=True)
-class InvokerIamChange(TemplateConfigChanger):
+class InvokerIamChange(NonTemplateConfigChanger):
   """Sets the invoker-iam-disabled annotation on the service.
 
   Attributes:
@@ -1662,9 +2031,31 @@ class GpuTypeChange(TemplateConfigChanger):
   gpu_type: str
 
   def Adjust(self, resource):
-    resource.template.node_selector[k8s_object.GPU_TYPE_NODE_SELECTOR] = (
-        self.gpu_type
-    )
+    if self.gpu_type:
+      resource.template.node_selector[k8s_object.GPU_TYPE_NODE_SELECTOR] = (
+          self.gpu_type
+      )
+    else:
+      resource.template.node_selector.pop(
+          k8s_object.GPU_TYPE_NODE_SELECTOR, None
+      )
+    return resource
+
+
+@dataclasses.dataclass(frozen=True)
+class GpuZonalRedundancyChange(TemplateConfigChanger):
+  """Sets the gpu zonal redundancy annotation on the revision annotations.
+
+  Attributes:
+    gpu_zonal_redundancy: The gpu_zonal_redundancy annotation value to set.
+  """
+
+  gpu_zonal_redundancy: bool
+
+  def Adjust(self, resource):
+    resource.template.annotations[
+        revision.GPU_ZONAL_REDUNDANCY_DISABLED_ANNOTATION
+    ] = str(not self.gpu_zonal_redundancy)
     return resource
 
 
@@ -1841,3 +2232,55 @@ class AddVolumeMountChange(ContainerConfigChanger):
         )
       container.volume_mounts[mount['mount-path']] = mount['volume']
     return container
+
+
+@dataclasses.dataclass(frozen=True)
+class SetServiceMeshChange(TemplateConfigChanger):
+  """Sets the service mesh annotation on the service template.
+
+  Attributes:
+    project: The project to use for the mesh when not specified in mesh_name.
+    mesh: Mesh resource name in the format of MESH_NAME or
+      projects/PROJECT/locations/global/meshes/MESH_NAME.
+  """
+
+  project: str
+  mesh_name: str
+
+  def Adjust(self, resource):
+    resource.template.annotations[revision.MESH_ANNOTATION] = (
+        self.mesh_name
+        if '/' in self.mesh_name
+        else f'projects/{self.project}/locations/global/meshes/{self.mesh_name}'
+    )
+    return resource
+
+
+@dataclasses.dataclass(frozen=True)
+class PresetChange(TemplateConfigChanger):
+  """Sets the preset annotation on the service template.
+
+  Attributes:
+    type: The type of preset to use.
+    config: The config to use for the preset.
+    flatten: Whether to flatten the preset values into the service template.
+  """
+
+  type: str
+  config: Mapping[str, str] = dataclasses.field(default_factory=dict)
+  flatten: bool = True
+
+  def Adjust(self, resource):
+    # TODO(b/412784660): Add support for multiple presets and merge existing
+    # presets.
+    if service.PRESETS_ANNOTATION in resource.annotations:
+      presets = json.loads(resource.annotations[service.PRESETS_ANNOTATION])
+    else:
+      presets = []
+    presets.append({
+        'type': self.type,
+        'config': self.config,
+        'flatten': self.flatten,
+    })
+    resource.annotations[service.PRESETS_ANNOTATION] = json.dumps(presets)
+    return resource

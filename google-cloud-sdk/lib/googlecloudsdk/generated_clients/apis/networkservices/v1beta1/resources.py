@@ -41,6 +41,17 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  PROJECTS_LOCATIONS_AUTHZEXTENSIONS = (
+      'projects.locations.authzExtensions',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/authzExtensions/'
+              '{authzExtensionsId}',
+      },
+      ['name'],
+      True
+  )
   PROJECTS_LOCATIONS_ENDPOINTPOLICIES = (
       'projects.locations.endpointPolicies',
       '{+name}',
@@ -59,6 +70,17 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/gateways/'
               '{gatewaysId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_GATEWAYS_ROUTEVIEWS = (
+      'projects.locations.gateways.routeViews',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/gateways/'
+              '{gatewaysId}/routeViews/{routeViewsId}',
       },
       ['name'],
       True
@@ -85,6 +107,17 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  PROJECTS_LOCATIONS_LBEDGEEXTENSIONS = (
+      'projects.locations.lbEdgeExtensions',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'lbEdgeExtensions/{lbEdgeExtensionsId}',
+      },
+      ['name'],
+      True
+  )
   PROJECTS_LOCATIONS_LBROUTEEXTENSIONS = (
       'projects.locations.lbRouteExtensions',
       '{+name}',
@@ -92,17 +125,6 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/'
               'lbRouteExtensions/{lbRouteExtensionsId}',
-      },
-      ['name'],
-      True
-  )
-  PROJECTS_LOCATIONS_LBSERVICESTEERINGEXTENSIONS = (
-      'projects.locations.lbServiceSteeringExtensions',
-      '{+name}',
-      {
-          '':
-              'projects/{projectsId}/locations/{locationsId}/'
-              'lbServiceSteeringExtensions/{lbServiceSteeringExtensionsId}',
       },
       ['name'],
       True
@@ -125,6 +147,121 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/meshes/'
               '{meshesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MESHES_ROUTEVIEWS = (
+      'projects.locations.meshes.routeViews',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/meshes/'
+              '{meshesId}/routeViews/{routeViewsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MULTICASTCONSUMERASSOCIATIONS = (
+      'projects.locations.multicastConsumerAssociations',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'multicastConsumerAssociations/'
+              '{multicastConsumerAssociationsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MULTICASTDOMAINACTIVATIONS = (
+      'projects.locations.multicastDomainActivations',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'multicastDomainActivations/{multicastDomainActivationsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MULTICASTDOMAINGROUPS = (
+      'projects.locations.multicastDomainGroups',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'multicastDomainGroups/{multicastDomainGroupsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MULTICASTDOMAINS = (
+      'projects.locations.multicastDomains',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'multicastDomains/{multicastDomainsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MULTICASTGROUPCONSUMERACTIVATIONS = (
+      'projects.locations.multicastGroupConsumerActivations',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'multicastGroupConsumerActivations/'
+              '{multicastGroupConsumerActivationsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MULTICASTGROUPPRODUCERACTIVATIONS = (
+      'projects.locations.multicastGroupProducerActivations',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'multicastGroupProducerActivations/'
+              '{multicastGroupProducerActivationsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MULTICASTGROUPRANGEACTIVATIONS = (
+      'projects.locations.multicastGroupRangeActivations',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'multicastGroupRangeActivations/'
+              '{multicastGroupRangeActivationsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MULTICASTGROUPRANGES = (
+      'projects.locations.multicastGroupRanges',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'multicastGroupRanges/{multicastGroupRangesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_MULTICASTPRODUCERASSOCIATIONS = (
+      'projects.locations.multicastProducerAssociations',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'multicastProducerAssociations/'
+              '{multicastProducerAssociationsId}',
       },
       ['name'],
       True
@@ -180,6 +317,28 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/tlsRoutes/'
               '{tlsRoutesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_WASMPLUGINS = (
+      'projects.locations.wasmPlugins',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/wasmPlugins/'
+              '{wasmPluginsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_WASMPLUGINS_VERSIONS = (
+      'projects.locations.wasmPlugins.versions',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/wasmPlugins/'
+              '{wasmPluginsId}/versions/{versionsId}',
       },
       ['name'],
       True

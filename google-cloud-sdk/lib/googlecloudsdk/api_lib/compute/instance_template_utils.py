@@ -27,33 +27,38 @@ from googlecloudsdk.api_lib.compute import utils
 from googlecloudsdk.api_lib.compute.instances.create import utils as create_utils
 from googlecloudsdk.command_lib.compute import scope as compute_scope
 from googlecloudsdk.command_lib.compute.networks.subnets import flags as subnet_flags
+from googlecloudsdk.command_lib.util.args import labels_util
 from googlecloudsdk.core import properties
 
 EPHEMERAL_ADDRESS = object()
 
 
-def CreateNetworkInterfaceMessage(resources,
-                                  scope_lister,
-                                  messages,
-                                  network,
-                                  private_ip,
-                                  subnet_region,
-                                  subnet,
-                                  address,
-                                  alias_ip_ranges_string=None,
-                                  network_tier=None,
-                                  stack_type=None,
-                                  ipv6_network_tier=None,
-                                  nic_type=None,
-                                  ipv6_public_ptr_domain=None,
-                                  ipv6_address=None,
-                                  ipv6_prefix_length=None,
-                                  external_ipv6_address=None,
-                                  external_ipv6_prefix_length=None,
-                                  internal_ipv6_address=None,
-                                  internal_ipv6_prefix_length=None,
-                                  network_attachment=None,
-                                  network_queue_count=None,):
+def CreateNetworkInterfaceMessage(
+    resources,
+    scope_lister,
+    messages,
+    network,
+    private_ip,
+    subnet_region,
+    subnet,
+    address,
+    alias_ip_ranges_string=None,
+    network_tier=None,
+    stack_type=None,
+    ipv6_network_tier=None,
+    nic_type=None,
+    ipv6_public_ptr_domain=None,
+    ipv6_address=None,
+    ipv6_prefix_length=None,
+    external_ipv6_address=None,
+    external_ipv6_prefix_length=None,
+    internal_ipv6_address=None,
+    internal_ipv6_prefix_length=None,
+    network_attachment=None,
+    network_queue_count=None,
+    vlan=None,
+    igmp_query=None,
+):
   """Creates and returns a new NetworkInterface message.
 
   Args:
@@ -101,6 +106,8 @@ def CreateNetworkInterfaceMessage(resources,
       length of the internal IPv6 address reserved to the interface.
     network_attachment: URL of a network attachment to connect the interface to.
     network_queue_count: the number of queues assigned to the network interface.
+    vlan: the VLAN tag of the network interface.
+    igmp_query: the IGMP query mode of the network interface.
 
   Returns:
     network_interface: a NetworkInterface message object
@@ -138,7 +145,7 @@ def CreateNetworkInterfaceMessage(resources,
     network_interface.stackType = (
         messages.NetworkInterface.StackTypeValueValuesEnum(stack_type))
 
-  if address:
+  if address and stack_type != 'IPV6_ONLY':
     access_config = messages.AccessConfig(
         name=constants.DEFAULT_ACCESS_CONFIG_NAME,
         type=messages.AccessConfig.TypeValueValuesEnum.ONE_TO_ONE_NAT)
@@ -215,6 +222,14 @@ def CreateNetworkInterfaceMessage(resources,
   if network_queue_count is not None:
     network_interface.queueCount = network_queue_count
 
+  if vlan is not None:
+    network_interface.vlan = vlan
+
+  if igmp_query is not None:
+    network_interface.igmpQuery = (
+        messages.NetworkInterface.IgmpQueryValueValuesEnum(igmp_query)
+    )
+
   return network_interface
 
 
@@ -262,21 +277,27 @@ def CreateNetworkInterfaceMessages(resources, scope_lister, messages,
               nic_type=nic_type,
               stack_type=interface.get('stack-type', None),
               ipv6_network_tier=interface.get('ipv6-network-tier', None),
-              ipv6_public_ptr_domain=interface.get('ipv6-public-ptr-domain',
-                                                   None),
+              ipv6_public_ptr_domain=interface.get(
+                  'ipv6-public-ptr-domain', None
+              ),
               ipv6_address=interface.get('ipv6-address', None),
               ipv6_prefix_length=interface.get('ipv6-prefix-length', None),
-              external_ipv6_address=interface.get('external-ipv6-address',
-                                                  None),
+              external_ipv6_address=interface.get(
+                  'external-ipv6-address', None
+              ),
               external_ipv6_prefix_length=interface.get(
-                  'external-ipv6-prefix-length', None),
-              internal_ipv6_address=interface.get('internal-ipv6-address',
-                                                  None),
+                  'external-ipv6-prefix-length', None
+              ),
+              internal_ipv6_address=interface.get(
+                  'internal-ipv6-address', None
+              ),
               internal_ipv6_prefix_length=interface.get(
                   'internal-ipv6-prefix-length', None
               ),
               network_attachment=interface.get('network-attachment'),
               network_queue_count=interface.get('queue-count', None),
+              vlan=interface.get('vlan', None),
+              igmp_query=interface.get('igmp-query', None),
           )
       )
   return result
@@ -294,7 +315,7 @@ def CreateDiskMessages(
     support_multi_writer=False,
     match_container_mount_disks=False,
     support_replica_zones=True,
-    support_storage_pool=False,
+    support_disk_labels=False,
 ):
   """Create disk messages for a single instance template."""
   container_mount_disk = (
@@ -306,16 +327,16 @@ def CreateDiskMessages(
           args.disk or [],
           container_mount_disk=container_mount_disk))
 
-  persistent_create_disks = (
-      CreatePersistentCreateDiskMessages(
-          client,
-          resources,
-          project,
-          getattr(args, 'create_disk', []),
-          support_kms=support_kms,
-          support_multi_writer=support_multi_writer,
-          support_replica_zones=support_replica_zones,
-          support_storage_pool=support_storage_pool))
+  persistent_create_disks = CreatePersistentCreateDiskMessages(
+      client,
+      resources,
+      project,
+      getattr(args, 'create_disk', []),
+      support_kms=support_kms,
+      support_multi_writer=support_multi_writer,
+      support_replica_zones=support_replica_zones,
+      support_disk_labels=support_disk_labels,
+  )
 
   if create_boot_disk:
     boot_disk_list = [
@@ -330,6 +351,7 @@ def CreateDiskMessages(
             support_kms=support_kms,
             disk_provisioned_iops=args.boot_disk_provisioned_iops,
             disk_provisioned_throughput=args.boot_disk_provisioned_throughput,
+            disk_interface=args.boot_disk_interface,
         )
     ]
   elif persistent_create_disks and persistent_create_disks[0].boot:
@@ -402,6 +424,13 @@ def CreatePersistentAttachedDiskMessages(
         source=name,
         type=messages.AttachedDisk.TypeValueValuesEnum.PERSISTENT)
 
+    if disk.get('interface'):
+      if disk.get('interface') == 'SCSI':
+        interface = messages.AttachedDisk.InterfaceValueValuesEnum.SCSI
+      else:
+        interface = messages.AttachedDisk.InterfaceValueValuesEnum.NVME
+      attached_disk.interface = interface
+
     # The boot disk must end up at index 0.
     if boot:
       disks_messages = [attached_disk] + disks_messages
@@ -420,7 +449,7 @@ def CreatePersistentCreateDiskMessages(
     container_mount_disk=None,
     support_multi_writer=False,
     support_replica_zones=True,
-    support_storage_pool=False,
+    support_disk_labels=False,
 ):
   """Returns a list of AttachedDisk messages.
 
@@ -428,30 +457,23 @@ def CreatePersistentCreateDiskMessages(
     client: Compute client adapter
     resources: Compute resources registry
     user_project: name of user project
-    create_disks: disk objects - contains following properties
-             * name - the name of disk,
-             * description - an optional description for the disk,
-             * mode - 'rw' (R/W), 'ro' (R/O) access mode,
-             * size - the size of the disk,
-             * provisioned-iops - Indicates how many IOPS must be provisioned
-               for the disk.
-             * provisioned-throughput - Indicates how much throughput is
-               provisioned for the disks.
-             * type - the type of the disk (HDD or SSD),
-             * image - the name of the image to initialize from,
-             * image-family - the image family name,
-             * image-project - the project name that has the image,
-             * auto-delete - whether disks is deleted when VM is deleted ('yes'
-               if True),
-             * device-name - device name on VM,
-             * disk-resource-policy - resource policies applied to disk.
-             * storage-pool: the storage pool in which the new disk is created.
-
+    create_disks: disk objects - contains following properties * name - the name
+      of disk, * description - an optional description for the disk, * mode -
+      'rw' (R/W), 'ro' (R/O) access mode, * size - the size of the disk, *
+      provisioned-iops - Indicates how many IOPS must be provisioned for the
+      disk. * provisioned-throughput - Indicates how much throughput is
+      provisioned for the disks. * type - the type of the disk (HDD or SSD), *
+      image - the name of the image to initialize from, * image-family - the
+      image family name, * image-project - the project name that has the image,
+      * auto-delete - whether disks is deleted when VM is deleted ('yes' if
+      True), * device-name - device name on VM, * disk-resource-policy -
+      resource policies applied to disk. * storage-pool: the storage pool in
+      which the new disk is created.
     support_kms: if KMS is supported
     container_mount_disk: list of disks to be mounted to container, if any.
     support_multi_writer: if multi writer disks are supported.
     support_replica_zones: True if we allow creation of regional disks.
-    support_storage_pool: if storage pool is upported
+    support_disk_labels: True if we allow adding disk labels.
 
   Returns:
     list of API messages for attached disks
@@ -526,10 +548,20 @@ def CreatePersistentCreateDiskMessages(
           )
       )
 
+    if support_disk_labels:
+      dict_labels = labels_util.ValidateAndParseLabels(disk.get('labels'))
+      if dict_labels:
+        labels_value = messages.AttachedDiskInitializeParams.LabelsValue()
+        labels_value.additionalProperties = [
+            labels_value.AdditionalProperty(key=key, value=value)
+            for key, value in dict_labels.items()
+        ]
+
+        init_params.labels = labels_value
+
     init_params.provisionedThroughput = disk.get('provisioned-throughput')
 
-    if support_storage_pool:
-      init_params.storagePool = disk.get('storage-pool')
+    init_params.storagePool = disk.get('storage-pool')
 
     create_disk = client.messages.AttachedDisk(
         autoDelete=auto_delete,
@@ -540,6 +572,12 @@ def CreatePersistentCreateDiskMessages(
         type=client.messages.AttachedDisk.TypeValueValuesEnum.PERSISTENT,
         diskEncryptionKey=disk_key,
     )
+    if disk.get('interface'):
+      if disk.get('interface') == 'SCSI':
+        interface = messages.AttachedDisk.InterfaceValueValuesEnum.SCSI
+      else:
+        interface = messages.AttachedDisk.InterfaceValueValuesEnum.NVME
+      create_disk.interface = interface
 
     # The boot disk must end up at index 0.
     if boot:
@@ -561,6 +599,7 @@ def CreateDefaultBootAttachedDiskMessage(
     support_kms=False,
     disk_provisioned_iops=None,
     disk_provisioned_throughput=None,
+    disk_interface=None,
 ):
   """Returns an AttachedDisk message for creating a new boot disk."""
   disk_key = None
@@ -577,14 +616,22 @@ def CreateDefaultBootAttachedDiskMessage(
   if disk_provisioned_throughput is not None:
     initialize_params.provisionedThroughput = disk_provisioned_throughput
 
-  return messages.AttachedDisk(
+  boot_attached_disk = messages.AttachedDisk(
       autoDelete=disk_auto_delete,
       boot=True,
       deviceName=disk_device_name,
       initializeParams=initialize_params,
       mode=messages.AttachedDisk.ModeValueValuesEnum.READ_WRITE,
       type=messages.AttachedDisk.TypeValueValuesEnum.PERSISTENT,
-      diskEncryptionKey=disk_key)
+      diskEncryptionKey=disk_key,
+  )
+  if disk_interface:
+    if disk_interface == 'SCSI':
+      interface = messages.AttachedDisk.InterfaceValueValuesEnum.SCSI
+    else:
+      interface = messages.AttachedDisk.InterfaceValueValuesEnum.NVME
+    boot_attached_disk.interface = interface
+  return boot_attached_disk
 
 
 def CreateAcceleratorConfigMessages(messages, accelerator):

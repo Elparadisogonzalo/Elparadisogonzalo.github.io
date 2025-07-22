@@ -37,6 +37,11 @@ node_prefix:
 
     Must also specify `--node-count`.
 
+workload_type:
+  arg_name: workload-type
+  help_text: |
+    Specifies the workload type for the multi-node TPUs.
+
 accelerator_type:
   arg_name: accelerator-type
   type: googlecloudsdk.command_lib.util.hooks.types:LowerCaseType
@@ -47,7 +52,7 @@ runtime_version:
   arg_name: runtime-version
   required: true
   help_text: |
-    Runtime version for the TPU, such as `2.3`.
+    Runtime version for the TPU, such as `tpu-ubuntu2204-base`.
 
 best_effort:
   arg_name: best-effort
@@ -70,6 +75,20 @@ guaranteed:
   help_text: |
     If provided, the Node requested here will only be scheduled at the 'guaranteed' tier.
 
+provisioning_model:
+  arg_name: provisioning-model
+  help_text: |
+    If provided, the resource will be provisioned with the specified provisioning model.
+
+max_run_duration:
+  arg_name: max-run-duration
+  type: googlecloudsdk.core.util.times:ParseDuration
+  processor: googlecloudsdk.core.util.times:FormatDurationForJson
+  api_field: queuedResource.runDuration.maxRunDuration
+  help_text: |
+    A duration after which the resource will be terminated. Used with flex-start.
+    See $ gcloud topic datetimes for information on duration formats.
+
 min_duration:
   arg_name: min-duration
   api_field: queuedResource.guaranteed.minDuration
@@ -84,11 +103,11 @@ reserved:
   type: bool
   action: store_true
   default: null
-  api_field: queuedResource.guaranteed.reserved
   help_text: |
     Specifies the request should be scheduled on reserved capacity.
 
-    If this flag is set the guaranteed flag is also set.
+    If `--reservation-host-project`, `--reservation-host-folder`, or
+    `--reservation-host-organization` are present then this flag has no effect.
 
 valid_after_duration:
   arg_name: valid-after-duration
@@ -292,3 +311,55 @@ boot_disk:
     *kms-key*::: Specifies fully qualified Cloud KMS cryptokey name
     which will be used to protect the disk. KMS cryptokey name format:
       projects/<kms-project>/locations/<kms-location>/keyRings/<kms-keyring>/cryptoKeys/<key-name>
+
+network_config:
+  api_field: queuedResource.tpu.nodeSpec.node.networkConfigs
+  arg_name: network-config
+  type:
+    arg_dict:
+      flatten: false
+      spec:
+      - api_field: network
+        arg_name: network
+        type: str
+        required: false
+      - api_field: subnetwork
+        arg_name: subnetwork
+        type: str
+        required: false
+      - api_field: enableExternalIps
+        arg_name: external-ips
+        required: false
+        type: bool
+  required: false
+  help_text: |
+      Specify a full network_config for the TPU. network or subnetwork must be specified.
+
+      This flag may be repeated to provide multiple networks. For example:
+
+      $ {command} \
+          --network-config network=example_network,internal-ips=true
+
+      The following keys are allowed:
+
+      *network*::: Specify the network to be used by this TPU.
+
+      *subnetwork*::: Specify the network to be used by this TPU. If not specified,
+      this defaults to the subnetwork by the same name as the network.
+
+      *external-ips*::: Indicate that the IP addresses for the node should be exteranl. The default will be
+      only internal IP addresses.
+
+reservation:
+  api_field: queuedResource.reservationName
+  arg_name: reservation
+  type: str
+  required: false
+  help_text: |
+    The name of the reservation. This can either be the full name or just the name.
+
+    However, a full name is required if the reservation is not in the default project.
+
+    Full reservation name format is:
+    projects/<project>/locations/<location>/reservations/<reservation-name>,
+    projects/<project>/zones/<zone>/reservations/<reservation-name>.

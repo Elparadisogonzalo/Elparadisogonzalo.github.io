@@ -23,9 +23,10 @@ class AbortInfo(_messages.Message):
 
   Fields:
     cause: Causes that the analysis is aborted.
-    projectsMissingPermission: List of project IDs that the user has specified
-      in the request but does not have permission to access network configs.
-      Analysis is aborted in this case with the PERMISSION_DENIED cause.
+    ipAddress: IP address that caused the abort.
+    projectsMissingPermission: List of project IDs the user specified in the
+      request but lacks access to. In this case, analysis is aborted with the
+      PERMISSION_DENIED cause.
     resourceUri: URI of the resource that caused the abort.
   """
 
@@ -34,40 +35,52 @@ class AbortInfo(_messages.Message):
 
     Values:
       CAUSE_UNSPECIFIED: Cause is unspecified.
-      UNKNOWN_NETWORK: Aborted due to unknown network. The reachability
-        analysis cannot proceed because the user does not have access to the
-        host project's network configurations, including firewall rules and
-        routes. This happens when the project is a service project and the
-        endpoints being traced are in the host project's network.
-      UNKNOWN_IP: Aborted because the IP address(es) are unknown.
+      UNKNOWN_NETWORK: Aborted due to unknown network. Deprecated, not used in
+        the new tests.
       UNKNOWN_PROJECT: Aborted because no project information can be derived
-        from the test input.
-      PERMISSION_DENIED: Aborted because the user lacks the permission to
-        access all or part of the network configurations required to run the
-        test.
-      NO_SOURCE_LOCATION: Aborted because no valid source endpoint is derived
-        from the input test request.
-      INVALID_ARGUMENT: Aborted because the source and/or destination endpoint
-        specified in the test are invalid. The possible reasons that an
-        endpoint is invalid include: malformed IP address; nonexistent
-        instance or network URI; IP address not in the range of specified
-        network URI; and instance not owning the network interface in the
-        specified network.
+        from the test input. Deprecated, not used in the new tests.
       NO_EXTERNAL_IP: Aborted because traffic is sent from a public IP to an
-        instance without an external IP.
+        instance without an external IP. Deprecated, not used in the new
+        tests.
       UNINTENDED_DESTINATION: Aborted because none of the traces matches
         destination information specified in the input test request.
-      TRACE_TOO_LONG: Aborted because the number of steps in the trace
-        exceeding a certain limit which may be caused by routing loop.
-      INTERNAL_ERROR: Aborted due to internal server error.
+        Deprecated, not used in the new tests.
       SOURCE_ENDPOINT_NOT_FOUND: Aborted because the source endpoint could not
-        be found.
+        be found. Deprecated, not used in the new tests.
       MISMATCHED_SOURCE_NETWORK: Aborted because the source network does not
-        match the source endpoint.
+        match the source endpoint. Deprecated, not used in the new tests.
       DESTINATION_ENDPOINT_NOT_FOUND: Aborted because the destination endpoint
-        could not be found.
+        could not be found. Deprecated, not used in the new tests.
       MISMATCHED_DESTINATION_NETWORK: Aborted because the destination network
-        does not match the destination endpoint.
+        does not match the destination endpoint. Deprecated, not used in the
+        new tests.
+      UNKNOWN_IP: Aborted because no endpoint with the packet's destination IP
+        address is found.
+      GOOGLE_MANAGED_SERVICE_UNKNOWN_IP: Aborted because no endpoint with the
+        packet's destination IP is found in the Google-managed project.
+      SOURCE_IP_ADDRESS_NOT_IN_SOURCE_NETWORK: Aborted because the source IP
+        address doesn't belong to any of the subnets of the source VPC
+        network.
+      PERMISSION_DENIED: Aborted because user lacks permission to access all
+        or part of the network configurations required to run the test.
+      PERMISSION_DENIED_NO_CLOUD_NAT_CONFIGS: Aborted because user lacks
+        permission to access Cloud NAT configs required to run the test.
+      PERMISSION_DENIED_NO_NEG_ENDPOINT_CONFIGS: Aborted because user lacks
+        permission to access Network endpoint group endpoint configs required
+        to run the test.
+      PERMISSION_DENIED_NO_CLOUD_ROUTER_CONFIGS: Aborted because user lacks
+        permission to access Cloud Router configs required to run the test.
+      NO_SOURCE_LOCATION: Aborted because no valid source or destination
+        endpoint is derived from the input test request.
+      INVALID_ARGUMENT: Aborted because the source or destination endpoint
+        specified in the request is invalid. Some examples: - The request
+        might contain malformed resource URI, project ID, or IP address. - The
+        request might contain inconsistent information (for example, the
+        request might include both the instance and the network, but the
+        instance might not have a NIC in that network).
+      TRACE_TOO_LONG: Aborted because the number of steps in the trace exceeds
+        a certain limit. It might be caused by a routing loop.
+      INTERNAL_ERROR: Aborted due to internal server error.
       UNSUPPORTED: Aborted because the test scenario is not supported.
       MISMATCHED_IP_VERSION: Aborted because the source and destination
         resources have no common IP version.
@@ -76,43 +89,106 @@ class AbortInfo(_messages.Message):
         initiated by the node and managed by the Konnectivity proxy.
       RESOURCE_CONFIG_NOT_FOUND: Aborted because expected resource
         configuration was missing.
-      GOOGLE_MANAGED_SERVICE_AMBIGUOUS_PSC_ENDPOINT: Aborted because a PSC
+      VM_INSTANCE_CONFIG_NOT_FOUND: Aborted because expected VM instance
+        configuration was missing.
+      NETWORK_CONFIG_NOT_FOUND: Aborted because expected network configuration
+        was missing.
+      FIREWALL_CONFIG_NOT_FOUND: Aborted because expected firewall
+        configuration was missing.
+      ROUTE_CONFIG_NOT_FOUND: Aborted because expected route configuration was
+        missing.
+      GOOGLE_MANAGED_SERVICE_AMBIGUOUS_PSC_ENDPOINT: Aborted because PSC
         endpoint selection for the Google-managed service is ambiguous
         (several PSC endpoints satisfy test input).
+      GOOGLE_MANAGED_SERVICE_AMBIGUOUS_ENDPOINT: Aborted because endpoint
+        selection for the Google-managed service is ambiguous (several
+        endpoints satisfy test input).
       SOURCE_PSC_CLOUD_SQL_UNSUPPORTED: Aborted because tests with a PSC-based
         Cloud SQL instance as a source are not supported.
+      SOURCE_REDIS_CLUSTER_UNSUPPORTED: Aborted because tests with a Redis
+        Cluster as a source are not supported.
+      SOURCE_REDIS_INSTANCE_UNSUPPORTED: Aborted because tests with a Redis
+        Instance as a source are not supported.
       SOURCE_FORWARDING_RULE_UNSUPPORTED: Aborted because tests with a
         forwarding rule as a source are not supported.
       NON_ROUTABLE_IP_ADDRESS: Aborted because one of the endpoints is a non-
         routable IP address (loopback, link-local, etc).
+      UNKNOWN_ISSUE_IN_GOOGLE_MANAGED_PROJECT: Aborted due to an unknown issue
+        in the Google-managed project.
+      UNSUPPORTED_GOOGLE_MANAGED_PROJECT_CONFIG: Aborted due to an unsupported
+        configuration of the Google-managed project.
+      INVALID_JUSTIFICATION: Aborted due to an invalid justification.
+      NO_SERVERLESS_IP_RANGES: Aborted because the source endpoint is a Cloud
+        Run revision with direct VPC access enabled, but there are no reserved
+        serverless IP ranges.
+      ALLOY_DB_INSTANCE_OUTBOUND_CONNECTION_UNSUPPORTED: Packet sent from an
+        AlloyDB instance that does not support outbound connections (e.g. a
+        read-pool instance).
     """
     CAUSE_UNSPECIFIED = 0
     UNKNOWN_NETWORK = 1
-    UNKNOWN_IP = 2
-    UNKNOWN_PROJECT = 3
-    PERMISSION_DENIED = 4
-    NO_SOURCE_LOCATION = 5
-    INVALID_ARGUMENT = 6
-    NO_EXTERNAL_IP = 7
-    UNINTENDED_DESTINATION = 8
-    TRACE_TOO_LONG = 9
-    INTERNAL_ERROR = 10
-    SOURCE_ENDPOINT_NOT_FOUND = 11
-    MISMATCHED_SOURCE_NETWORK = 12
-    DESTINATION_ENDPOINT_NOT_FOUND = 13
-    MISMATCHED_DESTINATION_NETWORK = 14
-    UNSUPPORTED = 15
-    MISMATCHED_IP_VERSION = 16
-    GKE_KONNECTIVITY_PROXY_UNSUPPORTED = 17
-    RESOURCE_CONFIG_NOT_FOUND = 18
-    GOOGLE_MANAGED_SERVICE_AMBIGUOUS_PSC_ENDPOINT = 19
-    SOURCE_PSC_CLOUD_SQL_UNSUPPORTED = 20
-    SOURCE_FORWARDING_RULE_UNSUPPORTED = 21
-    NON_ROUTABLE_IP_ADDRESS = 22
+    UNKNOWN_PROJECT = 2
+    NO_EXTERNAL_IP = 3
+    UNINTENDED_DESTINATION = 4
+    SOURCE_ENDPOINT_NOT_FOUND = 5
+    MISMATCHED_SOURCE_NETWORK = 6
+    DESTINATION_ENDPOINT_NOT_FOUND = 7
+    MISMATCHED_DESTINATION_NETWORK = 8
+    UNKNOWN_IP = 9
+    GOOGLE_MANAGED_SERVICE_UNKNOWN_IP = 10
+    SOURCE_IP_ADDRESS_NOT_IN_SOURCE_NETWORK = 11
+    PERMISSION_DENIED = 12
+    PERMISSION_DENIED_NO_CLOUD_NAT_CONFIGS = 13
+    PERMISSION_DENIED_NO_NEG_ENDPOINT_CONFIGS = 14
+    PERMISSION_DENIED_NO_CLOUD_ROUTER_CONFIGS = 15
+    NO_SOURCE_LOCATION = 16
+    INVALID_ARGUMENT = 17
+    TRACE_TOO_LONG = 18
+    INTERNAL_ERROR = 19
+    UNSUPPORTED = 20
+    MISMATCHED_IP_VERSION = 21
+    GKE_KONNECTIVITY_PROXY_UNSUPPORTED = 22
+    RESOURCE_CONFIG_NOT_FOUND = 23
+    VM_INSTANCE_CONFIG_NOT_FOUND = 24
+    NETWORK_CONFIG_NOT_FOUND = 25
+    FIREWALL_CONFIG_NOT_FOUND = 26
+    ROUTE_CONFIG_NOT_FOUND = 27
+    GOOGLE_MANAGED_SERVICE_AMBIGUOUS_PSC_ENDPOINT = 28
+    GOOGLE_MANAGED_SERVICE_AMBIGUOUS_ENDPOINT = 29
+    SOURCE_PSC_CLOUD_SQL_UNSUPPORTED = 30
+    SOURCE_REDIS_CLUSTER_UNSUPPORTED = 31
+    SOURCE_REDIS_INSTANCE_UNSUPPORTED = 32
+    SOURCE_FORWARDING_RULE_UNSUPPORTED = 33
+    NON_ROUTABLE_IP_ADDRESS = 34
+    UNKNOWN_ISSUE_IN_GOOGLE_MANAGED_PROJECT = 35
+    UNSUPPORTED_GOOGLE_MANAGED_PROJECT_CONFIG = 36
+    INVALID_JUSTIFICATION = 37
+    NO_SERVERLESS_IP_RANGES = 38
+    ALLOY_DB_INSTANCE_OUTBOUND_CONNECTION_UNSUPPORTED = 39
 
   cause = _messages.EnumField('CauseValueValuesEnum', 1)
-  projectsMissingPermission = _messages.StringField(2, repeated=True)
-  resourceUri = _messages.StringField(3)
+  ipAddress = _messages.StringField(2)
+  projectsMissingPermission = _messages.StringField(3, repeated=True)
+  resourceUri = _messages.StringField(4)
+
+
+class AlloyDbInstanceInfo(_messages.Message):
+  r"""For display only. Metadata associated with an AlloyDB Instance.
+
+  Fields:
+    networkUri: For peering-based instances, the URI of the network the
+      AlloyDB Cluster this Instance belongs to.
+    privateIpv4Ip: For peering-based instances, a private internal IPv4
+      address.
+    publicIpv4Ip: Public IPv4 IP address of the AlloyDB Instance, if enabled.
+    uri: URI of the AlloyDB Instance in format: "projects/PROJECT_ID/locations
+      /REGION_NAME/clusters/CLUSTER_NAME/instances/INSTANCE_NAME"
+  """
+
+  networkUri = _messages.StringField(1)
+  privateIpv4Ip = _messages.StringField(2)
+  publicIpv4Ip = _messages.StringField(3)
+  uri = _messages.StringField(4)
 
 
 class AppEngineVersionEndpoint(_messages.Message):
@@ -523,7 +599,9 @@ class CloudRunRevisionInfo(_messages.Message):
   Fields:
     displayName: Name of a Cloud Run revision.
     location: Location in which this revision is deployed.
-    serviceName: ID of Cloud Run Service this revision belongs to.
+    serviceName: ID of Cloud Run Service this revision belongs to. Was never
+      set, is not exported to v1 proto and public protos. Do not export to
+      v1beta1 public proto.
     serviceUri: URI of Cloud Run service this revision belongs to.
     uri: URI of a Cloud Run revision.
   """
@@ -592,15 +670,23 @@ class Condition(_messages.Message):
         cloud region) - 'self:prod-region' (i.e., allow connections from
         clients that are in the same prod region) - 'guardians' (i.e., allow
         connections from its guardian realms. See go/security-realms-
-        glossary#guardian for more information.) - 'self' [DEPRECATED] (i.e.,
-        allow connections from clients that are in the same security realm,
-        which is currently but not guaranteed to be campus-sized) - a realm
-        (e.g., 'campus-abc') - a realm group (e.g., 'realms-for-borg-cell-xx',
-        see: go/realm-groups) A match is determined by a realm group
-        membership check performed by a RealmAclRep object (go/realm-acl-
-        howto). It is not permitted to grant access based on the *absence* of
-        a realm, so realm conditions can only be used in a "positive" context
-        (e.g., ALLOW/IN or DENY/NOT_IN).
+        glossary#guardian for more information.) - 'cryto_core_guardians'
+        (i.e., allow connections from its crypto core guardian realms. See
+        go/security-realms-glossary#guardian for more information.) Crypto
+        Core coverage is a super-set of Default coverage, containing
+        information about coverage between higher tier data centers (e.g.,
+        YAWNs). Most services should use Default coverage and only use Crypto
+        Core coverage if the service is involved in greenfield turnup of new
+        higher tier data centers (e.g., credential infrastructure, machine/job
+        management systems, etc.). - 'self' [DEPRECATED] (i.e., allow
+        connections from clients that are in the same security realm, which is
+        currently but not guaranteed to be campus-sized) - a realm (e.g.,
+        'campus-abc') - a realm group (e.g., 'realms-for-borg-cell-xx', see:
+        go/realm-groups) A match is determined by a realm group membership
+        check performed by a RealmAclRep object (go/realm-acl-howto). It is
+        not permitted to grant access based on the *absence* of a realm, so
+        realm conditions can only be used in a "positive" context (e.g.,
+        ALLOW/IN or DENY/NOT_IN).
       APPROVER: An approver (distinct from the requester) that has authorized
         this request. When used with IN, the condition indicates that one of
         the approvers associated with the request matches the specified
@@ -621,8 +707,10 @@ class Condition(_messages.Message):
         CREDS_TYPE_EMERGENCY is supported. It is not permitted to grant access
         based on the *absence* of a credentials type, so the conditions can
         only be used in a "positive" context (e.g., ALLOW/IN or DENY/NOT_IN).
-      CREDS_ASSERTION: EXPERIMENTAL -- DO NOT USE. The conditions can only be
-        used in a "positive" context (e.g., ALLOW/IN or DENY/NOT_IN).
+      CREDS_ASSERTION: Properties of the credentials supplied with this
+        request. See http://go/rpcsp-credential-assertions?polyglot=rpcsp-v1-0
+        The conditions can only be used in a "positive" context (e.g.,
+        ALLOW/IN or DENY/NOT_IN).
     """
     NO_ATTR = 0
     AUTHORITY = 1
@@ -809,6 +897,7 @@ class DataAccessOptions(_messages.Message):
     LogModeValueValuesEnum:
 
   Fields:
+    isDirectAuth: Indicates that access was granted by a regular grant policy
     logMode: A LogModeValueValuesEnum attribute.
   """
 
@@ -833,7 +922,8 @@ class DataAccessOptions(_messages.Message):
     LOG_MODE_UNSPECIFIED = 0
     LOG_FAIL_CLOSED = 1
 
-  logMode = _messages.EnumField('LogModeValueValuesEnum', 1)
+  isDirectAuth = _messages.BooleanField(1)
+  logMode = _messages.EnumField('LogModeValueValuesEnum', 2)
 
 
 class DeliverInfo(_messages.Message):
@@ -843,7 +933,12 @@ class DeliverInfo(_messages.Message):
     TargetValueValuesEnum: Target type where the packet is delivered to.
 
   Fields:
+    ipAddress: IP address of the target (if applicable).
+    pscGoogleApiTarget: PSC Google API target the packet is delivered to (if
+      applicable).
     resourceUri: URI of the resource that the packet is delivered to.
+    storageBucket: Name of the Cloud Storage Bucket the packet is delivered to
+      (if applicable).
     target: Target type where the packet is delivered to.
   """
 
@@ -860,7 +955,7 @@ class DeliverInfo(_messages.Message):
       PSC_PUBLISHED_SERVICE: Target is a published service that uses [Private
         Service Connect](https://cloud.google.com/vpc/docs/configure-private-
         service-connect-services).
-      PSC_GOOGLE_API: Target is all Google APIs that use [Private Service
+      PSC_GOOGLE_API: Target is Google APIs that use [Private Service
         Connect](https://cloud.google.com/vpc/docs/configure-private-service-
         connect-apis).
       PSC_VPC_SC: Target is a VPC-SC that uses [Private Service
@@ -875,6 +970,11 @@ class DeliverInfo(_messages.Message):
         for return traces.
       CLOUD_RUN_REVISION: Target is a Cloud Run revision. Used only for return
         traces.
+      GOOGLE_MANAGED_SERVICE: Target is a Google-managed service. Used only
+        for return traces.
+      REDIS_INSTANCE: Target is a Redis Instance.
+      REDIS_CLUSTER: Target is a Redis Cluster.
+      ALLOY_DB_INSTANCE: Target is an AlloyDB Instance.
     """
     TARGET_UNSPECIFIED = 0
     INSTANCE = 1
@@ -891,9 +991,16 @@ class DeliverInfo(_messages.Message):
     CLOUD_FUNCTION = 12
     APP_ENGINE_VERSION = 13
     CLOUD_RUN_REVISION = 14
+    GOOGLE_MANAGED_SERVICE = 15
+    REDIS_INSTANCE = 16
+    REDIS_CLUSTER = 17
+    ALLOY_DB_INSTANCE = 18
 
-  resourceUri = _messages.StringField(1)
-  target = _messages.EnumField('TargetValueValuesEnum', 2)
+  ipAddress = _messages.StringField(1)
+  pscGoogleApiTarget = _messages.StringField(2)
+  resourceUri = _messages.StringField(3)
+  storageBucket = _messages.StringField(4)
+  target = _messages.EnumField('TargetValueValuesEnum', 5)
 
 
 class Deployment(_messages.Message):
@@ -910,6 +1017,26 @@ class Deployment(_messages.Message):
 
   mirroredTrafficConfig = _messages.MessageField('OutOfBandDeploymentConfig', 1)
   name = _messages.StringField(2)
+
+
+class DirectVpcEgressConnectionInfo(_messages.Message):
+  r"""For display only. Metadata associated with a serverless direct VPC
+  egress connection.
+
+  Fields:
+    networkUri: URI of direct access network.
+    region: Region in which the Direct VPC egress is deployed.
+    selectedIpAddress: Selected starting IP address, from the selected IP
+      range.
+    selectedIpRange: Selected IP range.
+    subnetworkUri: URI of direct access subnetwork.
+  """
+
+  networkUri = _messages.StringField(1)
+  region = _messages.StringField(2)
+  selectedIpAddress = _messages.StringField(3)
+  selectedIpRange = _messages.StringField(4)
+  subnetworkUri = _messages.StringField(5)
 
 
 class DropInfo(_messages.Message):
@@ -950,7 +1077,7 @@ class DropInfo(_messages.Message):
       ROUTE_NEXT_HOP_RESOURCE_NOT_FOUND: Route's next hop resource is not
         found.
       ROUTE_NEXT_HOP_INSTANCE_WRONG_NETWORK: Route's next hop instance doesn't
-        hace a NIC in the route's network.
+        have a NIC in the route's network.
       ROUTE_NEXT_HOP_INSTANCE_NON_PRIMARY_IP: Route's next hop IP address is
         not a primary IP address of the next hop instance.
       ROUTE_NEXT_HOP_FORWARDING_RULE_IP_MISMATCH: Route's next hop forwarding
@@ -961,23 +1088,26 @@ class DropInfo(_messages.Message):
         rule type is invalid (it's not a forwarding rule of the internal
         passthrough load balancer).
       NO_ROUTE_FROM_INTERNET_TO_PRIVATE_IPV6_ADDRESS: Packet is sent from the
-        Internet to the private IPv6 address.
+        Internet or Google service to the private IPv6 address.
+      NO_ROUTE_FROM_EXTERNAL_IPV6_SOURCE_TO_PRIVATE_IPV6_ADDRESS: Packet is
+        sent from the external IPv6 source address of an instance to the
+        private IPv6 address of an instance.
       VPN_TUNNEL_LOCAL_SELECTOR_MISMATCH: The packet does not match a policy-
         based VPN tunnel local selector.
       VPN_TUNNEL_REMOTE_SELECTOR_MISMATCH: The packet does not match a policy-
         based VPN tunnel remote selector.
       PRIVATE_TRAFFIC_TO_INTERNET: Packet with internal destination address
         sent to the internet gateway.
-      PRIVATE_GOOGLE_ACCESS_DISALLOWED: Instance with only an internal IP
-        address tries to access Google API and services, but private Google
-        access is not enabled in the subnet.
+      PRIVATE_GOOGLE_ACCESS_DISALLOWED: Endpoint with only an internal IP
+        address tries to access Google API and services, but Private Google
+        Access is not enabled in the subnet or is not applicable.
       PRIVATE_GOOGLE_ACCESS_VIA_VPN_TUNNEL_UNSUPPORTED: Source endpoint tries
         to access Google API and services through the VPN tunnel to another
         network, but Private Google Access needs to be enabled in the source
         endpoint network.
-      NO_EXTERNAL_ADDRESS: Instance with only an internal IP address tries to
-        access external hosts, but Cloud NAT is not enabled in the subnet,
-        unless special configurations on a VM allow this connection.
+      NO_EXTERNAL_ADDRESS: Endpoint with only an internal IP address tries to
+        access external hosts, but there is no matching Cloud NAT gateway in
+        the subnet.
       UNKNOWN_INTERNAL_ADDRESS: Destination internal address cannot be
         resolved to a known target. If this is a shared VPC scenario, verify
         if the service project ID is provided as test input. Otherwise, verify
@@ -991,12 +1121,23 @@ class DropInfo(_messages.Message):
         unavailable for traffic from the load balancer. For more details, see
         [Health check firewall rules](https://cloud.google.com/load-
         balancing/docs/health-checks#firewall_rules).
+      INGRESS_FIREWALL_TAGS_UNSUPPORTED_BY_DIRECT_VPC_EGRESS: Matching ingress
+        firewall rules by network tags for packets sent via serverless VPC
+        direct egress is unsupported. Behavior is undefined.
+        https://cloud.google.com/run/docs/configuring/vpc-direct-
+        vpc#limitations
       INSTANCE_NOT_RUNNING: Packet is sent from or to a Compute Engine
         instance that is not in a running state.
       GKE_CLUSTER_NOT_RUNNING: Packet sent from or to a GKE cluster that is
         not in running state.
       CLOUD_SQL_INSTANCE_NOT_RUNNING: Packet sent from or to a Cloud SQL
         instance that is not in running state.
+      REDIS_INSTANCE_NOT_RUNNING: Packet sent from or to a Redis Instance that
+        is not in running state.
+      REDIS_CLUSTER_NOT_RUNNING: Packet sent from or to a Redis Cluster that
+        is not in running state.
+      ALLOY_DB_INSTANCE_NOT_READY: Packet sent from or to a AlloyDB Instance
+        that is not in ready state.
       TRAFFIC_TYPE_BLOCKED: The type of traffic is blocked and the user cannot
         configure a firewall rule to enable it. See [Always blocked
         traffic](https://cloud.google.com/vpc/docs/firewalls#blockedtraffic)
@@ -1010,9 +1151,15 @@ class DropInfo(_messages.Message):
         endpoint is not authorized. See [Authorizing with authorized
         networks](https://cloud.google.com/sql/docs/mysql/authorize-networks)
         for more details.
+      ALLOY_DB_INSTANCE_UNAUTHORIZED_ACCESS: Access to the AlloyDB instance
+        endpoint is not authorized. See [AlloyDB Connection
+        Overview](https://cloud.google.com/alloydb/docs/connection-overview)
+        for more details.
       DROPPED_INSIDE_GKE_SERVICE: Packet was dropped inside Google Kubernetes
         Engine Service.
       DROPPED_INSIDE_CLOUD_SQL_SERVICE: Packet was dropped inside Cloud SQL
+        Service.
+      DROPPED_INSIDE_ALLOY_DB_SERVICE: Packet was dropped inside AlloyDB
         Service.
       GOOGLE_MANAGED_SERVICE_NO_PEERING: Packet was dropped because there is
         no peering between the originating network and the Google Managed
@@ -1036,17 +1183,34 @@ class DropInfo(_messages.Message):
         a Cloud SQL instance to an external IP address is not allowed. The
         Cloud SQL instance is not configured to send packets to external IP
         addresses.
+      ALLOY_DB_INSTANCE_NOT_CONFIGURED_FOR_EXTERNAL_TRAFFIC: Packet sent from
+        a AlloyDB instance to an external IP address is not allowed. The
+        AlloyDB instance is not configured to send packets to external IP
+        addresses.
       PUBLIC_CLOUD_SQL_INSTANCE_TO_PRIVATE_DESTINATION: Packet sent from a
         Cloud SQL instance with only a public IP address to a private IP
         address.
       CLOUD_SQL_INSTANCE_NO_ROUTE: Packet was dropped because there is no
         route from a Cloud SQL instance to a destination network.
+      ALLOY_DB_INSTANCE_NO_ROUTE: Packet was dropped because there is no route
+        from a AlloyDB instance to a destination network.
+      CLOUD_SQL_CONNECTOR_REQUIRED: Packet was dropped because the Cloud SQL
+        instance requires all connections to use Cloud SQL connectors and to
+        target the Cloud SQL proxy port (3307).
+      ALLOY_DB_AUTH_PROXY_REQUIRED: Packet was dropped because the AlloyDB
+        instance requires all connections to use AlloyDB Auth Proxy and to
+        target the AlloyDB Auth Proxy port (5433).
       CLOUD_FUNCTION_NOT_ACTIVE: Packet could be dropped because the Cloud
         Function is not in an active status.
       VPC_CONNECTOR_NOT_SET: Packet could be dropped because no VPC connector
         is set.
       VPC_CONNECTOR_NOT_RUNNING: Packet could be dropped because the VPC
         connector is not in a running state.
+      VPC_CONNECTOR_SERVERLESS_TRAFFIC_BLOCKED: Packet could be dropped
+        because the traffic from the serverless service to the VPC connector
+        is not allowed.
+      VPC_CONNECTOR_HEALTH_CHECK_TRAFFIC_BLOCKED: Packet could be dropped
+        because the health check traffic to the VPC connector is not allowed.
       FORWARDING_RULE_REGION_MISMATCH: Packet could be dropped because it was
         sent from a different region to a regional forwarding without global
         access.
@@ -1062,6 +1226,19 @@ class DropInfo(_messages.Message):
       PSC_NEG_PRODUCER_FORWARDING_RULE_MULTIPLE_PORTS: The packet is sent to
         the Private Service Connect backend (network endpoint group), but the
         producer PSC forwarding rule has multiple ports specified.
+      CLOUD_SQL_PSC_NEG_UNSUPPORTED: The packet is sent to the Private Service
+        Connect backend (network endpoint group) targeting a Cloud SQL service
+        attachment, but this configuration is not supported.
+      NO_NAT_SUBNETS_FOR_PSC_SERVICE_ATTACHMENT: No NAT subnets are defined
+        for the PSC service attachment.
+      PSC_TRANSITIVITY_NOT_PROPAGATED: PSC endpoint is accessed via NCC, but
+        PSC transitivity configuration is not yet propagated.
+      HYBRID_NEG_NON_DYNAMIC_ROUTE_MATCHED: The packet sent from the hybrid
+        NEG proxy matches a non-dynamic route, but such a configuration is not
+        supported.
+      HYBRID_NEG_NON_LOCAL_DYNAMIC_ROUTE_MATCHED: The packet sent from the
+        hybrid NEG proxy matches a dynamic route with a next hop in a
+        different region, but such a configuration is not supported.
       CLOUD_RUN_REVISION_NOT_READY: Packet sent from a Cloud Run revision that
         is not ready.
       DROPPED_INSIDE_PSC_SERVICE_PRODUCER: Packet was dropped inside Private
@@ -1069,6 +1246,78 @@ class DropInfo(_messages.Message):
       LOAD_BALANCER_HAS_NO_PROXY_SUBNET: Packet sent to a load balancer, which
         requires a proxy-only subnet and the subnet is not found.
       CLOUD_NAT_NO_ADDRESSES: Packet sent to Cloud Nat without active NAT IPs.
+      ROUTING_LOOP: Packet is stuck in a routing loop.
+      DROPPED_INSIDE_GOOGLE_MANAGED_SERVICE: Packet is dropped inside a
+        Google-managed service due to being delivered in return trace to an
+        endpoint that doesn't match the endpoint the packet was sent from in
+        forward trace. Used only for return traces.
+      LOAD_BALANCER_BACKEND_INVALID_NETWORK: Packet is dropped due to a load
+        balancer backend instance not having a network interface in the
+        network expected by the load balancer.
+      BACKEND_SERVICE_NAMED_PORT_NOT_DEFINED: Packet is dropped due to a
+        backend service named port not being defined on the instance group
+        level.
+      DESTINATION_IS_PRIVATE_NAT_IP_RANGE: Packet is dropped due to a
+        destination IP range being part of a Private NAT IP range.
+      DROPPED_INSIDE_REDIS_INSTANCE_SERVICE: Generic drop cause for a packet
+        being dropped inside a Redis Instance service project.
+      REDIS_INSTANCE_UNSUPPORTED_PORT: Packet is dropped due to an unsupported
+        port being used to connect to a Redis Instance. Port 6379 should be
+        used to connect to a Redis Instance.
+      REDIS_INSTANCE_CONNECTING_FROM_PUPI_ADDRESS: Packet is dropped due to
+        connecting from PUPI address to a PSA based Redis Instance.
+      REDIS_INSTANCE_NO_ROUTE_TO_DESTINATION_NETWORK: Packet is dropped due to
+        no route to the destination network.
+      REDIS_INSTANCE_NO_EXTERNAL_IP: Redis Instance does not have an external
+        IP address.
+      REDIS_INSTANCE_UNSUPPORTED_PROTOCOL: Packet is dropped due to an
+        unsupported protocol being used to connect to a Redis Instance. Only
+        TCP connections are accepted by a Redis Instance.
+      DROPPED_INSIDE_REDIS_CLUSTER_SERVICE: Generic drop cause for a packet
+        being dropped inside a Redis Cluster service project.
+      REDIS_CLUSTER_UNSUPPORTED_PORT: Packet is dropped due to an unsupported
+        port being used to connect to a Redis Cluster. Ports 6379 and 11000 to
+        13047 should be used to connect to a Redis Cluster.
+      REDIS_CLUSTER_NO_EXTERNAL_IP: Redis Cluster does not have an external IP
+        address.
+      REDIS_CLUSTER_UNSUPPORTED_PROTOCOL: Packet is dropped due to an
+        unsupported protocol being used to connect to a Redis Cluster. Only
+        TCP connections are accepted by a Redis Cluster.
+      NO_ADVERTISED_ROUTE_TO_GCP_DESTINATION: Packet from the non-GCP (on-
+        prem) or unknown GCP network is dropped due to the destination IP
+        address not belonging to any IP prefix advertised via BGP by the Cloud
+        Router.
+      NO_TRAFFIC_SELECTOR_TO_GCP_DESTINATION: Packet from the non-GCP (on-
+        prem) or unknown GCP network is dropped due to the destination IP
+        address not belonging to any IP prefix included to the local traffic
+        selector of the VPN tunnel.
+      NO_KNOWN_ROUTE_FROM_PEERED_NETWORK_TO_DESTINATION: Packet from the
+        unknown peered network is dropped due to no known route from the
+        source network to the destination IP address.
+      PRIVATE_NAT_TO_PSC_ENDPOINT_UNSUPPORTED: Sending packets processed by
+        the Private NAT Gateways to the Private Service Connect endpoints is
+        not supported.
+      PSC_PORT_MAPPING_PORT_MISMATCH: Packet is sent to the PSC port mapping
+        service, but its destination port does not match any port mapping
+        rules.
+      PSC_PORT_MAPPING_WITHOUT_PSC_CONNECTION_UNSUPPORTED: Sending packets
+        directly to the PSC port mapping service without going through the PSC
+        connection is not supported.
+      UNSUPPORTED_ROUTE_MATCHED_FOR_NAT64_DESTINATION: Packet with destination
+        IP address within the reserved NAT64 range is dropped due to matching
+        a route of an unsupported type.
+      TRAFFIC_FROM_HYBRID_ENDPOINT_TO_INTERNET_DISALLOWED: Packet could be
+        dropped because hybrid endpoint like a VPN gateway or Interconnect is
+        not allowed to send traffic to the Internet.
+      NO_MATCHING_NAT64_GATEWAY: Packet with destination IP address within the
+        reserved NAT64 range is dropped due to no matching NAT gateway in the
+        subnet.
+      LOAD_BALANCER_BACKEND_IP_VERSION_MISMATCH: Packet is dropped due to
+        being sent to a backend of a passthrough load balancer that doesn't
+        use the same IP version as the frontend.
+      NO_KNOWN_ROUTE_FROM_NCC_NETWORK_TO_DESTINATION: Packet from the unknown
+        NCC network is dropped due to no known route from the source network
+        to the destination IP address.
     """
     CAUSE_UNSPECIFIED = 0
     UNKNOWN_EXTERNAL_ADDRESS = 1
@@ -1085,46 +1334,90 @@ class DropInfo(_messages.Message):
     ROUTE_NEXT_HOP_VPN_TUNNEL_NOT_ESTABLISHED = 12
     ROUTE_NEXT_HOP_FORWARDING_RULE_TYPE_INVALID = 13
     NO_ROUTE_FROM_INTERNET_TO_PRIVATE_IPV6_ADDRESS = 14
-    VPN_TUNNEL_LOCAL_SELECTOR_MISMATCH = 15
-    VPN_TUNNEL_REMOTE_SELECTOR_MISMATCH = 16
-    PRIVATE_TRAFFIC_TO_INTERNET = 17
-    PRIVATE_GOOGLE_ACCESS_DISALLOWED = 18
-    PRIVATE_GOOGLE_ACCESS_VIA_VPN_TUNNEL_UNSUPPORTED = 19
-    NO_EXTERNAL_ADDRESS = 20
-    UNKNOWN_INTERNAL_ADDRESS = 21
-    FORWARDING_RULE_MISMATCH = 22
-    FORWARDING_RULE_NO_INSTANCES = 23
-    FIREWALL_BLOCKING_LOAD_BALANCER_BACKEND_HEALTH_CHECK = 24
-    INSTANCE_NOT_RUNNING = 25
-    GKE_CLUSTER_NOT_RUNNING = 26
-    CLOUD_SQL_INSTANCE_NOT_RUNNING = 27
-    TRAFFIC_TYPE_BLOCKED = 28
-    GKE_MASTER_UNAUTHORIZED_ACCESS = 29
-    CLOUD_SQL_INSTANCE_UNAUTHORIZED_ACCESS = 30
-    DROPPED_INSIDE_GKE_SERVICE = 31
-    DROPPED_INSIDE_CLOUD_SQL_SERVICE = 32
-    GOOGLE_MANAGED_SERVICE_NO_PEERING = 33
-    GOOGLE_MANAGED_SERVICE_NO_PSC_ENDPOINT = 34
-    GKE_PSC_ENDPOINT_MISSING = 35
-    CLOUD_SQL_INSTANCE_NO_IP_ADDRESS = 36
-    GKE_CONTROL_PLANE_REGION_MISMATCH = 37
-    PUBLIC_GKE_CONTROL_PLANE_TO_PRIVATE_DESTINATION = 38
-    GKE_CONTROL_PLANE_NO_ROUTE = 39
-    CLOUD_SQL_INSTANCE_NOT_CONFIGURED_FOR_EXTERNAL_TRAFFIC = 40
-    PUBLIC_CLOUD_SQL_INSTANCE_TO_PRIVATE_DESTINATION = 41
-    CLOUD_SQL_INSTANCE_NO_ROUTE = 42
-    CLOUD_FUNCTION_NOT_ACTIVE = 43
-    VPC_CONNECTOR_NOT_SET = 44
-    VPC_CONNECTOR_NOT_RUNNING = 45
-    FORWARDING_RULE_REGION_MISMATCH = 46
-    PSC_CONNECTION_NOT_ACCEPTED = 47
-    PSC_ENDPOINT_ACCESSED_FROM_PEERED_NETWORK = 48
-    PSC_NEG_PRODUCER_ENDPOINT_NO_GLOBAL_ACCESS = 49
-    PSC_NEG_PRODUCER_FORWARDING_RULE_MULTIPLE_PORTS = 50
-    CLOUD_RUN_REVISION_NOT_READY = 51
-    DROPPED_INSIDE_PSC_SERVICE_PRODUCER = 52
-    LOAD_BALANCER_HAS_NO_PROXY_SUBNET = 53
-    CLOUD_NAT_NO_ADDRESSES = 54
+    NO_ROUTE_FROM_EXTERNAL_IPV6_SOURCE_TO_PRIVATE_IPV6_ADDRESS = 15
+    VPN_TUNNEL_LOCAL_SELECTOR_MISMATCH = 16
+    VPN_TUNNEL_REMOTE_SELECTOR_MISMATCH = 17
+    PRIVATE_TRAFFIC_TO_INTERNET = 18
+    PRIVATE_GOOGLE_ACCESS_DISALLOWED = 19
+    PRIVATE_GOOGLE_ACCESS_VIA_VPN_TUNNEL_UNSUPPORTED = 20
+    NO_EXTERNAL_ADDRESS = 21
+    UNKNOWN_INTERNAL_ADDRESS = 22
+    FORWARDING_RULE_MISMATCH = 23
+    FORWARDING_RULE_NO_INSTANCES = 24
+    FIREWALL_BLOCKING_LOAD_BALANCER_BACKEND_HEALTH_CHECK = 25
+    INGRESS_FIREWALL_TAGS_UNSUPPORTED_BY_DIRECT_VPC_EGRESS = 26
+    INSTANCE_NOT_RUNNING = 27
+    GKE_CLUSTER_NOT_RUNNING = 28
+    CLOUD_SQL_INSTANCE_NOT_RUNNING = 29
+    REDIS_INSTANCE_NOT_RUNNING = 30
+    REDIS_CLUSTER_NOT_RUNNING = 31
+    ALLOY_DB_INSTANCE_NOT_READY = 32
+    TRAFFIC_TYPE_BLOCKED = 33
+    GKE_MASTER_UNAUTHORIZED_ACCESS = 34
+    CLOUD_SQL_INSTANCE_UNAUTHORIZED_ACCESS = 35
+    ALLOY_DB_INSTANCE_UNAUTHORIZED_ACCESS = 36
+    DROPPED_INSIDE_GKE_SERVICE = 37
+    DROPPED_INSIDE_CLOUD_SQL_SERVICE = 38
+    DROPPED_INSIDE_ALLOY_DB_SERVICE = 39
+    GOOGLE_MANAGED_SERVICE_NO_PEERING = 40
+    GOOGLE_MANAGED_SERVICE_NO_PSC_ENDPOINT = 41
+    GKE_PSC_ENDPOINT_MISSING = 42
+    CLOUD_SQL_INSTANCE_NO_IP_ADDRESS = 43
+    GKE_CONTROL_PLANE_REGION_MISMATCH = 44
+    PUBLIC_GKE_CONTROL_PLANE_TO_PRIVATE_DESTINATION = 45
+    GKE_CONTROL_PLANE_NO_ROUTE = 46
+    CLOUD_SQL_INSTANCE_NOT_CONFIGURED_FOR_EXTERNAL_TRAFFIC = 47
+    ALLOY_DB_INSTANCE_NOT_CONFIGURED_FOR_EXTERNAL_TRAFFIC = 48
+    PUBLIC_CLOUD_SQL_INSTANCE_TO_PRIVATE_DESTINATION = 49
+    CLOUD_SQL_INSTANCE_NO_ROUTE = 50
+    ALLOY_DB_INSTANCE_NO_ROUTE = 51
+    CLOUD_SQL_CONNECTOR_REQUIRED = 52
+    ALLOY_DB_AUTH_PROXY_REQUIRED = 53
+    CLOUD_FUNCTION_NOT_ACTIVE = 54
+    VPC_CONNECTOR_NOT_SET = 55
+    VPC_CONNECTOR_NOT_RUNNING = 56
+    VPC_CONNECTOR_SERVERLESS_TRAFFIC_BLOCKED = 57
+    VPC_CONNECTOR_HEALTH_CHECK_TRAFFIC_BLOCKED = 58
+    FORWARDING_RULE_REGION_MISMATCH = 59
+    PSC_CONNECTION_NOT_ACCEPTED = 60
+    PSC_ENDPOINT_ACCESSED_FROM_PEERED_NETWORK = 61
+    PSC_NEG_PRODUCER_ENDPOINT_NO_GLOBAL_ACCESS = 62
+    PSC_NEG_PRODUCER_FORWARDING_RULE_MULTIPLE_PORTS = 63
+    CLOUD_SQL_PSC_NEG_UNSUPPORTED = 64
+    NO_NAT_SUBNETS_FOR_PSC_SERVICE_ATTACHMENT = 65
+    PSC_TRANSITIVITY_NOT_PROPAGATED = 66
+    HYBRID_NEG_NON_DYNAMIC_ROUTE_MATCHED = 67
+    HYBRID_NEG_NON_LOCAL_DYNAMIC_ROUTE_MATCHED = 68
+    CLOUD_RUN_REVISION_NOT_READY = 69
+    DROPPED_INSIDE_PSC_SERVICE_PRODUCER = 70
+    LOAD_BALANCER_HAS_NO_PROXY_SUBNET = 71
+    CLOUD_NAT_NO_ADDRESSES = 72
+    ROUTING_LOOP = 73
+    DROPPED_INSIDE_GOOGLE_MANAGED_SERVICE = 74
+    LOAD_BALANCER_BACKEND_INVALID_NETWORK = 75
+    BACKEND_SERVICE_NAMED_PORT_NOT_DEFINED = 76
+    DESTINATION_IS_PRIVATE_NAT_IP_RANGE = 77
+    DROPPED_INSIDE_REDIS_INSTANCE_SERVICE = 78
+    REDIS_INSTANCE_UNSUPPORTED_PORT = 79
+    REDIS_INSTANCE_CONNECTING_FROM_PUPI_ADDRESS = 80
+    REDIS_INSTANCE_NO_ROUTE_TO_DESTINATION_NETWORK = 81
+    REDIS_INSTANCE_NO_EXTERNAL_IP = 82
+    REDIS_INSTANCE_UNSUPPORTED_PROTOCOL = 83
+    DROPPED_INSIDE_REDIS_CLUSTER_SERVICE = 84
+    REDIS_CLUSTER_UNSUPPORTED_PORT = 85
+    REDIS_CLUSTER_NO_EXTERNAL_IP = 86
+    REDIS_CLUSTER_UNSUPPORTED_PROTOCOL = 87
+    NO_ADVERTISED_ROUTE_TO_GCP_DESTINATION = 88
+    NO_TRAFFIC_SELECTOR_TO_GCP_DESTINATION = 89
+    NO_KNOWN_ROUTE_FROM_PEERED_NETWORK_TO_DESTINATION = 90
+    PRIVATE_NAT_TO_PSC_ENDPOINT_UNSUPPORTED = 91
+    PSC_PORT_MAPPING_PORT_MISMATCH = 92
+    PSC_PORT_MAPPING_WITHOUT_PSC_CONNECTION_UNSUPPORTED = 93
+    UNSUPPORTED_ROUTE_MATCHED_FOR_NAT64_DESTINATION = 94
+    TRAFFIC_FROM_HYBRID_ENDPOINT_TO_INTERNET_DISALLOWED = 95
+    NO_MATCHING_NAT64_GATEWAY = 96
+    LOAD_BALANCER_BACKEND_IP_VERSION_MISMATCH = 97
+    NO_KNOWN_ROUTE_FROM_NCC_NETWORK_TO_DESTINATION = 98
 
   cause = _messages.EnumField('CauseValueValuesEnum', 1)
   destinationIp = _messages.StringField(2)
@@ -1155,26 +1448,35 @@ class Endpoint(_messages.Message):
       can be inferred from the source.
 
   Fields:
+    alloyDbInstance: An [AlloyDB Instance](https://cloud.google.com/alloydb)
+      URI.
     appEngineVersion: An [App Engine](https://cloud.google.com/appengine)
       [service version](https://cloud.google.com/appengine/docs/admin-
-      api/reference/rest/v1/apps.services.versions).
+      api/reference/rest/v1/apps.services.versions). Applicable only to source
+      endpoint.
     cloudFunction: A [Cloud Function](https://cloud.google.com/functions).
+      Applicable only to source endpoint.
     cloudRunRevision: A [Cloud Run](https://cloud.google.com/run) [revision](h
       ttps://cloud.google.com/run/docs/reference/rest/v1/namespaces.revisions/
-      get)
+      get) Applicable only to source endpoint.
     cloudSqlInstance: A [Cloud SQL](https://cloud.google.com/sql) instance
       URI.
     forwardingRule: A forwarding rule and its corresponding IP address
       represent the frontend configuration of a Google Cloud load balancer.
       Forwarding rules are also used for protocol forwarding, Private Service
       Connect and other network services to provide forwarding information in
-      the control plane. Format:
+      the control plane. Applicable only to destination endpoint. Format:
       projects/{project}/global/forwardingRules/{id} or
       projects/{project}/regions/{region}/forwardingRules/{id}
     forwardingRuleTarget: Output only. Specifies the type of the target of the
       forwarding rule.
-    gkeMasterCluster: A cluster URI for [Google Kubernetes Engine
-      master](https://cloud.google.com/kubernetes-
+    fqdn: DNS endpoint of [Google Kubernetes Engine cluster control
+      plane](https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-
+      architecture). Requires gke_master_cluster to be set, can't be used
+      simultaneoulsly with ip_address or network. Applicable only to
+      destination endpoint.
+    gkeMasterCluster: A cluster URI for [Google Kubernetes Engine cluster
+      control plane](https://cloud.google.com/kubernetes-
       engine/docs/concepts/cluster-architecture).
     instance: A Compute Engine instance URI.
     ipAddress: The IP address of the endpoint, which can be an external or
@@ -1183,19 +1485,25 @@ class Endpoint(_messages.Message):
       points to. Empty for forwarding rules not related to load balancers.
     loadBalancerType: Output only. Type of the load balancer the forwarding
       rule points to.
-    network: A Compute Engine network URI.
+    network: A VPC network URI.
     networkType: Type of the network where the endpoint is located. Applicable
       only to source endpoint, as destination network type can be inferred
       from the source.
     port: The IP protocol port of the endpoint. Only applicable when protocol
       is TCP or UDP.
-    projectId: Project ID where the endpoint is located. The Project ID can be
-      derived from the URI if you provide a VM instance or network URI. The
-      following are two cases where you must provide the project ID: 1. Only
-      the IP address is specified, and the IP address is within a Google Cloud
-      project. 2. When you are using Shared VPC and the IP address that you
-      provide is from the service project. In this case, the network that the
-      IP address resides in is defined in the host project.
+    projectId: Project ID where the endpoint is located. The project ID can be
+      derived from the URI if you provide a endpoint or network URI. The
+      following are two cases where you may need to provide the project ID: 1.
+      Only the IP address is specified, and the IP address is within a Google
+      Cloud project. 2. When you are using Shared VPC and the IP address that
+      you provide is from the service project. In this case, the network that
+      the IP address resides in is defined in the host project.
+    redisCluster: A [Redis
+      Cluster](https://cloud.google.com/memorystore/docs/cluster) URI.
+      Applicable only to destination endpoint.
+    redisInstance: A [Redis
+      Instance](https://cloud.google.com/memorystore/docs/redis) URI.
+      Applicable only to destination endpoint.
   """
 
   class ForwardingRuleTargetValueValuesEnum(_messages.Enum):
@@ -1257,27 +1565,32 @@ class Endpoint(_messages.Message):
         detailed output, specify the URI for the source or destination
         network.
       NON_GCP_NETWORK: A network hosted outside of Google Cloud. This can be
-        an on-premises network, or a network hosted by another cloud provider.
+        an on-premises network, an internet resource or a network hosted by
+        another cloud provider.
     """
     NETWORK_TYPE_UNSPECIFIED = 0
     GCP_NETWORK = 1
     NON_GCP_NETWORK = 2
 
-  appEngineVersion = _messages.MessageField('AppEngineVersionEndpoint', 1)
-  cloudFunction = _messages.MessageField('CloudFunctionEndpoint', 2)
-  cloudRunRevision = _messages.MessageField('CloudRunRevisionEndpoint', 3)
-  cloudSqlInstance = _messages.StringField(4)
-  forwardingRule = _messages.StringField(5)
-  forwardingRuleTarget = _messages.EnumField('ForwardingRuleTargetValueValuesEnum', 6)
-  gkeMasterCluster = _messages.StringField(7)
-  instance = _messages.StringField(8)
-  ipAddress = _messages.StringField(9)
-  loadBalancerId = _messages.StringField(10)
-  loadBalancerType = _messages.EnumField('LoadBalancerTypeValueValuesEnum', 11)
-  network = _messages.StringField(12)
-  networkType = _messages.EnumField('NetworkTypeValueValuesEnum', 13)
-  port = _messages.IntegerField(14, variant=_messages.Variant.INT32)
-  projectId = _messages.StringField(15)
+  alloyDbInstance = _messages.StringField(1)
+  appEngineVersion = _messages.MessageField('AppEngineVersionEndpoint', 2)
+  cloudFunction = _messages.MessageField('CloudFunctionEndpoint', 3)
+  cloudRunRevision = _messages.MessageField('CloudRunRevisionEndpoint', 4)
+  cloudSqlInstance = _messages.StringField(5)
+  forwardingRule = _messages.StringField(6)
+  forwardingRuleTarget = _messages.EnumField('ForwardingRuleTargetValueValuesEnum', 7)
+  fqdn = _messages.StringField(8)
+  gkeMasterCluster = _messages.StringField(9)
+  instance = _messages.StringField(10)
+  ipAddress = _messages.StringField(11)
+  loadBalancerId = _messages.StringField(12)
+  loadBalancerType = _messages.EnumField('LoadBalancerTypeValueValuesEnum', 13)
+  network = _messages.StringField(14)
+  networkType = _messages.EnumField('NetworkTypeValueValuesEnum', 15)
+  port = _messages.IntegerField(16, variant=_messages.Variant.INT32)
+  projectId = _messages.StringField(17)
+  redisCluster = _messages.StringField(18)
+  redisInstance = _messages.StringField(19)
 
 
 class EndpointInfo(_messages.Message):
@@ -1345,7 +1658,7 @@ class Expr(_messages.Message):
 
 class FirewallInfo(_messages.Message):
   r"""For display only. Metadata associated with a VPC firewall rule, an
-  implied VPC firewall rule, or a hierarchical firewall policy rule.
+  implied VPC firewall rule, or a firewall policy rule.
 
   Enums:
     FirewallRuleTypeValueValuesEnum: The firewall rule's type.
@@ -1353,21 +1666,25 @@ class FirewallInfo(_messages.Message):
   Fields:
     action: Possible values: ALLOW, DENY, APPLY_SECURITY_PROFILE_GROUP
     direction: Possible values: INGRESS, EGRESS
-    displayName: The display name of the VPC firewall rule. This field is not
-      applicable to hierarchical firewall policy rules.
+    displayName: The display name of the firewall rule. This field might be
+      empty for firewall policy rules.
     firewallRuleType: The firewall rule's type.
     networkUri: The URI of the VPC network that the firewall rule is
       associated with. This field is not applicable to hierarchical firewall
       policy rules.
-    policy: The hierarchical firewall policy that this rule is associated
-      with. This field is not applicable to VPC firewall rules.
+    policy: The name of the firewall policy that this rule is associated with.
+      This field is not applicable to VPC firewall rules and implied VPC
+      firewall rules.
+    policyUri: The URI of the firewall policy that this rule is associated
+      with. This field is not applicable to VPC firewall rules and implied VPC
+      firewall rules.
     priority: The priority of the firewall rule.
     targetServiceAccounts: The target service accounts specified by the
       firewall rule.
     targetTags: The target tags defined by the VPC firewall rule. This field
-      is not applicable to hierarchical firewall policy rules.
-    uri: The URI of the VPC firewall rule. This field is not applicable to
-      implied firewall rules or hierarchical firewall policy rules.
+      is not applicable to firewall policy rules.
+    uri: The URI of the firewall rule. This field is not applicable to implied
+      VPC firewall rules.
   """
 
   class FirewallRuleTypeValueValuesEnum(_messages.Enum):
@@ -1407,6 +1724,8 @@ class FirewallInfo(_messages.Message):
         traffic goes through allow firewall rule. For details, see [firewall
         rules specifications](https://cloud.google.com/firewall/docs/firewalls
         #specifications)
+      ANALYSIS_SKIPPED: Firewall analysis was skipped due to executing
+        Connectivity Test in the BypassFirewallChecks mode
     """
     FIREWALL_RULE_TYPE_UNSPECIFIED = 0
     HIERARCHICAL_FIREWALL_POLICY_RULE = 1
@@ -1417,6 +1736,7 @@ class FirewallInfo(_messages.Message):
     NETWORK_REGIONAL_FIREWALL_POLICY_RULE = 6
     UNSUPPORTED_FIREWALL_POLICY_RULE = 7
     TRACKING_STATE = 8
+    ANALYSIS_SKIPPED = 9
 
   action = _messages.StringField(1)
   direction = _messages.StringField(2)
@@ -1424,10 +1744,11 @@ class FirewallInfo(_messages.Message):
   firewallRuleType = _messages.EnumField('FirewallRuleTypeValueValuesEnum', 4)
   networkUri = _messages.StringField(5)
   policy = _messages.StringField(6)
-  priority = _messages.IntegerField(7, variant=_messages.Variant.INT32)
-  targetServiceAccounts = _messages.StringField(8, repeated=True)
-  targetTags = _messages.StringField(9, repeated=True)
-  uri = _messages.StringField(10)
+  policyUri = _messages.StringField(7)
+  priority = _messages.IntegerField(8, variant=_messages.Variant.INT32)
+  targetServiceAccounts = _messages.StringField(9, repeated=True)
+  targetTags = _messages.StringField(10, repeated=True)
+  uri = _messages.StringField(11)
 
 
 class ForwardInfo(_messages.Message):
@@ -1437,6 +1758,7 @@ class ForwardInfo(_messages.Message):
     TargetValueValuesEnum: Target type where this packet is forwarded to.
 
   Fields:
+    ipAddress: IP address of the target (if applicable).
     resourceUri: URI of the resource that the packet is forwarded to.
     target: Target type where this packet is forwarded to.
   """
@@ -1469,8 +1791,9 @@ class ForwardInfo(_messages.Message):
     NCC_HUB = 8
     ROUTER_APPLIANCE = 9
 
-  resourceUri = _messages.StringField(1)
-  target = _messages.EnumField('TargetValueValuesEnum', 2)
+  ipAddress = _messages.StringField(1)
+  resourceUri = _messages.StringField(2)
+  target = _messages.EnumField('TargetValueValuesEnum', 3)
 
 
 class ForwardingRuleInfo(_messages.Message):
@@ -1478,24 +1801,37 @@ class ForwardingRuleInfo(_messages.Message):
   rule.
 
   Fields:
-    displayName: Name of a Compute Engine forwarding rule.
+    displayName: Name of the forwarding rule.
+    loadBalancerName: Name of the load balancer the forwarding rule belongs
+      to. Empty for forwarding rules not related to load balancers (like PSC
+      forwarding rules).
     matchedPortRange: Port range defined in the forwarding rule that matches
-      the test.
+      the packet.
     matchedProtocol: Protocol defined in the forwarding rule that matches the
-      test.
-    networkUri: Network URI. Only valid for Internal Load Balancer.
+      packet.
+    networkUri: Network URI.
+    pscGoogleApiTarget: PSC Google API target this forwarding rule targets (if
+      applicable).
+    pscServiceAttachmentUri: URI of the PSC service attachment this forwarding
+      rule targets (if applicable).
+    region: Region of the forwarding rule. Set only for regional forwarding
+      rules.
     target: Target type of the forwarding rule.
-    uri: URI of a Compute Engine forwarding rule.
+    uri: URI of the forwarding rule.
     vip: VIP of the forwarding rule.
   """
 
   displayName = _messages.StringField(1)
-  matchedPortRange = _messages.StringField(2)
-  matchedProtocol = _messages.StringField(3)
-  networkUri = _messages.StringField(4)
-  target = _messages.StringField(5)
-  uri = _messages.StringField(6)
-  vip = _messages.StringField(7)
+  loadBalancerName = _messages.StringField(2)
+  matchedPortRange = _messages.StringField(3)
+  matchedProtocol = _messages.StringField(4)
+  networkUri = _messages.StringField(5)
+  pscGoogleApiTarget = _messages.StringField(6)
+  pscServiceAttachmentUri = _messages.StringField(7)
+  region = _messages.StringField(8)
+  target = _messages.StringField(9)
+  uri = _messages.StringField(10)
+  vip = _messages.StringField(11)
 
 
 class GKEMasterInfo(_messages.Message):
@@ -1505,14 +1841,16 @@ class GKEMasterInfo(_messages.Message):
   Fields:
     clusterNetworkUri: URI of a GKE cluster network.
     clusterUri: URI of a GKE cluster.
-    externalIp: External IP address of a GKE cluster master.
-    internalIp: Internal IP address of a GKE cluster master.
+    dnsEndpoint: DNS endpoint of a GKE cluster control plane.
+    externalIp: External IP address of a GKE cluster control plane.
+    internalIp: Internal IP address of a GKE cluster control plane.
   """
 
   clusterNetworkUri = _messages.StringField(1)
   clusterUri = _messages.StringField(2)
-  externalIp = _messages.StringField(3)
-  internalIp = _messages.StringField(4)
+  dnsEndpoint = _messages.StringField(3)
+  externalIp = _messages.StringField(4)
+  internalIp = _messages.StringField(5)
 
 
 class GoogleServiceInfo(_messages.Message):
@@ -1551,6 +1889,8 @@ class GoogleServiceInfo(_messages.Message):
       GOOGLE_API_VPC_SC: Google API via VPC Service Controls.
         https://cloud.google.com/vpc/docs/configure-private-service-connect-
         apis
+      SERVERLESS_VPC_ACCESS: Google API via Serverless VPC Access.
+        https://cloud.google.com/vpc/docs/serverless-vpc-access
     """
     GOOGLE_SERVICE_TYPE_UNSPECIFIED = 0
     IAP = 1
@@ -1559,6 +1899,7 @@ class GoogleServiceInfo(_messages.Message):
     GOOGLE_API = 4
     GOOGLE_API_PSC = 5
     GOOGLE_API_VPC_SC = 6
+    SERVERLESS_VPC_ACCESS = 7
 
   googleServiceType = _messages.EnumField('GoogleServiceTypeValueValuesEnum', 1)
   sourceIp = _messages.StringField(2)
@@ -1574,6 +1915,9 @@ class InstanceInfo(_messages.Message):
     internalIp: Internal IP address of the network interface.
     networkTags: Network tags configured on the instance.
     networkUri: URI of a Compute Engine network.
+    pscNetworkAttachmentUri: URI of the PSC network attachment the NIC is
+      attached to (if relevant).
+    running: Indicates whether the Compute Engine instance is running.
     serviceAccount: Service account authorized for the instance.
     uri: URI of a Compute Engine instance.
   """
@@ -1584,8 +1928,10 @@ class InstanceInfo(_messages.Message):
   internalIp = _messages.StringField(4)
   networkTags = _messages.StringField(5, repeated=True)
   networkUri = _messages.StringField(6)
-  serviceAccount = _messages.StringField(7)
-  uri = _messages.StringField(8)
+  pscNetworkAttachmentUri = _messages.StringField(7)
+  running = _messages.BooleanField(8)
+  serviceAccount = _messages.StringField(9)
+  uri = _messages.StringField(10)
 
 
 class ListAppliancesResponse(_messages.Message):
@@ -2000,16 +2346,24 @@ class NatInfo(_messages.Message):
 
 class NetworkInfo(_messages.Message):
   r"""For display only. Metadata associated with a Compute Engine network.
+  Next ID: 7
 
   Fields:
     displayName: Name of a Compute Engine network.
-    matchedIpRange: The IP range that matches the test.
+    matchedIpRange: The IP range of the subnet matching the source IP address
+      of the test.
+    matchedSubnetUri: URI of the subnet matching the source IP address of the
+      test.
+    region: The region of the subnet matching the source IP address of the
+      test.
     uri: URI of a Compute Engine network.
   """
 
   displayName = _messages.StringField(1)
   matchedIpRange = _messages.StringField(2)
-  uri = _messages.StringField(3)
+  matchedSubnetUri = _messages.StringField(3)
+  region = _messages.StringField(4)
+  uri = _messages.StringField(5)
 
 
 class NetworkmanagementProjectsLocationsAppliancesGetRequest(_messages.Message):
@@ -2128,6 +2482,8 @@ class NetworkmanagementProjectsLocationsListRequest(_messages.Message):
   r"""A NetworkmanagementProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -2140,11 +2496,12 @@ class NetworkmanagementProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  includeUnrevealedLocations = _messages.BooleanField(2)
-  name = _messages.StringField(3, required=True)
-  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(5)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  includeUnrevealedLocations = _messages.BooleanField(3)
+  name = _messages.StringField(4, required=True)
+  pageSize = _messages.IntegerField(5, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(6)
 
 
 class NetworkmanagementProjectsLocationsOperationsCancelRequest(_messages.Message):
@@ -2727,35 +3084,108 @@ class ReachabilityDetails(_messages.Message):
   verifyTime = _messages.StringField(4)
 
 
+class RedisClusterInfo(_messages.Message):
+  r"""For display only. Metadata associated with a Redis Cluster.
+
+  Fields:
+    discoveryEndpointIpAddress: Discovery endpoint IP address of a Redis
+      Cluster.
+    displayName: Name of a Redis Cluster.
+    location: Name of the region in which the Redis Cluster is defined. For
+      example, "us-central1".
+    networkUri: URI of the network containing the Redis Cluster endpoints in
+      format "projects/{project_id}/global/networks/{network_id}".
+    secondaryEndpointIpAddress: Secondary endpoint IP address of a Redis
+      Cluster.
+    uri: URI of a Redis Cluster in format
+      "projects/{project_id}/locations/{location}/clusters/{cluster_id}"
+  """
+
+  discoveryEndpointIpAddress = _messages.StringField(1)
+  displayName = _messages.StringField(2)
+  location = _messages.StringField(3)
+  networkUri = _messages.StringField(4)
+  secondaryEndpointIpAddress = _messages.StringField(5)
+  uri = _messages.StringField(6)
+
+
+class RedisInstanceInfo(_messages.Message):
+  r"""For display only. Metadata associated with a Cloud Redis Instance.
+
+  Fields:
+    displayName: Name of a Cloud Redis Instance.
+    networkUri: URI of a Cloud Redis Instance network.
+    primaryEndpointIp: Primary endpoint IP address of a Cloud Redis Instance.
+    readEndpointIp: Read endpoint IP address of a Cloud Redis Instance (if
+      applicable).
+    region: Region in which the Cloud Redis Instance is defined.
+    uri: URI of a Cloud Redis Instance.
+  """
+
+  displayName = _messages.StringField(1)
+  networkUri = _messages.StringField(2)
+  primaryEndpointIp = _messages.StringField(3)
+  readEndpointIp = _messages.StringField(4)
+  region = _messages.StringField(5)
+  uri = _messages.StringField(6)
+
+
 class RouteInfo(_messages.Message):
   r"""For display only. Metadata associated with a Compute Engine route.
 
   Enums:
     NextHopTypeValueValuesEnum: Type of next hop.
     RouteScopeValueValuesEnum: Indicates where route is applicable.
+      Deprecated, routes with NCC_HUB scope are not included in the trace in
+      new tests.
     RouteTypeValueValuesEnum: Type of route.
 
   Fields:
+    advertisedRouteNextHopUri: For ADVERTISED routes, the URI of their next
+      hop, i.e. the URI of the hybrid endpoint (VPN tunnel, Interconnect
+      attachment, NCC router appliance) the advertised prefix is advertised
+      through, or URI of the source peered network. Deprecated in favor of the
+      next_hop_uri field, not used in new tests.
+    advertisedRouteSourceRouterUri: For ADVERTISED dynamic routes, the URI of
+      the Cloud Router that advertised the corresponding IP prefix.
     destIpRange: Destination IP range of the route.
-    destPortRanges: Destination port ranges of the route. Policy based routes
+    destPortRanges: Destination port ranges of the route. POLICY_BASED routes
       only.
     displayName: Name of a route.
     instanceTags: Instance tags of the route.
-    nccHubUri: URI of a NCC Hub. NCC_HUB routes only.
-    nccSpokeUri: URI of a NCC Spoke. NCC_HUB routes only.
-    networkUri: URI of a Compute Engine network. NETWORK routes only.
-    nextHop: Next hop of the route.
+    nccHubRouteUri: For PEERING_SUBNET and PEERING_DYNAMIC routes that are
+      advertised by NCC Hub, the URI of the corresponding route in NCC Hub's
+      routing table.
+    nccHubUri: URI of the NCC Hub the route is advertised by. PEERING_SUBNET
+      and PEERING_DYNAMIC routes that are advertised by NCC Hub only.
+    nccSpokeUri: URI of the destination NCC Spoke. PEERING_SUBNET and
+      PEERING_DYNAMIC routes that are advertised by NCC Hub only.
+    networkUri: URI of a VPC network where route is located.
+    nextHop: String type of the next hop of the route (for example, "VPN
+      tunnel"). Deprecated in favor of the next_hop_type and next_hop_uri
+      fields, not used in new tests.
+    nextHopNetworkUri: URI of a VPC network where the next hop resource is
+      located.
     nextHopType: Type of next hop.
+    nextHopUri: URI of the next hop resource.
+    originatingRouteDisplayName: For PEERING_SUBNET, PEERING_STATIC and
+      PEERING_DYNAMIC routes, the name of the originating
+      SUBNET/STATIC/DYNAMIC route.
+    originatingRouteUri: For PEERING_SUBNET and PEERING_STATIC routes, the URI
+      of the originating SUBNET/STATIC route.
     priority: Priority of the route.
-    protocols: Protocols of the route. Policy based routes only.
-    routeScope: Indicates where route is applicable.
+    protocols: Protocols of the route. POLICY_BASED routes only.
+    region: Region of the route. DYNAMIC, PEERING_DYNAMIC, POLICY_BASED and
+      ADVERTISED routes only. If set for POLICY_BASED route, this is a region
+      of VLAN attachments for Cloud Interconnect the route applies to.
+    routeScope: Indicates where route is applicable. Deprecated, routes with
+      NCC_HUB scope are not included in the trace in new tests.
     routeType: Type of route.
-    srcIpRange: Source IP address range of the route. Policy based routes
+    srcIpRange: Source IP address range of the route. POLICY_BASED routes
       only.
-    srcPortRanges: Source port ranges of the route. Policy based routes only.
-    uri: URI of a route. Dynamic, peering static and peering dynamic routes do
-      not have an URI. Advertised route from Google Cloud VPC to on-premises
-      network also does not have an URI.
+    srcPortRanges: Source port ranges of the route. POLICY_BASED routes only.
+    uri: URI of a route. SUBNET, STATIC, PEERING_SUBNET (only for peering
+      network) and POLICY_BASED routes only.
   """
 
   class NextHopTypeValueValuesEnum(_messages.Enum):
@@ -2766,7 +3196,9 @@ class RouteInfo(_messages.Message):
       NEXT_HOP_IP: Next hop is an IP address.
       NEXT_HOP_INSTANCE: Next hop is a Compute Engine instance.
       NEXT_HOP_NETWORK: Next hop is a VPC network gateway.
-      NEXT_HOP_PEERING: Next hop is a peering VPC.
+      NEXT_HOP_PEERING: Next hop is a peering VPC. This scenario only happens
+        when the user doesn't have permissions to the project where the next
+        hop resource is located.
       NEXT_HOP_INTERCONNECT: Next hop is an interconnect.
       NEXT_HOP_VPN_TUNNEL: Next hop is a VPN tunnel.
       NEXT_HOP_VPN_GATEWAY: Next hop is a VPN gateway. This scenario only
@@ -2776,13 +3208,15 @@ class RouteInfo(_messages.Message):
         Cloud VPN gateway.
       NEXT_HOP_INTERNET_GATEWAY: Next hop is an internet gateway.
       NEXT_HOP_BLACKHOLE: Next hop is blackhole; that is, the next hop either
-        does not exist or is not running.
+        does not exist or is unusable.
       NEXT_HOP_ILB: Next hop is the forwarding rule of an Internal Load
         Balancer.
       NEXT_HOP_ROUTER_APPLIANCE: Next hop is a [router appliance
         instance](https://cloud.google.com/network-connectivity/docs/network-
         connectivity-center/concepts/ra-overview).
-      NEXT_HOP_NCC_HUB: Next hop is an NCC hub.
+      NEXT_HOP_NCC_HUB: Next hop is an NCC hub. This scenario only happens
+        when the user doesn't have permissions to the project where the next
+        hop resource is located.
     """
     NEXT_HOP_TYPE_UNSPECIFIED = 0
     NEXT_HOP_IP = 1
@@ -2799,7 +3233,8 @@ class RouteInfo(_messages.Message):
     NEXT_HOP_NCC_HUB = 12
 
   class RouteScopeValueValuesEnum(_messages.Enum):
-    r"""Indicates where route is applicable.
+    r"""Indicates where route is applicable. Deprecated, routes with NCC_HUB
+    scope are not included in the trace in new tests.
 
     Values:
       ROUTE_SCOPE_UNSPECIFIED: Unspecified scope. Default value.
@@ -2819,10 +3254,14 @@ class RouteInfo(_messages.Message):
       STATIC: Static route created by the user, including the default route to
         the internet.
       DYNAMIC: Dynamic route exchanged between BGP peers.
-      PEERING_SUBNET: A subnet route received from peering network.
+      PEERING_SUBNET: A subnet route received from peering network or NCC Hub.
       PEERING_STATIC: A static route received from peering network.
-      PEERING_DYNAMIC: A dynamic route received from peering network.
+      PEERING_DYNAMIC: A dynamic route received from peering network or NCC
+        Hub.
       POLICY_BASED: Policy based route.
+      ADVERTISED: Advertised route. Synthetic route which is used to
+        transition from the StartFromPrivateNetwork state in Connectivity
+        tests.
     """
     ROUTE_TYPE_UNSPECIFIED = 0
     SUBNET = 1
@@ -2832,23 +3271,32 @@ class RouteInfo(_messages.Message):
     PEERING_STATIC = 5
     PEERING_DYNAMIC = 6
     POLICY_BASED = 7
+    ADVERTISED = 8
 
-  destIpRange = _messages.StringField(1)
-  destPortRanges = _messages.StringField(2, repeated=True)
-  displayName = _messages.StringField(3)
-  instanceTags = _messages.StringField(4, repeated=True)
-  nccHubUri = _messages.StringField(5)
-  nccSpokeUri = _messages.StringField(6)
-  networkUri = _messages.StringField(7)
-  nextHop = _messages.StringField(8)
-  nextHopType = _messages.EnumField('NextHopTypeValueValuesEnum', 9)
-  priority = _messages.IntegerField(10, variant=_messages.Variant.INT32)
-  protocols = _messages.StringField(11, repeated=True)
-  routeScope = _messages.EnumField('RouteScopeValueValuesEnum', 12)
-  routeType = _messages.EnumField('RouteTypeValueValuesEnum', 13)
-  srcIpRange = _messages.StringField(14)
-  srcPortRanges = _messages.StringField(15, repeated=True)
-  uri = _messages.StringField(16)
+  advertisedRouteNextHopUri = _messages.StringField(1)
+  advertisedRouteSourceRouterUri = _messages.StringField(2)
+  destIpRange = _messages.StringField(3)
+  destPortRanges = _messages.StringField(4, repeated=True)
+  displayName = _messages.StringField(5)
+  instanceTags = _messages.StringField(6, repeated=True)
+  nccHubRouteUri = _messages.StringField(7)
+  nccHubUri = _messages.StringField(8)
+  nccSpokeUri = _messages.StringField(9)
+  networkUri = _messages.StringField(10)
+  nextHop = _messages.StringField(11)
+  nextHopNetworkUri = _messages.StringField(12)
+  nextHopType = _messages.EnumField('NextHopTypeValueValuesEnum', 13)
+  nextHopUri = _messages.StringField(14)
+  originatingRouteDisplayName = _messages.StringField(15)
+  originatingRouteUri = _messages.StringField(16)
+  priority = _messages.IntegerField(17, variant=_messages.Variant.INT32)
+  protocols = _messages.StringField(18, repeated=True)
+  region = _messages.StringField(19)
+  routeScope = _messages.EnumField('RouteScopeValueValuesEnum', 20)
+  routeType = _messages.EnumField('RouteTypeValueValuesEnum', 21)
+  srcIpRange = _messages.StringField(22)
+  srcPortRanges = _messages.StringField(23, repeated=True)
+  uri = _messages.StringField(24)
 
 
 class Rule(_messages.Message):
@@ -2870,7 +3318,7 @@ class Rule(_messages.Message):
       the PRINCIPAL/AUTHORITY_SELECTOR is in none of the entries. The format
       for in and not_in entries can be found at in the Local IAM documentation
       (see go/local-iam#features).
-    permissions: A permission is a string of form '..' (e.g.,
+    permissions: A permission is a string of form `..` (e.g.,
       'storage.buckets.list'). A value of '*' matches all permissions, and a
       verb part of '*' (e.g., 'storage.buckets.*') matches all verbs.
   """
@@ -2902,6 +3350,29 @@ class Rule(_messages.Message):
   logConfig = _messages.MessageField('LogConfig', 5, repeated=True)
   notIn = _messages.StringField(6, repeated=True)
   permissions = _messages.StringField(7, repeated=True)
+
+
+class ServerlessExternalConnectionInfo(_messages.Message):
+  r"""For display only. Metadata associated with a serverless public
+  connection.
+
+  Fields:
+    selectedIpAddress: Selected starting IP address, from the Google dynamic
+      address pool.
+  """
+
+  selectedIpAddress = _messages.StringField(1)
+
+
+class ServerlessNegInfo(_messages.Message):
+  r"""For display only. Metadata associated with the serverless network
+  endpoint group backend.
+
+  Fields:
+    negUri: URI of the serverless network endpoint group.
+  """
+
+  negUri = _messages.StringField(1)
 
 
 class SetIamPolicyRequest(_messages.Message):
@@ -3196,6 +3667,7 @@ class Step(_messages.Message):
 
   Fields:
     abort: Display information of the final state "abort" and reason.
+    alloyDbInstance: Display information of an AlloyDB instance.
     appEngineVersion: Display information of an App Engine service version.
     causesDrop: This is a step that leads to the final state Drop.
     cloudFunction: Display information of a Cloud Function.
@@ -3204,6 +3676,8 @@ class Step(_messages.Message):
     deliver: Display information of the final state "deliver" and reason.
     description: A description of the step. Usually this is a summary of the
       state.
+    directVpcEgressConnection: Display information of a serverless direct VPC
+      egress connection.
     drop: Display information of the final state "drop" and reason.
     endpoint: Display information of the source and destination under
       analysis. The endpoint information in an intermediate state may differ
@@ -3225,7 +3699,13 @@ class Step(_messages.Message):
     projectId: Project ID that contains the configuration this step is
       validating.
     proxyConnection: Display information of a ProxyConnection.
+    redisCluster: Display information of a Redis Cluster.
+    redisInstance: Display information of a Redis Instance.
     route: Display information of a Compute Engine route.
+    serverlessExternalConnection: Display information of a serverless public
+      (external) connection.
+    serverlessNeg: Display information of a Serverless network endpoint group
+      backend. Used only for return traces.
     state: Each step is in one of the pre-defined states.
     storageBucket: Display information of a Storage Bucket. Used only for
       return traces.
@@ -3256,6 +3736,15 @@ class Step(_messages.Message):
       START_FROM_CLOUD_SQL_INSTANCE: Initial state: packet originating from a
         Cloud SQL instance. A CloudSQLInstanceInfo is populated with starting
         instance information.
+      START_FROM_REDIS_INSTANCE: Initial state: packet originating from a
+        Redis instance. A RedisInstanceInfo is populated with starting
+        instance information.
+      START_FROM_REDIS_CLUSTER: Initial state: packet originating from a Redis
+        Cluster. A RedisClusterInfo is populated with starting Cluster
+        information.
+      START_FROM_ALLOY_DB_INSTANCE: Initial state: packet originating from a
+        AlloyDB instance. An AlloyDbInstanceInfo is populated with starting
+        instance information.
       START_FROM_CLOUD_FUNCTION: Initial state: packet originating from a
         Cloud Function. A CloudFunctionInfo is populated with starting
         function information.
@@ -3271,6 +3760,9 @@ class Step(_messages.Message):
       START_FROM_PSC_PUBLISHED_SERVICE: Initial state: packet originating from
         a published service that uses Private Service Connect. Used only for
         return traces.
+      START_FROM_SERVERLESS_NEG: Initial state: packet originating from a
+        serverless network endpoint group backend. Used only for return
+        traces. The serverless_neg information is populated.
       APPLY_INGRESS_FIREWALL_RULE: Config checking state: verify ingress
         firewall rule.
       APPLY_EGRESS_FIREWALL_RULE: Config checking state: verify egress
@@ -3293,6 +3785,11 @@ class Step(_messages.Message):
         gateway.
       ARRIVE_AT_VPN_TUNNEL: Forwarding state: arriving at a Cloud VPN tunnel.
       ARRIVE_AT_VPC_CONNECTOR: Forwarding state: arriving at a VPC connector.
+      DIRECT_VPC_EGRESS_CONNECTION: Forwarding state: for packets originating
+        from a serverless endpoint forwarded through Direct VPC egress.
+      SERVERLESS_EXTERNAL_CONNECTION: Forwarding state: for packets
+        originating from a serverless endpoint forwarded through public
+        (external) connectivity.
       NAT: Transition state: packet header translated.
       PROXY_CONNECTION: Transition state: original connection is terminated
         and a new proxied connection is initiated.
@@ -3311,59 +3808,71 @@ class Step(_messages.Message):
     START_FROM_PRIVATE_NETWORK = 4
     START_FROM_GKE_MASTER = 5
     START_FROM_CLOUD_SQL_INSTANCE = 6
-    START_FROM_CLOUD_FUNCTION = 7
-    START_FROM_APP_ENGINE_VERSION = 8
-    START_FROM_CLOUD_RUN_REVISION = 9
-    START_FROM_STORAGE_BUCKET = 10
-    START_FROM_PSC_PUBLISHED_SERVICE = 11
-    APPLY_INGRESS_FIREWALL_RULE = 12
-    APPLY_EGRESS_FIREWALL_RULE = 13
-    APPLY_ROUTE = 14
-    APPLY_FORWARDING_RULE = 15
-    ANALYZE_LOAD_BALANCER_BACKEND = 16
-    SPOOFING_APPROVED = 17
-    ARRIVE_AT_INSTANCE = 18
-    ARRIVE_AT_INTERNAL_LOAD_BALANCER = 19
-    ARRIVE_AT_EXTERNAL_LOAD_BALANCER = 20
-    ARRIVE_AT_VPN_GATEWAY = 21
-    ARRIVE_AT_VPN_TUNNEL = 22
-    ARRIVE_AT_VPC_CONNECTOR = 23
-    NAT = 24
-    PROXY_CONNECTION = 25
-    DELIVER = 26
-    DROP = 27
-    FORWARD = 28
-    ABORT = 29
-    VIEWER_PERMISSION_MISSING = 30
+    START_FROM_REDIS_INSTANCE = 7
+    START_FROM_REDIS_CLUSTER = 8
+    START_FROM_ALLOY_DB_INSTANCE = 9
+    START_FROM_CLOUD_FUNCTION = 10
+    START_FROM_APP_ENGINE_VERSION = 11
+    START_FROM_CLOUD_RUN_REVISION = 12
+    START_FROM_STORAGE_BUCKET = 13
+    START_FROM_PSC_PUBLISHED_SERVICE = 14
+    START_FROM_SERVERLESS_NEG = 15
+    APPLY_INGRESS_FIREWALL_RULE = 16
+    APPLY_EGRESS_FIREWALL_RULE = 17
+    APPLY_ROUTE = 18
+    APPLY_FORWARDING_RULE = 19
+    ANALYZE_LOAD_BALANCER_BACKEND = 20
+    SPOOFING_APPROVED = 21
+    ARRIVE_AT_INSTANCE = 22
+    ARRIVE_AT_INTERNAL_LOAD_BALANCER = 23
+    ARRIVE_AT_EXTERNAL_LOAD_BALANCER = 24
+    ARRIVE_AT_VPN_GATEWAY = 25
+    ARRIVE_AT_VPN_TUNNEL = 26
+    ARRIVE_AT_VPC_CONNECTOR = 27
+    DIRECT_VPC_EGRESS_CONNECTION = 28
+    SERVERLESS_EXTERNAL_CONNECTION = 29
+    NAT = 30
+    PROXY_CONNECTION = 31
+    DELIVER = 32
+    DROP = 33
+    FORWARD = 34
+    ABORT = 35
+    VIEWER_PERMISSION_MISSING = 36
 
   abort = _messages.MessageField('AbortInfo', 1)
-  appEngineVersion = _messages.MessageField('AppEngineVersionInfo', 2)
-  causesDrop = _messages.BooleanField(3)
-  cloudFunction = _messages.MessageField('CloudFunctionInfo', 4)
-  cloudRunRevision = _messages.MessageField('CloudRunRevisionInfo', 5)
-  cloudSqlInstance = _messages.MessageField('CloudSQLInstanceInfo', 6)
-  deliver = _messages.MessageField('DeliverInfo', 7)
-  description = _messages.StringField(8)
-  drop = _messages.MessageField('DropInfo', 9)
-  endpoint = _messages.MessageField('EndpointInfo', 10)
-  firewall = _messages.MessageField('FirewallInfo', 11)
-  forward = _messages.MessageField('ForwardInfo', 12)
-  forwardingRule = _messages.MessageField('ForwardingRuleInfo', 13)
-  gkeMaster = _messages.MessageField('GKEMasterInfo', 14)
-  googleService = _messages.MessageField('GoogleServiceInfo', 15)
-  instance = _messages.MessageField('InstanceInfo', 16)
-  loadBalancer = _messages.MessageField('LoadBalancerInfo', 17)
-  loadBalancerBackendInfo = _messages.MessageField('LoadBalancerBackendInfo', 18)
-  nat = _messages.MessageField('NatInfo', 19)
-  network = _messages.MessageField('NetworkInfo', 20)
-  projectId = _messages.StringField(21)
-  proxyConnection = _messages.MessageField('ProxyConnectionInfo', 22)
-  route = _messages.MessageField('RouteInfo', 23)
-  state = _messages.EnumField('StateValueValuesEnum', 24)
-  storageBucket = _messages.MessageField('StorageBucketInfo', 25)
-  vpcConnector = _messages.MessageField('VpcConnectorInfo', 26)
-  vpnGateway = _messages.MessageField('VpnGatewayInfo', 27)
-  vpnTunnel = _messages.MessageField('VpnTunnelInfo', 28)
+  alloyDbInstance = _messages.MessageField('AlloyDbInstanceInfo', 2)
+  appEngineVersion = _messages.MessageField('AppEngineVersionInfo', 3)
+  causesDrop = _messages.BooleanField(4)
+  cloudFunction = _messages.MessageField('CloudFunctionInfo', 5)
+  cloudRunRevision = _messages.MessageField('CloudRunRevisionInfo', 6)
+  cloudSqlInstance = _messages.MessageField('CloudSQLInstanceInfo', 7)
+  deliver = _messages.MessageField('DeliverInfo', 8)
+  description = _messages.StringField(9)
+  directVpcEgressConnection = _messages.MessageField('DirectVpcEgressConnectionInfo', 10)
+  drop = _messages.MessageField('DropInfo', 11)
+  endpoint = _messages.MessageField('EndpointInfo', 12)
+  firewall = _messages.MessageField('FirewallInfo', 13)
+  forward = _messages.MessageField('ForwardInfo', 14)
+  forwardingRule = _messages.MessageField('ForwardingRuleInfo', 15)
+  gkeMaster = _messages.MessageField('GKEMasterInfo', 16)
+  googleService = _messages.MessageField('GoogleServiceInfo', 17)
+  instance = _messages.MessageField('InstanceInfo', 18)
+  loadBalancer = _messages.MessageField('LoadBalancerInfo', 19)
+  loadBalancerBackendInfo = _messages.MessageField('LoadBalancerBackendInfo', 20)
+  nat = _messages.MessageField('NatInfo', 21)
+  network = _messages.MessageField('NetworkInfo', 22)
+  projectId = _messages.StringField(23)
+  proxyConnection = _messages.MessageField('ProxyConnectionInfo', 24)
+  redisCluster = _messages.MessageField('RedisClusterInfo', 25)
+  redisInstance = _messages.MessageField('RedisInstanceInfo', 26)
+  route = _messages.MessageField('RouteInfo', 27)
+  serverlessExternalConnection = _messages.MessageField('ServerlessExternalConnectionInfo', 28)
+  serverlessNeg = _messages.MessageField('ServerlessNegInfo', 29)
+  state = _messages.EnumField('StateValueValuesEnum', 30)
+  storageBucket = _messages.MessageField('StorageBucketInfo', 31)
+  vpcConnector = _messages.MessageField('VpcConnectorInfo', 32)
+  vpnGateway = _messages.MessageField('VpnGatewayInfo', 33)
+  vpnTunnel = _messages.MessageField('VpnTunnelInfo', 34)
 
 
 class StorageBucketInfo(_messages.Message):
@@ -3520,3 +4029,5 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    NetworkmanagementProjectsLocationsSimulationsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

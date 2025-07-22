@@ -59,8 +59,7 @@ def _get_list_tasks_and_cleanup_paths(
       (source_container, False),
       (destination_container, False),
   ]
-  # TODO(b/304524534): Replace with args.include_managed_folders.
-  if getattr(args, 'include_managed_folders', False):
+  if args.include_managed_folders:
     list_task_arguments.extend(
         [(source_container, True), (destination_container, True)]
     )
@@ -153,6 +152,7 @@ def _perform_rsync(
   )
 
 
+@base.UniverseCompatible
 class Rsync(base.Command):
   """Synchronize content of two buckets/directories."""
 
@@ -237,8 +237,7 @@ class Rsync(base.Command):
     cp_command_util.add_ignore_symlinks_flag(parser, default=True)
     cp_command_util.add_recursion_flag(parser)
 
-    if cls.ReleaseTrack() is base.ReleaseTrack.ALPHA:
-      cp_command_util.add_include_managed_folders_flag(parser)
+    cp_command_util.add_include_managed_folders_flag(parser)
 
     parser.add_argument(
         '--checksums-only',
@@ -298,6 +297,7 @@ character. When using Windows PowerShell, use `'` instead of
     )
 
   def Run(self, args):
+
     encryption_util.initialize_key_store(args)
     cp_command_util.validate_include_managed_folders(
         args,
@@ -327,8 +327,7 @@ character. When using Windows PowerShell, use `'` instead of
         self.exit_code = exit_code
         return
 
-      # TODO(b/304524534): Replace with args.include_managed_folders.
-      if getattr(args, 'include_managed_folders', False):
+      if args.include_managed_folders:
         exit_code = _perform_rsync(
             args,
             source_container,

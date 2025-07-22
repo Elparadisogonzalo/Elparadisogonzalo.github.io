@@ -20,8 +20,10 @@
   request:
     collection: remotebuildexecution.projects.instances.workerpools
     modify_request_hooks:
+    - googlecloudsdk.command_lib.remote_build_execution.workerpool_update_util:RemoveDockerRootDiskConfig
     - googlecloudsdk.command_lib.remote_build_execution.workerpool_update_util:RemoveAcceleratorConfig
     - googlecloudsdk.command_lib.remote_build_execution.workerpool_update_util:RemoveAutoscale
+    - googlecloudsdk.command_lib.remote_build_execution.workerpool_update_util:RemoveNetworkAllowlist
     - googlecloudsdk.command_lib.remote_build_execution.workerpool_update_util:UpdateLabels
 
   async:
@@ -103,6 +105,43 @@
         mutex: true
         params:
         - group:
+            help_text: |
+              Either all or none of docker-root-disk-image, docker-root-disk-type,
+              and docker-root-disk-size should be set.
+            params:
+            - api_field: googleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest.workerPool.workerConfig.attachedDisks.dockerRootDisk.sourceImage
+              arg_name: docker-root-disk-image
+              required: true
+              help_text: The source image to use for the user-provided docker root disk.
+            - api_field: googleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest.workerPool.workerConfig.attachedDisks.dockerRootDisk.diskType
+              arg_name: docker-root-disk-type
+              required: true
+              choices:
+              - arg_value: pd-standard
+                enum_value: pd-standard
+                help_text: |
+                  Standard persistent disk.
+              - arg_value: pd-ssd
+                enum_value: pd-ssd
+                help_text: |
+                  SSD persistent disk.
+              help_text: |
+                The disk type to use for the user-provided docker root disk. Must be one of
+                pd-ssd and pd-standard.
+            - api_field: googleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest.workerPool.workerConfig.attachedDisks.dockerRootDisk.diskSizeGb
+              arg_name: docker-root-disk-size
+              required: true
+              help_text: Size of the user-provided docker root disk, in Gb.
+        - arg_name: clear-docker-root-disk-config
+          action: store_true
+          processor: googlecloudsdk.command_lib.scheduler.util:ClearFlag
+          help_text: |
+            Remove the user-provided disk for docker root from the VMs in the worker pool and
+            use the boot disk instead.
+    - group:
+        mutex: true
+        params:
+        - group:
             help_text: Either both or none of accelerator-count and accelerator-type should be set.
             params:
             - api_field: googleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest.workerPool.workerConfig.accelerator.acceleratorCount
@@ -162,6 +201,10 @@
               help_text: |
                 The maximal number of autoscale workers. Must be equal to or greater than
                 autoscale-min-size.
+            - api_field: googleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest.workerPool.autoscale.minIdleWorkers
+              arg_name: autoscale-min-idle-workers
+              help_text: |
+                The minimum number of idle workers. Must be equal to or greater than 0.
         - arg_name: clear-autoscale
           action: store_true
           processor: googlecloudsdk.command_lib.scheduler.util:ClearFlag
@@ -173,4 +216,28 @@
       help_text: |
         List of zones where the workers should be located. If empty, workers
         will be located in all zones in the region.
+    - api_field: googleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest.workerPool.workerConfig.userServiceAccounts
+      arg_name: user-service-accounts
+      required: false
+      help_text: |
+        A chain of user service accounts, the last of which will be the service account that user
+        code running on workers will authenticate as. The VM's service account (typically
+        "service-<consumer-project-num>@remotebuildexecution.iam.gserviceaccount.com") should be
+        granted roles/iam.serviceAccountTokenCreator on the first user account in the chain, the
+        first user account in the chain should be granted roles/iam.serviceAccountTokenCreator on
+        the second user account in the chain, and so on. If user service account is empty then the
+        user code will use the VM's service account.
+    - group:
+        mutex: true
+        params:
+        - api_field: googleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest.workerPool.workerConfig.networkAllowlist
+          arg_name: network-allowlist
+          required: false
+          help_text: |
+            The network allowlist mode for the worker pool. If per_action, the network allowlist will be applied per action.
+        - arg_name: clear-network-allowlist
+          action: store_true
+          processor: googlecloudsdk.command_lib.scheduler.util:ClearFlag
+          help_text: |
+            Clear the network allowlist mode.
     additional_arguments_hook: googlecloudsdk.command_lib.remote_build_execution.workerpool_update_util:AddLabelsFlags

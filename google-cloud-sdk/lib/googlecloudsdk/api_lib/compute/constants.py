@@ -31,6 +31,7 @@ SSD_DISK_PERFORMANCE_WARNING_GB = 10
 
 SSD_SMALL_PARTITION_GB = 375
 SSD_LARGE_PARTITION_GB = 3000
+SSD_Z3_METAL_PARTITION_GB = 6000
 
 # Disk types
 DISK_TYPE_PD_STANDARD = 'pd-standard'
@@ -85,18 +86,26 @@ DEFAULT_MACHINE_TYPE_FOR_CONFIDENTIAL_VMS = {
 DEFAULT_NETWORK = 'default'
 DEFAULT_NETWORK_INTERFACE = 'nic0'
 NETWORK_TIER_CHOICES_FOR_INSTANCE = (
-    'PREMIUM', 'SELECT', 'STANDARD', 'FIXED_STANDARD')
-NETWORK_INTERFACE_NIC_TYPE_CHOICES = ('VIRTIO_NET', 'GVNIC', 'RDMA')
+    'PREMIUM', 'SELECT', 'STANDARD')
+NETWORK_INTERFACE_NIC_TYPE_CHOICES = (
+    'VIRTIO_NET',
+    'GVNIC',
+    'RDMA',
+    'IDPF',
+    'MRDMA',
+    'IRDMA',
+)
 NETWORK_INTERFACE_STACK_TYPE_CHOICES = ('IPV4_ONLY', 'IPV4_IPV6', 'IPV6_ONLY')
 NETWORK_INTERFACE_IPV6_ONLY_STACK_TYPE = 'IPV6_ONLY'
+NETWORK_INTERFACE_IGMP_QUERY_CHOICES = ('IGMP_QUERY_V2', 'IGMP_QUERY_DISABLED')
 NETWORK_INTERFACE_IPV6_NETWORK_TIER_CHOICES = ('PREMIUM',)
 ADV_NETWORK_TIER_CHOICES = ['DEFAULT', 'TIER_1']
 
-DEFAULT_IMAGE_FAMILY = 'debian-11'
+DEFAULT_IMAGE_FAMILY = 'debian-12'
 DEFAULT_IMAGE_FAMILY_FOR_CONFIDENTIAL_VMS = {
     CONFIDENTIAL_VM_TYPES.SEV: 'ubuntu-2204-lts',
     CONFIDENTIAL_VM_TYPES.SEV_SNP: 'ubuntu-2204-lts',
-    CONFIDENTIAL_VM_TYPES.TDX: 'ubuntu-2304-amd64',
+    CONFIDENTIAL_VM_TYPES.TDX: 'ubuntu-2204-lts',
 }
 
 ImageAlias = collections.namedtuple(
@@ -181,19 +190,23 @@ WINDOWS_IMAGE_PROJECTS = [
     'windows-cloud',
     'windows-sql-cloud'
 ]
-PUBLIC_IMAGE_PROJECTS = [
-    'centos-cloud',
+BASE_PUBLIC_IMAGE_PROJECTS = [
     'cos-cloud',
     'debian-cloud',
-    'fedora-cloud',
+    'rocky-linux-cloud',
+    'ubuntu-os-cloud',
+]
+PUBLIC_IMAGE_PROJECTS = BASE_PUBLIC_IMAGE_PROJECTS + [
+    'centos-cloud',
     'fedora-coreos-cloud',
     'opensuse-cloud',
+    'oracle-linux-cloud',
     'rhel-cloud',
     'rhel-sap-cloud',
-    'rocky-linux-cloud',
+    'rocky-linux-accelerator-cloud',
     'suse-cloud',
     'suse-sap-cloud',
-    'ubuntu-os-cloud',
+    'ubuntu-os-accelerator-images',
     'ubuntu-os-pro-cloud',
 ] + WINDOWS_IMAGE_PROJECTS
 PREVIEW_IMAGE_PROJECTS = []

@@ -1,0 +1,31 @@
+include "devtools/blueprint/bluze/public/bluze.ncl";
+include bytes "third_party/py/requests/bluze.textproto" as textproto;
+
+// See go/bluze/guide before editing. To check the generated final blueprint run
+// rncl third_party/py/requests/requests.blueprint printproto blueprint_file
+
+blueprint_file = ::bluze::BlueprintFile(
+  textproto,
+
+  project_name = "third_party.py.requests",
+  teams_product_id = 1416215957357,
+  tech_lead = ["proppy", "afshar"],
+  dev_mailing_list = "third-party-requests-dev@google.com",
+  mdb_groups = ["techinfra-build"],
+  buganizer_component_ids = [131331],
+  metadata_path = "//depot/google3/third_party/py/requests/METADATA",
+
+  buildable_units = [
+    blueprint::BuildableUnit(
+      name = "third_party.py.requests",
+      enable_release = false,
+      enable_continuous_build = true,
+      build_patterns = [
+        "//third_party/py/requests/...",
+      ],
+      test_patterns = [
+        "//third_party/py/requests/...",
+      ],
+    ),
+  ],
+);

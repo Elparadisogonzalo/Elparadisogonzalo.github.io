@@ -18,14 +18,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-import hashlib
 import os
 import re
 import uuid
 
 from apitools.base.py import encoding
 from apitools.base.py import exceptions as api_exceptions
-from googlecloudsdk.api_lib.app import runtime_builders
 from googlecloudsdk.api_lib.cloudbuild import cloudbuild_exceptions
 from googlecloudsdk.api_lib.cloudbuild import cloudbuild_util
 from googlecloudsdk.api_lib.cloudbuild import config
@@ -100,49 +98,6 @@ def _GetBuildTimeout():
     timeout_str = None
 
   return timeout_str
-
-
-def _IsRequestPartOfBuilderExperiment()  -> bool:
-  """Checks whether request is part of the experiment or not.
-
-  Returns:
-    True if request is part of experiment
-  """
-  account = properties.VALUES.core.account.Get()
-  # Most likely a Google Internal project,
-  # Hence should always be part of experiment.
-  if (account is not None) and account.endswith('@google.com'):
-    return True
-  experiment_config = runtime_builders.Experiments.LoadFromURI(
-      'gs://gcp-runtime-experiments/'
-  )
-  experiment_percent = experiment_config.GetExperimentPercentWithDefault(
-      'migrate_to_buildpacks_builder_latest', 0
-  )
-  project_hash = (
-      int(
-          hashlib.sha256(
-              properties.VALUES.core.project.Get().encode('utf-8')
-          ).hexdigest(),
-          16,
-      )
-      % 100
-  )
-  return project_hash < experiment_percent
-
-
-def _GetDefaultBuildPackBuilder() -> str:
-  """Evaluates the default builder that needs to be set for build using buildpacks by using an experiment.
-
-  Returns:
-    gcr.io/buildpacks/builder:v1 if the request is not part of the experiment.
-    gcr.io/buildpacks/builder:latest if the request is part of the experiemnt.
-  """
-  return (
-      'gcr.io/buildpacks/builder:latest'
-      if _IsRequestPartOfBuilderExperiment()
-      else 'gcr.io/buildpacks/builder:v1'
-  )
 
 
 def _GetBuildTag(builder) -> str:
@@ -293,7 +248,7 @@ def _SetBuildSteps(
       pack_args.append('--builder')
       pack_args.append(builder)
     else:
-      default_buildpacks_builder = _GetDefaultBuildPackBuilder()
+      default_buildpacks_builder = 'gcr.io/buildpacks/builder:latest'
       build_tags.append(_GetBuildTag(default_buildpacks_builder))
       # Use `pack config default-builder` to allow overriding the builder in a
       # project.toml file.
@@ -417,6 +372,18 @@ def SetSource(
       )
       return build_config
 
+    if re.match(
+        r'projects/.*/locations/.*/connections/.*/gitRepositoryLinks/.*', source
+    ):
+      build_config.source = messages.Source(
+          developerConnectConfig=messages.DeveloperConnectConfig(
+              gitRepositoryLink=source,
+              dir=arg_dir,
+              revision=arg_revision,
+          )
+      )
+      return build_config
+
     suffix = '.tgz'
     if source.startswith('gs://') or os.path.isfile(source):
       _, suffix = os.path.splitext(source)
@@ -445,12 +412,12 @@ def SetSource(
         )
     except api_exceptions.HttpForbiddenError:
       raise BucketForbiddenError(
-          'The user is forbidden from accessing the bucket [{}]. Please check '
-          "your organization's policy or if the user has the "
-          '"serviceusage.services.use" permission. Giving the user Owner, '
-          'Editor, or Viewer roles may also fix this issue. Alternatively, use '
-          'the --no-source option and access your source code via a different '
-          'method.'.format(gcs_source_staging_dir.bucket)
+          'The user is forbidden from accessing the bucket [{}]. Please check'
+          " your organization's policy or if the user has the"
+          ' "serviceusage.services.use" permission. Giving the user a role with'
+          ' this permission such as Service Usage Admin may fix this issue.'
+          ' Alternatively, use the --no-source option and access your source'
+          ' code via a different method.'.format(gcs_source_staging_dir.bucket)
       )
     except storage_api.BucketInWrongProjectError:
       # If we're using the default bucket but it already exists in a different
@@ -477,13 +444,23 @@ def SetSource(
         ignore_file=ignore_file,
         hide_logs=hide_logs,
     )
-    build_config.source = messages.Source(
-        storageSource=messages.StorageSource(
-            bucket=staged_source_obj.bucket,
-            object=staged_source_obj.name,
-            generation=staged_source_obj.generation,
-        )
-    )
+
+    if suffix == '.json':
+      build_config.source = messages.Source(
+          storageSourceManifest=messages.StorageSourceManifest(
+              bucket=staged_source_obj.bucket,
+              object=staged_source_obj.name,
+              generation=staged_source_obj.generation,
+          )
+      )
+    else:
+      build_config.source = messages.Source(
+          storageSource=messages.StorageSource(
+              bucket=staged_source_obj.bucket,
+              object=staged_source_obj.name,
+              generation=staged_source_obj.generation,
+          )
+      )
   else:
     # No source
     if not no_source:
@@ -617,6 +594,23 @@ def _SetDefaultLogsBucketBehavior(
   return build_config
 
 
+def _SetServiceAccount(build_config, arg_service_account):
+  """Sets the service account to run the build in.
+
+  Args:
+    build_config: apitools.base.protorpclite.messages.Message, The Build message
+      to analyze.
+    arg_service_account: The service account behavior flag.
+
+  Returns:
+    build_config: apitools.base.protorpclite.messages.Message, The Build message
+      to analyze.
+  """
+  if arg_service_account is not None:
+    build_config.serviceAccount = arg_service_account
+  return build_config
+
+
 def CreateBuildConfig(
     tag,
     no_cache,
@@ -636,6 +630,7 @@ def CreateBuildConfig(
     arg_revision,
     arg_git_source_dir,
     arg_git_source_revision,
+    arg_service_account,
     buildpack,
     hide_logs=False,
     arg_bucket_behavior=None,
@@ -679,6 +674,7 @@ def CreateBuildConfig(
   build_config = _SetDefaultLogsBucketBehavior(
       build_config, messages, arg_bucket_behavior
   )
+  build_config = _SetServiceAccount(build_config, arg_service_account)
 
   return build_config
 
@@ -782,6 +778,9 @@ def DetermineBuildRegion(build_config, desired_region=None):
   """
   # If the build is configured to run in a worker pool, use the worker
   # pool's resource ID to determine which regional GCB service to send it to.
+  if desired_region is None:
+    desired_region = properties.VALUES.builds.region.Get()
+
   wp_options = build_config.options
   if not wp_options:
     return desired_region
@@ -824,6 +823,7 @@ def Build(
     support_gcl=False,
     suppress_logs=False,
     skip_activation_prompt=False,
+    polling_interval=1,
 ):
   """Starts the build."""
   log.debug('submitting build: ' + repr(build_config))
@@ -894,9 +894,10 @@ def Build(
   # Otherwise, logs are streamed from the chosen logging service
   # (defaulted to GCS).
   with execution_utils.CtrlCSection(mash_handler):
-    build = cb_logs.CloudBuildClient(client, messages, support_gcl).Stream(
-        build_ref, out
-    )
+    build = cb_logs.CloudBuildClient(client,
+                                     messages,
+                                     support_gcl,
+                                     polling_interval).Stream(build_ref, out)
 
   if build.status == messages.Build.StatusValueValuesEnum.TIMEOUT:
     log.status.Print(

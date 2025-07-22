@@ -52,7 +52,6 @@ DETAILED_HELP = {
 }
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
 class Update(base.UpdateCommand):
   """Update a Firewall Plus endpoint association."""
 
@@ -61,6 +60,7 @@ class Update(base.UpdateCommand):
       '--remove-labels',
       '--update-labels',
       '--[no-]tls-inspection-policy',
+      '--[no-]disabled',
   ]
 
   @classmethod
@@ -69,9 +69,15 @@ class Update(base.UpdateCommand):
     association_flags.AddMaxWait(parser, '60m')  # default to 60 minutes wait.
     base.ASYNC_FLAG.AddToParser(parser)
     base.ASYNC_FLAG.SetDefault(parser, True)
-    labels_util.AddUpdateLabelsFlags(parser)
 
-    tls_group = parser.add_mutually_exclusive_group()
+    outer_group = parser.add_mutually_exclusive_group()
+
+    association_flags.AddDisabledArg(outer_group)
+
+    tls_and_labels_group = outer_group.add_group()
+    labels_util.AddUpdateLabelsFlags(tls_and_labels_group)
+
+    tls_group = tls_and_labels_group.add_mutually_exclusive_group()
     association_flags.AddTLSInspectionPolicy(cls.ReleaseTrack(), tls_group)
     association_flags.AddNoTLSInspectionPolicyArg(tls_group)
 
@@ -94,14 +100,18 @@ class Update(base.UpdateCommand):
           'Firewall endpoint association does not exist.',
       )
 
+    if args.IsSpecified('disabled'):
+      update_fields['disabled'] = getattr(args, 'disabled', False)
+
     if args.IsSpecified('tls_inspection_policy'):
       parsed_policy = args.CONCEPTS.tls_inspection_policy.Parse()
       if parsed_policy is None:
         raise core_exceptions.Error(
-            'TLS Inspection Policy resource path is either empty, malformed, or'
-            ' missing necessary flag `--tls-inspection-policy-region`.\nNOTE:'
-            ' TLS Inspection Policy needs to be in the same region as Firewall'
-            ' Plus endpoint resource.'
+            'TLS Inspection Policy resource path is either empty, malformed,'
+            ' or missing necessary flag'
+            ' `--tls-inspection-policy-region`.\nNOTE: TLS Inspection Policy'
+            ' needs to be in the same region as Firewall Plus endpoint'
+            ' resource.'
         )
       update_fields['tls_inspection_policy'] = parsed_policy.RelativeName()
     elif getattr(args, 'no_tls_inspection_policy', False):

@@ -15,7 +15,7 @@ class CloudidentityV1beta1(base_api.BaseApiClient):
   MTLS_BASE_URL = 'https://cloudidentity.mtls.googleapis.com/'
 
   _PACKAGE = 'cloudidentity'
-  _SCOPES = ['https://www.googleapis.com/auth/cloud-identity.devices', 'https://www.googleapis.com/auth/cloud-identity.devices.lookup', 'https://www.googleapis.com/auth/cloud-identity.devices.readonly', 'https://www.googleapis.com/auth/cloud-identity.groups', 'https://www.googleapis.com/auth/cloud-identity.groups.readonly', 'https://www.googleapis.com/auth/cloud-platform']
+  _SCOPES = ['https://www.googleapis.com/auth/cloud-identity.devices', 'https://www.googleapis.com/auth/cloud-identity.devices.lookup', 'https://www.googleapis.com/auth/cloud-identity.devices.readonly', 'https://www.googleapis.com/auth/cloud-identity.groups', 'https://www.googleapis.com/auth/cloud-identity.groups.readonly', 'https://www.googleapis.com/auth/cloud-identity.inboundsso', 'https://www.googleapis.com/auth/cloud-identity.inboundsso.readonly', 'https://www.googleapis.com/auth/cloud-identity.orgunits', 'https://www.googleapis.com/auth/cloud-identity.orgunits.readonly', 'https://www.googleapis.com/auth/cloud-identity.policies', 'https://www.googleapis.com/auth/cloud-identity.policies.readonly', 'https://www.googleapis.com/auth/cloud-platform']
   _VERSION = 'v1beta1'
   _CLIENT_ID = 'CLIENT_ID'
   _CLIENT_SECRET = 'CLIENT_SECRET'
@@ -51,6 +51,7 @@ class CloudidentityV1beta1(base_api.BaseApiClient):
     self.inboundSsoAssignments = self.InboundSsoAssignmentsService(self)
     self.orgUnits_memberships = self.OrgUnitsMembershipsService(self)
     self.orgUnits = self.OrgUnitsService(self)
+    self.policies = self.PoliciesService(self)
 
   class CustomersUserinvitationsService(base_api.BaseApiService):
     """Service class for the customers_userinvitations resource."""
@@ -1234,7 +1235,7 @@ class CloudidentityV1beta1(base_api.BaseApiClient):
           }
 
     def Add(self, request, global_params=None):
-      r"""Adds an IdpCredential. Up to 2 credentials are allowed.
+      r"""Adds an IdpCredential. Up to 2 credentials are allowed. When the target customer has enabled [Multi-party approval for sensitive actions](https://support.google.com/a/answer/13790448), the `Operation` in the response will have `"done": false`, it will not have a response, and the metadata will have `"state": "awaiting-multi-party-approval"`.
 
       Args:
         request: (CloudidentityInboundSamlSsoProfilesIdpCredentialsAddRequest) input message
@@ -1352,7 +1353,7 @@ class CloudidentityV1beta1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates an InboundSamlSsoProfile for a customer.
+      r"""Creates an InboundSamlSsoProfile for a customer. When the target customer has enabled [Multi-party approval for sensitive actions](https://support.google.com/a/answer/13790448), the `Operation` in the response will have `"done": false`, it will not have a response, and the metadata will have `"state": "awaiting-multi-party-approval"`.
 
       Args:
         request: (InboundSamlSsoProfile) input message
@@ -1458,7 +1459,7 @@ class CloudidentityV1beta1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates an InboundSamlSsoProfile.
+      r"""Updates an InboundSamlSsoProfile. When the target customer has enabled [Multi-party approval for sensitive actions](https://support.google.com/a/answer/13790448), the `Operation` in the response will have `"done": false`, it will not have a response, and the metadata will have `"state": "awaiting-multi-party-approval"`.
 
       Args:
         request: (CloudidentityInboundSamlSsoProfilesPatchRequest) input message
@@ -1700,3 +1701,66 @@ class CloudidentityV1beta1(base_api.BaseApiClient):
       super(CloudidentityV1beta1.OrgUnitsService, self).__init__(client)
       self._upload_configs = {
           }
+
+  class PoliciesService(base_api.BaseApiService):
+    """Service class for the policies resource."""
+
+    _NAME = 'policies'
+
+    def __init__(self, client):
+      super(CloudidentityV1beta1.PoliciesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Get a Policy.
+
+      Args:
+        request: (CloudidentityPoliciesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Policy) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1beta1/policies/{policiesId}',
+        http_method='GET',
+        method_id='cloudidentity.policies.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1beta1/{+name}',
+        request_field='',
+        request_type_name='CloudidentityPoliciesGetRequest',
+        response_type_name='Policy',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""List Policies.
+
+      Args:
+        request: (CloudidentityPoliciesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListPoliciesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        http_method='GET',
+        method_id='cloudidentity.policies.list',
+        ordered_params=[],
+        path_params=[],
+        query_params=['filter', 'pageSize', 'pageToken'],
+        relative_path='v1beta1/policies',
+        request_field='',
+        request_type_name='CloudidentityPoliciesListRequest',
+        response_type_name='ListPoliciesResponse',
+        supports_download=False,
+    )

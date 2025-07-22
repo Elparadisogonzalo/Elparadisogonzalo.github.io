@@ -1,0 +1,75 @@
+2025-07-22 02:15:35,040 DEBUG    root            Metrics collector initialized...
+2025-07-22 02:15:35,049 DEBUG    root            Loaded Command Group: ['gcloud', 'components']
+2025-07-22 02:15:35,063 DEBUG    root            Loaded Command Group: ['gcloud', 'components', 'list']
+2025-07-22 02:15:35,067 DEBUG    root            Running [gcloud.components.list] with arguments: [--quiet: "True"]
+2025-07-22 02:15:35,074 DEBUG    root            (gcloud.components.list) Invalid value for property [core/custom_ca_certs_file]: The provided path must exist.
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/properties.py", line 3966, in Validate
+    self.__validator(value)
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/properties.py", line 124, in ExistingAbsoluteFilepathValidator
+    raise InvalidValueError('The provided path must exist.')
+googlecloudsdk.core.properties.InvalidValueError: The provided path must exist.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 987, in Execute
+    resources = calliope_command.Run(cli=self, args=args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 807, in Run
+    resources = command_instance.Run(args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/surface/components/list.py", line 102, in Run
+    result = update_manager.List(show_hidden=args.show_hidden,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 788, in List
+    to_print, current_version, latest_version = self._GetPrintListWithDiff()
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 825, in _GetPrintListWithDiff
+    _, diff = self._GetStateAndDiff(command_path='components.list')
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 714, in _GetStateAndDiff
+    latest_snapshot = self._GetLatestSnapshot(version=version,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 697, in _GetLatestSnapshot
+    return snapshots.ComponentSnapshot.FromURLs(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/snapshots.py", line 176, in FromURLs
+    (ComponentSnapshot._DictFromURL(
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/snapshots.py", line 200, in _DictFromURL
+    response = installers.MakeRequest(url, command_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/installers.py", line 114, in MakeRequest
+    return _RawRequest(url, headers=headers, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/installers.py", line 162, in _RawRequest
+    return retryer.RetryOnException(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/util/retry.py", line 201, in RetryOnException
+    exceptions.reraise(exc_info[1], tb=exc_info[2])
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/exceptions.py", line 146, in reraise
+    six.reraise(type(exc_value), exc_value, tb)
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/six/__init__.py", line 719, in reraise
+    raise value
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/util/retry.py", line 182, in TryFunc
+    return func(*args, **kwargs), None
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/installers.py", line 189, in _ExecuteRequestAndRaiseExceptions
+    requests_session = core_requests.GetSession()
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/requests.py", line 95, in GetSession
+    http_client = _CreateRawSession(timeout, ca_certs, session,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/requests.py", line 316, in _CreateRawSession
+    ca_certs_property = properties.VALUES.core.custom_ca_certs_file.Get()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/properties.py", line 3909, in Get
+    property_value = self.GetPropertyValue(required, validate)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/properties.py", line 3932, in GetPropertyValue
+    self.Validate(property_value)
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/properties.py", line 3970, in Validate
+    raise InvalidValueError(error)
+googlecloudsdk.core.properties.InvalidValueError: Invalid value for property [core/custom_ca_certs_file]: The provided path must exist.
+2025-07-22 02:15:35,079 ERROR    root            (gcloud.components.list) Invalid value for property [core/custom_ca_certs_file]: The provided path must exist.

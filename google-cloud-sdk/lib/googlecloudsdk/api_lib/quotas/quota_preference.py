@@ -18,14 +18,22 @@ from apitools.base.py import list_pager
 from googlecloudsdk.api_lib.quotas import message_util
 from googlecloudsdk.api_lib.util import apis
 from googlecloudsdk.api_lib.util import common_args
+from googlecloudsdk.calliope import base
 
 PAGE_SIZE = 100
 _CONSUMER_LOCATION_RESOURCE = '%s/locations/global'
 _RECONCILING_ONLY_FILTER = 'reconciling:true'
 
+VERSION_MAP = {
+    base.ReleaseTrack.ALPHA: 'v1alpha',
+    base.ReleaseTrack.BETA: 'v1beta',
+    base.ReleaseTrack.GA: 'v1',
+}
 
-def _GetClientInstance(no_http=False):
-  return apis.GetClientInstance('cloudquotas', 'v1', no_http=no_http)
+
+def _GetClientInstance(release_track: base.ReleaseTrack, no_http=False):
+  api_version = VERSION_MAP.get(release_track)
+  return apis.GetClientInstance('cloudquotas', api_version, no_http=no_http)
 
 
 def _GetPreferenceName(request_parent, preference_id):
@@ -82,11 +90,14 @@ def _GetFilter(custom_filter, reconciling_only):
   return None
 
 
-def CreateQuotaPreference(args):
+def CreateQuotaPreference(
+    args, release_track: base.ReleaseTrack = base.ReleaseTrack.ALPHA
+):
   """Creates a new QuotaPreference that declares the desired value for a quota.
 
   Args:
     args: argparse.Namespace, The arguments that this command was invoked with.
+    release_track: base.ReleaseTrack, The release track to use.
 
   Returns:
     The created QuotaPreference
@@ -94,7 +105,7 @@ def CreateQuotaPreference(args):
   consumer = message_util.CreateConsumer(
       args.project, args.folder, args.organization
   )
-  client = _GetClientInstance()
+  client = _GetClientInstance(release_track)
   messages = client.MESSAGES_MODULE
   parent = _CONSUMER_LOCATION_RESOURCE % (consumer)
 
@@ -107,6 +118,7 @@ def CreateQuotaPreference(args):
       service=args.service,
       quotaId=args.quota_id,
       justification=_GetJustification(args.email, args.justification),
+      contactEmail=args.email,
   )
 
   if args.project:
@@ -146,11 +158,14 @@ def CreateQuotaPreference(args):
     return client.organizations_locations_quotaPreferences.Create(request)
 
 
-def UpdateQuotaPreference(args):
+def UpdateQuotaPreference(
+    args, release_track: base.ReleaseTrack = base.ReleaseTrack.ALPHA
+):
   """Updates the parameters of a single QuotaPreference.
 
   Args:
     args: argparse.Namespace, The arguments that this command was invoked with.
+    release_track: base.ReleaseTrack, The release track to use.
 
   Returns:
     The updated QuotaPreference.
@@ -158,7 +173,7 @@ def UpdateQuotaPreference(args):
   consumer = message_util.CreateConsumer(
       args.project, args.folder, args.organization
   )
-  client = _GetClientInstance()
+  client = _GetClientInstance(release_track)
   messages = client.MESSAGES_MODULE
   preference_name = _GetPreferenceName(
       _CONSUMER_LOCATION_RESOURCE % (consumer), args.PREFERENCE_ID
@@ -173,6 +188,7 @@ def UpdateQuotaPreference(args):
       service=args.service,
       quotaId=args.quota_id,
       justification=_GetJustification(args.email, args.justification),
+      contactEmail=args.email,
   )
 
   if args.project:
@@ -215,11 +231,14 @@ def UpdateQuotaPreference(args):
     return client.organizations_locations_quotaPreferences.Patch(request)
 
 
-def GetQuotaPreference(args):
+def GetQuotaPreference(
+    args, release_track: base.ReleaseTrack = base.ReleaseTrack.ALPHA
+):
   """Retrieve the QuotaPreference for a project, folder or organization.
 
   Args:
     args: argparse.Namespace, The arguments that this command was invoked with.
+    release_track: base.ReleaseTrack, The release track to use.
 
   Returns:
     The request QuotaPreference.
@@ -227,7 +246,7 @@ def GetQuotaPreference(args):
   consumer = message_util.CreateConsumer(
       args.project, args.folder, args.organization
   )
-  client = _GetClientInstance()
+  client = _GetClientInstance(release_track)
   messages = client.MESSAGES_MODULE
   name = (
       _CONSUMER_LOCATION_RESOURCE % (consumer)
@@ -255,11 +274,14 @@ def GetQuotaPreference(args):
     return client.organizations_locations_quotaPreferences.Get(request)
 
 
-def ListQuotaPreferences(args):
+def ListQuotaPreferences(
+    args, release_track: base.ReleaseTrack = base.ReleaseTrack.ALPHA
+):
   """Lists QuotaPreferences in a given project, folder or organization.
 
   Args:
     args: argparse.Namespace, The arguments that this command was invoked with.
+    release_track: base.ReleaseTrack, The release track to use.
 
   Returns:
     List of QuotaPreferences.
@@ -267,7 +289,7 @@ def ListQuotaPreferences(args):
   consumer = message_util.CreateConsumer(
       args.project, args.folder, args.organization
   )
-  client = _GetClientInstance()
+  client = _GetClientInstance(release_track)
   messages = client.MESSAGES_MODULE
   parent = _CONSUMER_LOCATION_RESOURCE % consumer
   print(args.page_size)
@@ -276,7 +298,6 @@ def ListQuotaPreferences(args):
     request = messages.CloudquotasProjectsLocationsQuotaPreferencesListRequest(
         parent=parent,
         pageSize=args.page_size,
-        pageToken=args.page_token,
         filter=_GetFilter(args.filter, args.reconciling_only),
         orderBy=common_args.ParseSortByArg(args.sort_by),
     )
@@ -286,13 +307,13 @@ def ListQuotaPreferences(args):
         batch_size_attribute='pageSize',
         batch_size=args.page_size if args.page_size is not None else PAGE_SIZE,
         field='quotaPreferences',
+        limit=args.limit,
     )
 
   if args.folder:
     request = messages.CloudquotasFoldersLocationsQuotaPreferencesListRequest(
         parent=parent,
         pageSize=args.page_size,
-        pageToken=args.page_token,
         filter=_GetFilter(args.filter, args.reconciling_only),
         orderBy=common_args.ParseSortByArg(args.sort_by),
     )
@@ -302,6 +323,7 @@ def ListQuotaPreferences(args):
         batch_size_attribute='pageSize',
         batch_size=args.page_size if args.page_size is not None else PAGE_SIZE,
         field='quotaPreferences',
+        limit=args.limit,
     )
 
   if args.organization:
@@ -309,7 +331,6 @@ def ListQuotaPreferences(args):
         messages.CloudquotasOrganizationsLocationsQuotaPreferencesListRequest(
             parent=parent,
             pageSize=args.page_size,
-            pageToken=args.page_token,
             filter=_GetFilter(args.filter, args.reconciling_only),
             orderBy=common_args.ParseSortByArg(args.sort_by),
         )
@@ -320,4 +341,5 @@ def ListQuotaPreferences(args):
         batch_size_attribute='pageSize',
         batch_size=args.page_size if args.page_size is not None else PAGE_SIZE,
         field='quotaPreferences',
+        limit=args.limit,
     )

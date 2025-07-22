@@ -23,6 +23,7 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.core import properties
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Update(base.UpdateCommand):
   r"""Update a Compute Engine project resource.
@@ -36,15 +37,21 @@ class Update(base.UpdateCommand):
   def Args(cls, parser):
     parser.add_argument(
         '--default-network-tier',
-        choices=['PREMIUM', 'STANDARD', 'FIXED_STANDARD'],
+        choices=['PREMIUM', 'STANDARD'],
         type=lambda x: x.upper(),
         help='The default network tier to assign to the project.')
+    parser.add_argument(
+        '--cloud-armor-tier',
+        choices=['CA_STANDARD', 'CA_ENTERPRISE_PAYGO', 'CA_ENTERPRISE_ANNUAL'],
+        type=lambda x: x.upper(),
+        help='Cloud armor tier to assign to the project.',
+    )
     if cls._support_managed_protection_tier:
       parser.add_argument(
           '--managed-protection-tier',
-          choices=['CA_STANDARD', 'CAMP_PLUS_PAYGO'],
+          choices=['CA_STANDARD', 'CAMP_PLUS_PAYGO', 'CAMP_PLUS_ANNUAL'],
           type=lambda x: x.upper(),
-          help='The maanged protection tier to assign to the project.',
+          help='Managed protection tier to assign to the project.',
       )
 
   def Run(self, args):
@@ -62,7 +69,17 @@ class Update(base.UpdateCommand):
               networkTier=messages.ProjectsSetDefaultNetworkTierRequest.
               NetworkTierValueValuesEnum(args.default_network_tier)))
       requests.append((client.projects, 'SetDefaultNetworkTier', request))
-    if self._support_managed_protection_tier and args.managed_protection_tier:
+    if args.cloud_armor_tier:
+      request = messages.ComputeProjectsSetCloudArmorTierRequest(
+          project=properties.VALUES.core.project.GetOrFail(),
+          projectsSetCloudArmorTierRequest=messages.ProjectsSetCloudArmorTierRequest(
+              cloudArmorTier=messages.ProjectsSetCloudArmorTierRequest.CloudArmorTierValueValuesEnum(
+                  args.cloud_armor_tier
+              )
+          ),
+      )
+      requests.append((client.projects, 'SetCloudArmorTier', request))
+    elif self._support_managed_protection_tier and args.managed_protection_tier:
       request = messages.ComputeProjectsSetManagedProtectionTierRequest(
           project=properties.VALUES.core.project.GetOrFail(),
           projectsSetManagedProtectionTierRequest=messages.ProjectsSetManagedProtectionTierRequest(

@@ -174,11 +174,14 @@ class AndroidModel(_messages.Message):
   r"""A description of an Android device tests may be run on.
 
   Enums:
+    AccessDeniedReasonsValueListEntryValuesEnum:
     FormValueValuesEnum: Whether this device is virtual or physical.
     FormFactorValueValuesEnum: Whether this device is a phone, tablet,
       wearable, etc.
 
   Fields:
+    accessDeniedReasons: Reasons for access denial. This model is accessible
+      if this list is empty, otherwise the model is viewable only.
     brand: The company that this device is branded with. Example: "Google",
       "Samsung".
     codename: The name of the industrial design. This corresponds to
@@ -187,6 +190,7 @@ class AndroidModel(_messages.Message):
     formFactor: Whether this device is a phone, tablet, wearable, etc.
     id: The unique opaque id for this model. Use this for invoking the
       TestExecutionService.
+    labInfo: Output only. Lab info of this device.
     lowFpsVideoRecording: True if and only if tests with this model are
       recorded by stitching together screenshots. See
       use_low_spec_video_recording in device config.
@@ -209,6 +213,18 @@ class AndroidModel(_messages.Message):
       "deprecated".
     thumbnailUrl: URL of a thumbnail image (photo) of the device.
   """
+
+  class AccessDeniedReasonsValueListEntryValuesEnum(_messages.Enum):
+    r"""AccessDeniedReasonsValueListEntryValuesEnum enum type.
+
+    Values:
+      ACCESS_DENIED_REASON_UNSPECIFIED: Do not use. For proto versioning only.
+      EULA_NOT_ACCEPTED: The model is for viewing purposes only. Access and
+        utilization require acceptance of an End User License Agreement
+        (EULA).
+    """
+    ACCESS_DENIED_REASON_UNSPECIFIED = 0
+    EULA_NOT_ACCEPTED = 1
 
   class FormFactorValueValuesEnum(_messages.Enum):
     r"""Whether this device is a phone, tablet, wearable, etc.
@@ -240,22 +256,24 @@ class AndroidModel(_messages.Message):
     PHYSICAL = 2
     EMULATOR = 3
 
-  brand = _messages.StringField(1)
-  codename = _messages.StringField(2)
-  form = _messages.EnumField('FormValueValuesEnum', 3)
-  formFactor = _messages.EnumField('FormFactorValueValuesEnum', 4)
-  id = _messages.StringField(5)
-  lowFpsVideoRecording = _messages.BooleanField(6)
-  manufacturer = _messages.StringField(7)
-  name = _messages.StringField(8)
-  perVersionInfo = _messages.MessageField('PerAndroidVersionInfo', 9, repeated=True)
-  screenDensity = _messages.IntegerField(10, variant=_messages.Variant.INT32)
-  screenX = _messages.IntegerField(11, variant=_messages.Variant.INT32)
-  screenY = _messages.IntegerField(12, variant=_messages.Variant.INT32)
-  supportedAbis = _messages.StringField(13, repeated=True)
-  supportedVersionIds = _messages.StringField(14, repeated=True)
-  tags = _messages.StringField(15, repeated=True)
-  thumbnailUrl = _messages.StringField(16)
+  accessDeniedReasons = _messages.EnumField('AccessDeniedReasonsValueListEntryValuesEnum', 1, repeated=True)
+  brand = _messages.StringField(2)
+  codename = _messages.StringField(3)
+  form = _messages.EnumField('FormValueValuesEnum', 4)
+  formFactor = _messages.EnumField('FormFactorValueValuesEnum', 5)
+  id = _messages.StringField(6)
+  labInfo = _messages.MessageField('LabInfo', 7)
+  lowFpsVideoRecording = _messages.BooleanField(8)
+  manufacturer = _messages.StringField(9)
+  name = _messages.StringField(10)
+  perVersionInfo = _messages.MessageField('PerAndroidVersionInfo', 11, repeated=True)
+  screenDensity = _messages.IntegerField(12, variant=_messages.Variant.INT32)
+  screenX = _messages.IntegerField(13, variant=_messages.Variant.INT32)
+  screenY = _messages.IntegerField(14, variant=_messages.Variant.INT32)
+  supportedAbis = _messages.StringField(15, repeated=True)
+  supportedVersionIds = _messages.StringField(16, repeated=True)
+  tags = _messages.StringField(17, repeated=True)
+  thumbnailUrl = _messages.StringField(18)
 
 
 class AndroidRoboTest(_messages.Message):
@@ -396,8 +414,8 @@ class Apk(_messages.Message):
 
 
 class ApkDetail(_messages.Message):
-  r"""Android application details based on application manifest and apk
-  archive contents.
+  r"""Android application details based on application manifest and archive
+  contents.
 
   Fields:
     apkManifest: A ApkManifest attribute.
@@ -423,7 +441,8 @@ class ApkManifest(_messages.Message):
     targetSdkVersion: Specifies the API Level on which the application is
       designed to run.
     usesFeature: Feature usage tags defined in the manifest.
-    usesPermission: Permissions declared to be used by the application
+    usesPermission: A string attribute.
+    usesPermissionTags: Permissions declared to be used by the application
     versionCode: Version number used internally by the app.
     versionName: Version number shown to users.
   """
@@ -438,8 +457,9 @@ class ApkManifest(_messages.Message):
   targetSdkVersion = _messages.IntegerField(8, variant=_messages.Variant.INT32)
   usesFeature = _messages.MessageField('UsesFeature', 9, repeated=True)
   usesPermission = _messages.StringField(10, repeated=True)
-  versionCode = _messages.IntegerField(11)
-  versionName = _messages.StringField(12)
+  usesPermissionTags = _messages.MessageField('UsesPermissionTag', 11, repeated=True)
+  versionCode = _messages.IntegerField(12)
+  versionName = _messages.StringField(13)
 
 
 class AppBundle(_messages.Message):
@@ -653,7 +673,7 @@ class DeviceSession(_messages.Message):
       session_state message including the current session state.
     ttl: Optional. The amount of time that a device will be initially
       allocated for. This can eventually be extended with the
-      UpdateDeviceSession RPC. Default: 30 minutes.
+      UpdateDeviceSession RPC. Default: 15 minutes.
   """
 
   class StateValueValuesEnum(_messages.Enum):
@@ -795,11 +815,10 @@ class FileReference(_messages.Message):
 
 
 class GetApkDetailsResponse(_messages.Message):
-  r"""Response containing the details of the specified Android application
-  APK.
+  r"""Response containing the details of the specified Android application.
 
   Fields:
-    apkDetail: Details of the Android APK.
+    apkDetail: Details of the Android App.
   """
 
   apkDetail = _messages.MessageField('ApkDetail', 1)
@@ -969,7 +988,8 @@ class IosRoboTest(_messages.Message):
       test.
     roboScript: An optional Roboscript to customize the crawl. See
       https://firebase.google.com/docs/test-lab/android/robo-scripts-reference
-      for more information about Roboscripts.
+      for more information about Roboscripts. The maximum allowed file size of
+      the roboscript is 10MiB.
   """
 
   appBundleId = _messages.StringField(1)
@@ -1083,6 +1103,20 @@ class IosXcTest(_messages.Message):
   testsZip = _messages.MessageField('FileReference', 3)
   xcodeVersion = _messages.StringField(4)
   xctestrun = _messages.MessageField('FileReference', 5)
+
+
+class LabInfo(_messages.Message):
+  r"""Lab specific information for a device.
+
+  Fields:
+    name: Lab name where the device is hosted. If empty, the device is hosted
+      in a Google owned lab.
+    regionCode: The Unicode country/region code (CLDR) of the lab where the
+      device is hosted. E.g. "US" for United States, "CH" for Switzerland.
+  """
+
+  name = _messages.StringField(1)
+  regionCode = _messages.StringField(2)
 
 
 class LauncherActivityIntent(_messages.Message):
@@ -1233,6 +1267,8 @@ class PerAndroidVersionInfo(_messages.Message):
     deviceCapacity: The number of online devices for an Android version.
     directAccessVersionInfo: Output only. Identifies supported clients for
       DirectAccess for this Android version.
+    interactiveDeviceAvailabilityEstimate: Output only. The estimated wait
+      time for a single interactive device session using Direct Access.
     versionId: An Android version.
   """
 
@@ -1274,7 +1310,8 @@ class PerAndroidVersionInfo(_messages.Message):
 
   deviceCapacity = _messages.EnumField('DeviceCapacityValueValuesEnum', 1)
   directAccessVersionInfo = _messages.MessageField('DirectAccessVersionInfo', 2)
-  versionId = _messages.StringField(3)
+  interactiveDeviceAvailabilityEstimate = _messages.StringField(3)
+  versionId = _messages.StringField(4)
 
 
 class PerIosVersionInfo(_messages.Message):
@@ -2135,6 +2172,20 @@ class TestTargetsForShard(_messages.Message):
   testTargets = _messages.StringField(1, repeated=True)
 
 
+class TestingApplicationDetailServiceGetApkDetailsRequest(_messages.Message):
+  r"""A TestingApplicationDetailServiceGetApkDetailsRequest object.
+
+  Fields:
+    bundleLocation_gcsPath: A path to a file in Google Cloud Storage. Example:
+      gs://build-app-1414623860166/app%40debug-unaligned.apk These paths are
+      expected to be url encoded (percent encoding)
+    fileReference: A FileReference resource to be passed as the request body.
+  """
+
+  bundleLocation_gcsPath = _messages.StringField(1)
+  fileReference = _messages.MessageField('FileReference', 2)
+
+
 class TestingProjectsDeviceSessionsCancelRequest(_messages.Message):
   r"""A TestingProjectsDeviceSessionsCancelRequest object.
 
@@ -2256,6 +2307,8 @@ class TestingTestEnvironmentCatalogGetRequest(_messages.Message):
 
   Fields:
     environmentType: Required. The type of environment that should be listed.
+    includeViewableModels: Optional. Whether to include viewable only models
+      in the response. This is only applicable for Android models.
     projectId: For authorization, the cloud project requesting the
       TestEnvironmentCatalog.
   """
@@ -2281,7 +2334,8 @@ class TestingTestEnvironmentCatalogGetRequest(_messages.Message):
     DEVICE_IP_BLOCKS = 5
 
   environmentType = _messages.EnumField('EnvironmentTypeValueValuesEnum', 1, required=True)
-  projectId = _messages.StringField(2)
+  includeViewableModels = _messages.BooleanField(2)
+  projectId = _messages.StringField(3)
 
 
 class ToolResultsExecution(_messages.Message):
@@ -2382,6 +2436,20 @@ class UsesFeature(_messages.Message):
   name = _messages.StringField(2)
 
 
+class UsesPermissionTag(_messages.Message):
+  r"""The tag within a manifest.
+  https://developer.android.com/guide/topics/manifest/uses-permission-
+  element.html
+
+  Fields:
+    maxSdkVersion: The android:name value
+    name: The android:name value
+  """
+
+  maxSdkVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  name = _messages.StringField(2)
+
+
 class XcodeVersion(_messages.Message):
   r"""An Xcode version that an iOS version is compatible with.
 
@@ -2400,3 +2468,5 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    TestingApplicationDetailServiceGetApkDetailsRequest, 'bundleLocation_gcsPath', 'bundleLocation.gcsPath')

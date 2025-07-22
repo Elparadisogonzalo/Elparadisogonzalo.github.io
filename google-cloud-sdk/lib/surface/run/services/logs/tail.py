@@ -23,21 +23,21 @@ from googlecloudsdk.command_lib.logs import read as read_logs_lib
 from googlecloudsdk.command_lib.run import flags
 from googlecloudsdk.command_lib.run import streaming
 from googlecloudsdk.core import properties
+from googlecloudsdk.core.credentials import store
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
 class Tail(base.BinaryBackedCommand):
   """Tail logs for a Cloud Run service."""
 
   detailed_help = {
-      'DESCRIPTION':
-          """\
+      'DESCRIPTION': """\
           {command} tails log-entries for a particular
           Cloud Run service in real time.  The log entries are formatted for
           consumption in a terminal.
           """,
-      'EXAMPLES':
-          """\
+      'EXAMPLES': """\
           To tail log entries for a Cloud Run Service, run:
 
             $ {command} my-service
@@ -69,5 +69,9 @@ class Tail(base.BinaryBackedCommand):
     filter_str = ' '.join(filters)
     command_executor = streaming.LogStreamingWrapper()
     response = command_executor(
-        project_id=project_id, log_format='run', log_filter=filter_str)
+        project_id=project_id,
+        log_format='run',
+        log_filter=filter_str,
+        token=store.GetFreshAccessTokenIfEnabled(),
+    )
     return self._DefaultOperationResponseHandler(response)

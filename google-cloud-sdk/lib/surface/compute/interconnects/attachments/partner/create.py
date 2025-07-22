@@ -14,10 +14,6 @@
 # limitations under the License.
 """Command for creating partner customer interconnect attachments."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.api_lib.compute.interconnects.attachments import client
 from googlecloudsdk.calliope import base
@@ -37,6 +33,7 @@ def PrintPairingKeyEpilog(pairing_key):
   log.status.Print(message)
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create a Compute Engine partner interconnect attachment.
@@ -48,7 +45,6 @@ class Create(base.CreateCommand):
   INTERCONNECT_ATTACHMENT_ARG = None
   INTERCONNECT_ARG = None
   ROUTER_ARG = None
-  _support_partner_ipv6 = False
 
   @classmethod
   def Args(cls, parser):
@@ -66,6 +62,7 @@ class Create(base.CreateCommand):
     attachment_flags.AddMtu(parser)
     attachment_flags.AddEncryption(parser)
     attachment_flags.GetIpsecInternalAddressesFlag().AddToParser(parser)
+    attachment_flags.AddStackType(parser)
 
   def Run(self, args):
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
@@ -110,6 +107,18 @@ class Create(base.CreateCommand):
         encryption=getattr(args, 'encryption', None),
         ipsec_internal_addresses=ipsec_internal_addresses_urls,
         stack_type=getattr(args, 'stack_type', None),
+        candidate_cloud_router_ip_address=getattr(
+            args, 'candidate_cloud_router_ip_address', None
+        ),
+        candidate_customer_router_ip_address=getattr(
+            args, 'candidate_customer_router_ip_address', None
+        ),
+        candidate_cloud_router_ipv6_address=getattr(
+            args, 'candidate_cloud_router_ipv6_address', None
+        ),
+        candidate_customer_router_ipv6_address=getattr(
+            args, 'candidate_customer_router_ipv6_address', None
+        ),
     )
     self._pairing_key = attachment.pairingKey
     return attachment
@@ -118,6 +127,7 @@ class Create(base.CreateCommand):
     PrintPairingKeyEpilog(self._pairing_key)
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
 class CreateBeta(Create):
   """Create a Compute Engine partner interconnect attachment.
@@ -127,14 +137,16 @@ class CreateBeta(Create):
   Interconnect to a path into and out of the customer's cloud network.
   """
 
-  _support_partner_ipv6 = True
-
   @classmethod
   def Args(cls, parser):
     super(CreateBeta, cls).Args(parser)
-    attachment_flags.AddStackType(parser)
+    attachment_flags.AddCandidateCloudRouterIpAddress(parser)
+    attachment_flags.AddCandidateCustomerRouterIpAddress(parser)
+    attachment_flags.AddCandidateCloudRouterIpv6Address(parser)
+    attachment_flags.AddCandidateCustomerRouterIpv6Address(parser)
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class CreateAlpha(CreateBeta):
   """Create a Compute Engine partner interconnect attachment.
@@ -143,7 +155,6 @@ class CreateAlpha(CreateBeta):
   interconnect attachment binds the underlying connectivity of a provider's
   Interconnect to a path into and out of the customer's cloud network.
   """
-  _support_partner_ipv6 = True
 
   @classmethod
   def Args(cls, parser):

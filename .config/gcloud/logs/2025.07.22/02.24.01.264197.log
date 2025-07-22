@@ -1,0 +1,34 @@
+2025-07-22 02:24:01,267 DEBUG    root            Loaded Command Group: ['gcloud', 'components']
+2025-07-22 02:24:01,271 DEBUG    root            Loaded Command Group: ['gcloud', 'components', 'update']
+2025-07-22 02:24:01,274 DEBUG    root            Running [gcloud.components.update] with arguments: []
+2025-07-22 02:24:01,274 INFO     ___FILE_ONLY___ Beginning update. This process may take several minutes.
+
+2025-07-22 02:24:01,282 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): dl.google.com:443
+2025-07-22 02:24:02,045 DEBUG    urllib3.connectionpool https://dl.google.com:443 "GET /dl/cloudsdk/channels/rapid/components-2.json HTTP/1.1" 200 239798
+2025-07-22 02:24:03,074 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:24:03,075 INFO     ___FILE_ONLY___ 
+Your current Google Cloud CLI version is: 456.0.0
+
+2025-07-22 02:24:03,075 INFO     ___FILE_ONLY___ You will be upgraded to version: 530.0.0
+
+2025-07-22 02:24:03,075 INFO     ___FILE_ONLY___ 
+
+2025-07-22 02:24:03,076 DEBUG    root            (gcloud.components.update) Your current working directory is inside the Google Cloud CLI install root: /data/data/com.termux/files/home/google-cloud-sdk.  In order to perform this update, run the command from outside of this directory.
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 987, in Execute
+    resources = calliope_command.Run(cli=self, args=args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 807, in Run
+    resources = command_instance.Run(args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/surface/components/update.py", line 125, in Run
+    update_manager.Update(
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 1057, in Update
+    disable_backup = self._ShouldDoFastUpdate(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 462, in _ShouldDoFastUpdate
+    raise InvalidCWDError(
+googlecloudsdk.core.updater.update_manager.InvalidCWDError: Your current working directory is inside the Google Cloud CLI install root: /data/data/com.termux/files/home/google-cloud-sdk.  In order to perform this update, run the command from outside of this directory.
+2025-07-22 02:24:03,078 ERROR    root            (gcloud.components.update) Your current working directory is inside the Google Cloud CLI install root: /data/data/com.termux/files/home/google-cloud-sdk.  In order to perform this update, run the command from outside of this directory.
+2025-07-22 02:24:03,101 DEBUG    root            Metrics reporting process started...

@@ -41,12 +41,23 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
-  PROJECTS_LOCATIONS_GLOBAL_NETWORKPEERINGS = (
-      'projects.locations.global.networkPeerings',
+  PROJECTS_LOCATIONS_ANNOUNCEMENTS = (
+      'projects.locations.announcements',
       '{+name}',
       {
           '':
-              'projects/{projectsId}/locations/global/networkPeerings/'
+              'projects/{projectsId}/locations/{locationsId}/announcements/'
+              '{announcementsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_NETWORKPEERINGS = (
+      'projects.locations.networkPeerings',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/networkPeerings/'
               '{networkPeeringsId}',
       },
       ['name'],
@@ -201,6 +212,28 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/privateClouds/'
               '{privateCloudsId}/subnets/{subnetsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_PRIVATECLOUDS_UPGRADEJOBS = (
+      'projects.locations.privateClouds.upgradeJobs',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/privateClouds/'
+              '{privateCloudsId}/upgradeJobs/{upgradeJobsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_PRIVATECLOUDS_UPGRADES = (
+      'projects.locations.privateClouds.upgrades',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/privateClouds/'
+              '{privateCloudsId}/upgrades/{upgradesId}',
       },
       ['name'],
       True

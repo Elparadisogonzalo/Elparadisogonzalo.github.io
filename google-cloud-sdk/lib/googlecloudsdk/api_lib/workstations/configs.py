@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import re
+
 from googlecloudsdk.api_lib.util import waiter
 from googlecloudsdk.api_lib.workstations.util import GetClientInstance
 from googlecloudsdk.api_lib.workstations.util import GetMessagesModule
@@ -27,17 +29,49 @@ from googlecloudsdk.core import log
 from googlecloudsdk.core import resources
 import six
 
+
 IMAGE_URL_MAP = {
-    'codeoss': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest',
-    'intellij': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/intellij-ultimate:latest',
-    'pycharm': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/pycharm:latest',
-    'rider': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/rider:latest',
-    'webstorm': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/webstorm:latest',
-    'phpstorm': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/phpstorm:latest',
-    'rubymine': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/rubymine:latest',
-    'goland': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/goland:latest',
-    'clion': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/clion:latest',
-    'base-image': 'us-central1-docker.pkg.dev/cloud-workstations-images/predefined/base:latest',
+    'base-image': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/base:latest'
+    ),
+    'clion': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/clion:latest'
+    ),
+    'codeoss': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest'
+    ),
+    'codeoss-cuda': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/code-oss-cuda:latest'
+    ),
+    'goland': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/goland:latest'
+    ),
+    'intellij': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/intellij-ultimate:latest'
+    ),
+    'phpstorm': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/phpstorm:latest'
+    ),
+    'pycharm': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/pycharm:latest'
+    ),
+    'rider': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/rider:latest'
+    ),
+    'rubymine': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/rubymine:latest'
+    ),
+    'webstorm': (
+        '{location}-docker.pkg.dev/cloud-workstations-images/predefined/webstorm:latest'
+    ),
+}
+
+BOOST_CONFIG_MAP = {
+    'id': 'id',
+    'machine-type': 'machineType',
+    'pool-size': 'poolSize',
+    'boot-disk-size': 'bootDiskSizeGb',
+    'enable-nested-virtualization': 'enableNestedVirtualization',
 }
 
 
@@ -64,6 +98,9 @@ class Configs:
     """
     config_name = args.CONCEPTS.config.Parse().RelativeName()
     parent = config_name.split('/workstationConfigs/')[0]
+    location = re.search(r'/locations/(?P<location>[^/]+)/', config_name).group(
+        'location'
+    )
     config_id = config_name.split('/workstationConfigs/')[1]
 
     config = self.messages.WorkstationConfig()
@@ -80,6 +117,7 @@ class Configs:
           ]
       )
     config.disableTcpConnections = args.disable_tcp_connections
+    config.maxUsableWorkstations = args.max_usable_workstations_count
 
     # GCE Instance Config
     config.host = self.messages.Host()
@@ -110,13 +148,11 @@ class Configs:
         args.enable_nested_virtualization
     )
     config.host.gceInstance.bootDiskSizeGb = args.boot_disk_size
-    config.host.gceInstance.disableSsh = args.disable_ssh_to_vm
-
-    if (
-        self.api_version != VERSION_MAP.get(base.ReleaseTrack.GA)
-        and args.accelerator_type
-        and args.accelerator_count
-    ):
+    if args.IsSpecified('disable_ssh_to_vm'):
+      config.host.gceInstance.disableSsh = args.disable_ssh_to_vm
+    else:
+      config.host.gceInstance.disableSsh = not args.enable_ssh_to_vm
+    if args.accelerator_type and args.accelerator_count:
       accelerators = [
           self.messages.Accelerator(
               type=args.accelerator_type,
@@ -125,25 +161,72 @@ class Configs:
       ]
       config.host.gceInstance.accelerators = accelerators
 
-    # Persistent directory
-    pd = self.messages.PersistentDirectory()
-    pd.mountPath = '/home'
-    if args.pd_reclaim_policy == 'retain':
-      reclaim_policy = (
-          self.messages.GceRegionalPersistentDisk.ReclaimPolicyValueValuesEnum.RETAIN
-      )
-    else:
-      reclaim_policy = (
-          self.messages.GceRegionalPersistentDisk.ReclaimPolicyValueValuesEnum.DELETE
-      )
+    if self.api_version != VERSION_MAP.get(base.ReleaseTrack.GA):
+      config.httpOptions = self.messages.HttpOptions()
+      if args.allow_unauthenticated_cors_preflight_requests:
+        config.httpOptions.allowedUnauthenticatedCorsPreflightRequests = True
+      if args.disable_localhost_replacement:
+        config.httpOptions.disableLocalhostReplacement = True
 
-    pd.gcePd = self.messages.GceRegionalPersistentDisk(
-        sizeGb=args.pd_disk_size,
-        fsType='ext4',
-        diskType=args.pd_disk_type,
-        reclaimPolicy=reclaim_policy,
-    )
-    config.persistentDirectories.append(pd)
+    if (
+        self.api_version != VERSION_MAP.get(base.ReleaseTrack.GA)
+        and args.boost_config
+    ):
+      for boost_config in args.boost_config:
+        desired_boost_config = self.messages.BoostConfig()
+        for key, value in boost_config.items():
+          if key == 'accelerator-type' or key == 'accelerator-count':
+            desired_boost_config.accelerators = [
+                self.messages.Accelerator(
+                    type=boost_config.get('accelerator-type', ''),
+                    count=boost_config.get('accelerator-count', 0),
+                )
+            ]
+          else:
+            setattr(desired_boost_config, BOOST_CONFIG_MAP.get(key), value)
+        config.host.gceInstance.boostConfigs.append(desired_boost_config)
+
+    if args.allowed_ports:
+      for port_range in args.allowed_ports:
+        desired_port_range = self.messages.PortRange()
+        for key, value in port_range.items():
+          setattr(desired_port_range, key, value)
+        config.allowedPorts.append(desired_port_range)
+
+    # Persistent directory
+    if not args.no_persistent_storage:
+      pd = self.messages.PersistentDirectory()
+      pd.mountPath = '/home'
+      if args.pd_reclaim_policy == 'retain':
+        reclaim_policy = (
+            self.messages.GceRegionalPersistentDisk.ReclaimPolicyValueValuesEnum.RETAIN
+        )
+      else:
+        reclaim_policy = (
+            self.messages.GceRegionalPersistentDisk.ReclaimPolicyValueValuesEnum.DELETE
+        )
+
+      pd.gcePd = self.messages.GceRegionalPersistentDisk(
+          sizeGb=0 if args.pd_source_snapshot else args.pd_disk_size,
+          fsType='' if args.pd_source_snapshot else 'ext4',
+          diskType=args.pd_disk_type,
+          reclaimPolicy=reclaim_policy,
+          sourceSnapshot=args.pd_source_snapshot,
+      )
+      config.persistentDirectories.append(pd)
+
+    # Ephemeral directory
+    if args.ephemeral_directory:
+      for directory in args.ephemeral_directory:
+        pd = self.messages.EphemeralDirectory()
+        pd.mountPath = directory.get('mount-path')
+        pd.gcePd = self.messages.GcePersistentDisk(
+            diskType=directory.get('disk-type'),
+            sourceSnapshot=directory.get('source-snapshot'),
+            sourceImage=directory.get('source-image'),
+            readOnly=directory.get('read-only'),
+        )
+        config.ephemeralDirectories.append(pd)
 
     # Container
     config.container = self.messages.Container()
@@ -152,7 +235,7 @@ class Configs:
     elif args.container_predefined_image:
       config.container.image = IMAGE_URL_MAP.get(
           args.container_predefined_image
-      )
+      ).format(location=location)
     if args.container_command:
       config.container.command = args.container_command
     if args.container_args:
@@ -180,8 +263,23 @@ class Configs:
     if args.enable_audit_agent:
       config.enableAuditAgent = args.enable_audit_agent
 
+    if args.grant_workstation_admin_role_on_create:
+      config.grantWorkstationAdminRoleOnCreate = (
+          args.grant_workstation_admin_role_on_create
+      )
+
     if args.replica_zones:
       config.replicaZones = args.replica_zones
+
+    if args.vm_tags:
+      tags_val = self.messages.GceInstance.VmTagsValue()
+      for key, value in args.vm_tags.items():
+        tags_val.additionalProperties.append(
+            self.messages.GceInstance.VmTagsValue.AdditionalProperty(
+                key=key, value=value
+            )
+        )
+      config.host.gceInstance.vmTags = tags_val
 
     create_req = self.messages.WorkstationsProjectsLocationsWorkstationClustersWorkstationConfigsCreateRequest(
         parent=parent, workstationConfigId=config_id, workstationConfig=config
@@ -223,10 +321,17 @@ class Configs:
       Workstation configuration that was updated.
     """
     config_name = args.CONCEPTS.config.Parse().RelativeName()
+    location = re.search(r'/locations/(?P<location>[^/]+)/', config_name).group(
+        'location'
+    )
     config_id = config_name.split('/workstationConfigs/')[1]
 
     config = self.messages.WorkstationConfig()
     config.name = config_name
+    get_req = self.messages.WorkstationsProjectsLocationsWorkstationClustersWorkstationConfigsGetRequest(
+        name=config_name
+    )
+    old_config = self._service.Get(get_req)
     update_mask = []
 
     if args.IsSpecified('idle_timeout'):
@@ -247,6 +352,30 @@ class Configs:
           ]
       )
       update_mask.append('labels')
+
+    if args.IsSpecified('max_usable_workstations_count'):
+      config.maxUsableWorkstations = args.max_usable_workstations_count
+      update_mask.append('max_usable_workstations')
+
+    if self.api_version != VERSION_MAP.get(base.ReleaseTrack.GA):
+      config.httpOptions = self.messages.HttpOptions()
+      if args.allow_unauthenticated_cors_preflight_requests:
+        config.httpOptions.allowedUnauthenticatedCorsPreflightRequests = True
+        update_mask.append(
+            'http_options.allowed_unauthenticated_cors_preflight_requests'
+        )
+      if args.disallow_unauthenticated_cors_preflight_requests:
+        config.httpOptions.allowedUnauthenticatedCorsPreflightRequests = False
+        update_mask.append(
+            'http_options.allowed_unauthenticated_cors_preflight_requests'
+        )
+
+      if args.enable_localhost_replacement:
+        config.httpOptions.disableLocalhostReplacement = False
+        update_mask.append('http_options.disable_localhost_replacement')
+      if args.disable_localhost_replacement:
+        config.httpOptions.disableLocalhostReplacement = True
+        update_mask.append('http_options.disable_localhost_replacement')
 
     # GCE Instance Config
     config.host = self.messages.Host()
@@ -281,11 +410,11 @@ class Configs:
       config.host.gceInstance.bootDiskSizeGb = args.boot_disk_size
       update_mask.append('host.gce_instance.boot_disk_size_gb')
 
-    if args.IsSpecified('disable_ssh_to_vm'):
+    if args.IsKnownAndSpecified('disable_ssh_to_vm'):
       config.host.gceInstance.disableSsh = args.disable_ssh_to_vm
       update_mask.append('host.gce_instance.disable_ssh')
 
-    if args.IsSpecified('enable_ssh_to_vm'):
+    if args.IsKnownAndSpecified('enable_ssh_to_vm'):
       config.host.gceInstance.disableSsh = not args.enable_ssh_to_vm
       update_mask.append('host.gce_instance.disable_ssh')
 
@@ -302,6 +431,12 @@ class Configs:
     if args.IsSpecified('enable_audit_agent'):
       config.enableAuditAgent = args.enable_audit_agent
       update_mask.append('enable_audit_agent')
+
+    if args.IsSpecified('grant_workstation_admin_role_on_create'):
+      config.grantWorkstationAdminRoleOnCreate = (
+          args.grant_workstation_admin_role_on_create
+      )
+      update_mask.append('grant_workstation_admin_role_on_create')
 
     if args.IsSpecified('disable_tcp_connections'):
       config.disableTcpConnections = args.disable_tcp_connections
@@ -343,9 +478,8 @@ class Configs:
         gce_shielded_instance_config
     )
 
-    if self.api_version != VERSION_MAP.get(base.ReleaseTrack.GA) and (
-        args.IsSpecified('accelerator_type')
-        or args.IsSpecified('accelerator_count')
+    if args.IsSpecified('accelerator_type') or args.IsSpecified(
+        'accelerator_count'
     ):
       accelerators = [
           self.messages.Accelerator(
@@ -354,9 +488,34 @@ class Configs:
           )
       ]
       config.host.gceInstance.accelerators = accelerators
-      update_mask.append(
-          'host.gce_instance.accelerators'
-      )
+      update_mask.append('host.gce_instance.accelerators')
+
+    if self.api_version != VERSION_MAP.get(
+        base.ReleaseTrack.GA
+    ) and args.IsSpecified('boost_config'):
+      for boost_config in args.boost_config:
+        desired_boost_config = self.messages.BoostConfig()
+        for key, value in boost_config.items():
+          if key == 'accelerator-type' or key == 'accelerator-count':
+            desired_boost_config.accelerators = [
+                self.messages.Accelerator(
+                    type=boost_config['accelerator-type'],
+                    count=boost_config['accelerator-count'],
+                )
+            ]
+          else:
+            setattr(desired_boost_config, BOOST_CONFIG_MAP.get(key), value)
+        config.host.gceInstance.boostConfigs.append(desired_boost_config)
+      update_mask.append('host.gce_instance.boost_configs')
+
+    if args.IsSpecified('allowed_ports'):
+      config.allowedPorts = []
+      for port_range in args.allowed_ports:
+        desired_port_range = self.messages.PortRange()
+        for key, value in port_range.items():
+          setattr(desired_port_range, key, value)
+        config.allowedPorts.append(desired_port_range)
+      update_mask.append('allowed_ports')
 
     # Container
     config.container = self.messages.Container()
@@ -366,7 +525,7 @@ class Configs:
     elif args.IsSpecified('container_predefined_image'):
       config.container.image = IMAGE_URL_MAP.get(
           args.container_predefined_image
-      )
+      ).format(location=location)
       update_mask.append('container.image')
 
     if args.IsSpecified('container_command'):
@@ -395,6 +554,39 @@ class Configs:
     if args.IsSpecified('container_run_as_user'):
       config.container.runAsUser = args.container_run_as_user
       update_mask.append('container.run_as_user')
+
+    if args.IsSpecified('pd_disk_type') or args.IsSpecified('pd_disk_size'):
+      config.persistentDirectories = old_config.persistentDirectories
+      if not old_config.persistentDirectories:
+        config.persistentDirectories = [self.messages.PersistentDirectory()]
+
+      config.persistentDirectories[0].gcePd = (
+          self.messages.GceRegionalPersistentDisk(
+              sizeGb=args.pd_disk_size, diskType=args.pd_disk_type
+          )
+      )
+      update_mask.append('persistent_directories')
+    elif args.IsSpecified('pd_source_snapshot'):
+      config.persistentDirectories = old_config.persistentDirectories
+      if not old_config.persistentDirectories:
+        config.persistentDirectories = [self.messages.PersistentDirectory()]
+      config.persistentDirectories[0].gcePd = (
+          self.messages.GceRegionalPersistentDisk(
+              sizeGb=0, fsType='', sourceSnapshot=args.pd_source_snapshot
+          )
+      )
+      update_mask.append('persistent_directories')
+
+    if args.IsSpecified('vm_tags'):
+      tags_val = self.messages.GceInstance.VmTagsValue()
+      for key, value in args.vm_tags.items():
+        tags_val.additionalProperties.append(
+            self.messages.GceInstance.VmTagsValue.AdditionalProperty(
+                key=key, value=value
+            )
+        )
+      config.host.gceInstance.vmTags = tags_val
+      update_mask.append('host.gce_instance.vm_tags')
 
     if not update_mask:
       log.error('No fields were specified.')

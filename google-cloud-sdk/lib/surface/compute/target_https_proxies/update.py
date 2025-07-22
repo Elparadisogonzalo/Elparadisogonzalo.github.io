@@ -69,12 +69,9 @@ def _DetailedHelp():
   }
 
 
-def _CheckMissingArgument(args, server_tls_policy_enabled):
+def _CheckMissingArgument(args):
   """Checks for missing argument."""
-  server_tls_policy_args = [
-      'clear_server_tls_policy',
-      'server_tls_policy',
-  ]
+  tls_early_data_args = ['tls_early_data']
   all_args = [
       'ssl_certificates',
       'url_map',
@@ -87,11 +84,10 @@ def _CheckMissingArgument(args, server_tls_policy_enabled):
       'certificate_manager_certificates',
       'clear_http_keep_alive_timeout_sec',
       'http_keep_alive_timeout_sec',
-  ] + (server_tls_policy_args if server_tls_policy_enabled else [])
-  err_server_tls_policy_args = [
-      '[--clear-server-tls-policy]',
-      '[--server-tls-policy]',
-  ]
+      'clear_server_tls_policy',
+      'server_tls_policy',
+  ] + (tls_early_data_args)
+  err_tls_early_data_args = ['[--tls-early-data]']
   err_msg_args = [
       '[--ssl-certificates]',
       '[--url-map]',
@@ -104,7 +100,9 @@ def _CheckMissingArgument(args, server_tls_policy_enabled):
       '[--certificate-manager-certificates]',
       '[--clear-http-keep-alive-timeout-sec]',
       '[--http-keep-alive-timeout-sec]',
-  ] + (err_server_tls_policy_args if server_tls_policy_enabled else [])
+      '[--clear-server-tls-policy]',
+      '[--server-tls-policy]',
+  ] + (err_tls_early_data_args)
   if not sum(args.IsSpecified(arg) for arg in all_args):
     raise compute_exceptions.ArgumentError(
         'You must specify at least one of %s or %s.'
@@ -120,7 +118,6 @@ def _Run(
     url_map_arg,
     ssl_policy_arg,
     certificate_map_ref,
-    server_tls_policy_enabled,
 ):
   """Issues requests necessary to update Target HTTPS Proxies."""
   client = holder.client
@@ -170,6 +167,13 @@ def _Run(
         )
     )
 
+  if args.tls_early_data:
+    new_resource.tlsEarlyData = (
+        client.messages.TargetHttpsProxy.TlsEarlyDataValueValuesEnum(
+            args.tls_early_data
+        )
+    )
+
   if args.ssl_policy:
     ssl_policy_ref = target_https_proxies_utils.ResolveSslPolicy(
         args, ssl_policy_arg, proxy_ref, holder.resources
@@ -193,13 +197,12 @@ def _Run(
     new_resource.certificateMap = None
     cleared_fields.append('certificateMap')
 
-  if server_tls_policy_enabled:
-    if args.IsKnownAndSpecified('server_tls_policy'):
-      server_tls_policy_ref = args.CONCEPTS.server_tls_policy.Parse()
-      new_resource.serverTlsPolicy = server_tls_policy_ref.SelfLink()
-    elif args.IsKnownAndSpecified('clear_server_tls_policy'):
-      new_resource.serverTlsPolicy = None
-      cleared_fields.append('serverTlsPolicy')
+  if args.IsKnownAndSpecified('server_tls_policy'):
+    server_tls_policy_ref = args.CONCEPTS.server_tls_policy.Parse()
+    new_resource.serverTlsPolicy = server_tls_policy_ref.SelfLink()
+  elif args.IsKnownAndSpecified('clear_server_tls_policy'):
+    new_resource.serverTlsPolicy = None
+    cleared_fields.append('serverTlsPolicy')
 
   if old_resource != new_resource:
     return _PatchTargetHttpsProxy(
@@ -266,6 +269,7 @@ def _AddServerTLSPolicyArguments(parser):
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.UniverseCompatible
 class Update(base.UpdateCommand):
   """Update a target HTTPS proxy."""
 
@@ -274,7 +278,6 @@ class Update(base.UpdateCommand):
   URL_MAP_ARG = None
   SSL_POLICY_ARG = None
   detailed_help = _DetailedHelp()
-  _server_tls_policy_enabled = False
 
   @classmethod
   def Args(cls, parser):
@@ -346,11 +349,12 @@ class Update(base.UpdateCommand):
     target_proxies_utils.AddClearHttpKeepAliveTimeoutSec(group)
 
     target_proxies_utils.AddQuicOverrideUpdateArgs(parser)
-    if cls._server_tls_policy_enabled:
-      _AddServerTLSPolicyArguments(parser)
+    target_proxies_utils.AddTlsEarlyDataUpdateArgs(parser)
+
+    _AddServerTLSPolicyArguments(parser)
 
   def Run(self, args):
-    _CheckMissingArgument(args, self._server_tls_policy_enabled)
+    _CheckMissingArgument(args)
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
     certificate_map_ref = args.CONCEPTS.certificate_map.Parse()
     return _Run(
@@ -361,10 +365,9 @@ class Update(base.UpdateCommand):
         self.URL_MAP_ARG,
         self.SSL_POLICY_ARG,
         certificate_map_ref,
-        self._server_tls_policy_enabled,
     )
 
 
 @base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
 class UpdateBeta(Update):
-  _server_tls_policy_enabled = True
+  pass

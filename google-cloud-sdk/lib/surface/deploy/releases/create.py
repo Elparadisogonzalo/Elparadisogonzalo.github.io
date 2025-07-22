@@ -28,6 +28,7 @@ from googlecloudsdk.api_lib.clouddeploy import release
 from googlecloudsdk.calliope import base
 from googlecloudsdk.calliope import exceptions as c_exceptions
 from googlecloudsdk.command_lib.deploy import delivery_pipeline_util
+from googlecloudsdk.command_lib.deploy import deploy_policy_util
 from googlecloudsdk.command_lib.deploy import deploy_util
 from googlecloudsdk.command_lib.deploy import flags
 from googlecloudsdk.command_lib.deploy import promote_util
@@ -92,11 +93,13 @@ def _CommonArgs(parser):
   flags.AddSkaffoldSources(parser)
   flags.AddInitialRolloutGroup(parser)
   flags.AddDeployParametersFlag(parser)
+  flags.AddOverrideDeployPolicies(parser)
 
 
 @base.ReleaseTracks(
     base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA, base.ReleaseTrack.GA
 )
+@base.DefaultUniverseOnly
 class Create(base.CreateCommand):
   """Creates a new release, delivery pipeline qualified."""
 
@@ -136,27 +139,29 @@ class Create(base.CreateCommand):
       )
     except (times.DateTimeSyntaxError, times.DateTimeValueError):
       support_expiration_dt = None
-    if maintenance_dt and (
-        maintenance_dt - times.Now()) <= datetime.timedelta(days=28):
+    if maintenance_dt and (maintenance_dt - times.Now()) <= datetime.timedelta(
+        days=28
+    ):
       log.status.Print(
-          'WARNING: This release\'s Skaffold version will be'
+          "WARNING: This release's Skaffold version will be"
           ' in maintenance mode beginning on {date}.'
-          ' After that you won\'t be able to create releases'
+          " After that you won't be able to create releases"
           ' using this version of Skaffold.\n'
           'https://cloud.google.com/deploy/docs/using-skaffold'
           '/select-skaffold#skaffold_version_deprecation'
           '_and_maintenance_policy'.format(
-              date=maintenance_dt.strftime('%Y-%m-%d'))
+              date=maintenance_dt.strftime('%Y-%m-%d')
+          )
       )
     if support_expiration_dt and times.Now() > support_expiration_dt:
       raise core_exceptions.Error(
-          'The Skaffold version you\'ve chosen is no longer supported.\n'
+          "The Skaffold version you've chosen is no longer supported.\n"
           'https://cloud.google.com/deploy/docs/using-skaffold/select-skaffold'
           '#skaffold_version_deprecation_and_maintenance_policy'
       )
     if maintenance_dt and times.Now() > maintenance_dt:
       raise core_exceptions.Error(
-          'You can\'t create a new release using a Skaffold version'
+          "You can't create a new release using a Skaffold version"
           ' that is in maintenance mode.\n'
           'https://cloud.google.com/deploy/docs/using-skaffold/select-skaffold'
           '#skaffold_version_deprecation_and_maintenance_policy'
@@ -168,17 +173,7 @@ class Create(base.CreateCommand):
       raise c_exceptions.ConflictingArgumentsException(
           '--disable-initial-rollout', '--to-target'
       )
-    if args.from_run_container:
-      if args.build_artifacts:
-        raise c_exceptions.ConflictingArgumentsException(
-            '--from-run-container',
-            '--build-artifacts',
-        )
-      if args.images:
-        raise c_exceptions.ConflictingArgumentsException(
-            '--from-run-container',
-            '--images'
-        )
+
     args.CONCEPTS.parsed_args.release = release_util.RenderPattern(
         args.CONCEPTS.parsed_args.release
     )
@@ -230,8 +225,6 @@ class Create(base.CreateCommand):
         pipeline_obj.uid,
         args.from_k8s_manifest,
         args.from_run_manifest,
-        args.from_run_container,
-        args.services,
         pipeline_obj,
         args.deploy_parameters,
     )
@@ -256,6 +249,12 @@ class Create(base.CreateCommand):
     release_obj = release.ReleaseClient().Get(release_ref.RelativeName())
     if args.disable_initial_rollout:
       return release_obj
+    # On the command line deploy policy IDs are provided, but for the
+    # CreateRollout API we need to provide the full resource name.
+    pipeline_ref = release_ref.Parent()
+    policies = deploy_policy_util.CreateDeployPolicyNamesFromIDs(
+        pipeline_ref, args.override_deploy_policies
+    )
     rollout_resource = promote_util.Promote(
         release_ref,
         release_obj,
@@ -264,6 +263,7 @@ class Create(base.CreateCommand):
         labels=args.initial_rollout_labels,
         annotations=args.initial_rollout_annotations,
         starting_phase_id=args.initial_rollout_phase_id,
+        override_deploy_policies=policies,
     )
 
     return release_obj, rollout_resource

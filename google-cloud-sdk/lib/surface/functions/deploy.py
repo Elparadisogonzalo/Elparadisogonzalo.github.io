@@ -40,20 +40,14 @@ _LEARN_ABOUT_GEN_DIFFS = (
     '\nhttps://cloud.google.com/functions/docs/concepts/version-comparison'
 )
 
-_RECENT_DEFAULT_CHANGE = (
-    'This function will be deployed as a 2nd gen function. This is a'
-    ' recent change in the default behavior for newly created functions.'
-    f'\n{_HOW_TO_DISABLE_CHANGE}\n{_LEARN_ABOUT_GEN_DIFFS}'
-)
 
-# TODO(b/286788716): Show this warning in GA track when change is incoming.
-_UPCOMING_CHANGE_WARNING = (
-    'In a future Cloud SDK release, new functions will be deployed as 2nd gen '
-    ' functions by default. This is equivalent to currently deploying new '
+_NEW_CHANGE_WARNING = (
+    'As of Cloud SDK 492.0.0 release, new functions will be deployed as 2nd gen'
+    ' functions by default. This is equivalent to currently deploying new'
     ' with the --gen2 flag. Existing 1st gen functions will not be impacted'
-    ' and will continue to deploy as 1st gen functions.\nYou can preview this'
-    ' behavior in beta. Alternatively,'
-    f' {_HOW_TO_DISABLE_CHANGE}\n{_LEARN_ABOUT_GEN_DIFFS}'
+    ' and will continue to deploy as 1st gen functions.\n'
+    f'{_HOW_TO_DISABLE_CHANGE}\n'
+    f'{_LEARN_ABOUT_GEN_DIFFS}'
 )
 
 
@@ -124,7 +118,12 @@ def _CommonArgs(parser, track):
   flags.AddGen2Flag(parser)
   flags.AddServeAllTrafficLatestRevisionFlag(parser)
   flags.AddConcurrencyFlag(parser)
-  flags.AddBuildServiceAccountFlag(parser, track)
+
+  # Add flag for user-provided Cloud Build Service Account
+  flags.AddBuildServiceAccountFlag(parser)
+
+  # Add flag for Binary Authorization Policy (2nd Gen only)
+  flags.AddBinaryAuthorizationMutexGroup(parser)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
@@ -141,7 +140,7 @@ class Deploy(util.FunctionResourceCommand, base.Command):
   def _RunV2(self, args):
     if not self._v2_function and not flags.ShouldUseGen2():
       # Gen2 function creation without an explicit generation specification.
-      log.status.Print(_RECENT_DEFAULT_CHANGE)
+      log.status.Print(_NEW_CHANGE_WARNING)
     return command_v2.Run(args, self.ReleaseTrack())
 
 

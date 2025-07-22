@@ -17,9 +17,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from googlecloudsdk.api_lib.apphub import utils as api_lib_utils
 from googlecloudsdk.api_lib.apphub.applications import client as apis
 from googlecloudsdk.calliope import base
-from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.apphub import flags
 from googlecloudsdk.command_lib.iam import iam_util
 
@@ -40,7 +40,8 @@ _DETAILED_HELP = {
 }
 
 
-class SetIamPolicy(base.Command):
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class SetIamPolicyGA(base.Command):
   """Set the IAM policy for an Apphub application as defined in a JSON/YAML file.
 
      See https://cloud.google.com/iam/docs/managing-policies for details of
@@ -54,12 +55,30 @@ class SetIamPolicy(base.Command):
     iam_util.AddArgForPolicyFile(parser)
 
   def Run(self, args):
-    client = apis.ApplicationsClient()
-    app_ref = args.CONCEPTS.application.Parse()
-    if not app_ref.Name():
-      raise exceptions.InvalidArgumentException(
-          'application', 'application id must be non-empty.'
-      )
+    client = apis.ApplicationsClient(release_track=base.ReleaseTrack.GA)
+    app_ref = api_lib_utils.GetApplicationRef(args)
+    return client.SetIamPolicy(
+        app_id=app_ref.RelativeName(), policy_file=args.policy_file
+    )
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class SetIamPolicyAlpha(base.Command):
+  """Set the IAM policy for an Apphub application as defined in a JSON/YAML file.
+
+     See https://cloud.google.com/iam/docs/managing-policies for details of
+        the policy file format and contents.
+  """
+  detailed_help = _DETAILED_HELP
+
+  @staticmethod
+  def Args(parser):
+    flags.AddSetIamPolicyFlags(parser)
+    iam_util.AddArgForPolicyFile(parser)
+
+  def Run(self, args):
+    client = apis.ApplicationsClient(release_track=base.ReleaseTrack.ALPHA)
+    app_ref = api_lib_utils.GetApplicationRef(args)
     return client.SetIamPolicy(
         app_id=app_ref.RelativeName(), policy_file=args.policy_file
     )

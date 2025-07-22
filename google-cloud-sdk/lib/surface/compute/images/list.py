@@ -26,6 +26,22 @@ from googlecloudsdk.command_lib.compute import completers
 from googlecloudsdk.command_lib.compute.images import flags
 from googlecloudsdk.command_lib.compute.images import policy
 from googlecloudsdk.core import properties
+from googlecloudsdk.core.universe_descriptor import universe_descriptor
+
+
+def _PublicImageProjects():
+  if properties.IsDefaultUniverse():
+    return sorted(constants.PUBLIC_IMAGE_PROJECTS)
+  else:
+    prefix = (
+        universe_descriptor.UniverseDescriptor()
+        .Get(properties.GetUniverseDomain())
+        .project_prefix
+    )
+    return [
+        prefix + ':' + project
+        for project in sorted(constants.BASE_PUBLIC_IMAGE_PROJECTS)
+    ]
 
 
 def _Args(parser, support_image_zone_flag=False):
@@ -89,6 +105,7 @@ def _Args(parser, support_image_zone_flag=False):
     )
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class List(base.ListCommand):
   """List Compute Engine images."""
@@ -109,10 +126,11 @@ class List(base.ListCommand):
 
     def ParseProject(project):
       return holder.resources.Parse(
-          None, {'project': project}, collection='compute.projects')
+          None, {'project': project}, collection='compute.projects'
+      )
 
     if args.standard_images:
-      for project in constants.PUBLIC_IMAGE_PROJECTS:
+      for project in _PublicImageProjects():
         request_data.scope_set.add(ParseProject(project))
 
     if args.preview_images:
@@ -132,8 +150,9 @@ class List(base.ListCommand):
 
     images = lister.Invoke(request_data, list_implementation)
 
-    return self.AugmentImagesStatus(holder.resources,
-                                    self._FilterDeprecated(args, images))
+    return self.AugmentImagesStatus(
+        holder.resources, self._FilterDeprecated(args, images)
+    )
 
   def _CheckForDeprecated(self, image):
     deprecated = False
@@ -161,10 +180,10 @@ class ListBeta(List):
 
   @classmethod
   def Args(cls, parser):
-    _Args(parser, support_image_zone_flag=False)
+    _Args(parser, support_image_zone_flag=True)
 
   def Run(self, args):
-    return self._Run(args, support_image_zone_flag=False)
+    return self._Run(args, support_image_zone_flag=True)
 
   def AugmentImagesStatus(self, resources, images):
     """Modify images status based on OrgPolicy."""

@@ -454,7 +454,7 @@ def ListSbomReferences(args):
         ]
       # Update the project for the request when a specific resource is provided.
       if artifact.project:
-        project = artifact.project
+        project = util.GetParent(artifact.project, args.location)
 
     except (ar_exceptions.InvalidInputValueError, docker_name.BadNameException):
       # Failed to process the artifact. Use the uri directly
@@ -767,6 +767,8 @@ def _GenerateSbomRefOccurrenceListFilter(artifact, sbom, project_id):
   f.WithResources([artifact.GetOccurrenceResourceUri()])
   f.WithKinds(['SBOM_REFERENCE'])
   note_id = _GetReferenceNoteID(sbom.sbom_format, sbom.version)
+  if len(project_id.split('/')) > 1:
+    project_id = project_id.split('/')[0]
   f.WithCustomFilter(
       'noteId="{0}" AND noteProjectId="{1}"'.format(note_id, project_id)
   )
@@ -899,7 +901,6 @@ def ExportSbom(args):
     raise ar_exceptions.InvalidInputValueError(
         '--uri is required.',
     )
-
   uri = _RemovePrefix(args.uri, 'https://')
   if docker_util.IsARDockerImage(uri):
     artifact = _GetARDockerImage(uri)
@@ -919,12 +920,12 @@ def ExportSbom(args):
     raise ar_exceptions.InvalidInputValueError(
         '{} is not an Artifact Registry image.'.format(uri)
     )
-
   project = util.GetProject(args)
   if artifact.project:
     project = artifact.project
+  parent = util.GetParent(project, args.location)
   resp = ca_requests.ExportSbomV1beta1(
-      project, 'https://{}'.format(artifact.resource_uri)
+      parent, 'https://{}'.format(artifact.resource_uri)
   )
   log.status.Print(
       'Exporting the SBOM file for resource {}. Discovery occurrence ID: {}'

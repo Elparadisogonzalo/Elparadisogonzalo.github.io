@@ -354,7 +354,11 @@ class Binding(_messages.Message):
       example, `deleted:principal://iam.googleapis.com/locations/global/workfo
       rcePools/my-pool-id/subject/my-subject-attribute-value`.
     role: Role that is assigned to the list of `members`, or principals. For
-      example, `roles/viewer`, `roles/editor`, or `roles/owner`.
+      example, `roles/viewer`, `roles/editor`, or `roles/owner`. For an
+      overview of the IAM roles and permissions, see the [IAM
+      documentation](https://cloud.google.com/iam/docs/roles-overview). For a
+      list of the available pre-defined roles, see
+      [here](https://cloud.google.com/iam/docs/understanding-roles).
   """
 
   condition = _messages.MessageField('Expr', 1)
@@ -580,7 +584,7 @@ class BuildSignature(_messages.Message):
 
 
 class BuildStep(_messages.Message):
-  r"""A step in the build pipeline. Next ID: 21
+  r"""A step in the build pipeline. Next ID: 22
 
   Enums:
     StatusValueValuesEnum: Output only. Status of the build step. At this
@@ -635,6 +639,7 @@ class BuildStep(_messages.Message):
       to use as the name for a later build step.
     pullTiming: Output only. Stores timing information for pulling this build
       step's builder image only.
+    results: A StepResult attribute.
     script: A shell script to be executed in the step. When script is
       provided, the user cannot specify the entrypoint or args.
     secretEnv: A list of environment variables which are encrypted using a
@@ -702,13 +707,14 @@ class BuildStep(_messages.Message):
   id = _messages.StringField(9)
   name = _messages.StringField(10)
   pullTiming = _messages.MessageField('TimeSpan', 11)
-  script = _messages.StringField(12)
-  secretEnv = _messages.StringField(13, repeated=True)
-  status = _messages.EnumField('StatusValueValuesEnum', 14)
-  timeout = _messages.StringField(15)
-  timing = _messages.MessageField('TimeSpan', 16)
-  volumes = _messages.MessageField('Volume', 17, repeated=True)
-  waitFor = _messages.StringField(18, repeated=True)
+  results = _messages.MessageField('StepResult', 12, repeated=True)
+  script = _messages.StringField(13)
+  secretEnv = _messages.StringField(14, repeated=True)
+  status = _messages.EnumField('StatusValueValuesEnum', 15)
+  timeout = _messages.StringField(16)
+  timing = _messages.MessageField('TimeSpan', 17)
+  volumes = _messages.MessageField('Volume', 18, repeated=True)
+  waitFor = _messages.StringField(19, repeated=True)
 
 
 class ByProducts(_messages.Message):
@@ -1187,6 +1193,9 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Artifacts(_messages.Message):
   completion of all build steps.
 
   Fields:
+    goModules: Optional. A list of Go modules to be uploaded to Artifact
+      Registry upon successful completion of all build steps. If any objects
+      fail to be pushed, the build is marked FAILURE.
     images: A list of images to be pushed upon the successful completion of
       all build steps. The images will be pushed using the builder service
       account's credentials. The digests of the pushed images will be stored
@@ -1216,11 +1225,12 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Artifacts(_messages.Message):
       objects fail to be pushed, the build is marked FAILURE.
   """
 
-  images = _messages.StringField(1, repeated=True)
-  mavenArtifacts = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsMavenArtifact', 2, repeated=True)
-  npmPackages = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsNpmPackage', 3, repeated=True)
-  objects = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsArtifactObjects', 4)
-  pythonPackages = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsPythonPackage', 5, repeated=True)
+  goModules = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsGoModule', 1, repeated=True)
+  images = _messages.StringField(2, repeated=True)
+  mavenArtifacts = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsMavenArtifact', 3, repeated=True)
+  npmPackages = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsNpmPackage', 4, repeated=True)
+  objects = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsArtifactObjects', 5)
+  pythonPackages = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsPythonPackage', 6, repeated=True)
 
 
 class ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsArtifactObjects(_messages.Message):
@@ -1243,6 +1253,37 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsArtifactObjects(_messa
   timing = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1TimeSpan', 3)
 
 
+class ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsGoModule(_messages.Message):
+  r"""Go module to upload to Artifact Registry upon successful completion of
+  all build steps. A module refers to all dependencies in a go.mod file.
+
+  Fields:
+    modulePath: Optional. The Go module's "module path". e.g.
+      example.com/foo/v2
+    moduleVersion: Optional. The Go module's semantic version in the form
+      vX.Y.Z. e.g. v0.1.1 Pre-release identifiers can also be added by
+      appending a dash and dot separated ASCII alphanumeric characters and
+      hyphens. e.g. v0.2.3-alpha.x.12m.5
+    repositoryLocation: Optional. Location of the Artifact Registry
+      repository. i.e. us-east1 Defaults to the build's location.
+    repositoryName: Optional. Artifact Registry repository name. Specified Go
+      modules will be zipped and uploaded to Artifact Registry with this
+      location as a prefix. e.g. my-go-repo
+    repositoryProjectId: Optional. Project ID of the Artifact Registry
+      repository. Defaults to the build project.
+    sourcePath: Optional. Source path of the go.mod file in the build's
+      workspace. If not specified, this will default to the current directory.
+      e.g. ~/code/go/mypackage
+  """
+
+  modulePath = _messages.StringField(1)
+  moduleVersion = _messages.StringField(2)
+  repositoryLocation = _messages.StringField(3)
+  repositoryName = _messages.StringField(4)
+  repositoryProjectId = _messages.StringField(5)
+  sourcePath = _messages.StringField(6)
+
+
 class ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsMavenArtifact(_messages.Message):
   r"""A Maven artifact to upload to Artifact Registry upon successful
   completion of all build steps.
@@ -1252,8 +1293,8 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1ArtifactsMavenArtifact(_message
       Artifact Registry.
     groupId: Maven `groupId` value used when uploading the artifact to
       Artifact Registry.
-    path: Path to an artifact in the build's workspace to be uploaded to
-      Artifact Registry. This can be either an absolute path, e.g.
+    path: Optional. Path to an artifact in the build's workspace to be
+      uploaded to Artifact Registry. This can be either an absolute path, e.g.
       /workspace/my-app/target/my-app-1.0.SNAPSHOT.jar or a relative path from
       /workspace, e.g. my-app/target/my-app-1.0.SNAPSHOT.jar.
     repository: Artifact Registry repository, in the form "https://$REGION-
@@ -1342,11 +1383,14 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Build(_messages.Message):
       this build, if it was triggered automatically.
     createTime: Output only. Time at which the request to create the build was
       received.
+    dependencies: Optional. Dependencies that the Cloud Build worker will
+      fetch before executing user steps.
     failureInfo: Output only. Contains information about the build when
       status=FAILURE.
     finishTime: Output only. Time at which execution of the build was
       finished. The difference between finish_time and start_time is the
       duration of the build's execution.
+    gitConfig: Optional. Configuration for git operations.
     id: Output only. Unique identifier of the build.
     images: A list of images to be pushed upon the successful completion of
       all build steps. The images are pushed using the builder service
@@ -1376,7 +1420,7 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Build(_messages.Message):
       build runtime. Must be of the format
       `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. ACCOUNT can be email
       address or uniqueId of the service account.
-    source: The location of the source files to build.
+    source: Optional. The location of the source files to build.
     sourceProvenance: Output only. A permanent fixed identifier for source.
     startTime: Output only. Time at which execution of the build was started.
     status: Output only. Status of the build.
@@ -1486,30 +1530,32 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Build(_messages.Message):
   availableSecrets = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Secrets', 3)
   buildTriggerId = _messages.StringField(4)
   createTime = _messages.StringField(5)
-  failureInfo = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildFailureInfo', 6)
-  finishTime = _messages.StringField(7)
-  id = _messages.StringField(8)
-  images = _messages.StringField(9, repeated=True)
-  logUrl = _messages.StringField(10)
-  logsBucket = _messages.StringField(11)
-  name = _messages.StringField(12)
-  options = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptions', 13)
-  projectId = _messages.StringField(14)
-  queueTtl = _messages.StringField(15)
-  results = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Results', 16)
-  secrets = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Secret', 17, repeated=True)
-  serviceAccount = _messages.StringField(18)
-  source = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Source', 19)
-  sourceProvenance = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1SourceProvenance', 20)
-  startTime = _messages.StringField(21)
-  status = _messages.EnumField('StatusValueValuesEnum', 22)
-  statusDetail = _messages.StringField(23)
-  steps = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildStep', 24, repeated=True)
-  substitutions = _messages.MessageField('SubstitutionsValue', 25)
-  tags = _messages.StringField(26, repeated=True)
-  timeout = _messages.StringField(27)
-  timing = _messages.MessageField('TimingValue', 28)
-  warnings = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildWarning', 29, repeated=True)
+  dependencies = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Dependency', 6, repeated=True)
+  failureInfo = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildFailureInfo', 7)
+  finishTime = _messages.StringField(8)
+  gitConfig = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1GitConfig', 9)
+  id = _messages.StringField(10)
+  images = _messages.StringField(11, repeated=True)
+  logUrl = _messages.StringField(12)
+  logsBucket = _messages.StringField(13)
+  name = _messages.StringField(14)
+  options = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptions', 15)
+  projectId = _messages.StringField(16)
+  queueTtl = _messages.StringField(17)
+  results = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Results', 18)
+  secrets = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Secret', 19, repeated=True)
+  serviceAccount = _messages.StringField(20)
+  source = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Source', 21)
+  sourceProvenance = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1SourceProvenance', 22)
+  startTime = _messages.StringField(23)
+  status = _messages.EnumField('StatusValueValuesEnum', 24)
+  statusDetail = _messages.StringField(25)
+  steps = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildStep', 26, repeated=True)
+  substitutions = _messages.MessageField('SubstitutionsValue', 27)
+  tags = _messages.StringField(28, repeated=True)
+  timeout = _messages.StringField(29)
+  timing = _messages.MessageField('TimingValue', 30)
+  warnings = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildWarning', 31, repeated=True)
 
 
 class ContaineranalysisGoogleDevtoolsCloudbuildV1BuildApproval(_messages.Message):
@@ -1610,12 +1656,15 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptions(_messages.Message)
       operating system and build utilities. Also note that this is the minimum
       disk size that will be allocated for the build -- the build may run with
       a larger disk than requested. At present, the maximum disk size is
-      2000GB; builds that request more than the maximum are rejected with an
+      4000GB; builds that request more than the maximum are rejected with an
       error.
     dynamicSubstitutions: Option to specify whether or not to apply bash style
       string operations to the substitutions. NOTE: this is always enabled for
       triggered builds and cannot be overridden in the build configuration
       file.
+    enableStructuredLogging: Optional. Option to specify whether structured
+      logging is enabled. If true, JSON-formatted logs are parsed as
+      structured logs.
     env: A list of global environment variable definitions that will exist for
       all build steps in this build. If a variable is defined in both globally
       and in a build step, the variable will use the build step value. The
@@ -1630,6 +1679,8 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptions(_messages.Message)
       [running builds in a private
       pool](https://cloud.google.com/build/docs/private-pools/run-builds-in-
       private-pool) for more information.
+    pubsubTopic: Optional. Option to specify the Pub/Sub topic to receive
+      build status updates.
     requestedVerifyOption: Requested verifiability options.
     secretEnv: A list of global environment variables, which are encrypted
       using a Cloud Key Management Service crypto key. These values must be
@@ -1659,9 +1710,12 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptions(_messages.Message)
         the same region as the build. The builder service account must have
         access to create and write to Cloud Storage buckets in the build
         project.
+      LEGACY_BUCKET: Bucket is located in a Google-owned project and is not
+        regionalized.
     """
     DEFAULT_LOGS_BUCKET_BEHAVIOR_UNSPECIFIED = 0
     REGIONAL_USER_OWNED_BUCKET = 1
+    LEGACY_BUCKET = 2
 
   class LogStreamingOptionValueValuesEnum(_messages.Enum):
     r"""Option to define build log streaming behavior to Cloud Storage.
@@ -1735,12 +1789,15 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptions(_messages.Message)
       NONE: No hash requested.
       SHA256: Use a sha256 hash.
       MD5: Use a md5 hash.
+      GO_MODULE_H1: Dirhash of a Go module's source code which is then hex-
+        encoded.
       SHA512: Use a sha512 hash.
     """
     NONE = 0
     SHA256 = 1
     MD5 = 2
-    SHA512 = 3
+    GO_MODULE_H1 = 3
+    SHA512 = 4
 
   class SubstitutionOptionValueValuesEnum(_messages.Enum):
     r"""Option to specify behavior when there is an error in the substitution
@@ -1759,17 +1816,19 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptions(_messages.Message)
   defaultLogsBucketBehavior = _messages.EnumField('DefaultLogsBucketBehaviorValueValuesEnum', 2)
   diskSizeGb = _messages.IntegerField(3)
   dynamicSubstitutions = _messages.BooleanField(4)
-  env = _messages.StringField(5, repeated=True)
-  logStreamingOption = _messages.EnumField('LogStreamingOptionValueValuesEnum', 6)
-  logging = _messages.EnumField('LoggingValueValuesEnum', 7)
-  machineType = _messages.EnumField('MachineTypeValueValuesEnum', 8)
-  pool = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptionsPoolOption', 9)
-  requestedVerifyOption = _messages.EnumField('RequestedVerifyOptionValueValuesEnum', 10)
-  secretEnv = _messages.StringField(11, repeated=True)
-  sourceProvenanceHash = _messages.EnumField('SourceProvenanceHashValueListEntryValuesEnum', 12, repeated=True)
-  substitutionOption = _messages.EnumField('SubstitutionOptionValueValuesEnum', 13)
-  volumes = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Volume', 14, repeated=True)
-  workerPool = _messages.StringField(15)
+  enableStructuredLogging = _messages.BooleanField(5)
+  env = _messages.StringField(6, repeated=True)
+  logStreamingOption = _messages.EnumField('LogStreamingOptionValueValuesEnum', 7)
+  logging = _messages.EnumField('LoggingValueValuesEnum', 8)
+  machineType = _messages.EnumField('MachineTypeValueValuesEnum', 9)
+  pool = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptionsPoolOption', 10)
+  pubsubTopic = _messages.StringField(11)
+  requestedVerifyOption = _messages.EnumField('RequestedVerifyOptionValueValuesEnum', 12)
+  secretEnv = _messages.StringField(13, repeated=True)
+  sourceProvenanceHash = _messages.EnumField('SourceProvenanceHashValueListEntryValuesEnum', 14, repeated=True)
+  substitutionOption = _messages.EnumField('SubstitutionOptionValueValuesEnum', 15)
+  volumes = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Volume', 16, repeated=True)
+  workerPool = _messages.StringField(17)
 
 
 class ContaineranalysisGoogleDevtoolsCloudbuildV1BuildOptionsPoolOption(_messages.Message):
@@ -1968,15 +2027,81 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1ConnectedRepository(_messages.M
   resource.
 
   Fields:
-    dir: Directory, relative to the source root, in which to run the build.
+    dir: Optional. Directory, relative to the source root, in which to run the
+      build.
     repository: Required. Name of the Google Cloud Build repository, formatted
       as `projects/*/locations/*/connections/*/repositories/*`.
-    revision: The revision to fetch from the Git repository such as a branch,
-      a tag, a commit SHA, or any Git ref.
+    revision: Required. The revision to fetch from the Git repository such as
+      a branch, a tag, a commit SHA, or any Git ref.
   """
 
   dir = _messages.StringField(1)
   repository = _messages.StringField(2)
+  revision = _messages.StringField(3)
+
+
+class ContaineranalysisGoogleDevtoolsCloudbuildV1Dependency(_messages.Message):
+  r"""A dependency that the Cloud Build worker will fetch before executing
+  user steps.
+
+  Fields:
+    empty: If set to true disable all dependency fetching (ignoring the
+      default source as well).
+    gitSource: Represents a git repository as a build dependency.
+  """
+
+  empty = _messages.BooleanField(1)
+  gitSource = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1DependencyGitSourceDependency', 2)
+
+
+class ContaineranalysisGoogleDevtoolsCloudbuildV1DependencyGitSourceDependency(_messages.Message):
+  r"""Represents a git repository as a build dependency.
+
+  Fields:
+    depth: Optional. How much history should be fetched for the build (default
+      1, -1 for all history).
+    destPath: Required. Where should the files be placed on the worker.
+    recurseSubmodules: Optional. True if submodules should be fetched too
+      (default false).
+    repository: Required. The kind of repo (url or dev connect).
+    revision: Required. The revision that we will fetch the repo at.
+  """
+
+  depth = _messages.IntegerField(1)
+  destPath = _messages.StringField(2)
+  recurseSubmodules = _messages.BooleanField(3)
+  repository = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1DependencyGitSourceRepository', 4)
+  revision = _messages.StringField(5)
+
+
+class ContaineranalysisGoogleDevtoolsCloudbuildV1DependencyGitSourceRepository(_messages.Message):
+  r"""A repository for a git source.
+
+  Fields:
+    developerConnect: The Developer Connect Git repository link or the url
+      that matches a repository link in the current project, formatted as
+      `projects/*/locations/*/connections/*/gitRepositoryLink/*`
+    url: Location of the Git repository.
+  """
+
+  developerConnect = _messages.StringField(1)
+  url = _messages.StringField(2)
+
+
+class ContaineranalysisGoogleDevtoolsCloudbuildV1DeveloperConnectConfig(_messages.Message):
+  r"""This config defines the location of a source through Developer Connect.
+
+  Fields:
+    dir: Required. Directory, relative to the source root, in which to run the
+      build.
+    gitRepositoryLink: Required. The Developer Connect Git repository link,
+      formatted as `projects/*/locations/*/connections/*/gitRepositoryLink/*`.
+    revision: Required. The revision to fetch from the Git repository such as
+      a branch, a tag, a commit SHA, or any Git ref.
+  """
+
+  dir = _messages.StringField(1)
+  gitRepositoryLink = _messages.StringField(2)
   revision = _messages.StringField(3)
 
 
@@ -1991,22 +2116,46 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1FileHashes(_messages.Message):
   fileHash = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1Hash', 1, repeated=True)
 
 
+class ContaineranalysisGoogleDevtoolsCloudbuildV1GitConfig(_messages.Message):
+  r"""GitConfig is a configuration for git operations.
+
+  Fields:
+    http: Configuration for HTTP related git operations.
+  """
+
+  http = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1GitConfigHttpConfig', 1)
+
+
+class ContaineranalysisGoogleDevtoolsCloudbuildV1GitConfigHttpConfig(_messages.Message):
+  r"""HttpConfig is a configuration for HTTP related git operations.
+
+  Fields:
+    proxySecretVersionName: SecretVersion resource of the HTTP proxy URL. The
+      Service Account used in the build (either the default Service Account or
+      user-specified Service Account) should have
+      `secretmanager.versions.access` permissions on this secret. The proxy
+      URL should be in format `protocol://@]proxyhost[:port]`.
+  """
+
+  proxySecretVersionName = _messages.StringField(1)
+
+
 class ContaineranalysisGoogleDevtoolsCloudbuildV1GitSource(_messages.Message):
   r"""Location of the source in any accessible Git repository.
 
   Fields:
-    dir: Directory, relative to the source root, in which to run the build.
-      This must be a relative path. If a step's `dir` is specified and is an
-      absolute path, this value is ignored for that step's execution.
-    revision: The revision to fetch from the Git repository such as a branch,
-      a tag, a commit SHA, or any Git ref. Cloud Build uses `git fetch` to
-      fetch the revision from the Git repository; therefore make sure that the
-      string you provide for `revision` is parsable by the command. For
-      information on string values accepted by `git fetch`, see https://git-
-      scm.com/docs/gitrevisions#_specifying_revisions. For information on `git
-      fetch`, see https://git-scm.com/docs/git-fetch.
-    url: Location of the Git repo to build. This will be used as a `git
-      remote`, see https://git-scm.com/docs/git-remote.
+    dir: Optional. Directory, relative to the source root, in which to run the
+      build. This must be a relative path. If a step's `dir` is specified and
+      is an absolute path, this value is ignored for that step's execution.
+    revision: Optional. The revision to fetch from the Git repository such as
+      a branch, a tag, a commit SHA, or any Git ref. Cloud Build uses `git
+      fetch` to fetch the revision from the Git repository; therefore make
+      sure that the string you provide for `revision` is parsable by the
+      command. For information on string values accepted by `git fetch`, see
+      https://git-scm.com/docs/gitrevisions#_specifying_revisions. For
+      information on `git fetch`, see https://git-scm.com/docs/git-fetch.
+    url: Required. Location of the Git repo to build. This will be used as a
+      `git remote`, see https://git-scm.com/docs/git-remote.
   """
 
   dir = _messages.StringField(1)
@@ -2032,12 +2181,15 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Hash(_messages.Message):
       NONE: No hash requested.
       SHA256: Use a sha256 hash.
       MD5: Use a md5 hash.
+      GO_MODULE_H1: Dirhash of a Go module's source code which is then hex-
+        encoded.
       SHA512: Use a sha512 hash.
     """
     NONE = 0
     SHA256 = 1
     MD5 = 2
-    SHA512 = 3
+    GO_MODULE_H1 = 3
+    SHA512 = 4
 
   type = _messages.EnumField('TypeValueValuesEnum', 1)
   value = _messages.BytesField(2)
@@ -2100,24 +2252,24 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1RepoSource(_messages.Message):
   r"""Location of the source in a Google Cloud Source Repository.
 
   Messages:
-    SubstitutionsValue: Substitutions to use in a triggered build. Should only
-      be used with RunBuildTrigger
+    SubstitutionsValue: Optional. Substitutions to use in a triggered build.
+      Should only be used with RunBuildTrigger
 
   Fields:
     branchName: Regex matching branches to build. The syntax of the regular
       expressions accepted is the syntax accepted by RE2 and described at
       https://github.com/google/re2/wiki/Syntax
     commitSha: Explicit commit SHA to build.
-    dir: Directory, relative to the source root, in which to run the build.
-      This must be a relative path. If a step's `dir` is specified and is an
-      absolute path, this value is ignored for that step's execution.
-    invertRegex: Only trigger a build if the revision regex does NOT match the
-      revision regex.
-    projectId: ID of the project that owns the Cloud Source Repository. If
-      omitted, the project ID requesting the build is assumed.
-    repoName: Name of the Cloud Source Repository.
-    substitutions: Substitutions to use in a triggered build. Should only be
-      used with RunBuildTrigger
+    dir: Optional. Directory, relative to the source root, in which to run the
+      build. This must be a relative path. If a step's `dir` is specified and
+      is an absolute path, this value is ignored for that step's execution.
+    invertRegex: Optional. Only trigger a build if the revision regex does NOT
+      match the revision regex.
+    projectId: Optional. ID of the project that owns the Cloud Source
+      Repository. If omitted, the project ID requesting the build is assumed.
+    repoName: Required. Name of the Cloud Source Repository.
+    substitutions: Optional. Substitutions to use in a triggered build. Should
+      only be used with RunBuildTrigger
     tagName: Regex matching tags to build. The syntax of the regular
       expressions accepted is the syntax accepted by RE2 and described at
       https://github.com/google/re2/wiki/Syntax
@@ -2125,8 +2277,8 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1RepoSource(_messages.Message):
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class SubstitutionsValue(_messages.Message):
-    r"""Substitutions to use in a triggered build. Should only be used with
-    RunBuildTrigger
+    r"""Optional. Substitutions to use in a triggered build. Should only be
+    used with RunBuildTrigger
 
     Messages:
       AdditionalProperty: An additional property for a SubstitutionsValue
@@ -2173,7 +2325,10 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Results(_messages.Message):
       in the order corresponding to build step indices. [Cloud
       Builders](https://cloud.google.com/cloud-build/docs/cloud-builders) can
       produce this output by writing to `$BUILDER_OUTPUT/output`. Only the
-      first 50KB of data is stored.
+      first 50KB of data is stored. Note that the `$BUILDER_OUTPUT` variable
+      is read-only and can't be substituted.
+    goModules: Optional. Go module artifacts uploaded to Artifact Registry at
+      the end of the build.
     images: Container images that were built as a part of the build.
     mavenArtifacts: Maven artifacts uploaded to Artifact Registry at the end
       of the build.
@@ -2189,11 +2344,12 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Results(_messages.Message):
   artifactTiming = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1TimeSpan', 2)
   buildStepImages = _messages.StringField(3, repeated=True)
   buildStepOutputs = _messages.BytesField(4, repeated=True)
-  images = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuiltImage', 5, repeated=True)
-  mavenArtifacts = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1UploadedMavenArtifact', 6, repeated=True)
-  npmPackages = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1UploadedNpmPackage', 7, repeated=True)
-  numArtifacts = _messages.IntegerField(8)
-  pythonPackages = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1UploadedPythonPackage', 9, repeated=True)
+  goModules = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1UploadedGoModule', 5, repeated=True)
+  images = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1BuiltImage', 6, repeated=True)
+  mavenArtifacts = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1UploadedMavenArtifact', 7, repeated=True)
+  npmPackages = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1UploadedNpmPackage', 8, repeated=True)
+  numArtifacts = _messages.IntegerField(9)
+  pythonPackages = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1UploadedPythonPackage', 10, repeated=True)
 
 
 class ContaineranalysisGoogleDevtoolsCloudbuildV1Secret(_messages.Message):
@@ -2287,6 +2443,8 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Source(_messages.Message):
   Fields:
     connectedRepository: Optional. If provided, get the source from this 2nd-
       gen Google Cloud Build repository resource.
+    developerConnectConfig: If provided, get the source from this Developer
+      Connect config.
     gitSource: If provided, get the source from this Git repository.
     repoSource: If provided, get the source from this location in a Cloud
       Source Repository.
@@ -2299,10 +2457,11 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Source(_messages.Message):
   """
 
   connectedRepository = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1ConnectedRepository', 1)
-  gitSource = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1GitSource', 2)
-  repoSource = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1RepoSource', 3)
-  storageSource = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1StorageSource', 4)
-  storageSourceManifest = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1StorageSourceManifest', 5)
+  developerConnectConfig = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1DeveloperConnectConfig', 2)
+  gitSource = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1GitSource', 3)
+  repoSource = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1RepoSource', 4)
+  storageSource = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1StorageSource', 5)
+  storageSourceManifest = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1StorageSourceManifest', 6)
 
 
 class ContaineranalysisGoogleDevtoolsCloudbuildV1SourceProvenance(_messages.Message):
@@ -2391,11 +2550,11 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1StorageSource(_messages.Message
     bucket: Cloud Storage bucket containing the source (see [Bucket Name
       Requirements](https://cloud.google.com/storage/docs/bucket-
       naming#requirements)).
-    generation: Cloud Storage generation for the object. If the generation is
-      omitted, the latest generation will be used.
-    object: Cloud Storage object containing the source. This object must be a
-      zipped (`.zip`) or gzipped archive file (`.tar.gz`) containing source to
-      build.
+    generation: Optional. Cloud Storage generation for the object. If the
+      generation is omitted, the latest generation will be used.
+    object: Required. Cloud Storage object containing the source. This object
+      must be a zipped (`.zip`) or gzipped archive file (`.tar.gz`) containing
+      source to build.
     sourceFetcher: Optional. Option to specify the tool to fetch the source
       file for the build.
   """
@@ -2427,13 +2586,13 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1StorageSourceManifest(_messages
   builders/tree/master/gcs-fetcher).
 
   Fields:
-    bucket: Cloud Storage bucket containing the source manifest (see [Bucket
-      Name Requirements](https://cloud.google.com/storage/docs/bucket-
+    bucket: Required. Cloud Storage bucket containing the source manifest (see
+      [Bucket Name Requirements](https://cloud.google.com/storage/docs/bucket-
       naming#requirements)).
     generation: Cloud Storage generation for the object. If the generation is
       omitted, the latest generation will be used.
-    object: Cloud Storage object containing the source manifest. This object
-      must be a JSON file.
+    object: Required. Cloud Storage object containing the source manifest.
+      This object must be a JSON file.
   """
 
   bucket = _messages.StringField(1)
@@ -2451,6 +2610,22 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1TimeSpan(_messages.Message):
 
   endTime = _messages.StringField(1)
   startTime = _messages.StringField(2)
+
+
+class ContaineranalysisGoogleDevtoolsCloudbuildV1UploadedGoModule(_messages.Message):
+  r"""A Go module artifact uploaded to Artifact Registry using the GoModule
+  directive.
+
+  Fields:
+    fileHashes: Hash types and values of the Go Module Artifact.
+    pushTiming: Output only. Stores timing information for pushing the
+      specified artifact.
+    uri: URI of the uploaded artifact.
+  """
+
+  fileHashes = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1FileHashes', 1)
+  pushTiming = _messages.MessageField('ContaineranalysisGoogleDevtoolsCloudbuildV1TimeSpan', 2)
+  uri = _messages.StringField(3)
 
 
 class ContaineranalysisGoogleDevtoolsCloudbuildV1UploadedMavenArtifact(_messages.Message):
@@ -2514,6 +2689,347 @@ class ContaineranalysisGoogleDevtoolsCloudbuildV1Volume(_messages.Message):
 
   name = _messages.StringField(1)
   path = _messages.StringField(2)
+
+
+class ContaineranalysisProjectsLocationsNotesBatchCreateRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesBatchCreateRequest object.
+
+  Fields:
+    batchCreateNotesRequest: A BatchCreateNotesRequest resource to be passed
+      as the request body.
+    parent: Required. The name of the project in the form of
+      `projects/[PROJECT_ID]`, under which the notes are to be created.
+  """
+
+  batchCreateNotesRequest = _messages.MessageField('BatchCreateNotesRequest', 1)
+  parent = _messages.StringField(2, required=True)
+
+
+class ContaineranalysisProjectsLocationsNotesCreateRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesCreateRequest object.
+
+  Fields:
+    note: A Note resource to be passed as the request body.
+    noteId: Required. The ID to use for this note.
+    parent: Required. The name of the project in the form of
+      `projects/[PROJECT_ID]`, under which the note is to be created.
+  """
+
+  note = _messages.MessageField('Note', 1)
+  noteId = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+
+
+class ContaineranalysisProjectsLocationsNotesDeleteRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesDeleteRequest object.
+
+  Fields:
+    name: Required. The name of the note in the form of
+      `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class ContaineranalysisProjectsLocationsNotesGetIamPolicyRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesGetIamPolicyRequest object.
+
+  Fields:
+    getIamPolicyRequest: A GetIamPolicyRequest resource to be passed as the
+      request body.
+    resource: REQUIRED: The resource for which the policy is being requested.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+  """
+
+  getIamPolicyRequest = _messages.MessageField('GetIamPolicyRequest', 1)
+  resource = _messages.StringField(2, required=True)
+
+
+class ContaineranalysisProjectsLocationsNotesGetRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesGetRequest object.
+
+  Fields:
+    name: Required. The name of the note in the form of
+      `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class ContaineranalysisProjectsLocationsNotesListRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesListRequest object.
+
+  Fields:
+    filter: The filter expression.
+    pageSize: Number of notes to return in the list. Must be positive. Max
+      allowed page size is 1000. If not specified, page size defaults to 20.
+    pageToken: Token to provide to skip to a particular spot in the list.
+    parent: Required. The name of the project to list notes for in the form of
+      `projects/[PROJECT_ID]`.
+  """
+
+  filter = _messages.StringField(1)
+  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(3)
+  parent = _messages.StringField(4, required=True)
+
+
+class ContaineranalysisProjectsLocationsNotesOccurrencesListRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesOccurrencesListRequest object.
+
+  Fields:
+    filter: The filter expression.
+    name: Required. The name of the note to list occurrences for in the form
+      of `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
+    pageSize: Number of occurrences to return in the list.
+    pageToken: Token to provide to skip to a particular spot in the list.
+  """
+
+  filter = _messages.StringField(1)
+  name = _messages.StringField(2, required=True)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+
+
+class ContaineranalysisProjectsLocationsNotesPatchRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesPatchRequest object.
+
+  Fields:
+    name: Required. The name of the note in the form of
+      `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
+    note: A Note resource to be passed as the request body.
+    updateMask: The fields to update.
+  """
+
+  name = _messages.StringField(1, required=True)
+  note = _messages.MessageField('Note', 2)
+  updateMask = _messages.StringField(3)
+
+
+class ContaineranalysisProjectsLocationsNotesSetIamPolicyRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesSetIamPolicyRequest object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy is being specified.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    setIamPolicyRequest: A SetIamPolicyRequest resource to be passed as the
+      request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  setIamPolicyRequest = _messages.MessageField('SetIamPolicyRequest', 2)
+
+
+class ContaineranalysisProjectsLocationsNotesTestIamPermissionsRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsNotesTestIamPermissionsRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy detail is being
+      requested. See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    testIamPermissionsRequest: A TestIamPermissionsRequest resource to be
+      passed as the request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesBatchCreateRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesBatchCreateRequest
+  object.
+
+  Fields:
+    batchCreateOccurrencesRequest: A BatchCreateOccurrencesRequest resource to
+      be passed as the request body.
+    parent: Required. The name of the project in the form of
+      `projects/[PROJECT_ID]`, under which the occurrences are to be created.
+  """
+
+  batchCreateOccurrencesRequest = _messages.MessageField('BatchCreateOccurrencesRequest', 1)
+  parent = _messages.StringField(2, required=True)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesCreateRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesCreateRequest object.
+
+  Fields:
+    occurrence: A Occurrence resource to be passed as the request body.
+    parent: Required. The name of the project in the form of
+      `projects/[PROJECT_ID]`, under which the occurrence is to be created.
+  """
+
+  occurrence = _messages.MessageField('Occurrence', 1)
+  parent = _messages.StringField(2, required=True)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesDeleteRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesDeleteRequest object.
+
+  Fields:
+    name: Required. The name of the occurrence in the form of
+      `projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesGetIamPolicyRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesGetIamPolicyRequest
+  object.
+
+  Fields:
+    getIamPolicyRequest: A GetIamPolicyRequest resource to be passed as the
+      request body.
+    resource: REQUIRED: The resource for which the policy is being requested.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+  """
+
+  getIamPolicyRequest = _messages.MessageField('GetIamPolicyRequest', 1)
+  resource = _messages.StringField(2, required=True)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesGetNotesRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesGetNotesRequest object.
+
+  Fields:
+    name: Required. The name of the occurrence in the form of
+      `projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesGetRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesGetRequest object.
+
+  Fields:
+    name: Required. The name of the occurrence in the form of
+      `projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesGetVulnerabilitySummaryRequest(_messages.Message):
+  r"""A
+  ContaineranalysisProjectsLocationsOccurrencesGetVulnerabilitySummaryRequest
+  object.
+
+  Fields:
+    filter: The filter expression.
+    parent: Required. The name of the project to get a vulnerability summary
+      for in the form of `projects/[PROJECT_ID]`.
+  """
+
+  filter = _messages.StringField(1)
+  parent = _messages.StringField(2, required=True)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesListRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesListRequest object.
+
+  Fields:
+    filter: The filter expression.
+    pageSize: Number of occurrences to return in the list. Must be positive.
+      Max allowed page size is 1000. If not specified, page size defaults to
+      20.
+    pageToken: Token to provide to skip to a particular spot in the list.
+    parent: Required. The name of the project to list occurrences for in the
+      form of `projects/[PROJECT_ID]`.
+  """
+
+  filter = _messages.StringField(1)
+  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(3)
+  parent = _messages.StringField(4, required=True)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesPatchRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesPatchRequest object.
+
+  Fields:
+    name: Required. The name of the occurrence in the form of
+      `projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.
+    occurrence: A Occurrence resource to be passed as the request body.
+    updateMask: The fields to update.
+  """
+
+  name = _messages.StringField(1, required=True)
+  occurrence = _messages.MessageField('Occurrence', 2)
+  updateMask = _messages.StringField(3)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesSetIamPolicyRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesSetIamPolicyRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy is being specified.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    setIamPolicyRequest: A SetIamPolicyRequest resource to be passed as the
+      request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  setIamPolicyRequest = _messages.MessageField('SetIamPolicyRequest', 2)
+
+
+class ContaineranalysisProjectsLocationsOccurrencesTestIamPermissionsRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsOccurrencesTestIamPermissionsRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy detail is being
+      requested. See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    testIamPermissionsRequest: A TestIamPermissionsRequest resource to be
+      passed as the request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
+
+
+class ContaineranalysisProjectsLocationsResourcesExportSBOMRequest(_messages.Message):
+  r"""A ContaineranalysisProjectsLocationsResourcesExportSBOMRequest object.
+
+  Fields:
+    exportSBOMRequest: A ExportSBOMRequest resource to be passed as the
+      request body.
+    name: Required. The name of the resource in the form of
+      `projects/[PROJECT_ID]/resources/[RESOURCE_URL]`.
+  """
+
+  exportSBOMRequest = _messages.MessageField('ExportSBOMRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class ContaineranalysisProjectsLocationsResourcesGeneratePackagesSummaryRequest(_messages.Message):
+  r"""A
+  ContaineranalysisProjectsLocationsResourcesGeneratePackagesSummaryRequest
+  object.
+
+  Fields:
+    generatePackagesSummaryRequest: A GeneratePackagesSummaryRequest resource
+      to be passed as the request body.
+    name: Required. The name of the resource to get a packages summary for in
+      the form of `projects/[PROJECT_ID]/resources/[RESOURCE_URL]`.
+  """
+
+  generatePackagesSummaryRequest = _messages.MessageField('GeneratePackagesSummaryRequest', 1)
+  name = _messages.StringField(2, required=True)
 
 
 class ContaineranalysisProjectsNotesBatchCreateRequest(_messages.Message):
@@ -3006,6 +3522,7 @@ class Discovered(_messages.Message):
       LocalizedMessage under details to show to the user. The LocalizedMessage
       is output only and populated by the API.
     continuousAnalysis: Whether the resource is continuously analyzed.
+    files: Files that make up the resource described by the occurrence.
     lastAnalysisTime: The last time continuous analysis was done for this
       resource. Deprecated, do not use.
     lastScanTime: The last time this resource was scanned.
@@ -3050,9 +3567,10 @@ class Discovered(_messages.Message):
   analysisStatus = _messages.EnumField('AnalysisStatusValueValuesEnum', 3)
   analysisStatusError = _messages.MessageField('Status', 4)
   continuousAnalysis = _messages.EnumField('ContinuousAnalysisValueValuesEnum', 5)
-  lastAnalysisTime = _messages.StringField(6)
-  lastScanTime = _messages.StringField(7)
-  sbomStatus = _messages.MessageField('SBOMStatus', 8)
+  files = _messages.MessageField('File', 6, repeated=True)
+  lastAnalysisTime = _messages.StringField(7)
+  lastScanTime = _messages.StringField(8)
+  sbomStatus = _messages.MessageField('SBOMStatus', 9)
 
 
 class Discovery(_messages.Message):
@@ -3385,6 +3903,45 @@ class ExternalRef(_messages.Message):
   comment = _messages.StringField(2)
   locator = _messages.StringField(3)
   type = _messages.StringField(4)
+
+
+class File(_messages.Message):
+  r"""A File object.
+
+  Messages:
+    DigestValue: A DigestValue object.
+
+  Fields:
+    digest: A DigestValue attribute.
+    name: A string attribute.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class DigestValue(_messages.Message):
+    r"""A DigestValue object.
+
+    Messages:
+      AdditionalProperty: An additional property for a DigestValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type DigestValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a DigestValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  digest = _messages.MessageField('DigestValue', 1)
+  name = _messages.StringField(2)
 
 
 class FileHashes(_messages.Message):
@@ -5845,6 +6402,20 @@ class Status(_messages.Message):
   code = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   details = _messages.MessageField('DetailsValueListEntry', 2, repeated=True)
   message = _messages.StringField(3)
+
+
+class StepResult(_messages.Message):
+  r"""StepResult is the declaration of a result for a build step.
+
+  Fields:
+    attestationContentName: A string attribute.
+    attestationType: A string attribute.
+    name: A string attribute.
+  """
+
+  attestationContentName = _messages.StringField(1)
+  attestationType = _messages.StringField(2)
+  name = _messages.StringField(3)
 
 
 class Subject(_messages.Message):

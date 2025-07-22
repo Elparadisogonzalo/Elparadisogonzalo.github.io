@@ -209,11 +209,15 @@ def _GetGapicClientClass(api_name,
   return getattr(module_obj, client_class_name)
 
 
-def _GetGapicClientInstance(api_name,
-                            api_version,
-                            credentials,
-                            address_override_func=None,
-                            transport_choice=apis_util.GapicTransport.GRPC):
+def _GetGapicClientInstance(
+    api_name,
+    api_version,
+    credentials,
+    address_override_func=None,
+    transport_choice=apis_util.GapicTransport.GRPC,
+    attempt_direct_path=False,
+    redact_request_body_reason=None,
+):
   """Returns an instance of the GAPIC API client specified in the args.
 
   For apitools API clients, the API endpoint override is something like
@@ -229,6 +233,10 @@ def _GetGapicClientInstance(api_name,
       host. It takes a single argument which is the original host.
     transport_choice: apis_util.GapicTransport, The transport to be used by the
       client.
+    attempt_direct_path: bool, True if we want to attempt direct path gRPC where
+      possible.
+    redact_request_body_reason: str, the reason why the request body must be
+      redacted if --log-http is used. If None, the body is not redacted.
 
   Returns:
     An instance of the specified GAPIC API client.
@@ -249,7 +257,7 @@ def _GetGapicClientInstance(api_name,
     if endpoint_override is not None:
       return address
 
-    return _UniversifyAddress(address)
+    return UniversifyAddress(address)
 
   client_class = _GetGapicClientClass(
       api_name, api_version, transport_choice=transport_choice)
@@ -257,15 +265,20 @@ def _GetGapicClientInstance(api_name,
   return client_class(
       credentials,
       address_override_func=AddressOverride,
-      mtls_enabled=_MtlsEnabled(api_name, api_version))
+      mtls_enabled=_MtlsEnabled(api_name, api_version),
+      attempt_direct_path=attempt_direct_path,
+      redact_request_body_reason=redact_request_body_reason,
+  )
 
 
-def _UniversifyAddress(address):
-  """Take universe into account."""
+def UniversifyAddress(address):
+  """Update a URL based on the current universe domain."""
   universe_domain_property = properties.VALUES.core.universe_domain
-  if address is not None and universe_domain_property.IsExplicitlySet():
+  universe_domain = universe_domain_property.Get()
+  if (address is not None and
+      universe_domain_property.default != universe_domain):
     address = address.replace(universe_domain_property.default,
-                              universe_domain_property.Get())
+                              universe_domain, 1)
   return address
 
 
@@ -335,7 +348,7 @@ def _GetBaseUrlFromApi(api_name, api_version):
       client_base_url = 'https://{}.googleapis.com/{}'.format(
           api_name, api_version
       )
-  return _UniversifyAddress(client_base_url)
+  return UniversifyAddress(client_base_url)
 
 
 def _GetEffectiveApiEndpoint(api_name, api_version, client_class=None):
@@ -355,7 +368,7 @@ def _GetEffectiveApiEndpoint(api_name, api_version, client_class=None):
   if endpoint_override:
     address = _BuildEndpointOverride(endpoint_override, client_base_url)
   elif _MtlsEnabled(api_name, api_version):
-    address = _UniversifyAddress(
+    address = UniversifyAddress(
         _GetMtlsEndpoint(api_name, api_version, client_class)
     )
   else:

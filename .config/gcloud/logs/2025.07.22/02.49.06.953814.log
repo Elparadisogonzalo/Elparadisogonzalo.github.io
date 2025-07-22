@@ -1,0 +1,9 @@
+2025-07-22 02:49:06,956 DEBUG    root            Loaded Command Group: ['gcloud', 'config']
+2025-07-22 02:49:06,962 DEBUG    root            Loaded Command Group: ['gcloud', 'config', 'get']
+2025-07-22 02:49:06,966 DEBUG    root            Running [gcloud.config.get] with arguments: [SECTION/PROPERTY: "project"]
+2025-07-22 02:49:06,966 DEBUG    root            Chosen display Format:value(.)
+2025-07-22 02:49:06,967 INFO     root            Display format: "value(.)"
+2025-07-22 02:49:06,968 INFO     ___FILE_ONLY___ elparadisogonzalo-dev
+
+2025-07-22 02:49:06,968 DEBUG    root            SDK update checks are disabled.
+2025-07-22 02:49:06,978 DEBUG    root            Metrics reporting process started...

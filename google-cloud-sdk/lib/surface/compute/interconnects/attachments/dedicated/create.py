@@ -14,10 +14,6 @@
 # limitations under the License.
 """Command for creating dedicated interconnect attachments."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.api_lib.compute.interconnects.attachments import client
 from googlecloudsdk.calliope import base
@@ -31,7 +27,8 @@ from googlecloudsdk.core import log
 _DOCUMENTATION_LINK = 'https://cloud.google.com/interconnect/docs/how-to/dedicated/creating-vlan-attachments'
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
+@base.UniverseCompatible
+@base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create a Compute Engine dedicated interconnect attachment.
 
@@ -102,8 +99,9 @@ class Create(base.CreateCommand):
     region = attachment_ref.region
     if args.ipsec_internal_addresses is not None:
       ipsec_internal_addresses_urls = [
-          attachment_flags.GetAddressRef(holder.resources, name, region,
-                                         attachment_ref.project).SelfLink()
+          attachment_flags.GetAddressRef(
+              holder.resources, name, region, attachment_ref.project
+          ).SelfLink()
           for name in args.ipsec_internal_addresses
       ]
 
@@ -129,6 +127,19 @@ class Create(base.CreateCommand):
             args, 'customer_router_ipv6_interface_id', None
         ),
         subnet_length=getattr(args, 'subnet_length', None),
+        multicast_enabled=getattr(args, 'enable_multicast', None),
+        candidate_cloud_router_ip_address=getattr(
+            args, 'candidate_cloud_router_ip_address', None
+        ),
+        candidate_customer_router_ip_address=getattr(
+            args, 'candidate_customer_router_ip_address', None
+        ),
+        candidate_cloud_router_ipv6_address=getattr(
+            args, 'candidate_cloud_router_ipv6_address', None
+        ),
+        candidate_customer_router_ipv6_address=getattr(
+            args, 'candidate_customer_router_ipv6_address', None
+        ),
     )
 
   def Epilog(self, resources_were_displayed):
@@ -142,8 +153,32 @@ class Create(base.CreateCommand):
     return self._Run(args)
 
 
+@base.UniverseCompatible
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class CreateBeta(Create):
+  """Create a Compute Engine dedicated interconnect attachment.
+
+  *{command}* is used to create a dedicated interconnect attachments. An
+  interconnect attachment is what binds the underlying connectivity of an
+  interconnect to a path into and out of the customer's cloud network.
+  """
+
+  @classmethod
+  def Args(cls, parser):
+    super(CreateBeta, cls).Args(parser)
+    attachment_flags.AddCandidateCloudRouterIpAddress(parser)
+    attachment_flags.AddCandidateCustomerRouterIpAddress(parser)
+    attachment_flags.AddCandidateCloudRouterIpv6Address(parser)
+    attachment_flags.AddCandidateCustomerRouterIpv6Address(parser)
+
+  def Run(self, args):
+    """See base.CreateCommand."""
+    return self._Run(args)
+
+
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class CreateAlpha(Create):
+class CreateAlpha(CreateBeta):
   """Create a Compute Engine dedicated interconnect attachment.
 
   *{command}* is used to create a dedicated interconnect attachments. An
@@ -154,6 +189,7 @@ class CreateAlpha(Create):
   @classmethod
   def Args(cls, parser):
     super(CreateAlpha, cls).Args(parser)
+    attachment_flags.AddEnableMulticast(parser)
     attachment_flags.AddDryRun(parser)
 
   def Run(self, args):

@@ -29,6 +29,7 @@ from googlecloudsdk.command_lib.compute.future_reservations import util
 
 
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
+@base.DefaultUniverseOnly
 class UpdateBeta(base.UpdateCommand):
   """Update Compute Engine future reservations."""
 
@@ -55,12 +56,18 @@ class UpdateBeta(base.UpdateCommand):
     )
 
     cls.fr_arg.AddArgument(parser, operation_type='update')
-    fr_flags.AddUpdateFlags(parser,
-                            support_fleet=False,
-                            support_planning_status=True,
-                            support_local_ssd_count=True,
-                            support_share_setting=True,
-                            support_auto_delete=True)
+    fr_flags.AddUpdateFlags(
+        parser,
+        support_fleet=False,
+        support_planning_status=True,
+        support_local_ssd_count=True,
+        support_share_setting=True,
+        support_auto_delete=True,
+        support_require_specific_reservation=True,
+        support_gsc=True,
+        support_cuds=True,
+        support_emergent_maintenance=True,
+    )
 
   def _ValidateArgs(self, update_mask):
     """Validates that at least one field to update is specified.
@@ -92,6 +99,16 @@ class UpdateBeta(base.UpdateCommand):
           '--no-auto-delete-auto-created-reservations',
           '--auto-created-reservations-delete-time',
           '--auto-created-reservations-duration',
+          '--require-specific-reservation',
+          '--no-require-specific-reservation',
+          '--reservation-name',
+          '--deployment-type',
+          '--commitment-name',
+          '--commitment-plan',
+          '--previous-commitment-terms',
+          '--scheduling-type',
+          '--enable-emergent-maintenance',
+          '--no-enable-emergent-maintenance'
       ]
       raise exceptions.MinimumArgumentException(
           parameter_names, 'Please specify at least one property to update'
@@ -159,6 +176,28 @@ class UpdateBeta(base.UpdateCommand):
     if args.IsSpecified('auto_created_reservations_duration'):
       update_mask.append('autoCreatedReservationsDuration')
 
+    if args.IsKnownAndSpecified('reservation_name'):
+      update_mask.append('reservationName')
+    if args.IsKnownAndSpecified('deployment_type'):
+      update_mask.append('deploymentType')
+    if args.IsKnownAndSpecified('commitment_name'):
+      update_mask.append('commitmentInfo.commitmentName')
+    if args.IsKnownAndSpecified('commitment_plan'):
+      update_mask.append('commitmentInfo.commitmentPlan')
+    if args.IsKnownAndSpecified('previous_commitment_terms'):
+      update_mask.append('commitmentInfo.previousCommitmentTerms')
+    if args.IsKnownAndSpecified('scheduling_type'):
+      update_mask.append('schedulingType')
+
+    require_specific_reservation = getattr(
+        args, 'require_specific_reservation', None
+    )
+
+    if require_specific_reservation is not None:
+      update_mask.append('specificReservationRequired')
+
+    if args.IsKnownAndSpecified('enable_emergent_maintenance'):
+      update_mask.append('enableEmergentMaintenance')
     self._ValidateArgs(update_mask=update_mask)
 
     fr_resource = util.MakeFutureReservationMessageFromArgs(
@@ -218,5 +257,9 @@ class UpdateAlpha(UpdateBeta):
         support_planning_status=True,
         support_local_ssd_count=True,
         support_share_setting=True,
-        support_auto_delete=True
+        support_auto_delete=True,
+        support_require_specific_reservation=True,
+        support_gsc=True,
+        support_cuds=True,
+        support_emergent_maintenance=True,
     )

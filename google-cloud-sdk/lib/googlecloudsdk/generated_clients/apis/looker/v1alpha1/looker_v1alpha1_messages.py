@@ -409,6 +409,19 @@ class Expr(_messages.Message):
   title = _messages.StringField(4)
 
 
+class GeminiAiConfig(_messages.Message):
+  r"""Information for Gemini AI setup for a Looker instance.
+
+  Fields:
+    promptLogging: Optional. Whether to enable prompt logging for Gemini AI.
+    trustedTester: Optional. Whether customer opt in for Gemini AI public
+      preview.
+  """
+
+  promptLogging = _messages.BooleanField(1)
+  trustedTester = _messages.BooleanField(2)
+
+
 class ImportInstanceRequest(_messages.Message):
   r"""Requestion options for importing looker data to an Instance
 
@@ -443,6 +456,10 @@ class Instance(_messages.Message):
     enablePublicIp: Whether public IP is enabled on the Looker instance.
     encryptionConfig: Encryption configuration (CMEK). Only set if CMEK has
       been enabled on the instance.
+    fipsEnabled: Optional. Whether FIPS is enabled on the Looker instance.
+    geminiAiConfig: Optional. Duet AI configuration
+    geminiEnabled: Optional. Whether Gemini feature is enabled on the Looker
+      instance or not.
     ingressPrivateIp: Output only. Private Ingress IP (IPv4).
     ingressPublicIp: Output only. Public Ingress IP (IPv4).
     lastDenyMaintenancePeriod: Output only. Last computed maintenance denial
@@ -458,6 +475,10 @@ class Instance(_messages.Message):
       `projects/{project}/locations/{location}/instances/{instance}`.
     oauthConfig: Looker instance OAuth login settings.
     platformEdition: Platform edition.
+    pscConfig: Optional. PSC configuration. Used when `psc_enabled` is true.
+    pscEnabled: Optional. Whether to use Private Service Connect (PSC) for
+      private IP connectivity. If true, neither `public_ip_enabled` nor
+      `private_ip_enabled` can be true.
     reservedRange: Name of a reserved IP address range within the
       Instance.consumer_network, to be used for private services access
       connection. May or may not be specified in a create request.
@@ -477,16 +498,12 @@ class Instance(_messages.Message):
       ADVANCED: Advanced.
       ELITE: Elite.
       LOOKER_CORE_TRIAL: Trial.
-      LOOKER_MODELER: Standalone Model Service.
-      LOOKER_MODELER_TRIAL: Standalone Model Service Trial.
     """
     PLATFORM_EDITION_UNSPECIFIED = 0
     STANDARD = 1
     ADVANCED = 2
     ELITE = 3
     LOOKER_CORE_TRIAL = 4
-    LOOKER_MODELER = 5
-    LOOKER_MODELER_TRIAL = 6
 
   class StateValueValuesEnum(_messages.Enum):
     r"""Output only. The state of the instance.
@@ -539,22 +556,27 @@ class Instance(_messages.Message):
   enablePrivateIp = _messages.BooleanField(7)
   enablePublicIp = _messages.BooleanField(8)
   encryptionConfig = _messages.MessageField('EncryptionConfig', 9)
-  ingressPrivateIp = _messages.StringField(10)
-  ingressPublicIp = _messages.StringField(11)
-  lastDenyMaintenancePeriod = _messages.MessageField('DenyMaintenancePeriod', 12)
-  linkedLspProjectNumber = _messages.IntegerField(13)
-  lookerUri = _messages.StringField(14)
-  lookerVersion = _messages.StringField(15)
-  maintenanceSchedule = _messages.MessageField('MaintenanceSchedule', 16)
-  maintenanceWindow = _messages.MessageField('MaintenanceWindow', 17)
-  name = _messages.StringField(18)
-  oauthConfig = _messages.MessageField('OAuthConfig', 19)
-  platformEdition = _messages.EnumField('PlatformEditionValueValuesEnum', 20)
-  reservedRange = _messages.StringField(21)
-  state = _messages.EnumField('StateValueValuesEnum', 22)
-  tier = _messages.EnumField('TierValueValuesEnum', 23)
-  updateTime = _messages.StringField(24)
-  users = _messages.MessageField('Users', 25)
+  fipsEnabled = _messages.BooleanField(10)
+  geminiAiConfig = _messages.MessageField('GeminiAiConfig', 11)
+  geminiEnabled = _messages.BooleanField(12)
+  ingressPrivateIp = _messages.StringField(13)
+  ingressPublicIp = _messages.StringField(14)
+  lastDenyMaintenancePeriod = _messages.MessageField('DenyMaintenancePeriod', 15)
+  linkedLspProjectNumber = _messages.IntegerField(16)
+  lookerUri = _messages.StringField(17)
+  lookerVersion = _messages.StringField(18)
+  maintenanceSchedule = _messages.MessageField('MaintenanceSchedule', 19)
+  maintenanceWindow = _messages.MessageField('MaintenanceWindow', 20)
+  name = _messages.StringField(21)
+  oauthConfig = _messages.MessageField('OAuthConfig', 22)
+  platformEdition = _messages.EnumField('PlatformEditionValueValuesEnum', 23)
+  pscConfig = _messages.MessageField('PscConfig', 24)
+  pscEnabled = _messages.BooleanField(25)
+  reservedRange = _messages.StringField(26)
+  state = _messages.EnumField('StateValueValuesEnum', 27)
+  tier = _messages.EnumField('TierValueValuesEnum', 28)
+  updateTime = _messages.StringField(29)
+  users = _messages.MessageField('Users', 30)
 
 
 class InstanceBackup(_messages.Message):
@@ -1392,6 +1414,24 @@ class Policy(_messages.Message):
   version = _messages.IntegerField(4, variant=_messages.Variant.INT32)
 
 
+class PscConfig(_messages.Message):
+  r"""Information for Private Service Connect (PSC) setup for a Looker
+  instance.
+
+  Fields:
+    allowedVpcs: Optional. List of VPCs that are allowed ingress into looker.
+      Format: projects/{project}/global/networks/{network}
+    lookerServiceAttachmentUri: Output only. URI of the Looker service
+      attachment.
+    serviceAttachments: Optional. List of egress service attachment
+      configurations.
+  """
+
+  allowedVpcs = _messages.StringField(1, repeated=True)
+  lookerServiceAttachmentUri = _messages.StringField(2)
+  serviceAttachments = _messages.MessageField('ServiceAttachment', 3, repeated=True)
+
+
 class RestartInstanceRequest(_messages.Message):
   r"""Request options for restarting an instance."""
 
@@ -1405,6 +1445,48 @@ class RestoreInstanceRequest(_messages.Message):
   """
 
   backup = _messages.StringField(1)
+
+
+class ServiceAttachment(_messages.Message):
+  r"""Service attachment configuration.
+
+  Enums:
+    ConnectionStatusValueValuesEnum: Output only. Connection status.
+
+  Fields:
+    connectionStatus: Output only. Connection status.
+    localFqdn: Required. Fully qualified domain name that will be used in the
+      private DNS record created for the service attachment.
+    targetServiceAttachmentUri: Required. URI of the service attachment to
+      connect to. Format: projects/{project}/regions/{region}/serviceAttachmen
+      ts/{service_attachment}
+  """
+
+  class ConnectionStatusValueValuesEnum(_messages.Enum):
+    r"""Output only. Connection status.
+
+    Values:
+      UNKNOWN: Connection status is unspecified.
+      ACCEPTED: Connection is established and functioning normally.
+      PENDING: Connection is not established (Looker tenant project hasn't
+        been allowlisted).
+      REJECTED: Connection is not established (Looker tenant project is
+        explicitly in reject list).
+      NEEDS_ATTENTION: Issue with target service attachment, e.g. NAT subnet
+        is exhausted.
+      CLOSED: Target service attachment does not exist. This status is a
+        terminal state.
+    """
+    UNKNOWN = 0
+    ACCEPTED = 1
+    PENDING = 2
+    REJECTED = 3
+    NEEDS_ATTENTION = 4
+    CLOSED = 5
+
+  connectionStatus = _messages.EnumField('ConnectionStatusValueValuesEnum', 1)
+  localFqdn = _messages.StringField(2)
+  targetServiceAttachmentUri = _messages.StringField(3)
 
 
 class SetIamPolicyRequest(_messages.Message):
@@ -1606,3 +1688,7 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    LookerProjectsLocationsInstancesGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    LookerProjectsLocationsInstancesBackupsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

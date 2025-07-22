@@ -18,7 +18,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from googlecloudsdk.api_lib.securesourcemanager import instances
 from googlecloudsdk.api_lib.securesourcemanager import repositories
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.source_manager import flags
@@ -29,14 +28,16 @@ DETAILED_HELP = {
           Create a Secure Source Manager repository.
         """,
     "EXAMPLES": """
-            To create a repository called 'my-repo' in location 'us-central1' in instance 'my-instance', run:
+            To create a repository called 'my-repo' in location 'us-central1' in
+            instance 'my-instance', run the following command:
 
             $ {command} my-repo --region=us-central1 --instance=my-instance
         """,
 }
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
 class Create(base.CreateCommand):
   """Create a Secure Source Manager repository."""
 
@@ -48,33 +49,25 @@ class Create(base.CreateCommand):
     flags.AddInitialConfigGroup(parser)
 
   def Run(self, args):
-    # Get --instance flag
-    instance_id = args.instance
-
     # Get resource args to contruct base url
     repository_ref = args.CONCEPTS.repository.Parse()
 
-    instance_client = instances.InstancesClient()
-    api_base_url = instance_client.GetApiBaseUrl(
-        repository_ref.Parent(), instance_id
+    # Create a repository
+    client = repositories.RepositoriesClient()
+    # this is a shortcut LRO, it completes immediately and is marked as done
+    # there is no need to wait
+    create_operation = client.Create(
+        repository_ref,
+        args.instance,
+        args.description,
+        args.default_branch,
+        args.gitignores,
+        args.license,
+        args.readme,
     )
-
-    with repositories.OverrideApiEndpointOverrides(api_base_url):
-      # Create a repository
-      client = repositories.RepositoriesClient()
-      # this is a shortcut LRO, it completes immediately and is marked as done
-      # there is no need to wait
-      create_operation = client.Create(
-          repository_ref,
-          args.description,
-          args.default_branch,
-          args.gitignores,
-          args.license,
-          args.readme,
-      )
-      if not args.IsSpecified("format"):
-        args.format = "default"
-      return create_operation
+    if not args.IsSpecified("format"):
+      args.format = "default"
+    return create_operation
 
 
 Create.detailed_help = DETAILED_HELP

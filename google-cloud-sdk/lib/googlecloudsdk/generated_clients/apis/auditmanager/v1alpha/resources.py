@@ -18,7 +18,7 @@ import enum
 
 
 BASE_URL = 'https://auditmanager.googleapis.com/v1alpha/'
-DOCS_URL = 'https://g3doc.corp.google.com/google/cloud/auditmanager/README.md?cl=head'
+DOCS_URL = 'https://cloud.google.com/assured-workloads/docs/audit-manager'
 
 
 class Collections(enum.Enum):
@@ -38,6 +38,28 @@ class Collections(enum.Enum):
       ['foldersId', 'locationsId'],
       True
   )
+  FOLDERS_LOCATIONS_AUDITREPORTS = (
+      'folders.locations.auditReports',
+      '{+name}',
+      {
+          '':
+              'folders/{foldersId}/locations/{locationsId}/auditReports/'
+              '{auditReportsId}',
+      },
+      ['name'],
+      True
+  )
+  FOLDERS_LOCATIONS_OPERATIONDETAILS = (
+      'folders.locations.operationDetails',
+      '{+name}',
+      {
+          '':
+              'folders/{foldersId}/locations/{locationsId}/operationDetails/'
+              '{operationDetailsId}',
+      },
+      ['name'],
+      True
+  )
   FOLDERS_LOCATIONS_OPERATIONIDS = (
       'folders.locations.operationIds',
       '{+name}',
@@ -45,6 +67,53 @@ class Collections(enum.Enum):
           '':
               'folders/{foldersId}/locations/{locationsId}/operationIds/'
               '{operationIdsId}',
+      },
+      ['name'],
+      True
+  )
+  FOLDERS_LOCATIONS_RESOURCEENROLLMENTSTATUSES = (
+      'folders.locations.resourceEnrollmentStatuses',
+      '{+name}',
+      {
+          '':
+              'folders/{foldersId}/locations/{locationsId}/'
+              'resourceEnrollmentStatuses/{resourceEnrollmentStatusesId}',
+      },
+      ['name'],
+      True
+  )
+  ORGANIZATIONS = (
+      'organizations',
+      'organizations/{organizationsId}',
+      {},
+      ['organizationsId'],
+      True
+  )
+  ORGANIZATIONS_LOCATIONS = (
+      'organizations.locations',
+      'organizations/{organizationsId}/locations/{locationsId}',
+      {},
+      ['organizationsId', 'locationsId'],
+      True
+  )
+  ORGANIZATIONS_LOCATIONS_OPERATIONS = (
+      'organizations.locations.operations',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'operations/{operationsId}',
+      },
+      ['name'],
+      True
+  )
+  ORGANIZATIONS_LOCATIONS_RESOURCEENROLLMENTSTATUSES = (
+      'organizations.locations.resourceEnrollmentStatuses',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/locations/{locationsId}/'
+              'resourceEnrollmentStatuses/{resourceEnrollmentStatusesId}',
       },
       ['name'],
       True
@@ -62,6 +131,28 @@ class Collections(enum.Enum):
       {
           '':
               'projects/{projectsId}/locations/{locationsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_AUDITREPORTS = (
+      'projects.locations.auditReports',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/auditReports/'
+              '{auditReportsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_OPERATIONDETAILS = (
+      'projects.locations.operationDetails',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'operationDetails/{operationDetailsId}',
       },
       ['name'],
       True
@@ -84,6 +175,17 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/operations/'
               '{operationsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_RESOURCEENROLLMENTSTATUSES = (
+      'projects.locations.resourceEnrollmentStatuses',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'resourceEnrollmentStatuses/{resourceEnrollmentStatusesId}',
       },
       ['name'],
       True

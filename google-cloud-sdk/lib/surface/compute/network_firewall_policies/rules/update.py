@@ -23,10 +23,12 @@ from googlecloudsdk.api_lib.compute import firewall_policy_rule_utils as rule_ut
 from googlecloudsdk.api_lib.compute.network_firewall_policies import client
 from googlecloudsdk.api_lib.compute.network_firewall_policies import region_client
 from googlecloudsdk.calliope import base
+from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.compute.network_firewall_policies import flags
 from googlecloudsdk.command_lib.compute.network_firewall_policies import secure_tags_utils
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Update(base.UpdateCommand):
   r"""Updates a Compute Engine network firewall policy rule.
@@ -35,8 +37,8 @@ class Update(base.UpdateCommand):
   """
 
   NETWORK_FIREWALL_POLICY_ARG = None
-  _support_ips = False
-  _support_ips_with_tls = False
+  support_network_scopes = False
+  support_target_type = False
 
   @classmethod
   def Args(cls, parser):
@@ -44,7 +46,7 @@ class Update(base.UpdateCommand):
         required=True, operation='update'
     )
     cls.NETWORK_FIREWALL_POLICY_ARG.AddArgument(parser)
-    flags.AddAction(parser, required=False, support_ips=cls._support_ips)
+    flags.AddAction(parser, required=False)
     flags.AddRulePriority(parser, operation='updated')
     flags.AddSrcIpRanges(parser)
     flags.AddDestIpRanges(parser)
@@ -55,20 +57,39 @@ class Update(base.UpdateCommand):
     flags.AddTargetServiceAccounts(parser)
     flags.AddDescription(parser)
     flags.AddNewPriority(parser, operation='update')
-    flags.AddSrcSecureTags(parser)
+    flags.AddSrcSecureTags(
+        parser,
+        required=False,
+        support_network_scopes=cls.support_network_scopes,
+    )
     flags.AddTargetSecureTags(parser)
     flags.AddDestAddressGroups(parser)
     flags.AddSrcAddressGroups(parser)
     flags.AddSrcFqdns(parser)
     flags.AddDestFqdns(parser)
-    flags.AddSrcRegionCodes(parser)
-    flags.AddDestRegionCodes(parser)
-    flags.AddSrcThreatIntelligence(parser)
-    flags.AddDestThreatIntelligence(parser)
-    if cls._support_ips:
-      flags.AddSecurityProfileGroup(parser)
-      if cls._support_ips_with_tls:
-        flags.AddTlsInspect(parser)
+    flags.AddSrcRegionCodes(
+        parser, support_network_scopes=cls.support_network_scopes
+    )
+    flags.AddDestRegionCodes(
+        parser, support_network_scopes=cls.support_network_scopes
+    )
+    flags.AddSrcThreatIntelligence(
+        parser, support_network_scopes=cls.support_network_scopes
+    )
+    flags.AddDestThreatIntelligence(
+        parser, support_network_scopes=cls.support_network_scopes
+    )
+    flags.AddSecurityProfileGroup(parser)
+    flags.AddTlsInspect(parser)
+    if cls.support_network_scopes:
+      flags.AddSrcNetworkScope(parser)
+      flags.AddSrcNetworks(parser)
+      flags.AddDestNetworkScope(parser)
+      flags.AddSrcNetworkType(parser)
+      flags.AddDestNetworkType(parser)
+    if cls.support_target_type:
+      flags.AddTargetType(parser)
+      flags.AddTargetForwardingRules(parser)
 
   def Run(self, args):
     clearable_arg_name_to_field_name = {
@@ -83,9 +104,11 @@ class Update(base.UpdateCommand):
         'dest_address_groups': 'match.destAddressGroups',
         'src_threat_intelligence': 'match.srcThreatIntelligences',
         'dest_threat_intelligence': 'match.destThreatIntelligences',
+        'src_networks': 'match.srcNetworks',
         'security_profile_group': 'securityProfileGroup',
         'target_secure_tags': 'targetSecureTags',
-        'target_service_accounts': 'targetServiceAccounts'
+        'target_service_accounts': 'targetServiceAccounts',
+        'target_forwarding_rules': 'targetForwardingRules',
     }
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
     ref = self.NETWORK_FIREWALL_POLICY_ARG.ResolveAsResource(
@@ -114,6 +137,11 @@ class Update(base.UpdateCommand):
     traffic_direct = None
     src_secure_tags = []
     target_secure_tags = []
+    src_network_scope = None
+    src_networks = []
+    dest_network_scope = None
+    target_type = None
+    target_forwarding_rules = []
     cleared_fields = []
     for arg in clearable_arg_name_to_field_name:
       if args.IsKnownAndSpecified(arg) and not args.GetValue(arg):
@@ -150,12 +178,94 @@ class Update(base.UpdateCommand):
               holder.client, args.target_secure_tags
           )
       )
-    matcher = holder.client.messages.FirewallPolicyRuleMatcher(
-        srcIpRanges=src_ip_ranges,
-        destIpRanges=dest_ip_ranges,
-        layer4Configs=layer4_config_list,
-        srcSecureTags=src_secure_tags,
-    )
+    if self.support_network_scopes:
+      if args.IsSpecified('src_network_scope') and args.IsSpecified(
+          'src_network_type'
+      ):
+        raise exceptions.ToolException(
+            'At most one of src_network_scope and src_network_type can be'
+            ' specified.'
+        )
+      if args.IsSpecified('dest_network_scope') and args.IsSpecified(
+          'dest_network_type'
+      ):
+        raise exceptions.ToolException(
+            'At most one of dest_network_scope and dest_network_type can be'
+            ' specified.'
+        )
+      if args.IsSpecified('src_network_scope'):
+        if not args.src_network_scope:
+          src_network_scope = (
+              holder.client.messages.FirewallPolicyRuleMatcher.SrcNetworkScopeValueValuesEnum.UNSPECIFIED
+          )
+        else:
+          src_network_scope = holder.client.messages.FirewallPolicyRuleMatcher.SrcNetworkScopeValueValuesEnum(
+              args.src_network_scope
+          )
+        should_setup_match = True
+      if args.IsSpecified('src_networks'):
+        src_networks = args.src_networks
+        should_setup_match = True
+      if args.IsSpecified('dest_network_scope'):
+        if not args.dest_network_scope:
+          dest_network_scope = (
+              holder.client.messages.FirewallPolicyRuleMatcher.DestNetworkScopeValueValuesEnum.UNSPECIFIED
+          )
+        else:
+          dest_network_scope = holder.client.messages.FirewallPolicyRuleMatcher.DestNetworkScopeValueValuesEnum(
+              args.dest_network_scope
+          )
+        should_setup_match = True
+
+      if args.IsSpecified('src_network_type'):
+        # src_network_type and src_network_scope are mutually exclusive so only
+        # one of them can be specified.
+        if not args.src_network_type:
+          src_network_scope = (
+              holder.client.messages.FirewallPolicyRuleMatcher.SrcNetworkScopeValueValuesEnum.UNSPECIFIED
+          )
+        else:
+          src_network_scope = holder.client.messages.FirewallPolicyRuleMatcher.SrcNetworkScopeValueValuesEnum(
+              args.src_network_type
+          )
+        should_setup_match = True
+      if args.IsSpecified('dest_network_type'):
+        # dest_network_type and dest_network_scope are mutually exclusive so
+        # only one of them can be specified.
+        if not args.dest_network_type:
+          dest_network_scope = (
+              holder.client.messages.FirewallPolicyRuleMatcher.DestNetworkScopeValueValuesEnum.UNSPECIFIED
+          )
+        else:
+          dest_network_scope = holder.client.messages.FirewallPolicyRuleMatcher.DestNetworkScopeValueValuesEnum(
+              args.dest_network_type
+          )
+        should_setup_match = True
+
+      if (
+          src_network_scope is not None
+          and src_network_scope
+          != holder.client.messages.FirewallPolicyRuleMatcher.SrcNetworkScopeValueValuesEnum.VPC_NETWORKS
+      ):
+        cleared_fields.append('match.srcNetworks')
+
+    if self.support_network_scopes:
+      matcher = holder.client.messages.FirewallPolicyRuleMatcher(
+          srcIpRanges=src_ip_ranges,
+          destIpRanges=dest_ip_ranges,
+          layer4Configs=layer4_config_list,
+          srcSecureTags=src_secure_tags,
+          srcNetworkScope=src_network_scope,
+          srcNetworks=src_networks,
+          destNetworkScope=dest_network_scope,
+      )
+    else:
+      matcher = holder.client.messages.FirewallPolicyRuleMatcher(
+          srcIpRanges=src_ip_ranges,
+          destIpRanges=dest_ip_ranges,
+          layer4Configs=layer4_config_list,
+          srcSecureTags=src_secure_tags,
+      )
     if args.IsSpecified('src_address_groups'):
       matcher.srcAddressGroups = args.src_address_groups
       should_setup_match = True
@@ -180,16 +290,15 @@ class Update(base.UpdateCommand):
     if args.IsSpecified('dest_threat_intelligence'):
       matcher.destThreatIntelligences = args.dest_threat_intelligence
       should_setup_match = True
-    if self._support_ips:
-      if args.IsSpecified('security_profile_group'):
-        security_profile_group = args.security_profile_group
-      elif (
-          args.IsSpecified('action')
-          and args.action != 'apply_security_profile_group'
-      ):
-        cleared_fields.append('securityProfileGroup')
-      if self._support_ips_with_tls and args.IsSpecified('tls_inspect'):
-        tls_inspect = args.tls_inspect
+    if args.IsSpecified('security_profile_group'):
+      security_profile_group = args.security_profile_group
+    elif (
+        args.IsSpecified('action')
+        and args.action != 'apply_security_profile_group'
+    ):
+      cleared_fields.append('securityProfileGroup')
+    if args.IsSpecified('tls_inspect'):
+      tls_inspect = args.tls_inspect
     # If not need to construct a new matcher.
     if not should_setup_match:
       matcher = None
@@ -203,50 +312,35 @@ class Update(base.UpdateCommand):
         traffic_direct = (
             holder.client.messages.FirewallPolicyRule.DirectionValueValuesEnum.EGRESS
         )
+    if self.support_target_type:
+      if args.IsSpecified('target_type'):
+        target_type = (
+            holder.client.messages.FirewallPolicyRule.TargetTypeValueValuesEnum(
+                args.target_type
+            )
+        )
+      if args.IsSpecified('target_forwarding_rules'):
+        target_forwarding_rules = args.target_forwarding_rules
 
-    if self._support_ips:
-      if self._support_ips_with_tls:
-        firewall_policy_rule = holder.client.messages.FirewallPolicyRule(
-            priority=new_priority,
-            action=args.action,
-            match=matcher,
-            direction=traffic_direct,
-            targetServiceAccounts=target_service_accounts,
-            description=args.description,
-            enableLogging=enable_logging,
-            disabled=disabled,
-            targetSecureTags=target_secure_tags,
-            securityProfileGroup=security_profile_group,
-            tlsInspect=tls_inspect,
-        )
-      else:
-        firewall_policy_rule = holder.client.messages.FirewallPolicyRule(
-            priority=new_priority,
-            action=args.action,
-            match=matcher,
-            direction=traffic_direct,
-            targetServiceAccounts=target_service_accounts,
-            description=args.description,
-            enableLogging=enable_logging,
-            disabled=disabled,
-            targetSecureTags=target_secure_tags,
-            securityProfileGroup=security_profile_group,
-        )
-    else:
-      firewall_policy_rule = holder.client.messages.FirewallPolicyRule(
-          priority=new_priority,
-          action=args.action,
-          match=matcher,
-          direction=traffic_direct,
-          targetServiceAccounts=target_service_accounts,
-          description=args.description,
-          enableLogging=enable_logging,
-          disabled=disabled,
-          targetSecureTags=target_secure_tags,
-      )
+    firewall_policy_rule = holder.client.messages.FirewallPolicyRule(
+        priority=new_priority,
+        action=args.action,
+        match=matcher,
+        direction=traffic_direct,
+        targetServiceAccounts=target_service_accounts,
+        description=args.description,
+        enableLogging=enable_logging,
+        disabled=disabled,
+        targetSecureTags=target_secure_tags,
+        securityProfileGroup=security_profile_group,
+        tlsInspect=tls_inspect,
+    )
+    if self.support_target_type:
+      firewall_policy_rule.targetType = target_type
+      firewall_policy_rule.targetForwardingRules = target_forwarding_rules
 
     with holder.client.apitools_client.IncludeFields(cleared_fields):
-      return network_firewall_policy_rule_client.Update(
+      return network_firewall_policy_rule_client.UpdateRule(
           priority=priority,
           firewall_policy=args.firewall_policy,
           firewall_policy_rule=firewall_policy_rule,
@@ -261,8 +355,8 @@ class UpdateBeta(Update):
   *{command}* is used to update network firewall policy rules.
   """
 
-  _support_ips = True
-  _support_ips_with_tls = True
+  support_network_scopes = True
+  support_target_type = False
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
@@ -272,8 +366,8 @@ class UpdateAlpha(Update):
   *{command}* is used to update network firewall policy rules.
   """
 
-  _support_ips = True
-  _support_ips_with_tls = True
+  support_network_scopes = True
+  support_target_type = True
 
 
 Update.detailed_help = {

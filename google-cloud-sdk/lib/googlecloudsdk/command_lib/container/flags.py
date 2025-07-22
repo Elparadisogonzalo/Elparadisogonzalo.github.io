@@ -28,6 +28,7 @@ from googlecloudsdk.calliope import actions
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
 from googlecloudsdk.calliope import exceptions
+from googlecloudsdk.calliope import parser_arguments
 from googlecloudsdk.command_lib.container import constants
 from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
@@ -71,6 +72,36 @@ _PMU_LEVEL = {
     'standard': 'Enables most documented core/L2 PMU events.',
     'enhanced': 'Enables most documented core/L2 and LLC PMU events.',
 }
+
+
+class InvalidAddonValueError(util.Error):
+  """A class for invalid --addons input."""
+
+  def __init__(self, value):
+    message = (
+        f'invalid --addons value {value}; must be ENABLED, DISABLED or empty.'
+    )
+    super().__init__(message)
+
+
+def _ParseAddonEnabled(val: str) -> bool:
+  """Parses expected status for addons from --addons flag.
+
+  Args:
+    val: 'ENABLED', 'DISABLED' or empty string (same as 'ENABLED' for backwards
+      compatibility).
+
+  Returns:
+    True if the addon is expected to be enabled, False otherwise.
+
+  Raises:
+    InvalidAddonValueError: if the value is not 'ENABLED', 'DISABLED' or empty.
+  """
+  if val in ('', 'ENABLED'):
+    return True
+  if val == 'DISABLED':
+    return False
+  raise InvalidAddonValueError(val)
 
 
 def AddBasicAuthFlags(parser):
@@ -250,7 +281,7 @@ project. Create a subscription for the topic specified to receive notification
 messages. See https://cloud.google.com/pubsub/docs/admin on how to manage
 Pub/Sub topics and subscriptions. You can also use the filter option to
 specify which event types you'd like to receive from the following options:
-SecurityBulletinEvent, UpgradeEvent, UpgradeAvailableEvent.
+SecurityBulletinEvent, UpgradeEvent, UpgradeInfoEvent, UpgradeAvailableEvent.
 
 Examples:
 
@@ -299,30 +330,40 @@ When a cluster is subscribed to a release channel, Google maintains both the
 master version and the node version. Node auto-upgrade is enabled by default
 for release channel clusters and can be controlled via [upgrade-scope
 exclusions](https://cloud.google.com/kubernetes-engine/docs/concepts/maintenance-windows-and-exclusions#scope_of_maintenance_to_exclude).
+
 """
+
   choices = {
       'rapid': """\
-'rapid' channel is offered on an early access basis for customers who want
-to test new releases.
+'rapid' channel is offered on an early access basis for customers
+who want to test new releases.
 
-WARNING: Versions available in the 'rapid' channel may be subject to
-unresolved issues with no known workaround and are not subject to any
-SLAs.
+WARNING: Versions available in the 'rapid' channel may be subject
+to unresolved issues with no known workaround and are not subject
+to any SLAs.
 """,
       'regular': """\
-Clusters subscribed to 'regular' receive versions that are considered GA
-quality. 'regular' is intended for production users who want to take
-advantage of new features.""",
+Clusters subscribed to 'regular' receive versions that are
+considered GA quality. 'regular' is intended for production users
+who want to take advantage of new features.
+""",
+      'extended': """\
+Clusters subscribed to 'extended' can remain on a minor version for 24 months
+from when the minor version is made available in the Regular channel.
+""",
       'stable': """\
-Clusters subscribed to 'stable' receive versions that are known to be
-stable and reliable in production.""",
+Clusters subscribed to 'stable' receive versions that are known to
+be stable and reliable in production.
+""",
   }
+
   if not autopilot:
     choices.update({
         'None': """\
 Use 'None' to opt-out of any release channel.
 """,
     })
+
   return parser.add_argument(
       '--release-channel',
       metavar='CHANNEL',
@@ -515,7 +556,7 @@ def AddAcceleratorArgs(
       help="""\
       Attaches accelerators (e.g. GPUs) to all nodes.
 
-      *type*::: (Required) The specific type (e.g. nvidia-tesla-k80 for NVIDIA Tesla K80)
+      *type*::: (Required) The specific type (e.g. nvidia-tesla-t4 for NVIDIA T4)
       of accelerator to attach to the instances. Use ```gcloud compute
       accelerator-types list``` to learn about all available accelerator types.
 
@@ -524,10 +565,10 @@ def AddAcceleratorArgs(
 
       *gpu-driver-version*::: (Optional) The NVIDIA driver version to install. GPU_DRIVER_VERSION must be one of:
 
-        `default`: Install the default driver version.
+        `default`: Install the default driver version for this GKE version.
 
-        `latest`: Install the latest available driver version. Available only for
-        nodes that use Container-Optimized OS.
+        `latest`: Install the latest driver version available for this GKE version.
+        Can only be used for nodes that use Container-Optimized OS.
 
         `disabled`: Skip automatic driver installation. You must manually install a
         driver after you create the cluster. If you omit the flag `gpu-driver-version`,
@@ -567,6 +608,51 @@ def AddAutoscalingProfilesFlag(parser, hidden=False):
       """,
       hidden=hidden,
       type=str,
+  )
+
+
+def AddEnableDefaultComputeClassFlag(parser, hidden=True):
+  """Adds default compute class flag to parser.
+
+  Default compute class flag is --enable-default-compute-class.
+
+  Args:
+    parser: A given parser.
+    hidden: If true, suppress help text for added options.
+  """
+  parser.add_argument(
+      '--enable-default-compute-class',
+      required=False,
+      default=None,
+      help="""\
+Enable the default compute class to use for the cluster.
+
+To disable Default Compute Class in an existing cluster, explicitly set flag
+`--no-enable-default-compute-class`.
+      """,
+      hidden=hidden,
+      action='store_true',
+  )
+
+
+def AddHPAProfilesFlag(parser, hidden=False):
+  """Adds workload autoscaling profiles flag to parser.
+
+  HPA profile flag is --hpa-profile.
+
+  Args:
+    parser: A given parser.
+    hidden: If true, suppress help text for added options.
+  """
+  parser.add_argument(
+      '--hpa-profile',
+      required=False,
+      default=None,
+      help="""\
+         Set Horizontal Pod Autoscaler behavior. Accepted values are: none, performance.
+         For more information, see https://cloud.google.com/kubernetes-engine/docs/how-to/horizontal-pod-autoscaling#hpa-profile.
+      """,
+      hidden=hidden,
   )
 
 
@@ -614,7 +700,7 @@ Resource limits are specified in the field 'resourceLimits'.
 Each resource limits definition contains three fields:
 resourceType, maximum and minimum.
 Resource type can be "cpu", "memory" or an accelerator (e.g.
-"nvidia-tesla-k80" for nVidia Tesla K80). Use gcloud compute accelerator-types
+"nvidia-tesla-t4" for NVIDIA T4). Use gcloud compute accelerator-types
 list to learn about available accelerator types.
 Maximum is the maximum allowed amount with the unit of the resource.
 Minimum is the minimum allowed amount with the unit of the resource.
@@ -738,7 +824,7 @@ Minimum number of gigabytes of memory to which the cluster can scale.""",
       help="""\
 Sets maximum limit for a single type of accelerators (e.g. GPUs) in cluster.
 
-*type*::: (Required) The specific type (e.g. nvidia-tesla-k80 for nVidia Tesla K80)
+*type*::: (Required) The specific type (e.g. nvidia-tesla-t4 for NVIDIA T4)
 of accelerator for which the limit is set. Use ```gcloud compute
 accelerator-types list``` to learn about all available accelerator types.
 
@@ -762,7 +848,7 @@ to which the cluster can be scaled.
 Sets minimum limit for a single type of accelerators (e.g. GPUs) in cluster. Defaults
 to 0 for all accelerator types if it isn't set.
 
-*type*::: (Required) The specific type (e.g. nvidia-tesla-k80 for nVidia Tesla K80)
+*type*::: (Required) The specific type (e.g. nvidia-tesla-t4 for NVIDIA T4)
 of accelerator for which the limit is set. Use ```gcloud compute
 accelerator-types list``` to learn about all available accelerator types.
 
@@ -938,8 +1024,8 @@ def AddBinauthzFlags(
 
   # Retrieve valid Binauthz evaluation mode options and convert to lowercase
   # to display in the help text per gcloud conventions.
-  options = [
-      api_adapter.NormalizeBinauthzEvaluationMode(option)
+  evaluation_options = [
+      api_adapter.NormalizeBinauthzMode(option)
       for option in api_adapter.GetBinauthzEvaluationModeOptions(
           messages, release_track
       )
@@ -951,10 +1037,10 @@ def AddBinauthzFlags(
   if autopilot:
     binauthz_group.add_argument(
         '--binauthz-evaluation-mode',
-        choices=options,
+        choices=evaluation_options,
         # Convert values to lower case before checking against the list of
         # options. This allows users to pass evaluation mode in enum form.
-        type=api_adapter.NormalizeBinauthzEvaluationMode,
+        type=api_adapter.NormalizeBinauthzMode,
         default=None,
         help='Enable Binary Authorization for this cluster.',
         hidden=hidden,
@@ -978,20 +1064,20 @@ def AddBinauthzFlags(
     )
     binauthz_enablement_group.add_argument(
         '--binauthz-evaluation-mode',
-        choices=options,
+        choices=evaluation_options,
         # Convert values to lower case before checking against the list of
         # options. This allows users to pass evaluation mode in enum form.
-        type=api_adapter.NormalizeBinauthzEvaluationMode,
+        type=api_adapter.NormalizeBinauthzMode,
         default=None,
         help='Enable Binary Authorization for this cluster.',
         hidden=hidden,
     )
-  if release_track in (base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA):
-    platform_policy_type = arg_parsers.RegexpValidator(
-        _BINAUTHZ_GKE_POLICY_REGEX,
-        'GKE policy resource names have the following format: '
-        '`projects/{project_number}/platforms/gke/policies/{policy_id}`',
-    )
+  platform_policy_type = arg_parsers.RegexpValidator(
+      _BINAUTHZ_GKE_POLICY_REGEX,
+      'GKE policy resource names have the following format: '
+      '`projects/{project_number}/platforms/gke/policies/{policy_id}`',
+  )
+  if release_track == base.ReleaseTrack.BETA:
     binauthz_group.add_argument(
         '--binauthz-policy-bindings',
         type=arg_parsers.ArgDict(
@@ -1010,6 +1096,46 @@ def AddBinauthzFlags(
           `projects/{project_number}/platforms/gke/policies/{policy_id}`."""),
         hidden=hidden,
     )
+    return
+  if release_track == base.ReleaseTrack.ALPHA:
+    # Retrieve valid Binauthz enforcement mode options and convert to lowercase
+    # to display in the help text per gcloud conventions.
+    normalized_enforcement_options = [
+        api_adapter.NormalizeBinauthzMode(option)
+        for option in api_adapter.GetBinauthzEnforcementModeOptions(messages)
+    ]
+    enforcement_validator = arg_parsers.CustomFunctionValidator(
+        lambda arg: api_adapter.NormalizeBinauthzMode(arg)
+        in normalized_enforcement_options,
+        'enforcement-mode should be one of the following: '
+        + ', '.join(normalized_enforcement_options),
+        str,
+    )
+    binauthz_group.add_argument(
+        '--binauthz-policy-bindings',
+        type=arg_parsers.ArgDict(
+            spec={
+                'name': platform_policy_type,
+                'enforcement-mode': enforcement_validator,
+            },
+            required_keys=['name'],
+            max_length=2,
+        ),
+        metavar='name=BINAUTHZ_POLICY,enforcement-mode=ENFORCEMENT_MODE',
+        action='append',
+        default=None,
+        help=textwrap.dedent("""\
+          Binds a Binary Authorization policy to the cluster.
+
+          *name*:: (Required) The relative resource name of the Binary Authorization policy to audit
+          and/or enforce. GKE policies have the following format:
+          `projects/{project_number}/platforms/gke/policies/{policy_id}`.
+
+          *enforcement-mode*:: (Optional) The mode of enforcement for the policy.
+          Must be one of: *audit*, *audit-and-enforce*, *audit-and-dryrun*. Defaults to *audit*, if unset.
+          """),
+        hidden=hidden,
+    )
 
 
 def AddLocationFlags(parser):
@@ -1021,17 +1147,27 @@ def AddLocationFlags(parser):
       '--location',
       help=(
           'Compute zone or region (e.g. us-central1-a or us-central1) for the '
-          'cluster.'
+          'cluster. Overrides the default compute/region or compute/zone value '
+          'for this command invocation. Prefer using this flag over the '
+          '--region or --zone flags.'
       ),
   )
   group.add_argument(
       '--zone',
       '-z',
-      help='Compute zone (e.g. us-central1-a) for the cluster.',
+      help=(
+          'Compute zone (e.g. us-central1-a) for a zonal cluster. Overrides '
+          'the default compute/zone property value for this command invocation.'
+      ),
       action=actions.StoreProperty(properties.VALUES.compute.zone),
   )
   group.add_argument(
-      '--region', help='Compute region (e.g. us-central1) for the cluster.'
+      '--region',
+      help=(
+          'Compute region (e.g. us-central1) for a regional cluster. Overrides'
+          ' the default compute/region property value for this command'
+          ' invocation.'
+      ),
   )
 
 
@@ -1067,6 +1203,20 @@ Alpha clusters are not covered by the Kubernetes Engine SLA and should not be
 used for production workloads."""
   parser.add_argument(
       '--enable-kubernetes-alpha', action='store_true', help=help_text
+  )
+
+
+def AddAlphaClusterFeatureGatesFlags(parser):
+  """Adds the --alpha-cluster-feature-gates flag to parser."""
+  help_text = """\
+Selectively enable or disable Kubernetes alpha and beta kubernetesfeature gates on alpha GKE cluster.
+Alpha clusters are not covered by the Kubernetes Engine SLA and should not be used for production workloads."""
+  parser.add_argument(
+      '--alpha-cluster-feature-gates',
+      type=arg_parsers.ArgList(),
+      default=None,
+      metavar='FEATURE=true|false',
+      help=help_text,
   )
 
 
@@ -1205,7 +1355,9 @@ def AddEnableStackdriverKubernetesFlag(parser):
               'will be removed in an upcoming release. '
               'Please use `--logging` and `--monitoring` instead. '
               'For more information, please read: '
-              'https://cloud.google.com/stackdriver/docs/solutions/gke/installing.'
+              'https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs'
+              ' and '
+              'https://cloud.google.com/kubernetes-engine/docs/how-to/configure-metrics.'
           ),
           action='store_true',
       ),
@@ -1226,7 +1378,9 @@ def AddEnableLoggingMonitoringSystemOnlyFlag(parser):
               'deprecated and will be removed in an upcoming release. '
               'Please use `--logging` and `--monitoring` instead. '
               'For more information, please read: '
-              'https://cloud.google.com/stackdriver/docs/solutions/gke/installing.'
+              'https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs'
+              ' and '
+              'https://cloud.google.com/kubernetes-engine/docs/how-to/configure-metrics.'
           ),
           action='store_true',
       ),
@@ -1284,6 +1438,23 @@ def AddManagedPrometheusFlags(parser, for_create=False):
     )
 
 
+def AddAutoMonitoringScopeFlags(parser, hidden):
+  """Adds --auto-monitoring-scope flags to parser."""
+  help_text = """
+  Enables Auto-Monitoring for a specific scope within the cluster.
+  ALL: Enables Auto-Monitoring for all supported workloads within the cluster.
+  NONE: Disables Auto-Monitoring.
+  """
+  choices = ['ALL', 'NONE']
+  parser.add_argument(
+      '--auto-monitoring-scope',
+      choices=choices,
+      default=None,
+      help=help_text,
+      hidden=hidden,
+  )
+
+
 def AddEnableMasterSignalsFlags(parser, for_create=False):
   """Adds --master-logs and --enable-master-metrics flags to parser."""
 
@@ -1310,7 +1481,7 @@ Examples:
               'The `--master-logs` flag is deprecated and will be removed in '
               'an upcoming release. Please use `--logging` instead. '
               'For more information, please read: '
-              'https://cloud.google.com/stackdriver/docs/solutions/gke/installing.'
+              'https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs.'
           ),
       ),
   )
@@ -1327,7 +1498,7 @@ Disable sending logs from master components to Cloud Operations.
                 'The `--no-master-logs` flag is deprecated and will be removed'
                 ' in an upcoming release. Please use `--logging` instead. '
                 'For more information, please read: '
-                'https://cloud.google.com/stackdriver/docs/solutions/gke/installing.'
+                'https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs.'
             ),
             action='store_true',
         ),
@@ -1347,7 +1518,7 @@ Enable sending metrics from master components to Cloud Operations.
               'removed in an upcoming release. Please use `--monitoring`'
               ' instead. '
               'For more information, please read: '
-              'https://cloud.google.com/stackdriver/docs/solutions/gke/installing.'
+              'https://cloud.google.com/kubernetes-engine/docs/how-to/configure-metrics.'
           ),
           action='store_true',
       ),
@@ -1363,7 +1534,7 @@ Set the components that have logging enabled. Valid component values are:
 `SYSTEM`, `WORKLOAD`, `API_SERVER`, `CONTROLLER_MANAGER`, `SCHEDULER`, `NONE`
 
 For more information, see
-https://cloud.google.com/stackdriver/docs/solutions/gke/installing#available-logs
+https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs#available-logs
 
 Examples:
 
@@ -1380,7 +1551,7 @@ The default is `SYSTEM,WORKLOAD`. If this flag is set, then `SYSTEM` must be
 included.
 
 For more information, see
-https://cloud.google.com/stackdriver/docs/solutions/gke/installing#available-logs
+https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs#available-logs
 
 Examples:
 
@@ -1403,10 +1574,11 @@ def AddMonitoringFlag(parser, autopilot=False):
   help_text = """\
 Set the components that have monitoring enabled. Valid component values are:
 `SYSTEM`, `WORKLOAD` (Deprecated), `NONE`, `API_SERVER`, `CONTROLLER_MANAGER`,
-`SCHEDULER`, `DAEMONSET`, `DEPLOYMENT`, `HPA`, `POD`, `STATEFULSET`, `STORAGE`
+`SCHEDULER`, `DAEMONSET`, `DEPLOYMENT`, `HPA`, `POD`, `STATEFULSET`, `STORAGE`,
+`CADVISOR`, `KUBELET`, `DCGM`, `JOBSET`
 
 For more information, see
-https://cloud.google.com/stackdriver/docs/solutions/gke/installing#available-metrics
+https://cloud.google.com/kubernetes-engine/docs/how-to/configure-metrics#available-metrics
 
 Examples:
 
@@ -1418,14 +1590,15 @@ Examples:
     help_text = """\
 Set the components that have monitoring enabled. Valid component values are:
 `SYSTEM`, `WORKLOAD` (Deprecated), `NONE`, `API_SERVER`, `CONTROLLER_MANAGER`,
-`SCHEDULER`, `DAEMONSET`, `DEPLOYMENT`, `HPA`, `POD`, `STATEFULSET`, `STORAGE`
+`SCHEDULER`, `DAEMONSET`, `DEPLOYMENT`, `HPA`, `POD`, `STATEFULSET`, `STORAGE`,
+`CADVISOR`, `KUBELET`, `DCGM`, `JOBSET`
 
 For more information, see
-https://cloud.google.com/stackdriver/docs/solutions/gke/installing#available-metrics
+https://cloud.google.com/kubernetes-engine/docs/how-to/configure-metrics#available-metrics
 
 Examples:
 
-  $ {command} --monitoring=SYSTEM,API_SERVER,POD
+  $ {command} --monitoring=SYSTEM,API_SERVER,POD,DCGM
   $ {command} --monitoring=SYSTEM
 """
 
@@ -1471,7 +1644,7 @@ Examples:
   help_text += """
 New nodes, including ones created by resize or recreate, will have these labels
 on the Kubernetes API node object and can be used in nodeSelectors.
-See [](http://kubernetes.io/docs/user-guide/node-selection/) for examples.
+See [](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/) for examples.
 
 Note that Kubernetes labels, intended to associate cluster components
 and resources with one another and manage resource lifecycles, are different
@@ -1681,6 +1854,21 @@ See https://cloud.google.com/compute/docs/disks/local-ssd for more information.
   )
 
 
+def AddDataCacheCountFlag(parser, for_node_pool=False, hidden=False):
+  """Adds a --data-cache-count flag to the given parser."""
+  target = 'node pool' if for_node_pool else 'cluster'
+  help_text = """
+Specifies the number of local SSDs to be utilized for GKE Data Cache in the {}.
+""".format(target)
+  parser.add_argument(
+      '--data-cache-count',
+      help=help_text,
+      hidden=hidden,
+      type=int,
+      default=None,
+  )
+
+
 def AddNodeTaintsFlag(
     parser, for_node_pool=False, for_update=False, hidden=False
 ):
@@ -1844,17 +2032,66 @@ def AddPlacementPolicyFlag(parser, hidden=False):
   parser.add_argument('--placement-policy', help=help_text, hidden=hidden)
 
 
+def AddKubecontextOverrideFlag(parser):
+  """Adds a --kubecontext-override flag to parser.
+
+  Args:
+    parser: A given parser.
+  """
+  help_text = textwrap.dedent("""\
+    Name of kubectl context to use.
+
+    $ {command} cluster-1 --kubecontext-override=my-kubecontext
+      """)
+
+  parser.add_argument('--kubecontext-override', help=help_text, hidden=True)
+
+
 def AddQueuedProvisioningFlag(parser, hidden=False):
   """Adds a --enable-queued-provisioning flag to parser."""
   parser.add_argument(
       '--enable-queued-provisioning',
       default=None,
       help=textwrap.dedent("""\
-        Mark the newly created nodepool as Queued only. This means that all
-        new nodes can be obtained only through queuing via Cluster Autoscaler
-        ProvisioningRequest API.
+        Mark the nodepool as Queued only. This means that all new nodes can
+        be obtained only through queuing via ProvisioningRequest API.
 
           $ {command} node-pool-1 --cluster=example-cluster --enable-queued-provisioning
+          ... and other required parameters, for more details see:
+          https://cloud.google.com/kubernetes-engine/docs/how-to/provisioningrequest
+        """),
+      hidden=hidden,
+      action='store_true',
+  )
+
+
+def AddMaxRunDurationFlag(parser, hidden=False):
+  """Adds a --max-run-duration flag to parser."""
+  parser.add_argument(
+      '--max-run-duration',
+      default=None,
+      type=str,
+      help=textwrap.dedent("""\
+        Limit the runtime of each node in the node pool to the specified
+        duration.
+
+          $ {command} node-pool-1 --cluster=example-cluster --max-run-duration=3600s
+        """),
+      hidden=hidden,
+  )
+
+
+def AddFlexStartFlag(parser, hidden=False):
+  """Adds a --flex-start flag to parser."""
+  parser.add_argument(
+      '--flex-start',
+      default=None,
+      help=textwrap.dedent("""\
+        Start the node pool with Flex Start provisioning model.
+
+         $ {command} node-pool-1 --cluster=example-cluster --flex-start
+         and other required parameters, for more details see:
+         https://cloud.google.com/kubernetes-engine/docs/how-to/provisioningrequest
         """),
       hidden=hidden,
       action='store_true',
@@ -2224,7 +2461,7 @@ see https://cloud.google.com/firewall/docs/use-tags-for-firewalls.
   AddAutoprovisioningResourceManagerTagsFlag(parser, help_text)
 
 
-def AddMasterAuthorizedNetworksFlags(parser, enable_group_for_update=None):
+def AddMasterAuthorizedNetworksFlags(parser):
   """Adds Master Authorized Networks related flags to parser.
 
   Master Authorized Networks related flags are:
@@ -2232,19 +2469,10 @@ def AddMasterAuthorizedNetworksFlags(parser, enable_group_for_update=None):
 
   Args:
     parser: A given parser.
-    enable_group_for_update: An optional group of mutually exclusive flag
-      options to which an --enable-master-authorized-networks flag is added in
-      an update command.
   """
-  if enable_group_for_update is None:
-    # Flags are being added to the same group.
-    master_flag_group = parser.add_argument_group('Master Authorized Networks')
-    enable_flag_group = master_flag_group
-  else:
-    # Flags are being added to different groups, so the new one should have no
-    # help text (has only one arg).
-    master_flag_group = parser.add_argument_group('')
-    enable_flag_group = enable_group_for_update
+  # Flags are being added to the same group.
+  master_flag_group = parser.add_argument_group('Master Authorized Networks')
+  enable_flag_group = master_flag_group
 
   enable_flag_group.add_argument(
       '--enable-master-authorized-networks',
@@ -2333,9 +2561,7 @@ def AddILBSubsettingFlags(parser, hidden=False):
   )
 
 
-def AddClusterDNSFlags(
-    parser, release_track=base.ReleaseTrack.GA, hidden=False
-):
+def AddClusterDNSFlags(parser, hidden=False):
   """Adds flags related to clusterDNS to parser.
 
   This includes:
@@ -2347,7 +2573,6 @@ def AddClusterDNSFlags(
 
   Args:
     parser: A given parser.
-    release_track: Release track the flags are being added to.
     hidden: Indicates that the flags are hidden.
   """
   group = parser.add_argument_group('ClusterDNS', hidden=hidden)
@@ -2376,10 +2601,10 @@ def AddClusterDNSFlags(
             """,
       hidden=hidden,
   )
-  AddAdditiveVPCScopeFlags(group, release_track=release_track)
+  AddAdditiveVPCScopeFlags(group, hidden=hidden)
 
 
-def AddAdditiveVPCScopeFlags(parser, release_track=base.ReleaseTrack.GA):
+def AddAdditiveVPCScopeFlags(parser, hidden=False):
   """Adds flags related to DNS Additive VPC scope to parser.
 
   This includes:
@@ -2388,28 +2613,25 @@ def AddAdditiveVPCScopeFlags(parser, release_track=base.ReleaseTrack.GA):
 
   Args:
     parser: A given parser.
-    release_track: Release track the flags are being added to.
+    hidden: Indicates that the flags are hidden.
   """
-  if release_track != base.ReleaseTrack.GA:
-    mutex = parser.add_argument_group(
-        'ClusterDNS_AdditiveVPCScope_EnabledDisable', hidden=True, mutex=True
-    )
-    mutex.add_argument(
-        '--disable-additive-vpc-scope',
-        default=None,
-        action='store_true',
-        hidden=True,
-        help='Disables Additive VPC Scope.',
-    )
-    mutex.add_argument(
-        '--additive-vpc-scope-dns-domain',
-        default=None,
-        hidden=True,
-        help=(
-            'The domain used in Additive VPC scope. Only works with Cluster'
-            ' Scope.'
-        ),
-    )
+  mutex = parser.add_argument_group(hidden=hidden, mutex=True)
+  mutex.add_argument(
+      '--disable-additive-vpc-scope',
+      default=None,
+      action='store_true',
+      hidden=hidden,
+      help='Disables Additive VPC Scope.',
+  )
+  mutex.add_argument(
+      '--additive-vpc-scope-dns-domain',
+      default=None,
+      hidden=hidden,
+      help=(
+          'The domain used in Additive VPC scope. Only works with Cluster'
+          ' Scope.'
+      ),
+  )
 
 
 def AddPrivateClusterFlags(parser, default=None, with_deprecated=False):
@@ -2689,9 +2911,16 @@ datetimes for information on time formats.
       hidden=hidden_for_create,
       metavar='TIME_STAMP',
       help="""\
-End time of the first window (can occur in the past). Must take place after the
-start time. The difference in start and end time specifies the length of each
-recurrence. See $ gcloud topic datetimes for information on time formats.
+The end time for calculating the duration of the maintenance window,
+as expressed by the amount of time after the START_TIME, in the
+same format. The value for END_TIME must be in the future, relative
+to START_TIME. This only calculates the duration of the window,
+and doesn't set when the maintenance window stops recurring.
+Maintenance windows only stop recurring when they're removed. See
+$ gcloud topic datetimes for information on time formats.
+
+This flag argument must be specified if any of the other arguments
+in this group are specified.
 """,
   )
 
@@ -2827,6 +3056,7 @@ def AddLabelsFlag(parser, hidden=False, for_node_pool=False):
     help_text = """\
 Labels to apply to the Google Cloud resources of node pools in the
 Kubernetes Engine cluster. These are unrelated to Kubernetes labels.
+Warning: Updating this label will causes the node(s) to be recreated.
 
 Examples:
 
@@ -2963,26 +3193,97 @@ Type of the node VM boot disk. For version 1.24 and later, defaults to pd-balanc
   )
 
 
+def AddBootDiskConfigFlags(parser):
+  """Adds flags to configure the boot disk to the given parser."""
+  group = parser.add_group(help='Configure boot disk options.', hidden=True)
+  AddBootDiskProvisionedIopsFlag(group)
+  AddBootDiskProvisionedThroughputFlag(group)
+
+
+def AddBootDiskProvisionedIopsFlag(parser):
+  """Adds a --boot-disk-provisioned-iops flag to the given parser.
+
+  Args:
+    parser: A given parser.
+  """
+  help_text = """\
+Configure the Provisioned IOPS for the node pool boot disks. Only valid for hyperdisk-balanced boot disks.
+"""
+  parser.add_argument(
+      '--boot-disk-provisioned-iops',
+      type=int,
+      help=help_text,
+      hidden=True,
+  )
+
+
+def AddBootDiskProvisionedThroughputFlag(parser):
+  """Adds a --boot-disk-provisioned-throughput flag to the given parser.
+
+  Args:
+    parser: A given parser.
+  """
+  help_text = """\
+Configure the Provisioned Throughput for the node pool boot disks. Only valid for hyperdisk-throughput boot disks.
+"""
+  parser.add_argument(
+      '--boot-disk-provisioned-throughput',
+      type=int,
+      help=help_text,
+      hidden=True,
+  )
+
+
 def AddIpAliasCoreFlag(parser):
   parser.add_argument(
       '--enable-ip-alias',
       action='store_true',
       default=None,
       help="""\
-Enable use of alias IPs (https://cloud.google.com/compute/docs/alias-ip/)
-for Pod IPs. This will require at least two secondary ranges in the
-subnetwork, one for the pod IPs and another to reserve space for the
-services range.
+--enable-ip-alias creates a VPC-native cluster. If you set this option, you
+can optionally specify the IP address ranges to use for Pods and Services.
+For instructions, see
+https://cloud.google.com/kubernetes-engine/docs/how-to/alias-ips.
+
+--no-enable-ip-alias creates a routes-based cluster. This type of cluster
+routes traffic between Pods using Google Cloud Routes. This option is not
+recommended; use the default VPC-native cluster type instead. For instructions,
+see
+https://cloud.google.com/kubernetes-engine/docs/how-to/routes-based-cluster
+
+Note: For IPv6-only clusters, these flags are a no-op as IP Aliases do not
+apply, and any specified IP address ranges for Pods and Services will be
+ignored.
+
+You can't specify both --enable-ip-alias and --no-enable-ip-alias.
+If you omit both --enable-ip-alias and --no-enable-ip-alias,
+the default is a VPC-native cluster.
 """,
   )
 
 
-def AddIPAliasRelatedFlags(parser):
+def AddIPAliasRelatedFlags(parser, autopilot=False):
   """Adds flags related to IP aliases to the parser.
 
   Args:
     parser: A given parser.
+    autopilot: True if the cluster is in autopilot mode.
   """
+
+  if autopilot:
+    must_specify_enable_ip_alias = ''
+    must_specify_enable_ip_alias_new_block = ''
+  else:
+    must_specify_enable_ip_alias = """\
+
+Cannot be specified unless '--enable-ip-alias' option is also specified.
+"""
+    must_specify_enable_ip_alias_new_block = """\
+
+
+Cannot be specified unless '--enable-ip-alias' option is also specified.
+"""
+
   parser.add_argument(
       '--services-ipv4-cidr',
       metavar='CIDR',
@@ -2994,10 +3295,8 @@ Can be specified as a netmask size (e.g. '/20') or as in CIDR notion
 be chosen automatically from the available space in the network.
 
 If unspecified, the services CIDR range will be chosen with a default
-mask size.
-
-Can not be specified unless '--enable-ip-alias' is also specified.
-""",
+mask size.{}
+""".format(must_specify_enable_ip_alias_new_block),
   )
   parser.add_argument(
       '--create-subnetwork',
@@ -3019,24 +3318,23 @@ Examples:
 
 Create a new subnetwork with a default name and size.
 
-  $ {command} --create-subnetwork ""
+  $ {{command}} --create-subnetwork ""
 
 Create a new subnetwork named "my-subnet" with netmask of size 21.
 
-  $ {command} --create-subnetwork name=my-subnet,range=/21
+  $ {{command}} --create-subnetwork name=my-subnet,range=/21
 
 Create a new subnetwork with a default name with the primary range of
 10.100.0.0/16.
 
-  $ {command} --create-subnetwork range=10.100.0.0/16
+  $ {{command}} --create-subnetwork range=10.100.0.0/16
 
 Create a new subnetwork with the name "my-subnet" with a default range.
 
-  $ {command} --create-subnetwork name=my-subnet
+  $ {{command}} --create-subnetwork name=my-subnet
 
-Can not be specified unless '--enable-ip-alias' is also specified. Can
-not be used in conjunction with the '--subnetwork' option.
-""",
+{}Cannot be used in conjunction with '--subnetwork' option.
+""".format(must_specify_enable_ip_alias),
   )
   parser.add_argument(
       '--cluster-secondary-range-name',
@@ -3046,9 +3344,8 @@ Set the secondary range to be used as the source for pod IPs. Alias
 ranges will be allocated from this secondary range.  NAME must be the
 name of an existing secondary range in the cluster subnetwork.
 
-Must be used in conjunction with '--enable-ip-alias'. Cannot be used
-with --create-subnetwork.
-""",
+{}Cannot be used with '--create-subnetwork' option.
+""".format(must_specify_enable_ip_alias),
   )
   parser.add_argument(
       '--services-secondary-range-name',
@@ -3058,9 +3355,8 @@ Set the secondary range to be used for services (e.g. ClusterIPs).
 NAME must be the name of an existing secondary range in the cluster
 subnetwork.
 
-Must be used in conjunction with '--enable-ip-alias'. Cannot be used
-with --create-subnetwork.
-""",
+{}Cannot be used with '--create-subnetwork' option.
+""".format(must_specify_enable_ip_alias),
   )
 
 
@@ -3301,7 +3597,7 @@ service with Kubernetes-native resource model enabled),
               'The `--logging-service` flag is deprecated and will be removed '
               'in an upcoming release. Please use `--logging` instead. '
               'For more information, please read: '
-              'https://cloud.google.com/stackdriver/docs/solutions/gke/installing.'
+              'https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs.'
           ),
       ),
       help=help_str,
@@ -3332,7 +3628,7 @@ Monitoring service with Kubernetes-native resource model enabled),
               'removed in an upcoming release. Please use `--monitoring`'
               ' instead. '
               'For more information, please read: '
-              'https://cloud.google.com/stackdriver/docs/solutions/gke/installing.'
+              'https://cloud.google.com/kubernetes-engine/docs/how-to/configure-metrics.'
           ),
       ),
       help=help_str,
@@ -3432,18 +3728,20 @@ def AddAddonsFlagsWithOptions(parser, addon_options):
       not in [
           api_adapter.APPLICATIONMANAGER,
           api_adapter.STATEFULHA,
-          # TODO(b/314808639): Remove at AGA time
-          api_adapter.PARALLELSTORECSIDRIVER,
+          api_adapter.HIGHSCALECHECKPOINTING,
       ]
   ]
   visible_addon_options += api_adapter.VISIBLE_CLOUDRUN_ADDONS
   parser.add_argument(
       '--addons',
-      type=arg_parsers.ArgList(
-          choices=(addon_options + api_adapter.CLOUDRUN_ADDONS),
-          visible_choices=visible_addon_options,
+      type=arg_parsers.ArgDict(
+          spec={
+              choice: _ParseAddonEnabled
+              for choice in (addon_options + api_adapter.CLOUDRUN_ADDONS)
+          },
+          allow_key_only=True,
       ),
-      metavar='ADDON',
+      metavar='ADDON[=ENABLED|DISABLED]',
       help="""\
 Addons
 (https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1/projects.locations.clusters#Cluster.AddonsConfig)
@@ -3451,7 +3749,11 @@ are additional Kubernetes cluster components. Addons specified by this flag will
 be enabled. The others will be disabled. Default addons: {0}.
 The Istio addon is deprecated and removed.
 For more information and migration, see https://cloud.google.com/istio/docs/istio-on-gke/migrate-to-anthos-service-mesh.
-""".format(', '.join(api_adapter.DEFAULT_ADDONS)),
+ADDON must be one of: {1}.
+""".format(
+          ', '.join(api_adapter.DEFAULT_ADDONS),
+          ', '.join(visible_addon_options),
+      ),
   )
 
 
@@ -3505,7 +3807,7 @@ Must be used in conjunction with '--enable-ip-alias' or '--no-enable-ip-alias'.
   )
 
 
-def AddTpuFlags(parser, hidden=False, enable_tpu_service_networking=False):
+def AddTpuFlags(parser, hidden=True, enable_tpu_service_networking=False):
   """Adds flags related to TPUs to the parser.
 
   Args:
@@ -3515,7 +3817,9 @@ def AddTpuFlags(parser, hidden=False, enable_tpu_service_networking=False):
       enable_tpu_service_networking flag.
   """
 
-  tpu_group = parser.add_group(help='Flags relating to Cloud TPUs:')
+  tpu_group = parser.add_group(
+      help='Flags relating to Cloud TPUs:', hidden=hidden
+  )
 
   tpu_group.add_argument(
       '--enable-tpu',
@@ -3638,22 +3942,20 @@ def ValidateIstioConfigUpdateArgs(istio_config_args, disable_addons_args):
   if disable_addons_args and disable_addons_args.get('Istio'):
     return
   if istio_config_args or (
-      disable_addons_args and disable_addons_args.get('Istio') is False):  # pylint: disable=g-bool-id-comparison
+      disable_addons_args and disable_addons_args.get('Istio') is False  # pylint: disable=g-bool-id-comparison
+  ):
     raise exceptions.InvalidArgumentException(
         '--istio-config', 'The Istio addon is no longer supported.'
     )
 
 
-# TODO(b/110368338): Drop this warning when changing the default value of the
-# flag.
-def WarnForUnspecifiedIpAllocationPolicy(args):
-  if not args.IsSpecified('enable_ip_alias'):
-    log.status.Print(
-        'Default change: VPC-native is the default mode during cluster '
-        'creation for versions greater than 1.21.0-gke.1500. To create '
-        'advanced routes based clusters, please pass the '
-        '`--no-enable-ip-alias` flag'
-    )
+def WarnForUnspecifiedKubeletReadonlyPort():
+  log.status.Print(
+      'Note: The Kubelet readonly port (10255) is now deprecated. '
+      'Please update your workloads to use the recommended alternatives. '
+      'See https://cloud.google.com/kubernetes-engine/docs/how-to/disable-kubelet-readonly-port '  # pylint: disable=line-too-long
+      'for ways to check usage and for migration instructions.'
+  )
 
 
 def WarnForNodeModification(args, enable_autorepair):
@@ -3731,12 +4033,6 @@ For more information on Workload Identity, see
             https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity
   """,
       required=False,
-      type=arg_parsers.RegexpValidator(
-          # Don't document hub.id.goog in the error, but still pass it through
-          # for now.
-          r'^[a-z][-a-z0-9]{4,}[a-z0-9]\.(svc|hub)\.id\.goog$',
-          "Must be in format of '[PROJECT_ID].svc.id.goog'",
-      ),
   )
   if use_identity_provider:
     parser.add_argument(
@@ -3916,6 +4212,8 @@ def AddWorkloadVulnScanningEnumFlag(parser):
 
       To disable in an existing cluster, explicitly set the flag to
       `--workload-vulnerability-scanning=disabled`.
+
+      For more information on enablement, see https://cloud.google.com/kubernetes-engine/docs/concepts/about-security-posture-dashboard#feature-enablement.
       """),
   )
 
@@ -3924,17 +4222,22 @@ def AddSecurityPostureEnumFlag(parser):
   """Adds Kubernetes Security Posture's enablement flag to the parser."""
   parser.add_argument(
       '--security-posture',
-      choices=['disabled', 'standard'],
+      choices=['disabled', 'standard', 'enterprise'],
       default=None,
       hidden=False,
       help=textwrap.dedent("""\
       Sets the mode of the Kubernetes security posture API's off-cluster features.
+
+      To enable advanced mode explicitly set the flag to
+      `--security-posture=enterprise`.
 
       To enable in standard mode explicitly set the flag to
       `--security-posture=standard`
 
       To disable in an existing cluster, explicitly set the flag to
       `--security-posture=disabled`.
+
+      For more information on enablement, see https://cloud.google.com/kubernetes-engine/docs/concepts/about-security-posture-dashboard#feature-enablement.
       """),
   )
 
@@ -3955,7 +4258,7 @@ def AddRuntimeVulnerabilityInsightFlag(parser):
   )
 
 
-def AddEnableKubeletReadonlyPortFlag(parser, hidden=True):
+def AddEnableKubeletReadonlyPortFlag(parser, hidden=False):
   """Adds Kubernetes Read Only Port's enablement flag to the parser."""
   parser.add_argument(
       '--enable-insecure-kubelet-readonly-port',
@@ -3971,7 +4274,7 @@ def AddEnableKubeletReadonlyPortFlag(parser, hidden=True):
   )
 
 
-def AddAutoprovisioningEnableKubeletReadonlyPortFlag(parser, hidden=True):
+def AddAutoprovisioningEnableKubeletReadonlyPortFlag(parser, hidden=False):
   """Adds Kubernetes Read Only Port's enablement flag to the parser."""
   parser.add_argument(
       '--autoprovisioning-enable-insecure-kubelet-readonly-port',
@@ -4159,19 +4462,72 @@ def AddPrivateIpv6GoogleAccessTypeFlag(api_version, parser, hidden=False):
   ).choice_arg.AddToParser(parser)
 
 
-def AddStackTypeFlag(parser, hidden=False):
+def AddStackTypeFlag(
+    parser, release_track: base.ReleaseTrack = None, hidden=False
+):
   """Adds --stack-type flag to the given parser.
 
   Args:
     parser: A given parser.
+    release_track: The release track of command.
     hidden: If true, suppress help text for added options.
   """
-  help_text = 'IP stack type of the node VMs.'
+  help_text = 'IP stack type of the cluster nodes.'
+  choices_args = ['ipv4', 'ipv4-ipv6']
+  if release_track == base.ReleaseTrack.ALPHA:
+    choices_args.append('ipv6')
   parser.add_argument(
       '--stack-type',
       hidden=hidden,
       help=help_text,
-      choices=['ipv4', 'ipv4-ipv6'],
+      choices=choices_args,
+  )
+
+
+def AddLocalSsdEncryptionModeFlag(parser, for_node_pool=False, hidden=False):
+  """Adds --local-ssd-encryption-mode flag to the given parser."""
+  target = 'node pool' if for_node_pool else 'cluster'
+  help_text = """
+Encryption mode for Local SSDs on the {}.
+""".format(target)
+  parser.add_argument(
+      '--local-ssd-encryption-mode',
+      help=help_text,
+      default=None,
+      choices=['STANDARD_ENCRYPTION', 'EPHEMERAL_KEY_ENCRYPTION'],
+      hidden=hidden,
+  )
+
+
+def AddStoragePoolsFlag(
+    parser, for_node_pool=False, for_create=True, hidden=False
+):
+  """Adds a --storage-pools flag to the given parser."""
+  target = 'node pool' if for_node_pool else 'cluster'
+  if for_create:
+    help_text = """
+A list of storage pools where the {}'s boot disks will be provisioned.
+
+STORAGE_POOL must be in the format
+projects/project/zones/zone/storagePools/storagePool
+""".format(target)
+  else:
+    help_text = """\
+A list of storage pools where the {arg1}'s boot disks will be provisioned. Replaces
+all the current storage pools of an existing {arg2}, with the specified storage
+pools.
+
+STORAGE_POOL must be in the format
+projects/project/zones/zone/storagePools/storagePool
+""".format(arg1=target, arg2=target)
+
+  parser.add_argument(
+      '--storage-pools',
+      help=help_text,
+      default=None,
+      type=arg_parsers.ArgList(min_length=1),
+      metavar='STORAGE_POOL',
+      hidden=hidden,
   )
 
 
@@ -4548,6 +4904,7 @@ def ValidateNotificationConfigFlag(args):
     if 'filter' in args.notification_config:
       known_event_types = [
           'UpgradeEvent',
+          'UpgradeInfoEvent',
           'UpgradeAvailableEvent',
           'SecurityBulletinEvent',
       ]
@@ -4956,7 +5313,7 @@ https://cloud.google.com/kubernetes-engine/docs/how-to/encrypting-secrets.
 """,
       required=False,
       type=arg_parsers.RegexpValidator(
-          r'^projects/[^/]+/locations/[^/]+/keyRings/[^/]+/cryptoKeys/[^/]+$',
+          r'^projects/[^/]+/locations/[^/]+/keyRings/[^/]+/cryptoKeys/[^/]+(\/grants\/[^/]+)?$',
           'Must be in format of'
           " 'projects/[KEY_PROJECT_ID]/locations/[LOCATION]/keyRings/[RING_NAME]/cryptoKeys/[KEY_NAME]'",
       ),
@@ -4992,13 +5349,19 @@ Examples:
 
     kubeletConfig:
       cpuManagerPolicy: static
+      memoryManager:
+        policy: Static
+      topologyManager:
+        policy: BestEffort
+        scope: pod
     linuxConfig:
       sysctl:
         net.core.somaxconn: '2048'
         net.ipv4.tcp_rmem: '4096 87380 6291456'
-    hugepageConfig:
-      hugepage_size2m: '1024'
-      hugepage_size1g: '2'
+      hugepageConfig:
+        hugepage_size2m: '1024'
+        hugepage_size1g: '2'
+      cgroupMode: 'CGROUP_MODE_V2'
 
 List of supported kubelet configs in 'kubeletConfig'.
 
@@ -5007,21 +5370,71 @@ KEY                                 | VALUE
 cpuManagerPolicy                    | either 'static' or 'none'
 cpuCFSQuota                         | true or false (enabled by default)
 cpuCFSQuotaPeriod                   | interval (e.g., '100ms')
+memoryManager                       | specify memory manager policy
+topologyManager                     | specify topology manager policy and scope
 podPidsLimit                        | integer (The value must be greater than or equal to 1024 and less than 4194304.)
+containerLogMaxSize                 | positive number plus unit suffix (e.g., '100Mi', '0.2Gi'. The value must be between 10Mi and 500Mi.)
+containerLogMaxFiles                | integer (The value must be between [2, 10].)
+imageGcLowThresholdPercent          | integer (The value must be between [10, 85], and lower than imageGcHighThresholdPercent.)
+imageGcHighThresholdPercent         | integer (The value must be between [10, 85], and greater than imageGcLowThresholdPercent.)
+imageMinimumGcAge                   | interval (e.g., '100s', '1m'. The value must be less than '2m'.)
+imageMaximumGcAge                   | interval (e.g., '100s', '1m'. The value must be greater than imageMinimumGcAge.)
+allowedUnsafeSysctls                | list of sysctls (Allowlisted groups: 'kernel.shm*', 'kernel.msg*', 'kernel.sem', 'fs.mqueue.*', and 'net.*', and sysctls under the groups.)
+singleProcessOomKill                | true or false
+maxParallelImagePulls               | integer (The value must be between [2, 5].)
+
+List of supported keys in memoryManager in 'kubeletConfig'.
+KEY                                        | VALUE
+------------------------------------------ | ------------------------------------------
+policy                                     | either 'Static' or 'None'
+
+List of supported keys in topologyManager in 'kubeletConfig'.
+KEY                                        | VALUE
+------------------------------------------ | ------------------------------------------
+policy                                     | either 'none' or 'best-effort' or 'single-numa-node' or 'restricted'
+scope                                      | either 'pod' or 'container'
+
 
 List of supported sysctls in 'linuxConfig'.
 
 KEY                                        | VALUE
 ------------------------------------------ | ------------------------------------------
-net.core.netdev_max_backlog                | Any positive integer, less than 2147483647
-net.core.rmem_max                          | Any positive integer, less than 2147483647
-net.core.wmem_default                      | Any positive integer, less than 2147483647
-net.core.wmem_max                          | Any positive integer, less than 2147483647
-net.core.optmem_max                        | Any positive integer, less than 2147483647
-net.core.somaxconn                         | Must be [128, 2147483647]
-net.ipv4.tcp_rmem                          | Any positive integer tuple
-net.ipv4.tcp_wmem                          | Any positive integer tuple
-net.ipv4.tcp_tw_reuse                      | Must be {0, 1}
+net.core.netdev_max_backlog                        | Any positive integer, less than 2147483647
+net.core.rmem_default                              | Must be between [2304, 2147483647]
+net.core.rmem_max                                  | Must be between [2304, 2147483647]
+net.core.wmem_default                              | Must be between [4608, 2147483647]
+net.core.wmem_max                                  | Must be between [4608, 2147483647]
+net.core.optmem_max                                | Any positive integer, less than 2147483647
+net.core.somaxconn                                 | Must be between [128, 2147483647]
+net.ipv4.tcp_rmem                                  | Any positive integer tuple
+net.ipv4.tcp_wmem                                  | Any positive integer tuple
+net.ipv4.tcp_tw_reuse                              | Must be {0, 1, 2}
+net.ipv4.tcp_max_orphans                           | Must be between [16384, 262144]
+net.netfilter.nf_conntrack_max                     | Must be between [65536, 4194304]
+net.netfilter.nf_conntrack_buckets                 | Must be between [65536, 524288]. Recommend setting: nf_conntrack_max = nf_conntrack_buckets * 4
+net.netfilter.nf_conntrack_tcp_timeout_close_wait  | Must be between [60, 3600]
+net.netfilter.nf_conntrack_tcp_timeout_time_wait   | Must be between [1, 600]
+net.netfilter.nf_conntrack_tcp_timeout_established | Must be between [600, 86400]
+net.netfilter.nf_conntrack_acct                    | Must be {0, 1}
+kernel.shmmni                                      | Must be between [4096, 32768]
+kernel.shmmax                                      | Must be between [0, 18446744073692774399]
+kernel.shmall                                      | Must be between [0, 18446744073692774399]
+fs.aio-max-nr                                      | Must be between [65536, 4194304]
+fs.file-max                                        | Must be between [104857, 67108864]
+fs.inotify.max_user_instances                      | Must be between [8192, 1048576]
+fs.inotify.max_user_watches                        | Must be between [8192, 1048576]
+fs.nr_open                                         | Must be between [1048576, 2147483584]
+vm.dirty_background_ratio                          | Must be between [1, 100]
+vm.dirty_expire_centisecs                          | Must be between [0, 6000]
+vm.dirty_ratio                                     | Must be between [1, 100]
+vm.dirty_writeback_centisecs                       | Must be between [0, 1000]
+vm.max_map_count                                   | Must be between [65536, 2147483647]
+vm.overcommit_memory                               | Must be one of {0, 1, 2}
+vm.overcommit_ratio                                | Must be between [0, 100]
+vm.vfs_cache_pressure                              | Must be between [0, 100]
+vm.swappiness                                      | Must be between [0, 200]
+vm.watermark_scale_factor                          | Must be between [10, 3000]
+vm.min_free_kbytes                                 | Must be between [67584, 1048576]
 
 List of supported hugepage size in 'hugepageConfig'.
 
@@ -5036,34 +5449,44 @@ allocated hugepage of 2m and 1g should not exceed 8GB * 0.6 = 4.8GB.
 1G hugepages are only available in following machine familes:
 c3, m2, c2d, c3d, h3, m3, a2, a3, g2.
 
+Supported values for 'cgroupMode' under 'linuxConfig'.
+
+* `CGROUP_MODE_V1`: Use cgroupv1 on the node pool.
+* `CGROUP_MODE_V2`: Use cgroupv2 on the node pool.
+* `CGROUP_MODE_UNSPECIFIED`: Use the default GKE cgroup configuration.
+
+Supported values for 'transparentHugepageEnabled' under 'linuxConfig' which controls transparent hugepage support for anonymous memory.
+
+* `TRANSPARENT_HUGEPAGE_ENABLED_ALWAYS`: Transparent hugepage is enabled system wide.
+* `TRANSPARENT_HUGEPAGE_ENABLED_MADVISE`: Transparent hugepage is enabled inside MADV_HUGEPAGE regions. This is the default kernel configuration.
+* `TRANSPARENT_HUGEPAGE_ENABLED_NEVER`: Transparent hugepage is disabled.
+* `TRANSPARENT_HUGEPAGE_ENABLED_UNSPECIFIED`: Default value. GKE will not modify the kernel configuration.
+
+Supported values for 'transparentHugepageDefrag' under 'linuxConfig' which defines the transparent hugepage defrag configuration on the node.
+
+* `TRANSPARENT_HUGEPAGE_DEFRAG_ALWAYS`: It means that an application requesting THP will stall on allocation failure and directly reclaim pages and compact memory in an effort to allocate a THP immediately.
+* `TRANSPARENT_HUGEPAGE_DEFRAG_DEFER`: It means that an application will wake kswapd in the background to reclaim pages and wake kcompactd to compact memory so that THP is available in the near future. It is the responsibility of khugepaged to then install the THP pages later.
+* `TRANSPARENT_HUGEPAGE_DEFRAG_DEFER_WITH_MADVISE`: It means that an application will enter direct reclaim and compaction like always, but only for regions that have used madvise(MADV_HUGEPAGE); all other regions will wake kswapd in the background to reclaim pages and wake kcompactd to compact memory so that THP is available in the near future.
+* `TRANSPARENT_HUGEPAGE_DEFRAG_MADVISE`: It means that an application will enter direct reclaim and compaction like always, but only for regions that have used madvise(MADV_HUGEPAGE); all other regions will wake kswapd in the background to reclaim pages and wake kcompactd to compact memory so that THP is available in the near future.
+* `TRANSPARENT_HUGEPAGE_DEFRAG_NEVER`: It means that an application will never enter direct reclaim or compaction.
+* `TRANSPARENT_HUGEPAGE_DEFRAG_UNSPECIFIED`: Default value. GKE will not modify the kernel configuration.
+
 Note, updating the system configuration of an existing node pool requires recreation of the nodes which which might cause a disruption.
 """,
   )
 
 
-def AddContainerdConfigFlag(parser, hidden=True):
+def AddContainerdConfigFlag(parser):
   """Adds --containerd-config-from-file flag to the given parser."""
   parser.add_argument(
       '--containerd-config-from-file',
       type=arg_parsers.FileContents(),
-      hidden=hidden,
-      # TODO(b/290786967): Update with proper documentation link.
       help="""
-Path of the YAML/JSON file that contains the containerd configuration, including private registry access config.
+Path of the YAML file that contains containerd configuration entries like configuring access to private image registries.
 
-Example:
-    privateRegistryAccessConfig:
-      enabled: true
-      certificateAuthorityDomainConfig:
-        - gcpSecretManagerCertificateConfig:
-            secretURI: "projects/1234567890/secrets/my-cert/versions/2"
-          fqdns:
-            - "my.custom.domain"
-            - "10.2.3.4"
+For detailed information on the configuration usage, please refer to https://cloud.google.com/kubernetes-engine/docs/how-to/customize-containerd-configuration.
 
-For detailed information on the configuration usage, please refer to DOC_LINK.
-
-Note: updating the containerd configuration of an existing cluster/node-pool requires recreation of the nodes which which might cause a disruption.
+Note: Updating the containerd configuration of an existing cluster or node pool requires recreation of the existing nodes, which might cause disruptions in running workloads.
 """,
   )
 
@@ -5201,12 +5624,12 @@ Examples:
       action=actions.DeprecationAction(
           '--dataplane-v2-observability-mode',
           warn=(
-              'The --dataplane-v2-observability-mode flag is deprecated and '
-              'will be removed in an upcoming release. '
+              'The --dataplane-v2-observability-mode flag is '
+              'no longer supported. '
               'Please use `--enable-dataplane-v2-flow-observability` or '
               '`--disable-dataplane-v2-flow-observability`.'
           ),
-          removed=False,
+          removed=True,
       ),
   )
 
@@ -5261,6 +5684,35 @@ https://cloud.google.com/compute/confidential-vm/docs/about-cvm.""".format(
       default=None,
       hidden=hidden,
       action='store_true',
+  )
+
+
+def AddConfidentialNodeTypeFlag(parser, for_node_pool=False, is_update=False):
+  """Adds --confidential-node-type flag to the parser."""
+  target = 'node pool' if for_node_pool else 'cluster'
+
+  help_text = """\
+Enable confidential nodes for the {}. Enabling Confidential Nodes
+will create nodes using Confidential VM
+https://cloud.google.com/compute/confidential-vm/docs/about-cvm.""".format(
+      target
+  )
+
+  if is_update:
+    help_text = """\
+    Recreate all the nodes in the node pool to be confidential VM
+    https://cloud.google.com/compute/confidential-vm/docs/about-cvm."""
+
+  choices = ['sev', 'sev_snp', 'tdx']
+  # This feature can only be disabled on node pool level.
+  if for_node_pool:
+    choices.append('disabled')
+
+  parser.add_argument(
+      '--confidential-node-type',
+      choices=choices,
+      default=None,
+      help=help_text,
   )
 
 
@@ -5323,7 +5775,9 @@ def AddEnableCloudLogging(parser):
               ' in an upcoming release. '
               'Please use `--logging` (optionally with `--monitoring`). '
               'For more details, please read: '
-              'https://cloud.google.com/stackdriver/docs/solutions/gke/installing.'
+              'https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs'
+              ' and '
+              'https://cloud.google.com/kubernetes-engine/docs/how-to/configure-metrics.'
           ),
           action='store_true',
       ),
@@ -5345,7 +5799,9 @@ def AddEnableCloudMonitoring(parser):
               'flag `--enable-cloud-monitoring` is also deprecated. Please use '
               '`--monitoring` (optionally with `--logging`). '
               'For more details, please read: '
-              'https://cloud.google.com/stackdriver/docs/solutions/gke/installing.'
+              'https://cloud.google.com/kubernetes-engine/docs/how-to/configure-metrics'
+              ' and '
+              'https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs.'
           ),
           action='store_true',
       ),
@@ -5360,14 +5816,14 @@ def AddEnableCloudMonitoring(parser):
 def AddMaxNodesPerPool(parser):
   parser.add_argument(
       '--max-nodes-per-pool',
-      type=arg_parsers.BoundedInt(100, api_adapter.MAX_NODES_PER_POOL),
+      type=arg_parsers.BoundedInt(100, 2000),
       help=(
           'The maximum number of nodes to allocate per default initial node'
           ' pool. Kubernetes Engine will automatically create enough nodes'
           ' pools such that each node pool contains less than'
           ' `--max-nodes-per-pool` nodes. Defaults to {nodes} nodes, but can be'
           ' set as low as 100 nodes per pool on initial create.'.format(
-              nodes=api_adapter.MAX_NODES_PER_POOL
+              nodes=api_adapter.DEFAULT_MAX_NODES_PER_POOL
           )
       ),
   )
@@ -5399,7 +5855,8 @@ def AddEnableNestedVirtualizationFlag(parser, for_node_pool=False, hidden=True):
   target = 'node pool' if for_node_pool else 'default initial node pool'
   help_text = """
       Enables the use of nested virtualization on the {}.
-      Defaults to `false`. Can only be enabled on UBUNTU_CONTAINERD base image.
+      Defaults to `false`. Can only be enabled on UBUNTU_CONTAINERD base image
+      or COS_CONTAINERD base image with version 1.28.4-gke.1083000 and above.
     """.format(target)
   parser.add_argument(
       '--enable-nested-virtualization',
@@ -5410,12 +5867,12 @@ def AddEnableNestedVirtualizationFlag(parser, for_node_pool=False, hidden=True):
   )
 
 
-def AddPerformanceMonitoringUnit(parser, hidden=True):
+def AddPerformanceMonitoringUnit(parser, hidden=False):
   help_text = """
       Sets the Performance Monitoring Unit level.
       Valid values are `architectural`, `standard` and `enhanced`
     """
-  parser.add_argument(
+  return parser.add_argument(
       '--performance-monitoring-unit',
       choices=_PMU_LEVEL,
       help=help_text,
@@ -5468,6 +5925,45 @@ The maintenance interval type must be either 'PERIODIC' or 'AS_NEEDED'
       type=type_validator,
       hidden=hidden,
       help=help_text,
+  )
+
+
+def AddOpportunisticMaintenanceFlag(parser):
+  """Adds a --opportunistic-maintenance flag to the given parser."""
+  spec = {'node-idle-time': str, 'window': str, 'min-nodes': int}
+
+  opportunistic_maintenance_help = """\
+Opportunistic maintenance options.
+
+node-idle-time: Time to be spent waiting for node to be idle
+before starting maintenance, ending with 's'. Example: "3.5s"
+
+window: The window of time that opportunistic maintenance can run, ending with 's'.
+  Example: A setting of 14 days (1209600s) implies that opportunistic maintenance can only be
+    ran in the 2 weeks leading up to the scheduled maintenance date.
+    Setting 28 days(2419200s) allows opportunistic maintenance to run at any time in the scheduled
+    maintenance window.
+
+min-nodes: Minimum number of nodes in the node pool to be available during the opportunistic
+    triggered maintenance.
+
+  $ {command} example-cluster\
+  --opportunistic-maintenance=node-idle-time=600s,window=600s,min-nodes=2
+"""
+
+  parser.add_argument(
+      '--opportunistic-maintenance',
+      type=arg_parsers.ArgDict(
+          spec=spec,
+          required_keys=[
+              'node-idle-time',
+              'window',
+              'min-nodes',
+          ],
+          max_length=len(spec),
+      ),
+      help=opportunistic_maintenance_help,
+      metavar='node-idle-time=NODE_IDLE_TIME,window=WINDOW,min-nodes=MIN_NODES',
   )
 
 
@@ -5558,11 +6054,14 @@ def AddGetCredentialsArgs(parser):
   )
 
 
-def AddDnsEndpointFlag(parser, hidden=True):
+def AddDnsEndpointFlag(parser):
+  """Adds the --dns-endpoint flag to parser."""
+  help_text = """\
+    Whether to use the DNS-based endpoint for the cluster address.
+  """
   parser.add_argument(
       '--dns-endpoint',
-      hidden=hidden,
-      help='Whether to use the DNS endpoint for the cluster address.',
+      help=help_text,
       action='store_true',
   )
 
@@ -5727,21 +6226,6 @@ def AddPrivateEndpointFQDNFlag(parser, hidden=True):
   )
 
 
-def AddPodAutoscalingDirectMetricsOptInFlag(parser):
-  """Adds a --pod-autoscaling-direct-metrics-opt-in flag to the given parser."""
-  parser.add_argument(
-      '--pod-autoscaling-direct-metrics-opt-in',
-      default=None,
-      action='store_true',
-      hidden=True,
-      help=(
-          'When specified, the cluster will use the pod autoscaling direct '
-          'metrics collection feature. Otherwise the cluster will use '
-          'the feature or will not, depending on the cluster version.'
-      ),
-  )
-
-
 def VerifyGetCredentialsFlags(args):
   """Verifies that the passed flags are valid for get-credentials.
 
@@ -5862,6 +6346,42 @@ $ {command} --clear-fleet-project
         help=unset_text,
         default=None,
         action='store_true',
+    )
+
+
+def AddMembershipTypeFlags(parser, is_update=False):
+  """Adds --membership-type  and --unset-membership-type flag to the parser."""
+  membership_type_text = """
+Specify a membership type for the cluster's fleet membership.
+Example:
+$ {command} --membership-type=LIGHTWEIGHT
+"""
+
+  unset_membership_type_text = """
+Set the membership type for the cluster's fleet membership to empty.
+Example:
+$ {command} --unset-membership-type
+"""
+  parser.add_argument(
+      '--membership-type',
+      help=membership_type_text,
+      required=False,
+      choices={
+          'LIGHTWEIGHT': """\
+              Fleet membership representing this cluster will be lightweight.
+              """,
+      },
+      default=None,
+      hidden=True,
+  )
+
+  if is_update:
+    parser.add_argument(
+        '--unset-membership-type',
+        help=unset_membership_type_text,
+        default=None,
+        action='store_true',
+        hidden=True,
     )
 
 
@@ -6091,23 +6611,41 @@ def AddAdditionalPodNetworkFlag(parser):
   )
 
 
-def AddEnableDNSEndpoint(parser):
-  """Adds the --enable-dns-endpoint flag to parser."""
-  help_text = ' '
+def AddEnableDNSAccessFlag(parser):
+  """Adds the --enable-dns-access flag to parser."""
+  help_text = """\
+    Enable access to the cluster's control plane over DNS-based endpoint.
+
+    DNS-based control plane access is recommended.
+  """
   parser.add_argument(
-      '--enable-dns-endpoint',
+      '--enable-dns-access',
       default=None,
-      hidden=True,
       action='store_true',
       help=help_text,
   )
 
 
+def AddCPDiskEncryptionKeyFlag(parser):
+  """Adds a --cp-disk-encryption-key flag to parser."""
+  help_text = ' '
+  parser.add_argument(
+      '--cp-disk-encryption-key',
+      help=help_text,
+      hidden=True,
+      type=str,
+      default=None,
+  )
+
+
+workload_policies_validator = arg_parsers.RegexpValidator(
+    r'^allow-net-admin$',
+    'Workload policy only supports "allow-net-admin"',
+)
+
+
 def AddWorkloadPoliciesFlag(parser, hidden=False):
   """Adds workload policies related flags to parser."""
-  type_validator = arg_parsers.RegexpValidator(
-      r'^allow-net-admin$', 'Workload policy only supports "allow-net-admin"'
-  )
   help_text = """\
 Add Autopilot workload policies to the cluster.
 
@@ -6119,15 +6657,15 @@ The only supported workload policy is 'allow-net-admin'.
 """
 
   parser.add_argument(
-      '--workload-policies', type=type_validator, help=help_text, hidden=hidden
+      '--workload-policies',
+      type=workload_policies_validator,
+      help=help_text,
+      hidden=hidden,
   )
 
 
 def AddRemoveWorkloadPoliciesFlag(parser, hidden=False):
   """Adds Remove workload policies related flags to parser."""
-  type_validator = arg_parsers.RegexpValidator(
-      r'^allow-net-admin$', 'Workload policy only supports "allow-net-admin"'
-  )
   help_text = """\
 Remove Autopilot workload policies from the cluster.
 
@@ -6140,7 +6678,65 @@ The only supported workload policy is 'allow-net-admin'.
 
   parser.add_argument(
       '--remove-workload-policies',
-      type=type_validator,
+      type=workload_policies_validator,
+      help=help_text,
+      hidden=hidden,
+  )
+
+
+def AddAutopilotWorkloadPoliciesFlag(parser, hidden=True):
+  """Adds workload policies related flags to parser.
+
+  This is for use in GKE Standard.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+  """
+
+  help_text = """\
+Add Autopilot workload policies to the cluster.
+
+Examples:
+
+  $ {command} example-cluster --autopilot-workload-policies=allow-net-admin
+
+The only supported workload policy is 'allow-net-admin'.
+"""
+
+  parser.add_argument(
+      '--autopilot-workload-policies',
+      dest='workload_policies',
+      type=workload_policies_validator,
+      help=help_text,
+      hidden=hidden,
+  )
+
+
+def AddRemoveAutopilotWorkloadPoliciesFlag(parser, hidden=True):
+  """Adds Remove workload policies related flags to parser.
+
+  This is for use in GKE Standard.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+  """
+
+  help_text = """\
+Remove Autopilot workload policies from the cluster.
+
+Examples:
+
+  $ {command} example-cluster --remove-autopilot-workload-policies=allow-net-admin
+
+The only supported workload policy is 'allow-net-admin'.
+"""
+
+  parser.add_argument(
+      '--remove-autopilot-workload-policies',
+      dest='remove_workload_policies',
+      type=workload_policies_validator,
       help=help_text,
       hidden=hidden,
   )
@@ -6194,7 +6790,6 @@ def AddEnableCiliumClusterwideNetworkPolicyFlag(parser, is_update=False):
         '--enable-cilium-clusterwide-network-policy',
         action=arg_parsers.StoreTrueFalseAction,
         help=help_text,
-        hidden=True,
     )
   else:
     help_text += ' Disabled by default.'
@@ -6203,7 +6798,53 @@ def AddEnableCiliumClusterwideNetworkPolicyFlag(parser, is_update=False):
         action='store_true',
         default=None,
         help=help_text,
-        hidden=True,
+    )
+
+
+def AddDisableL4LbFirewallReconciliationFlag(
+    parser, hidden=False, is_update=False
+):
+  """Adds a disable-l4-lb-firewall-reconciliation to the given cluster parser.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+    is_update: Whether the flag is used for an update operation.
+  """
+
+  if is_update:
+    group = parser.add_group(mutex=True, hidden=hidden)
+    group.add_argument(
+        '--disable-l4-lb-firewall-reconciliation',
+        action='store_const',
+        const=True,
+        help="""\
+            Disable reconciliation on the cluster for L4 Load Balancer VPC
+            firewalls targeting ingress traffic.
+            """,
+        hidden=hidden,
+    )
+    group.add_argument(
+        '--enable-l4-lb-firewall-reconciliation',
+        action='store_const',
+        const=True,
+        help="""\
+            Enable reconciliation on the cluster for L4 Load Balancer VPC
+            firewalls targeting ingress traffic. L4 LB VPC firewall
+            reconciliation is enabled by default.
+            """,
+        hidden=hidden,
+    )
+  else:
+    parser.add_argument(
+        '--disable-l4-lb-firewall-reconciliation',
+        action='store_const',
+        const=True,
+        help="""\
+            Disable reconciliation on the cluster for L4 Load Balancer VPC
+            firewalls targeting ingress traffic.
+            """,
+        hidden=hidden,
     )
 
 
@@ -6240,6 +6881,26 @@ def AddSoleTenantNodeAffinityFileFlag(parser, hidden=False):
   )
 
 
+def AddSoleTenantMinNodeCpusFlag(parser, hidden=False):
+  """Adds --sole-tenant-min-node-cpus flag to the given parser.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+  """
+
+  parser.add_argument(
+      '--sole-tenant-min-node-cpus',
+      type=int,
+      hidden=hidden,
+      help="""\
+      A integer value that specifies the minimum number of vCPUs that each sole
+      tenant node must have to use CPU overcommit. If not specified, the CPU
+      overcommit feature is disabled.
+      """,
+  )
+
+
 def AddSecondaryBootDisksArgs(
     parser,
     hidden=False,
@@ -6264,7 +6925,7 @@ def AddSecondaryBootDisksArgs(
 
       *disk-image*::: (Required) The full resource path to the source disk image to create the secondary boot disks from.
 
-      *mode*::: (Optional) The configuration mode for the secondary boot disks. The default value is "CONTAINER_IMAGE_CACHE."
+      *mode*::: (Optional) The configuration mode for the secondary boot disks. The default value is "CONTAINER_IMAGE_CACHE".
       """,
   )
 
@@ -6287,6 +6948,104 @@ def AddEnableBackupRestoreFlag(parser):
       help=help_text,
       hidden=False,
   )
+
+
+def AddEnableLustreCSIDriverFlag(parser, hidden=False):
+  """Adds --enable-lustre-csi-driver flag to the given parser.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+  """
+
+  help_text = """\
+    Enable the Lustre CSI Driver GKE add-on. This add-on is disabled by default.
+    """
+  parser.add_argument(
+      '--enable-lustre-csi-driver',
+      action='store_true',
+      default=None,
+      help=help_text,
+      hidden=hidden,
+  )
+
+
+def AddEnableRayOperatorFlag(parser, hidden=False):
+  """Adds --enable-ray-operator flag to the given parser.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+  """
+
+  help_text = """\
+    Enable the Ray Operator GKE add-on. This add-on is disabled by default.
+    """
+  parser.add_argument(
+      '--enable-ray-operator',
+      action='store_true',
+      default=None,
+      help=help_text,
+      hidden=hidden,
+  )
+
+
+def AddEnableRayClusterLogging(parser, hidden=False, is_update=False):
+  """Adds --enable-ray-cluster-logging flag to the given parser.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+    is_update: Whether the flag is used for an update operation.
+  """
+
+  help_text = """\
+    Enable automatic log processing sidecar for Ray clusters.
+    """
+  if is_update:
+    parser.add_argument(
+        '--enable-ray-cluster-logging',
+        action=arg_parsers.StoreTrueFalseAction,
+        help=help_text,
+        hidden=hidden,
+    )
+  else:
+    parser.add_argument(
+        '--enable-ray-cluster-logging',
+        action='store_true',
+        default=None,
+        help=help_text,
+        hidden=hidden,
+    )
+
+
+def AddEnableRayClusterMonitoring(parser, hidden=False, is_update=False):
+  """Adds --enable-ray-cluster-monitoring flag to the given parser.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+    is_update: Whether the flag is used for an update operation.
+  """
+
+  help_text = """\
+    Enable automatic metrics collection for Ray clusters.
+    """
+  if is_update:
+    parser.add_argument(
+        '--enable-ray-cluster-monitoring',
+        action=arg_parsers.StoreTrueFalseAction,
+        help=help_text,
+        hidden=hidden,
+    )
+  else:
+    parser.add_argument(
+        '--enable-ray-cluster-monitoring',
+        action='store_true',
+        default=None,
+        help=help_text,
+        hidden=hidden,
+    )
 
 
 def AddConvertToAutopilotFlag(parser, hidden=True):
@@ -6343,13 +7102,20 @@ the Autopilot conversion during or after workload migration.
   )
 
 
-def AddSecretManagerEnableFlag(parser, hidden=True):
-  """Adds --enable-secret-manager flag to the given parser.
+def AddSecretManagerEnableFlagGroup(
+    parser: parser_arguments.ArgumentInterceptor, hidden=False
+) -> None:
+  """Adds --enable-secret-manager, --enable-secret-manager-rotation, and --secret-manager-rotation-interval flags to the given parser.
 
   Args:
     parser: A given parser.
-    hidden: hidden status
+    hidden: whether the flags are hidden.
   """
+  secret_manager_group = parser.add_group(
+      mutex=False,
+      help='Flags for Secret Manager configuration:',
+      hidden=False,
+  )
   help_text = """\
         Enables the Secret Manager CSI driver provider component. See
         https://secrets-store-csi-driver.sigs.k8s.io/introduction
@@ -6358,10 +7124,585 @@ def AddSecretManagerEnableFlag(parser, hidden=True):
         To disable in an existing cluster, explicitly set flag to
         --no-enable-secret-manager
     """
-  parser.add_argument(
+  secret_manager_group.add_argument(
       '--enable-secret-manager',
       action='store_true',
       default=None,
       help=help_text,
+      hidden=False,
+  )
+
+  help_text = textwrap.dedent("""\
+      Enables the rotation of secrets in the Secret Manager CSI driver
+      provider component.
+
+      To disable in an existing cluster, explicitly set flag to
+      --no-enable-secret-manager-rotation
+  """)
+  secret_manager_group.add_argument(
+      '--enable-secret-manager-rotation',
+      action='store_true',
+      default=None,
+      help=help_text,
       hidden=hidden,
+  )
+
+  help_text = textwrap.dedent("""\
+      Set the rotation period for secrets in the Secret Manager CSI driver
+      provider component.
+  """)
+  secret_manager_group.add_argument(
+      '--secret-manager-rotation-interval',
+      default=None,
+      help=help_text,
+      hidden=hidden,
+  )
+
+
+def AddComplianceFlags(parser, hidden=True):
+  """Adds --compliance and --compliance-standards flag group to the parser.
+
+  Args:
+    parser: A given parser.
+    hidden: hidden status.
+  """
+  compliance_group = parser.add_group(
+      mutex=False,
+      help='Flags for Compliance configuration:',
+      hidden=hidden,
+  )
+  mode_help = (
+      'Sets enablement mode for Compliance. Must provide one of: enabled,'
+      ' disabled.'
+  )
+
+  standards_help = """\
+        Comma-delimited list of standards to be enabled. See
+        https://cloud.google.com/kubernetes-engine/fleet-management/docs/about-compliance-dashboard#how-compliance-works
+    """
+  compliance_group.add_argument(
+      '--compliance',
+      default=None,
+      help=mode_help,
+      hidden=hidden,
+  )
+  compliance_group.add_argument(
+      '--compliance-standards',
+      default=None,
+      help=standards_help,
+      hidden=hidden,
+  )
+
+
+def AddControlPlaneKeysFlags(parser):
+  """Adds control plane keys flags to the given parser.
+
+  Args:
+    parser: A given parser.
+  """
+
+  group = parser.add_group(help='Control Plane Keys', mutex=False)
+
+  group.add_argument(
+      '--cluster-ca',
+      help=(
+          'The Certificate Authority Service caPool that will back the'
+          ' cluster CA'
+      ),
+      metavar='CA_POOL_PATH',
+  )
+  group.add_argument(
+      '--aggregation-ca',
+      help=(
+          'The Certificate Authority Service caPool that will back the'
+          ' aggregation CA'
+      ),
+      metavar='CA_POOL_PATH',
+  )
+  group.add_argument(
+      '--etcd-api-ca',
+      help=(
+          'The Certificate Authority Service caPool that will back the etcd'
+          ' API CA'
+      ),
+      metavar='CA_POOL_PATH',
+  )
+  group.add_argument(
+      '--etcd-peer-ca',
+      help=(
+          'The Certificate Authority Service caPool that will back the etcd'
+          ' peer CA'
+      ),
+      metavar='CA_POOL_PATH',
+  )
+  group.add_argument(
+      '--service-account-signing-keys',
+      type=arg_parsers.ArgList(min_length=1),
+      help=(
+          'A Cloud KMS asymmetric signing cryptoKeyVersion that will be used to'
+          ' sign service account tokens'
+      ),
+      metavar='KEY_VERSION',
+  )
+  group.add_argument(
+      '--service-account-verification-keys',
+      type=arg_parsers.ArgList(min_length=1),
+      help=(
+          'A Cloud KMS asymmetric signing cryptoKeyVersion that will be used to'
+          ' verify service account tokens.  Maybe specified multiple times.'
+      ),
+      metavar='KEY_VERSION',
+  )
+  group.add_argument(
+      '--control-plane-disk-encryption-key',
+      help=(
+          'The Cloud KMS symmetric encryption cryptoKey that will be used to'
+          ' encrypt the control plane disks'
+      ),
+      metavar='KEY',
+  )
+  group.add_argument(
+      '--gkeops-etcd-backup-encryption-key',
+      help=(
+          'The Cloud KMS symmetric encryption cryptoKey that will be used to'
+          ' encrypt the disaster recovery etcd backups for the cluster'
+      ),
+      metavar='KEY',
+  )
+
+
+def AddInsecureRBACBindingFlags(parser, hidden=False):
+  """Adds --enable-insecure-binding-system-authenticated and --enable-insecure-binding-system-unauthenticated flag group to the group.
+
+  Args:
+    parser: A given parser.
+    hidden: hidden status
+  """
+  group = parser.add_group(hidden=hidden, mutex=False)
+  help_text = """\
+        Allow using `system:authenticated` as a subject in ClusterRoleBindings and RoleBindings.
+        Allowing bindings that reference `system:authenticated` is a security risk and is not recommended.
+
+        To disallow binding `system:authenticated` in a cluster, explicitly set the
+        `--no-enable-insecure-binding-system-authenticated` flag instead.
+    """
+  group.add_argument(
+      '--enable-insecure-binding-system-authenticated',
+      action='store_true',
+      default=None,
+      help=help_text,
+      hidden=hidden,
+  )
+  help_text = """\
+        Allow using `system:unauthenticated` and `system:anonymous` as subjects in ClusterRoleBindings and RoleBindings.
+        Allowing bindings that reference `system:unauthenticated` and `system:anonymous` are a security risk and is not recommended.
+
+        To disallow binding `system:authenticated` in a cluster, explicitly set the
+        `--no-enable-insecure-binding-system-unauthenticated` flag instead.
+    """
+  group.add_argument(
+      '--enable-insecure-binding-system-unauthenticated',
+      action='store_true',
+      default=None,
+      help=help_text,
+      hidden=hidden,
+  )
+
+
+def AddAnonymousAuthenticationConfigFlag(parser):
+  """Adds --anonymous-authentication-config flag group to the group.
+
+  Args:
+    parser: A given parser.
+  """
+  parser.add_argument(
+      '--anonymous-authentication-config',
+      help="""Enable or restrict anonymous access to the cluster. When enabled,
+      anonymous users will be authenticated as system:anonymous with the group
+      system:unauthenticated. Limiting access restricts anonymous access to only
+      the health check endpoints /readyz, /livez, and /healthz.
+      """,
+      choices={
+          'LIMITED': """\
+                'LIMITED' restricts anonymous access to the cluster. Only calls to
+                the health check endpoints are allowed anonymously, all other calls
+                will be rejected.""",
+          'ENABLED': """\
+                'ENABLED' enables anonymous calls.""",
+      },
+      default=None,
+  )
+
+
+def AddAdditionalIpRangesFlag(parser):
+  """Adds additional IP ranges flag to parser."""
+
+  help_text = """\
+Add additional subnetworks named "my-subnet" with pod ipv4 range named "my-range" to the cluster.
+
+Examples:
+
+  $ {command} example-cluster --additional-ip-ranges=subnetwork=my-subnet,pod-ipv4-range=my-range
+"""
+
+  spec = {
+      'subnetwork': str,
+      'pod-ipv4-range': str,
+  }
+
+  parser.add_argument(
+      '--additional-ip-ranges',
+      metavar='subnetwork=NAME,pod-ipv4-range=NAME',
+      type=arg_parsers.ArgDict(
+          spec=spec,
+          required_keys=['subnetwork', 'pod-ipv4-range'],
+      ),
+      action='append',
+      help=help_text,
+  )
+
+
+def AddRemoveAdditionalIpRangesFlag(parser):
+  """Adds flag to remove additional Ip ranges to parser."""
+
+  help_text = """\
+Additional subnetworks to be removed from the cluster.
+
+Examples:
+
+Remove pod range named "my-range" under additional subnetwork named "my-subnet" from the cluster.
+
+  $ {command} example-cluster --remove-additional-ip-ranges=subnetwork=my-subnet,pod-ipv4-range=my-range
+
+Remove additional subnetwork named "my-subnet", including all the pod ipv4 ranges under the subnetwork.
+
+  $ {command} example-cluster --remove-additional-ip-ranges=subnetwork=my-subnet
+
+
+"""
+  spec = {
+      'subnetwork': str,
+      'pod-ipv4-range': str,
+  }
+  parser.add_argument(
+      '--remove-additional-ip-ranges',
+      metavar='subnetwork=NAME,pod-ipv4-range=NAME',
+      type=arg_parsers.ArgDict(
+          spec=spec,
+          required_keys=['subnetwork'],
+      ),
+      action='append',
+      help=help_text,
+  )
+
+
+def AddClusterEnablePrivateNodesFlag(parser):
+  """Adds a --enable-private-nodes to the given cluster parser."""
+  help_text = """\
+Standard cluster:
+  Enable private nodes as a default behavior for all newly created node pools,
+  if `--enable-private-nodes` is not provided at node pool creation time.
+
+  Modifications to this flag do not affect `--enable-private-nodes` state of the
+  existing node pools.
+
+Autopilot cluster:
+  Force new and existing workloads, without explicit
+  `cloud.google.com/private-node=true` node selector, to run on nodes with no
+  public IP address.
+
+  Modifications to this flag trigger a re-schedule operation on all existng
+  workloads to run on different node VMs.
+"""
+  parser.add_argument(
+      '--enable-private-nodes',
+      default=None,
+      action='store_true',
+      help=help_text,
+  )
+
+
+def AddClusterTierFlag(parser):
+  """Adds a --tier flag to the given cluster parser."""
+  help_text = 'Set the desired tier for the cluster.'
+  parser.add_argument(
+      '--tier',
+      metavar='TIER',
+      help=help_text,
+      choices=['standard', 'enterprise'],
+  )
+
+
+def AddAutoprovisioningCgroupModeFlag(parser, hidden=False):
+  """Adds a --autoprovisioning-cgroup-mode to the given cluster parser."""
+  help_text = textwrap.dedent("""\
+      Sets the cgroup mode for auto-provisioned nodes.
+
+      Updating this flag triggers an update using surge upgrades of all existing
+      auto-provisioned nodes to apply the new value of cgroup mode.
+
+      For an Autopilot cluster, the specified cgroup mode will be set on all existing and new nodes in the cluster.
+      For a Standard cluster, the specified cgroup mode will be set on all existing and new auto-provisioned node pools in the cluster.
+
+      If not set, GKE uses cgroupv2 for new nodes when the cluster was created running 1.26 or later,
+      and cgroupv1 for clusters created running 1.25 or earlier. To check your initial cluster version, run
+      `gcloud container clusters describe [NAME] --format="value(initialClusterVersion)"`
+
+      For clusters created running version 1.26 or later, you can't set the cgroup mode to v1.
+
+      To learn more, see: https://cloud.google.com/kubernetes-engine/docs/how-to/migrate-cgroupv2
+  """)
+  parser.add_argument(
+      '--autoprovisioning-cgroup-mode',
+      default=None,
+      choices=['default', 'v1', 'v2'],
+      help=help_text,
+      hidden=hidden,
+  )
+
+
+def AddEnableIPAccessFlag(parser):
+  """Adds the --enable-ip-access flag to parser."""
+  help_text = """\
+Enable access to the cluster's control plane over private IP and
+public IP if --enable-private-endpoint is not enabled.
+"""
+
+  parser.add_argument(
+      '--enable-ip-access',
+      default=None,
+      action='store_true',
+      help=help_text,
+  )
+
+
+def AddAauthorizedNetworksOnPrivateEndpointFlag(parser):
+  """Adds the --enable-authorized-networks-on-private-endpoint flag to parser."""
+  help_text = """\
+Enable enforcement of --master-authorized-networks CIDR ranges for
+traffic reaching cluster's control plane via private IP.
+"""
+  parser.add_argument(
+      '--enable-authorized-networks-on-private-endpoint',
+      default=None,
+      action='store_true',
+      help=help_text,
+  )
+
+
+def AddEnableAutopilotCompatibilityAuditingFlag(parser, hidden=False):
+  help_text = """\
+        Lets you run the
+        [gcloud container clusters check-autopilot-compatibility](https://cloud.google.com/sdk/gcloud/reference/container/clusters/check-autopilot-compatibility)
+        command to check whether your workloads are compatible with Autopilot
+        mode. This flag is only applicable to clusters that run version
+        1.31.6-gke.1027000 or later.
+
+        Note: This flag causes a control plane restart.
+    """
+
+  parser.add_argument(
+      '--enable-autopilot-compatibility-auditing',
+      action=arg_parsers.StoreTrueFalseAction,
+      help=help_text,
+      hidden=hidden,
+  )
+
+
+def AddServiceAccountSigningKeysFlag(parser):
+  help_text = """\
+        the resource path of the Cloud KMS asymmetric signing cryptoKeyVersion
+        that will be used to sign service account tokens.
+
+        only one key version can be specified.
+    """
+
+  parser.add_argument(
+      '--service-account-signing-keys',
+      default=None,
+      help=help_text,
+      required=False,
+      hidden=True,
+      type=arg_parsers.ArgList(
+          element_type=str,
+          max_length=1,
+      ),
+      metavar='KEY_VERSION',
+  )
+
+
+def AddServiceAccountVerificationKeysFlag(parser):
+  help_text = """\
+        the resource path of the Cloud KMS asymmetric signing cryptoKeyVersion
+        that shall be used to verify service account tokens.
+
+        at most 2 key versions can be specified.
+    """
+
+  parser.add_argument(
+      '--service-account-verification-keys',
+      default=None,
+      help=help_text,
+      required=False,
+      hidden=True,
+      type=arg_parsers.ArgList(
+          element_type=str,
+          max_length=2,
+      ),
+      metavar='KEY_VERSION',
+  )
+
+
+def AddControlPlaneDiskEncryptionKeyFlag(parser):
+  help_text = """\
+        The Cloud KMS symmetric encryption cryptoKey that will be used to
+        encrypt the control plane disks.
+    """
+
+  parser.add_argument(
+      '--control-plane-disk-encryption-key',
+      default=None,
+      help=help_text,
+      required=False,
+      hidden=True,
+      type=str,
+      metavar='KEY',
+  )
+
+
+def AddPatchUpdateFlag(parser):
+  """Adds the --patch-update flag to parser."""
+  help_text = """\
+  The patch update to use for the cluster.
+
+  Setting to 'accelerated' automatically upgrades the cluster to the latest patch available within the cluster's current minor version and release channel.
+  Setting to 'default' automatically upgrades the cluster to the default patch upgrade targetversion available within the cluster's current minor version and release channel.
+  """
+  return parser.add_argument(
+      '--patch-update',
+      required=False,
+      help=help_text,
+      type=arg_parsers.ArgList(
+          choices=['accelerated', 'default'],
+          max_length=1,
+      ),
+      metavar='PATCH_UPDATE',
+  )
+
+
+def AddAutoIpamFlag(parser, hidden=False, is_update=False):
+  """Adds a enable-auto-ipam/disable-auto-ipam to the given cluster parser.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+    is_update: Whether the flag is used for an update operation.
+  """
+
+  if is_update:
+    group = parser.add_group(mutex=True, hidden=hidden)
+    group.add_argument(
+        '--disable-auto-ipam',
+        action='store_const',
+        const=True,
+        help="""\
+            Disable the Auto IP Address Management (Auto IPAM) feature for the cluster.
+            """,
+        hidden=hidden,
+    )
+    group.add_argument(
+        '--enable-auto-ipam',
+        action='store_const',
+        const=True,
+        help="""\
+            Enable the Auto IP Address Management (Auto IPAM) feature for the cluster.
+            """,
+        hidden=hidden,
+    )
+  else:
+    parser.add_argument(
+        '--enable-auto-ipam',
+        action='store_const',
+        const=True,
+        help="""\
+            Enable the Auto IP Address Management (Auto IPAM) feature for the cluster.
+            """,
+        hidden=hidden,
+    )
+
+
+def AddEnableK8sTokensViaDnsFlag(parser):
+  """Adds the --enable-k8s-tokens-via-dns flag to parser."""
+  help_text = ' '
+  parser.add_argument(
+      '--enable-k8s-tokens-via-dns',
+      default=None,
+      hidden=True,
+      action='store_true',
+      help=help_text,
+  )
+
+
+def AddEnableLegacyLustrePortFlag(parser, hidden=False):
+  """Adds the --enable-legacy-lustre-port flag to parser.
+
+  Args:
+    parser: A given parser.
+    hidden: Indicates that the flags are hidden.
+  """
+  help_text = """\
+  Allow the Lustre CSI driver to initialize LNet (the virtual network layer for Lustre kernel module) using port 6988.
+  This flag is required to workaround a port conflict with the gke-metadata-server on GKE nodes.
+  """
+  parser.add_argument(
+      '--enable-legacy-lustre-port',
+      default=None,
+      hidden=hidden,
+      action='store_true',
+      help=help_text,
+  )
+
+
+def AddUseIamTokenFlag(parser):
+  """Adds the --use-iam-token flag to parser.
+
+  Args:
+    parser: A given parser.
+  """
+  help_text = """\
+  Whether to generate and persist an IAM token in the kubeconfig file.
+  """
+
+  parser.add_argument(
+      '--use-iam-token',
+      hidden=True,
+      action='store_true',
+      help=help_text,
+  )
+
+
+def AddEnableK8sCertsViaDnsFlag(parser):
+  """Adds the --enable-k8s-certs-via-dns flag to parser."""
+  help_text = ' '
+  parser.add_argument(
+      '--enable-k8s-certs-via-dns',
+      default=None,
+      hidden=True,
+      action='store_true',
+      help=help_text,
+  )
+
+
+def AddNetworkTierFlag(parser):
+  """Adds the --network-tier flag to parser."""
+  help_text = """\
+  Set the network tier for the cluster, possible values are premium, standard and default.
+  If use default, cluster will use project default network tier.
+  """
+  parser.add_argument(
+      '--network-tier',
+      default=None,
+      hidden=True,
+      choices=['premium', 'standard', 'network-default'],
+      help=help_text,
   )

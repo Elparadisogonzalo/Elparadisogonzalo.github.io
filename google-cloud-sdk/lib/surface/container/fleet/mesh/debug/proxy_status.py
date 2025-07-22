@@ -18,24 +18,20 @@ from googlecloudsdk.api_lib.container.fleet import debug_util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.container.fleet import resources
 from googlecloudsdk.command_lib.container.fleet.mesh import istioctl_backend
+from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
 
 # Pull out the example text so the example command can be one line without the
 # py linter complaining. The docgen tool properly breaks it into multiple lines.
 EXAMPLES = r"""
-    Retrieve the configuration sync status of all the proxies with the control
-      plane.
+    Retrieve the configuration sync status of all the proxies with the control plane.
 
       Example: ${command} --project=projectId --membership=membershipId --location=us-central1
-
-    Print the config dump from both control plane and envoy for the given pod_name
-
-      Example: ${command} pod_name --project=projectId --membership=membershipId --location=us-central1
 """
 
 
 class ProxyStatus(base.BinaryBackedCommand):
-  """Retrive the envoy configuration sync status or the detailed config dump.
+  """Retrieve the envoy configuration sync status.
   """
   detailed_help = {'EXAMPLES': EXAMPLES}
 
@@ -50,8 +46,9 @@ class ProxyStatus(base.BinaryBackedCommand):
     parser.add_argument(
         'pod_name',
         nargs='?',
+        hidden=True,
         help=(
-            'If applied, capture the detailed config dump from both control'
+            'If applied, capture the config dump differences between control'
             ' plane and Envoy.'
         ),
     )
@@ -62,6 +59,10 @@ class ProxyStatus(base.BinaryBackedCommand):
     context = debug_util.ContextGenerator(args)
     # Generate meshname for the target membership
     mesh_name, project_number = debug_util.MeshInfoGenerator(args)
+    if mesh_name:
+      log.status.Print('Found MeshName = ' + mesh_name)
+    if project_number:
+      log.status.Print('Found project number = ' + project_number)
 
     auth_cred = istioctl_backend.GetAuthToken(
         account=properties.VALUES.core.account.Get(), operation='apply'

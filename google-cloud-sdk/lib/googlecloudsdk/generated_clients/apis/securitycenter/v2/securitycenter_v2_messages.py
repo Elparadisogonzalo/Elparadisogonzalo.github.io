@@ -105,20 +105,116 @@ class AccessReview(_messages.Message):
   version = _messages.StringField(7)
 
 
+class AdaptiveProtection(_messages.Message):
+  r"""Information about [Google Cloud Armor Adaptive
+  Protection](https://cloud.google.com/armor/docs/cloud-armor-overview#google-
+  cloud-armor-adaptive-protection).
+
+  Fields:
+    confidence: A score of 0 means that there is low confidence that the
+      detected event is an actual attack. A score of 1 means that there is
+      high confidence that the detected event is an attack. See the [Adaptive
+      Protection documentation](https://cloud.google.com/armor/docs/adaptive-
+      protection-overview#configure-alert-tuning) for further explanation.
+  """
+
+  confidence = _messages.FloatField(1)
+
+
+class AffectedResources(_messages.Message):
+  r"""Details about resources affected by this finding.
+
+  Fields:
+    count: The count of resources affected by the finding.
+  """
+
+  count = _messages.IntegerField(1)
+
+
+class AiModel(_messages.Message):
+  r"""Contains information about the AI model associated with the finding.
+
+  Enums:
+    DeploymentPlatformValueValuesEnum: The platform on which the model is
+      deployed.
+
+  Fields:
+    deploymentPlatform: The platform on which the model is deployed.
+    displayName: The user defined display name of model. Ex. baseline-
+      classification-model
+    domain: The domain of the model, for example, "image-classification".
+    library: The name of the model library, for example, "transformers".
+    location: The region in which the model is used, for example, "us-
+      central1".
+    name: The name of the AI model, for example, "gemini:1.0.0".
+    publisher: The publisher of the model, for example, "google" or "nvidia".
+  """
+
+  class DeploymentPlatformValueValuesEnum(_messages.Enum):
+    r"""The platform on which the model is deployed.
+
+    Values:
+      DEPLOYMENT_PLATFORM_UNSPECIFIED: Unspecified deployment platform.
+      VERTEX_AI: Vertex AI.
+      GKE: Google Kubernetes Engine.
+    """
+    DEPLOYMENT_PLATFORM_UNSPECIFIED = 0
+    VERTEX_AI = 1
+    GKE = 2
+
+  deploymentPlatform = _messages.EnumField('DeploymentPlatformValueValuesEnum', 1)
+  displayName = _messages.StringField(2)
+  domain = _messages.StringField(3)
+  library = _messages.StringField(4)
+  location = _messages.StringField(5)
+  name = _messages.StringField(6)
+  publisher = _messages.StringField(7)
+
+
+class Allowed(_messages.Message):
+  r"""Allowed IP rule.
+
+  Fields:
+    ipRules: Optional. Optional list of allowed IP rules.
+  """
+
+  ipRules = _messages.MessageField('IpRule', 1, repeated=True)
+
+
 class Application(_messages.Message):
   r"""Represents an application associated with a finding.
 
   Fields:
     baseUri: The base URI that identifies the network location of the
-      application in which the vulnerability was detected. Examples:
-      http://11.22.33.44, http://foo.com, http://11.22.33.44:8080
+      application in which the vulnerability was detected. For example,
+      `http://example.com`.
     fullUri: The full URI with payload that can be used to reproduce the
-      vulnerability. Example: http://11.22.33.44/reflected/parameter/attribute
-      /singlequoted/js?p=aMmYgI6H
+      vulnerability. For example, `http://example.com?p=aMmYgI6H`.
   """
 
   baseUri = _messages.StringField(1)
   fullUri = _messages.StringField(2)
+
+
+class Attack(_messages.Message):
+  r"""Information about DDoS attack volume and classification.
+
+  Fields:
+    classification: Type of attack, for example, 'SYN-flood', 'NTP-udp', or
+      'CHARGEN-udp'.
+    volumeBps: Total BPS (bytes per second) volume of attack. Deprecated -
+      refer to volume_bps_long instead.
+    volumeBpsLong: Total BPS (bytes per second) volume of attack.
+    volumePps: Total PPS (packets per second) volume of attack. Deprecated -
+      refer to volume_pps_long instead.
+    volumePpsLong: Total PPS (packets per second) volume of attack.
+  """
+
+  classification = _messages.StringField(1)
+  volumeBps = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  volumeBpsLong = _messages.IntegerField(3)
+  volumePps = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  volumePpsLong = _messages.IntegerField(5)
 
 
 class AttackExposure(_messages.Message):
@@ -132,7 +228,7 @@ class AttackExposure(_messages.Message):
   Fields:
     attackExposureResult: The resource name of the attack path simulation
       result that contains the details regarding this attack exposure score.
-      Example: organizations/123/simulations/456/attackExposureResults/789
+      Example: `organizations/123/simulations/456/attackExposureResults/789`
     exposedHighValueResourcesCount: The number of high value resources that
       are exposed as a result of this finding.
     exposedLowValueResourcesCount: The number of high value resources that are
@@ -176,7 +272,7 @@ class AttackPath(_messages.Message):
   Fields:
     edges: A list of the edges between nodes in this attack path.
     name: The attack path name, for example,
-      `organizations/12/simulation/34/valuedResources/56/attackPaths/78`
+      `organizations/12/simulations/34/valuedResources/56/attackPaths/78`
     pathNodes: A list of nodes that exist in this attack path.
   """
 
@@ -210,11 +306,11 @@ class AttackPathNode(_messages.Message):
     displayName: Human-readable name of this resource.
     resource: The name of the resource at this point in the attack path. The
       format of the name follows the Cloud Asset Inventory [resource name
-      format]("https://cloud.google.com/asset-inventory/docs/resource-name-
-      format")
+      format](https://cloud.google.com/asset-inventory/docs/resource-name-
+      format)
     resourceType: The [supported resource
       type](https://cloud.google.com/asset-inventory/docs/supported-asset-
-      types")
+      types)
     uuid: Unique id of the attack path node.
   """
 
@@ -353,53 +449,185 @@ class AuditLogConfig(_messages.Message):
   logType = _messages.EnumField('LogTypeValueValuesEnum', 2)
 
 
+class AwsAccount(_messages.Message):
+  r"""An AWS account that is a member of an organization.
+
+  Fields:
+    id: The unique identifier (ID) of the account, containing exactly 12
+      digits.
+    name: The friendly name of this account.
+  """
+
+  id = _messages.StringField(1)
+  name = _messages.StringField(2)
+
+
+class AwsMetadata(_messages.Message):
+  r"""AWS metadata associated with the resource, only applicable if the
+  finding's cloud provider is Amazon Web Services.
+
+  Fields:
+    account: The AWS account associated with the resource.
+    organization: The AWS organization associated with the resource.
+    organizationalUnits: A list of AWS organizational units associated with
+      the resource, ordered from lowest level (closest to the account) to
+      highest level.
+  """
+
+  account = _messages.MessageField('AwsAccount', 1)
+  organization = _messages.MessageField('AwsOrganization', 2)
+  organizationalUnits = _messages.MessageField('AwsOrganizationalUnit', 3, repeated=True)
+
+
+class AwsOrganization(_messages.Message):
+  r"""An organization is a collection of accounts that are centrally managed
+  together using consolidated billing, organized hierarchically with
+  organizational units (OUs), and controlled with policies.
+
+  Fields:
+    id: The unique identifier (ID) for the organization. The regex pattern for
+      an organization ID string requires "o-" followed by from 10 to 32
+      lowercase letters or digits.
+  """
+
+  id = _messages.StringField(1)
+
+
+class AwsOrganizationalUnit(_messages.Message):
+  r"""An Organizational Unit (OU) is a container of AWS accounts within a root
+  of an organization. Policies that are attached to an OU apply to all
+  accounts contained in that OU and in any child OUs.
+
+  Fields:
+    id: The unique identifier (ID) associated with this OU. The regex pattern
+      for an organizational unit ID string requires "ou-" followed by from 4
+      to 32 lowercase letters or digits (the ID of the root that contains the
+      OU). This string is followed by a second "-" dash and from 8 to 32
+      additional lowercase letters or digits. For example, "ou-ab12-cd34ef56".
+    name: The friendly name of the OU.
+  """
+
+  id = _messages.StringField(1)
+  name = _messages.StringField(2)
+
+
+class AzureManagementGroup(_messages.Message):
+  r"""Represents an Azure management group.
+
+  Fields:
+    displayName: The display name of the Azure management group.
+    id: The UUID of the Azure management group, for example,
+      `20000000-0001-0000-0000-000000000000`.
+  """
+
+  displayName = _messages.StringField(1)
+  id = _messages.StringField(2)
+
+
+class AzureMetadata(_messages.Message):
+  r"""Azure metadata associated with the resource, only applicable if the
+  finding's cloud provider is Microsoft Azure.
+
+  Fields:
+    managementGroups: A list of Azure management groups associated with the
+      resource, ordered from lowest level (closest to the subscription) to
+      highest level.
+    resourceGroup: The Azure resource group associated with the resource.
+    subscription: The Azure subscription associated with the resource.
+    tenant: The Azure Entra tenant associated with the resource.
+  """
+
+  managementGroups = _messages.MessageField('AzureManagementGroup', 1, repeated=True)
+  resourceGroup = _messages.MessageField('AzureResourceGroup', 2)
+  subscription = _messages.MessageField('AzureSubscription', 3)
+  tenant = _messages.MessageField('AzureTenant', 4)
+
+
+class AzureResourceGroup(_messages.Message):
+  r"""Represents an Azure resource group.
+
+  Fields:
+    id: The ID of the Azure resource group.
+    name: The name of the Azure resource group. This is not a UUID.
+  """
+
+  id = _messages.StringField(1)
+  name = _messages.StringField(2)
+
+
+class AzureSubscription(_messages.Message):
+  r"""Represents an Azure subscription.
+
+  Fields:
+    displayName: The display name of the Azure subscription.
+    id: The UUID of the Azure subscription, for example,
+      `291bba3f-e0a5-47bc-a099-3bdcb2a50a05`.
+  """
+
+  displayName = _messages.StringField(1)
+  id = _messages.StringField(2)
+
+
+class AzureTenant(_messages.Message):
+  r"""Represents a Microsoft Entra tenant.
+
+  Fields:
+    displayName: The display name of the Azure tenant.
+    id: The ID of the Microsoft Entra tenant, for example,
+      "a11aaa11-aa11-1aa1-11aa-1aaa11a".
+  """
+
+  displayName = _messages.StringField(1)
+  id = _messages.StringField(2)
+
+
 class BackupDisasterRecovery(_messages.Message):
   r"""Information related to Google Cloud Backup and DR Service findings.
 
   Fields:
     appliance: The name of the Backup and DR appliance that captures, moves,
-      and manages the lifecycle of backup data. For example, "backup-
-      server-57137".
+      and manages the lifecycle of backup data. For example, `backup-
+      server-57137`.
     applications: The names of Backup and DR applications. An application is a
       VM, database, or file system on a managed host monitored by a backup and
-      recovery appliance. For example, "centos7-01-vol00", "centos7-01-vol01",
-      "centos7-01-vol02".
+      recovery appliance. For example, `centos7-01-vol00`, `centos7-01-vol01`,
+      `centos7-01-vol02`.
     backupCreateTime: The timestamp at which the Backup and DR backup was
       created.
     backupTemplate: The name of a Backup and DR template which comprises one
       or more backup policies. See the [Backup and DR
       documentation](https://cloud.google.com/backup-disaster-
       recovery/docs/concepts/backup-plan#temp) for more information. For
-      example, "snap-ov".
+      example, `snap-ov`.
     backupType: The backup type of the Backup and DR image. For example,
-      "Snapshot", "Remote Snapshot", "OnVault".
+      `Snapshot`, `Remote Snapshot`, `OnVault`.
     host: The name of a Backup and DR host, which is managed by the backup and
       recovery appliance and known to the management console. The host can be
       of type Generic (for example, Compute Engine, SQL Server, Oracle DB, SMB
       file system, etc.), vCenter, or an ESX server. See the [Backup and DR
       documentation on hosts](https://cloud.google.com/backup-disaster-
       recovery/docs/configuration/manage-hosts-and-their-applications) for
-      more information. For example, "centos7-01".
+      more information. For example, `centos7-01`.
     policies: The names of Backup and DR policies that are associated with a
       template and that define when to run a backup, how frequently to run a
       backup, and how long to retain the backup image. For example,
-      "onvaults".
+      `onvaults`.
     policyOptions: The names of Backup and DR advanced policy options of a
       policy applying to an application. See the [Backup and DR documentation
       on policy options](https://cloud.google.com/backup-disaster-
       recovery/docs/create-plan/policy-settings). For example,
-      "skipofflineappsincongrp, nounmap".
+      `skipofflineappsincongrp, nounmap`.
     profile: The name of the Backup and DR resource profile that specifies the
       storage media for backups of application and VM data. See the [Backup
       and DR documentation on profiles](https://cloud.google.com/backup-
       disaster-recovery/docs/concepts/backup-plan#profile). For example,
-      "GCP".
+      `GCP`.
     storagePool: The name of the Backup and DR storage pool that the backup
       and recovery appliance is storing data in. The storage pool could be of
       type Cloud, Primary, Snapshot, or OnVault. See the [Backup and DR
       documentation on storage pools](https://cloud.google.com/backup-
       disaster-recovery/docs/concepts/storage-pools). For example,
-      "DiskPoolOne".
+      `DiskPoolOne`.
   """
 
   appliance = _messages.StringField(1)
@@ -432,6 +660,17 @@ class BatchCreateResourceValueConfigsResponse(_messages.Message):
   """
 
   resourceValueConfigs = _messages.MessageField('GoogleCloudSecuritycenterV2ResourceValueConfig', 1, repeated=True)
+
+
+class BigQueryDestination(_messages.Message):
+  r"""The destination big query dataset to export findings to.
+
+  Fields:
+    dataset: Required. The relative resource name of the destination dataset,
+      in the form projects/{projectId}/datasets/{datasetId}.
+  """
+
+  dataset = _messages.StringField(1)
 
 
 class Binding(_messages.Message):
@@ -521,23 +760,6 @@ class Binding(_messages.Message):
   role = _messages.StringField(3)
 
 
-class Bucket(_messages.Message):
-  r"""One bucket in the histogram
-
-  Fields:
-    max: maximum value for the bucket, inclusive for all except the first
-      bucket
-    min: minimum value for the bucket, exclusive
-    mutedFindings: number of muted findings in this bucket
-    unmutedFindings: number of unmuted findings in this bucket
-  """
-
-  max = _messages.IntegerField(1, variant=_messages.Variant.INT32)
-  min = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  mutedFindings = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  unmutedFindings = _messages.IntegerField(4, variant=_messages.Variant.INT32)
-
-
 class BulkMuteFindingsRequest(_messages.Message):
   r"""Request message for bulk findings update. Note: 1. If multiple bulk
   update requests match the same resource, the order in which they get
@@ -583,6 +805,77 @@ class BulkMuteFindingsRequest(_messages.Message):
 
   filter = _messages.StringField(1)
   muteState = _messages.EnumField('MuteStateValueValuesEnum', 2)
+
+
+class CelPolicySpec(_messages.Message):
+  r"""YAML-based rule that uses CEL, which supports the declaration of
+  variables and a filtering predicate. A vulnerable resource is emitted if the
+  evaluation is false. Given: 1) the resource types as: - resource_types:
+  "compute.googleapis.com/Instance" - resource_types:
+  "compute.googleapis.com/Firewall" 2) the CEL policy spec as: name:
+  bad_instance resource_filters: - name: instance resource_type:
+  compute.googleapis.com/Instance filter: > instance.status == 'RUNNING' &&
+  'public' in instance.tags.items - name: firewall resource_type:
+  compute.googleapis.com/Firewall filter: > firewall.direction == 'INGRESS' &&
+  !firewall.disabled && firewall.allowed.exists(rule,
+  rule.IPProtocol.upperAscii() in ['TCP', 'ALL'] && rule.ports.exists(port,
+  network.portsInRange(port, '11-256'))) rule: match: - predicate: >
+  instance.networkInterfaces.exists(net, firewall.network == net.network)
+  output: > {'message': 'Compute instance with publicly accessible ports',
+  'instance': instance.name} Users are able to join resource types together
+  using the exact format as Kubernetes Validating Admission policies.
+
+  Fields:
+    spec: The CEL policy to evaluate to produce findings. A finding is
+      generated when the policy validation evaluates to false.
+  """
+
+  spec = _messages.StringField(1)
+
+
+class Chokepoint(_messages.Message):
+  r"""Contains details about a chokepoint, which is a resource or resource
+  group where high-risk attack paths converge, based on [attack path
+  simulations] (https://cloud.google.com/security-command-center/docs/attack-
+  exposure-learn#attack_path_simulations).
+
+  Fields:
+    relatedFindings: List of resource names of findings associated with this
+      chokepoint. For example, organizations/123/sources/456/findings/789.
+      This list will have at most 100 findings.
+  """
+
+  relatedFindings = _messages.StringField(1, repeated=True)
+
+
+class CloudArmor(_messages.Message):
+  r"""Fields related to Google Cloud Armor findings.
+
+  Fields:
+    adaptiveProtection: Information about potential Layer 7 DDoS attacks
+      identified by [Google Cloud Armor Adaptive
+      Protection](https://cloud.google.com/armor/docs/adaptive-protection-
+      overview).
+    attack: Information about DDoS attack volume and classification.
+    duration: Duration of attack from the start until the current moment
+      (updated every 5 minutes).
+    requests: Information about incoming requests evaluated by [Google Cloud
+      Armor security policies](https://cloud.google.com/armor/docs/security-
+      policy-overview).
+    securityPolicy: Information about the [Google Cloud Armor security
+      policy](https://cloud.google.com/armor/docs/security-policy-overview)
+      relevant to the finding.
+    threatVector: Distinguish between volumetric & protocol DDoS attack and
+      application layer attacks. For example, "L3_4" for Layer 3 and Layer 4
+      DDoS attacks, or "L_7" for Layer 7 DDoS attacks.
+  """
+
+  adaptiveProtection = _messages.MessageField('AdaptiveProtection', 1)
+  attack = _messages.MessageField('Attack', 2)
+  duration = _messages.StringField(3)
+  requests = _messages.MessageField('Requests', 4)
+  securityPolicy = _messages.MessageField('SecurityPolicy', 5)
+  threatVector = _messages.StringField(6)
 
 
 class CloudDlpDataProfile(_messages.Message):
@@ -674,54 +967,6 @@ class Compliance(_messages.Message):
   ids = _messages.StringField(1, repeated=True)
   standard = _messages.StringField(2)
   version = _messages.StringField(3)
-
-
-class ComplianceSnapshot(_messages.Message):
-  r"""Result containing the properties and count of a ComplianceSnapshot
-  request.
-
-  Enums:
-    CloudProviderValueValuesEnum: The cloud provider for the compliance
-      snapshot.
-
-  Fields:
-    category: The category of Findings matching.
-    cloudProvider: The cloud provider for the compliance snapshot.
-    complianceStandard: The compliance standard (ie CIS).
-    complianceVersion: The compliance version (ie 1.3) in CIS 1.3.
-    count: Total count of findings for the given properties.
-    leafContainerResource: The leaf container resource name that is closest to
-      the snapshot.
-    name: The compliance snapshot name. Format:
-      //sources//complianceSnapshots/
-    projectDisplayName: The CRM resource display name that is closest to the
-      snapshot the Findings belong to.
-    snapshotTime: The snapshot time of the snapshot.
-  """
-
-  class CloudProviderValueValuesEnum(_messages.Enum):
-    r"""The cloud provider for the compliance snapshot.
-
-    Values:
-      CLOUD_PROVIDER_UNSPECIFIED: The cloud provider is unspecified.
-      GOOGLE_CLOUD_PLATFORM: The cloud provider is Google Cloud Platform.
-      AMAZON_WEB_SERVICES: The cloud provider is Amazon Web Services.
-      MICROSOFT_AZURE: The cloud provider is Microsoft Azure.
-    """
-    CLOUD_PROVIDER_UNSPECIFIED = 0
-    GOOGLE_CLOUD_PLATFORM = 1
-    AMAZON_WEB_SERVICES = 2
-    MICROSOFT_AZURE = 3
-
-  category = _messages.StringField(1)
-  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 2)
-  complianceStandard = _messages.StringField(3)
-  complianceVersion = _messages.StringField(4)
-  count = _messages.IntegerField(5)
-  leafContainerResource = _messages.StringField(6)
-  name = _messages.StringField(7)
-  projectDisplayName = _messages.StringField(8)
-  snapshotTime = _messages.StringField(9)
 
 
 class Connection(_messages.Message):
@@ -825,19 +1070,82 @@ class Cve(_messages.Message):
   the [CVE record](https://www.cve.org/ResourcesSupport/Glossary) that
   describes this vulnerability.
 
+  Enums:
+    ExploitationActivityValueValuesEnum: The exploitation activity of the
+      vulnerability in the wild.
+    ImpactValueValuesEnum: The potential impact of the vulnerability if it was
+      to be exploited.
+
   Fields:
     cvssv3: Describe Common Vulnerability Scoring System specified at
       https://www.first.org/cvss/v3.1/specification-document
+    exploitReleaseDate: Date the first publicly available exploit or PoC was
+      released.
+    exploitationActivity: The exploitation activity of the vulnerability in
+      the wild.
+    firstExploitationDate: Date of the earliest known exploitation.
     id: The unique identifier for the vulnerability. e.g. CVE-2021-34527
+    impact: The potential impact of the vulnerability if it was to be
+      exploited.
+    observedInTheWild: Whether or not the vulnerability has been observed in
+      the wild.
     references: Additional information about the CVE. e.g.
       https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-34527
     upstreamFixAvailable: Whether upstream fix is available for the CVE.
+    zeroDay: Whether or not the vulnerability was zero day when the finding
+      was published.
   """
 
+  class ExploitationActivityValueValuesEnum(_messages.Enum):
+    r"""The exploitation activity of the vulnerability in the wild.
+
+    Values:
+      EXPLOITATION_ACTIVITY_UNSPECIFIED: Invalid or empty value.
+      WIDE: Exploitation has been reported or confirmed to widely occur.
+      CONFIRMED: Limited reported or confirmed exploitation activities.
+      AVAILABLE: Exploit is publicly available.
+      ANTICIPATED: No known exploitation activity, but has a high potential
+        for exploitation.
+      NO_KNOWN: No known exploitation activity.
+    """
+    EXPLOITATION_ACTIVITY_UNSPECIFIED = 0
+    WIDE = 1
+    CONFIRMED = 2
+    AVAILABLE = 3
+    ANTICIPATED = 4
+    NO_KNOWN = 5
+
+  class ImpactValueValuesEnum(_messages.Enum):
+    r"""The potential impact of the vulnerability if it was to be exploited.
+
+    Values:
+      RISK_RATING_UNSPECIFIED: Invalid or empty value.
+      LOW: Exploitation would have little to no security impact.
+      MEDIUM: Exploitation would enable attackers to perform activities, or
+        could allow attackers to have a direct impact, but would require
+        additional steps.
+      HIGH: Exploitation would enable attackers to have a notable direct
+        impact without needing to overcome any major mitigating factors.
+      CRITICAL: Exploitation would fundamentally undermine the security of
+        affected systems, enable actors to perform significant attacks with
+        minimal effort, with little to no mitigating factors to overcome.
+    """
+    RISK_RATING_UNSPECIFIED = 0
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
+    CRITICAL = 4
+
   cvssv3 = _messages.MessageField('Cvssv3', 1)
-  id = _messages.StringField(2)
-  references = _messages.MessageField('Reference', 3, repeated=True)
-  upstreamFixAvailable = _messages.BooleanField(4)
+  exploitReleaseDate = _messages.StringField(2)
+  exploitationActivity = _messages.EnumField('ExploitationActivityValueValuesEnum', 3)
+  firstExploitationDate = _messages.StringField(4)
+  id = _messages.StringField(5)
+  impact = _messages.EnumField('ImpactValueValuesEnum', 6)
+  observedInTheWild = _messages.BooleanField(7)
+  references = _messages.MessageField('Reference', 8, repeated=True)
+  upstreamFixAvailable = _messages.BooleanField(9)
+  zeroDay = _messages.BooleanField(10)
 
 
 class Cvssv3(_messages.Message):
@@ -1052,6 +1360,146 @@ class Cvssv3(_messages.Message):
   userInteraction = _messages.EnumField('UserInteractionValueValuesEnum', 9)
 
 
+class Cwe(_messages.Message):
+  r"""CWE stands for Common Weakness Enumeration. Information about this
+  weakness, as described by [CWE](https://cwe.mitre.org/).
+
+  Fields:
+    id: The CWE identifier, e.g. CWE-94
+    references: Any reference to the details on the CWE, for example,
+      https://cwe.mitre.org/data/definitions/94.html
+  """
+
+  id = _messages.StringField(1)
+  references = _messages.MessageField('Reference', 2, repeated=True)
+
+
+class DataAccessEvent(_messages.Message):
+  r"""Details about a data access attempt made by a principal not authorized
+  under applicable data security policy.
+
+  Enums:
+    OperationValueValuesEnum: The operation performed by the principal to
+      access the data.
+
+  Fields:
+    eventId: Unique identifier for data access event.
+    eventTime: Timestamp of data access event.
+    operation: The operation performed by the principal to access the data.
+    principalEmail: The email address of the principal that accessed the data.
+      The principal could be a user account, service account, Google group, or
+      other.
+  """
+
+  class OperationValueValuesEnum(_messages.Enum):
+    r"""The operation performed by the principal to access the data.
+
+    Values:
+      OPERATION_UNSPECIFIED: The operation is unspecified.
+      READ: Represents a read operation.
+      MOVE: Represents a move operation.
+      COPY: Represents a copy operation.
+    """
+    OPERATION_UNSPECIFIED = 0
+    READ = 1
+    MOVE = 2
+    COPY = 3
+
+  eventId = _messages.StringField(1)
+  eventTime = _messages.StringField(2)
+  operation = _messages.EnumField('OperationValueValuesEnum', 3)
+  principalEmail = _messages.StringField(4)
+
+
+class DataFlowEvent(_messages.Message):
+  r"""Details about a data flow event, in which either the data is moved to or
+  is accessed from a non-compliant geo-location, as defined in the applicable
+  data security policy.
+
+  Enums:
+    OperationValueValuesEnum: The operation performed by the principal for the
+      data flow event.
+
+  Fields:
+    eventId: Unique identifier for data flow event.
+    eventTime: Timestamp of data flow event.
+    operation: The operation performed by the principal for the data flow
+      event.
+    principalEmail: The email address of the principal that initiated the data
+      flow event. The principal could be a user account, service account,
+      Google group, or other.
+    violatedLocation: Non-compliant location of the principal or the data
+      destination.
+  """
+
+  class OperationValueValuesEnum(_messages.Enum):
+    r"""The operation performed by the principal for the data flow event.
+
+    Values:
+      OPERATION_UNSPECIFIED: The operation is unspecified.
+      READ: Represents a read operation.
+      MOVE: Represents a move operation.
+      COPY: Represents a copy operation.
+    """
+    OPERATION_UNSPECIFIED = 0
+    READ = 1
+    MOVE = 2
+    COPY = 3
+
+  eventId = _messages.StringField(1)
+  eventTime = _messages.StringField(2)
+  operation = _messages.EnumField('OperationValueValuesEnum', 3)
+  principalEmail = _messages.StringField(4)
+  violatedLocation = _messages.StringField(5)
+
+
+class DataRetentionDeletionEvent(_messages.Message):
+  r"""Details about data retention deletion violations, in which the data is
+  non-compliant based on their retention or deletion time, as defined in the
+  applicable data security policy. The Data Retention Deletion (DRD) control
+  is a control of the DSPM (Data Security Posture Management) suite that
+  enables organizations to manage data retention and deletion policies in
+  compliance with regulations, such as GDPR and CRPA. DRD supports two primary
+  policy types: maximum storage length (max TTL) and minimum storage length
+  (min TTL). Both are aimed at helping organizations meet regulatory and data
+  management commitments.
+
+  Enums:
+    EventTypeValueValuesEnum: Type of the DRD event.
+
+  Fields:
+    dataObjectCount: Number of objects that violated the policy for this
+      resource. If the number is less than 1,000, then the value of this field
+      is the exact number. If the number of objects that violated the policy
+      is greater than or equal to 1,000, then the value of this field is 1000.
+    eventDetectionTime: Timestamp indicating when the event was detected.
+    eventType: Type of the DRD event.
+    maxRetentionAllowed: Maximum duration of retention allowed from the DRD
+      control. This comes from the DRD control where users set a max TTL for
+      their data. For example, suppose that a user sets the max TTL for a
+      Cloud Storage bucket to 90 days. However, an object in that bucket is
+      100 days old. In this case, a DataRetentionDeletionEvent will be
+      generated for that Cloud Storage bucket, and the max_retention_allowed
+      is 90 days.
+  """
+
+  class EventTypeValueValuesEnum(_messages.Enum):
+    r"""Type of the DRD event.
+
+    Values:
+      EVENT_TYPE_UNSPECIFIED: Unspecified event type.
+      EVENT_TYPE_MAX_TTL_EXCEEDED: The maximum retention time has been
+        exceeded.
+    """
+    EVENT_TYPE_UNSPECIFIED = 0
+    EVENT_TYPE_MAX_TTL_EXCEEDED = 1
+
+  dataObjectCount = _messages.IntegerField(1)
+  eventDetectionTime = _messages.StringField(2)
+  eventType = _messages.EnumField('EventTypeValueValuesEnum', 3)
+  maxRetentionAllowed = _messages.StringField(4)
+
+
 class Database(_messages.Message):
   r"""Represents database access information, such as queries. A database may
   be a sub-resource of an instance (as in the case of Cloud SQL instances or
@@ -1089,6 +1537,32 @@ class Database(_messages.Message):
   version = _messages.StringField(6)
 
 
+class Dataset(_messages.Message):
+  r"""Vertex AI dataset associated with the finding.
+
+  Fields:
+    displayName: The user defined display name of dataset, e.g. plants-dataset
+    name: Resource name of dataset, e.g.
+      projects/{project}/locations/{location}/datasets/2094040236064505856
+    source: Data source, such as BigQuery source URI, e.g. bq://scc-nexus-
+      test.AIPPtest.gsod
+  """
+
+  displayName = _messages.StringField(1)
+  name = _messages.StringField(2)
+  source = _messages.StringField(3)
+
+
+class Denied(_messages.Message):
+  r"""Denied IP rule.
+
+  Fields:
+    ipRules: Optional. Optional list of denied IP rules.
+  """
+
+  ipRules = _messages.MessageField('IpRule', 1, repeated=True)
+
+
 class Detection(_messages.Message):
   r"""Memory hash detection contributing to the binary family match.
 
@@ -1103,6 +1577,18 @@ class Detection(_messages.Message):
   percentPagesMatched = _messages.FloatField(2)
 
 
+class Disk(_messages.Message):
+  r"""Contains information about the disk associated with the finding.
+
+  Fields:
+    name: The name of the disk, for example,
+      "https://www.googleapis.com/compute/v1/projects/{project-
+      id}/zones/{zone-id}/disks/{disk-id}".
+  """
+
+  name = _messages.StringField(1)
+
+
 class DiskPath(_messages.Message):
   r"""Path of the file in terms of underlying disk/partition identifiers.
 
@@ -1115,6 +1601,21 @@ class DiskPath(_messages.Message):
 
   partitionUuid = _messages.StringField(1)
   relativePath = _messages.StringField(2)
+
+
+class DynamicMuteRecord(_messages.Message):
+  r"""The record of a dynamic mute rule that matches the finding.
+
+  Fields:
+    matchTime: When the dynamic mute rule first matched the finding.
+    muteConfig: The relative resource name of the mute rule, represented by a
+      mute config, that created this record, for example
+      `organizations/123/muteConfigs/mymuteconfig` or
+      `organizations/123/locations/global/muteConfigs/mymuteconfig`.
+  """
+
+  matchTime = _messages.StringField(1)
+  muteConfig = _messages.StringField(2)
 
 
 class Empty(_messages.Message):
@@ -1177,6 +1678,36 @@ class Exfiltration(_messages.Message):
   totalExfiltratedBytes = _messages.IntegerField(3)
 
 
+class ExportFindingsMetadata(_messages.Message):
+  r"""The LRO metadata for a ExportFindings request.
+
+  Fields:
+    bigQueryDestination: Required. The destination big query dataset to export
+      findings to.
+    exportStartTime: Optional. Timestamp at which export was started
+  """
+
+  bigQueryDestination = _messages.MessageField('BigQueryDestination', 1)
+  exportStartTime = _messages.StringField(2)
+
+
+class ExportFindingsRequest(_messages.Message):
+  r"""Request message for exporting findings to external big query.
+
+  Fields:
+    bigQueryDestination: Required. The destination big query dataset to export
+      findings to.
+  """
+
+  bigQueryDestination = _messages.MessageField('BigQueryDestination', 1)
+
+
+class ExportFindingsResponse(_messages.Message):
+  r"""The response to a ExportFindings request. Contains the LRO information.
+  """
+
+
+
 class Expr(_messages.Message):
   r"""Represents a textual expression in the Common Expression Language (CEL)
   syntax. CEL is a C-like expression language. The syntax and semantics of CEL
@@ -1213,24 +1744,6 @@ class Expr(_messages.Message):
   title = _messages.StringField(4)
 
 
-class FieldDetails(_messages.Message):
-  r"""FieldDetails is for the top level field. Separating FieldDetails and
-  SubfieldDetails allows future extension of flags for top level fields only.
-
-  Fields:
-    field: the field name
-    isContainsSupported: true if the field can be used in the contains
-      function (if ListValue or repeated field).
-    listContainsSubfields: FieldDetails for each subfield that can be used
-      again this field within contains. Contains can be nested, which is why
-      nested subfields for contains are supported.
-  """
-
-  field = _messages.StringField(1)
-  isContainsSupported = _messages.BooleanField(2)
-  listContainsSubfields = _messages.MessageField('SubfieldDetails', 3, repeated=True)
-
-
 class File(_messages.Message):
   r"""File information about the related binary/library used by an executable,
   or the script used by a script interpreter
@@ -1241,6 +1754,7 @@ class File(_messages.Message):
       identifiers.
     hashedSize: The length in bytes of the file prefix that was hashed. If
       hashed_size == size, any hashes reported represent the entire file.
+    operations: Operation(s) performed on a file.
     partiallyHashed: True when the hash covers only a prefix of the file.
     path: Absolute path of the file as a JSON encoded string.
     sha256: SHA256 hash of the first hashed_size bytes of the file encoded as
@@ -1252,10 +1766,42 @@ class File(_messages.Message):
   contents = _messages.StringField(1)
   diskPath = _messages.MessageField('DiskPath', 2)
   hashedSize = _messages.IntegerField(3)
-  partiallyHashed = _messages.BooleanField(4)
-  path = _messages.StringField(5)
-  sha256 = _messages.StringField(6)
-  size = _messages.IntegerField(7)
+  operations = _messages.MessageField('FileOperation', 4, repeated=True)
+  partiallyHashed = _messages.BooleanField(5)
+  path = _messages.StringField(6)
+  sha256 = _messages.StringField(7)
+  size = _messages.IntegerField(8)
+
+
+class FileOperation(_messages.Message):
+  r"""Operation(s) performed on a file.
+
+  Enums:
+    TypeValueValuesEnum: The type of the operation
+
+  Fields:
+    type: The type of the operation
+  """
+
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""The type of the operation
+
+    Values:
+      OPERATION_TYPE_UNSPECIFIED: The operation is unspecified.
+      OPEN: Represents an open operation.
+      READ: Represents a read operation.
+      RENAME: Represents a rename operation.
+      WRITE: Represents a write operation.
+      EXECUTE: Represents an execute operation.
+    """
+    OPERATION_TYPE_UNSPECIFIED = 0
+    OPEN = 1
+    READ = 2
+    RENAME = 3
+    WRITE = 4
+    EXECUTE = 5
+
+  type = _messages.EnumField('TypeValueValuesEnum', 1)
 
 
 class Finding(_messages.Message):
@@ -1294,6 +1840,8 @@ class Finding(_messages.Message):
   Fields:
     access: Access details associated with the finding, such as more
       information on the caller, which method was accessed, and from where.
+    affectedResources: AffectedResources associated with the finding.
+    aiModel: The AI model associated with the finding.
     application: Represents an application associated with the finding.
     attackExposure: The results of an attack path simulation relevant to this
       finding.
@@ -1307,6 +1855,12 @@ class Finding(_messages.Message):
     category: The additional taxonomy group within findings from a given
       source. This field is immutable after creation time. Example:
       "XSS_FLASH_INJECTION"
+    chokepoint: Contains details about a chokepoint, which is a resource or
+      resource group where high-risk attack paths converge, based on [attack
+      path simulations] (https://cloud.google.com/security-command-
+      center/docs/attack-exposure-learn#attack_path_simulations). This field
+      cannot be updated. Its value is ignored in all update requests.
+    cloudArmor: Fields related to Cloud Armor findings.
     cloudDlpDataProfile: Cloud DLP data profile that is associated with the
       finding.
     cloudDlpInspection: Cloud Data Loss Prevention (Cloud DLP) inspection
@@ -1326,8 +1880,13 @@ class Finding(_messages.Message):
       information for both Kubernetes and non-Kubernetes containers.
     createTime: The time at which the finding was created in Security Command
       Center.
+    dataAccessEvents: Data access events associated with the finding.
+    dataFlowEvents: Data flow events associated with the finding.
+    dataRetentionDeletionEvents: Data retention deletion events associated
+      with the finding.
     database: Database associated with the finding.
     description: Contains more details about the finding.
+    disk: Disk associated with the finding.
     eventTime: The time the finding was first detected. If an existing finding
       is updated, then this is the time the update occurred. For example, if
       the finding represents an open firewall, this property captures the time
@@ -1344,12 +1903,18 @@ class Finding(_messages.Message):
       formed URL.
     files: File associated with the finding.
     findingClass: The class of the finding.
+    groupMemberships: Contains details about groups of which this finding is a
+      member. A group is a collection of findings that are related in some
+      way. This field cannot be updated. Its value is ignored in all update
+      requests.
     iamBindings: Represents IAM bindings associated with the finding.
     indicator: Represents what's commonly known as an *indicator of
       compromise* (IoC) in computer forensics. This is an artifact observed on
       a network or in an operating system that, with high confidence,
       indicates a computer intrusion. For more information, see [Indicator of
       compromise](https://en.wikipedia.org/wiki/Indicator_of_compromise).
+    ipRules: IP rules associated with the finding.
+    job: Job associated with the finding.
     kernelRootkit: Signature of the kernel rootkit.
     kubernetes: Kubernetes resources associated with the finding.
     loadBalancers: The load balancers associated with the finding.
@@ -1362,6 +1927,11 @@ class Finding(_messages.Message):
     mute: Indicates the mute state of a finding (either muted, unmuted or
       undefined). Unlike other attributes of a finding, a finding provider
       shouldn't set the value of mute.
+    muteAnnotation: Records additional information about the mute operation
+      e.g. mute config that muted the finding etc. Unlike other attributes of
+      a finding, a finding provider shouldn't set the value of
+      mute_annotation.
+    muteInfo: Output only. The mute information regarding this finding.
     muteInitiator: Records additional information about the mute operation,
       for example, the [mute configuration](/security-command-center/docs/how-
       to-mute-findings) that muted the finding and the user who muted the
@@ -1373,7 +1943,9 @@ class Finding(_messages.Message):
       ions/{organization_id}/sources/{source_id}/findings/{finding_id}",
       "folders/{folder_id}/sources/{source_id}/findings/{finding_id}",
       "projects/{project_id}/sources/{source_id}/findings/{finding_id}".
+    networks: Represents the VPC networks that the resource is attached to.
     nextSteps: Steps to address the finding.
+    notebook: Notebook associated with the finding.
     orgPolicies: Contains information about the org policies associated with
       the finding.
     parent: The relative resource name of the source the finding belongs to.
@@ -1403,6 +1975,12 @@ class Finding(_messages.Message):
       start with a letter and contain alphanumeric characters or underscores
       only.
     state: The state of the finding.
+    toxicCombination: Contains details about a group of security issues that,
+      when the issues occur together, represent a greater risk than when the
+      issues occur independently. A group of such issues is referred to as a
+      toxic combination. This field cannot be updated. Its value is ignored in
+      all update requests.
+    vertexAi: VertexAi associated with the finding.
     vulnerability: Represents vulnerability-specific fields like CVE and CVSS
       scores. CVE stands for Common Vulnerabilities and Exposures
       (https://cve.mitre.org/about/)
@@ -1423,6 +2001,14 @@ class Finding(_messages.Message):
       SCC_ERROR: Describes an error that prevents some SCC functionality.
       POSTURE_VIOLATION: Describes a potential security risk due to a change
         in the security posture.
+      TOXIC_COMBINATION: Describes a group of security issues that, when the
+        issues occur together, represent a greater risk than when the issues
+        occur independently. A group of such issues is referred to as a toxic
+        combination.
+      SENSITIVE_DATA_RISK: Describes a potential security risk to data assets
+        that contain sensitive data.
+      CHOKEPOINT: Describes a resource or resource group where high risk
+        attack paths converge, based on attack path simulations (APS).
     """
     FINDING_CLASS_UNSPECIFIED = 0
     THREAT = 1
@@ -1431,6 +2017,9 @@ class Finding(_messages.Message):
     OBSERVATION = 4
     SCC_ERROR = 5
     POSTURE_VIOLATION = 6
+    TOXIC_COMBINATION = 7
+    SENSITIVE_DATA_RISK = 8
+    CHOKEPOINT = 9
 
   class MuteValueValuesEnum(_messages.Enum):
     r"""Indicates the mute state of a finding (either muted, unmuted or
@@ -1595,69 +2184,67 @@ class Finding(_messages.Message):
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   access = _messages.MessageField('Access', 1)
-  application = _messages.MessageField('Application', 2)
-  attackExposure = _messages.MessageField('AttackExposure', 3)
-  backupDisasterRecovery = _messages.MessageField('BackupDisasterRecovery', 4)
-  canonicalName = _messages.StringField(5)
-  category = _messages.StringField(6)
-  cloudDlpDataProfile = _messages.MessageField('CloudDlpDataProfile', 7)
-  cloudDlpInspection = _messages.MessageField('CloudDlpInspection', 8)
-  compliances = _messages.MessageField('Compliance', 9, repeated=True)
-  connections = _messages.MessageField('Connection', 10, repeated=True)
-  contacts = _messages.MessageField('ContactsValue', 11)
-  containers = _messages.MessageField('Container', 12, repeated=True)
-  createTime = _messages.StringField(13)
-  database = _messages.MessageField('Database', 14)
-  description = _messages.StringField(15)
-  eventTime = _messages.StringField(16)
-  exfiltration = _messages.MessageField('Exfiltration', 17)
-  externalSystems = _messages.MessageField('ExternalSystemsValue', 18)
-  externalUri = _messages.StringField(19)
-  files = _messages.MessageField('File', 20, repeated=True)
-  findingClass = _messages.EnumField('FindingClassValueValuesEnum', 21)
-  iamBindings = _messages.MessageField('IamBinding', 22, repeated=True)
-  indicator = _messages.MessageField('Indicator', 23)
-  kernelRootkit = _messages.MessageField('KernelRootkit', 24)
-  kubernetes = _messages.MessageField('Kubernetes', 25)
-  loadBalancers = _messages.MessageField('LoadBalancer', 26, repeated=True)
-  logEntries = _messages.MessageField('LogEntry', 27, repeated=True)
-  mitreAttack = _messages.MessageField('MitreAttack', 28)
-  moduleName = _messages.StringField(29)
-  mute = _messages.EnumField('MuteValueValuesEnum', 30)
-  muteInitiator = _messages.StringField(31)
-  muteUpdateTime = _messages.StringField(32)
-  name = _messages.StringField(33)
-  nextSteps = _messages.StringField(34)
-  orgPolicies = _messages.MessageField('OrgPolicy', 35, repeated=True)
-  parent = _messages.StringField(36)
-  parentDisplayName = _messages.StringField(37)
-  processes = _messages.MessageField('Process', 38, repeated=True)
-  resourceName = _messages.StringField(39)
-  securityMarks = _messages.MessageField('SecurityMarks', 40)
-  securityPosture = _messages.MessageField('SecurityPosture', 41)
-  severity = _messages.EnumField('SeverityValueValuesEnum', 42)
-  sourceProperties = _messages.MessageField('SourcePropertiesValue', 43)
-  state = _messages.EnumField('StateValueValuesEnum', 44)
-  vulnerability = _messages.MessageField('Vulnerability', 45)
-
-
-class FindingExplanation(_messages.Message):
-  r"""Explanation of a particular exposure path.
-
-  Fields:
-    content: Output only. Content of the explanation.
-    contentId: Output only. Unique identifier for the content of the
-      explanation.
-    name: Immutable. Full resource name of the finding explanation. The
-      following list shows some examples: + `organizations/{organization}/sour
-      ces/{source}/findings/{finding}/explanations/{explanation}` + `organizat
-      ions/{organization}/sources/{source}/locations/{location}/findings/{find
-      ing}/explanations/{explanation}`
-  """
-
-  content = _messages.StringField(1)
-  contentId = _messages.StringField(2)
-  name = _messages.StringField(3)
+  affectedResources = _messages.MessageField('AffectedResources', 2)
+  aiModel = _messages.MessageField('AiModel', 3)
+  application = _messages.MessageField('Application', 4)
+  attackExposure = _messages.MessageField('AttackExposure', 5)
+  backupDisasterRecovery = _messages.MessageField('BackupDisasterRecovery', 6)
+  canonicalName = _messages.StringField(7)
+  category = _messages.StringField(8)
+  chokepoint = _messages.MessageField('Chokepoint', 9)
+  cloudArmor = _messages.MessageField('CloudArmor', 10)
+  cloudDlpDataProfile = _messages.MessageField('CloudDlpDataProfile', 11)
+  cloudDlpInspection = _messages.MessageField('CloudDlpInspection', 12)
+  compliances = _messages.MessageField('Compliance', 13, repeated=True)
+  connections = _messages.MessageField('Connection', 14, repeated=True)
+  contacts = _messages.MessageField('ContactsValue', 15)
+  containers = _messages.MessageField('Container', 16, repeated=True)
+  createTime = _messages.StringField(17)
+  dataAccessEvents = _messages.MessageField('DataAccessEvent', 18, repeated=True)
+  dataFlowEvents = _messages.MessageField('DataFlowEvent', 19, repeated=True)
+  dataRetentionDeletionEvents = _messages.MessageField('DataRetentionDeletionEvent', 20, repeated=True)
+  database = _messages.MessageField('Database', 21)
+  description = _messages.StringField(22)
+  disk = _messages.MessageField('Disk', 23)
+  eventTime = _messages.StringField(24)
+  exfiltration = _messages.MessageField('Exfiltration', 25)
+  externalSystems = _messages.MessageField('ExternalSystemsValue', 26)
+  externalUri = _messages.StringField(27)
+  files = _messages.MessageField('File', 28, repeated=True)
+  findingClass = _messages.EnumField('FindingClassValueValuesEnum', 29)
+  groupMemberships = _messages.MessageField('GroupMembership', 30, repeated=True)
+  iamBindings = _messages.MessageField('IamBinding', 31, repeated=True)
+  indicator = _messages.MessageField('Indicator', 32)
+  ipRules = _messages.MessageField('IpRules', 33)
+  job = _messages.MessageField('Job', 34)
+  kernelRootkit = _messages.MessageField('KernelRootkit', 35)
+  kubernetes = _messages.MessageField('Kubernetes', 36)
+  loadBalancers = _messages.MessageField('LoadBalancer', 37, repeated=True)
+  logEntries = _messages.MessageField('LogEntry', 38, repeated=True)
+  mitreAttack = _messages.MessageField('MitreAttack', 39)
+  moduleName = _messages.StringField(40)
+  mute = _messages.EnumField('MuteValueValuesEnum', 41)
+  muteAnnotation = _messages.StringField(42)
+  muteInfo = _messages.MessageField('MuteInfo', 43)
+  muteInitiator = _messages.StringField(44)
+  muteUpdateTime = _messages.StringField(45)
+  name = _messages.StringField(46)
+  networks = _messages.MessageField('Network', 47, repeated=True)
+  nextSteps = _messages.StringField(48)
+  notebook = _messages.MessageField('Notebook', 49)
+  orgPolicies = _messages.MessageField('OrgPolicy', 50, repeated=True)
+  parent = _messages.StringField(51)
+  parentDisplayName = _messages.StringField(52)
+  processes = _messages.MessageField('Process', 53, repeated=True)
+  resourceName = _messages.StringField(54)
+  securityMarks = _messages.MessageField('SecurityMarks', 55)
+  securityPosture = _messages.MessageField('SecurityPosture', 56)
+  severity = _messages.EnumField('SeverityValueValuesEnum', 57)
+  sourceProperties = _messages.MessageField('SourcePropertiesValue', 58)
+  state = _messages.EnumField('StateValueValuesEnum', 59)
+  toxicCombination = _messages.MessageField('ToxicCombination', 60)
+  vertexAi = _messages.MessageField('VertexAi', 61)
+  vulnerability = _messages.MessageField('Vulnerability', 62)
 
 
 class Folder(_messages.Message):
@@ -1820,6 +2407,7 @@ class GoogleCloudSecuritycenterV1CustomConfig(_messages.Message):
       the module.
 
   Fields:
+    celPolicy: The CEL policy spec attached to the custom module.
     customOutput: Custom output properties.
     description: Text that describes the vulnerability or misconfiguration
       that the custom module detects. This explanation is returned with each
@@ -1852,12 +2440,13 @@ class GoogleCloudSecuritycenterV1CustomConfig(_messages.Message):
     MEDIUM = 3
     LOW = 4
 
-  customOutput = _messages.MessageField('GoogleCloudSecuritycenterV1CustomOutputSpec', 1)
-  description = _messages.StringField(2)
-  predicate = _messages.MessageField('Expr', 3)
-  recommendation = _messages.StringField(4)
-  resourceSelector = _messages.MessageField('GoogleCloudSecuritycenterV1ResourceSelector', 5)
-  severity = _messages.EnumField('SeverityValueValuesEnum', 6)
+  celPolicy = _messages.MessageField('CelPolicySpec', 1)
+  customOutput = _messages.MessageField('GoogleCloudSecuritycenterV1CustomOutputSpec', 2)
+  description = _messages.StringField(3)
+  predicate = _messages.MessageField('Expr', 4)
+  recommendation = _messages.StringField(5)
+  resourceSelector = _messages.MessageField('GoogleCloudSecuritycenterV1ResourceSelector', 6)
+  severity = _messages.EnumField('SeverityValueValuesEnum', 7)
 
 
 class GoogleCloudSecuritycenterV1CustomOutputSpec(_messages.Message):
@@ -1886,10 +2475,12 @@ class GoogleCloudSecuritycenterV1EffectiveSecurityHealthAnalyticsCustomModule(_m
   read-only.
 
   Enums:
+    CloudProviderValueValuesEnum: The cloud provider of the custom module.
     EnablementStateValueValuesEnum: Output only. The effective state of
       enablement for the module at the given level of the hierarchy.
 
   Fields:
+    cloudProvider: The cloud provider of the custom module.
     customConfig: Output only. The user-specified configuration for the
       module.
     displayName: Output only. The display name for the custom module. The name
@@ -1904,6 +2495,20 @@ class GoogleCloudSecuritycenterV1EffectiveSecurityHealthAnalyticsCustomModule(_m
       /securityHealthAnalyticsSettings/effectiveCustomModules/{customModule}"
   """
 
+  class CloudProviderValueValuesEnum(_messages.Enum):
+    r"""The cloud provider of the custom module.
+
+    Values:
+      CLOUD_PROVIDER_UNSPECIFIED: Unspecified cloud provider.
+      GOOGLE_CLOUD_PLATFORM: Google Cloud Platform.
+      AMAZON_WEB_SERVICES: Amazon Web Services.
+      MICROSOFT_AZURE: Microsoft Azure.
+    """
+    CLOUD_PROVIDER_UNSPECIFIED = 0
+    GOOGLE_CLOUD_PLATFORM = 1
+    AMAZON_WEB_SERVICES = 2
+    MICROSOFT_AZURE = 3
+
   class EnablementStateValueValuesEnum(_messages.Enum):
     r"""Output only. The effective state of enablement for the module at the
     given level of the hierarchy.
@@ -1917,10 +2522,11 @@ class GoogleCloudSecuritycenterV1EffectiveSecurityHealthAnalyticsCustomModule(_m
     ENABLED = 1
     DISABLED = 2
 
-  customConfig = _messages.MessageField('GoogleCloudSecuritycenterV1CustomConfig', 1)
-  displayName = _messages.StringField(2)
-  enablementState = _messages.EnumField('EnablementStateValueValuesEnum', 3)
-  name = _messages.StringField(4)
+  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 1)
+  customConfig = _messages.MessageField('GoogleCloudSecuritycenterV1CustomConfig', 2)
+  displayName = _messages.StringField(3)
+  enablementState = _messages.EnumField('EnablementStateValueValuesEnum', 4)
+  name = _messages.StringField(5)
 
 
 class GoogleCloudSecuritycenterV1ExternalSystem(_messages.Message):
@@ -1929,6 +2535,10 @@ class GoogleCloudSecuritycenterV1ExternalSystem(_messages.Message):
   Fields:
     assignees: References primary/secondary etc assignees in the external
       system.
+    caseCloseTime: The time when the case was closed, as reported by the
+      external system.
+    caseCreateTime: The time when the case was created, as reported by the
+      external system.
     casePriority: The priority of the finding's corresponding case in the
       external system.
     caseSla: The SLA of the finding's corresponding case in the external
@@ -1950,19 +2560,27 @@ class GoogleCloudSecuritycenterV1ExternalSystem(_messages.Message):
   """
 
   assignees = _messages.StringField(1, repeated=True)
-  casePriority = _messages.StringField(2)
-  caseSla = _messages.StringField(3)
-  caseUri = _messages.StringField(4)
-  externalSystemUpdateTime = _messages.StringField(5)
-  externalUid = _messages.StringField(6)
-  name = _messages.StringField(7)
-  status = _messages.StringField(8)
-  ticketInfo = _messages.MessageField('TicketInfo', 9)
+  caseCloseTime = _messages.StringField(2)
+  caseCreateTime = _messages.StringField(3)
+  casePriority = _messages.StringField(4)
+  caseSla = _messages.StringField(5)
+  caseUri = _messages.StringField(6)
+  externalSystemUpdateTime = _messages.StringField(7)
+  externalUid = _messages.StringField(8)
+  name = _messages.StringField(9)
+  status = _messages.StringField(10)
+  ticketInfo = _messages.MessageField('TicketInfo', 11)
 
 
 class GoogleCloudSecuritycenterV1MuteConfig(_messages.Message):
   r"""A mute config is a Cloud SCC resource that contains the configuration to
   mute create/update events of findings.
+
+  Enums:
+    TypeValueValuesEnum: Optional. The type of the mute config, which
+      determines what type of mute state the config affects. The static mute
+      state takes precedence over the dynamic mute state. Immutable after
+      creation. STATIC by default if not set during creation.
 
   Fields:
     createTime: Output only. The time at which the mute config was created.
@@ -1970,6 +2588,9 @@ class GoogleCloudSecuritycenterV1MuteConfig(_messages.Message):
       config creation.
     description: A description of the mute config.
     displayName: The human readable name to be displayed for the mute config.
+    expiryTime: Optional. The expiry of the mute config. Only applicable for
+      dynamic configs. If the expiry is set, when the config expires, it is
+      removed from all findings.
     filter: Required. An expression that defines the filter to apply across
       create/update events of findings. While creating a filter string, be
       mindful of the scope in which the mute configuration is being created.
@@ -1986,24 +2607,52 @@ class GoogleCloudSecuritycenterV1MuteConfig(_messages.Message):
       the mute config. This field is set by the server and will be ignored if
       provided on config creation or update.
     name: This field will be ignored if provided on config creation. Format
-      "organizations/{organization}/muteConfigs/{mute_config}"
-      "folders/{folder}/muteConfigs/{mute_config}"
-      "projects/{project}/muteConfigs/{mute_config}" "organizations/{organizat
-      ion}/locations/global/muteConfigs/{mute_config}"
-      "folders/{folder}/locations/global/muteConfigs/{mute_config}"
-      "projects/{project}/locations/global/muteConfigs/{mute_config}"
+      `organizations/{organization}/muteConfigs/{mute_config}`
+      `folders/{folder}/muteConfigs/{mute_config}`
+      `projects/{project}/muteConfigs/{mute_config}` `organizations/{organizat
+      ion}/locations/global/muteConfigs/{mute_config}`
+      `folders/{folder}/locations/global/muteConfigs/{mute_config}`
+      `projects/{project}/locations/global/muteConfigs/{mute_config}`
+    type: Optional. The type of the mute config, which determines what type of
+      mute state the config affects. The static mute state takes precedence
+      over the dynamic mute state. Immutable after creation. STATIC by default
+      if not set during creation.
     updateTime: Output only. The most recent time at which the mute config was
       updated. This field is set by the server and will be ignored if provided
       on config creation or update.
   """
 
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""Optional. The type of the mute config, which determines what type of
+    mute state the config affects. The static mute state takes precedence over
+    the dynamic mute state. Immutable after creation. STATIC by default if not
+    set during creation.
+
+    Values:
+      MUTE_CONFIG_TYPE_UNSPECIFIED: Unused.
+      STATIC: A static mute config, which sets the static mute state of future
+        matching findings to muted. Once the static mute state has been set,
+        finding or config modifications will not affect the state.
+      DYNAMIC: A dynamic mute config, which is applied to existing and future
+        matching findings, setting their dynamic mute state to "muted". If the
+        config is updated or deleted, or a matching finding is updated, such
+        that the finding doesn't match the config, the config will be removed
+        from the finding, and the finding's dynamic mute state may become
+        "unmuted" (unless other configs still match).
+    """
+    MUTE_CONFIG_TYPE_UNSPECIFIED = 0
+    STATIC = 1
+    DYNAMIC = 2
+
   createTime = _messages.StringField(1)
   description = _messages.StringField(2)
   displayName = _messages.StringField(3)
-  filter = _messages.StringField(4)
-  mostRecentEditor = _messages.StringField(5)
-  name = _messages.StringField(6)
-  updateTime = _messages.StringField(7)
+  expiryTime = _messages.StringField(4)
+  filter = _messages.StringField(5)
+  mostRecentEditor = _messages.StringField(6)
+  name = _messages.StringField(7)
+  type = _messages.EnumField('TypeValueValuesEnum', 8)
+  updateTime = _messages.StringField(9)
 
 
 class GoogleCloudSecuritycenterV1NotificationMessage(_messages.Message):
@@ -2039,28 +2688,73 @@ class GoogleCloudSecuritycenterV1Property(_messages.Message):
 class GoogleCloudSecuritycenterV1Resource(_messages.Message):
   r"""Information related to the Google Cloud resource.
 
+  Enums:
+    CloudProviderValueValuesEnum: Indicates which cloud provider the resource
+      resides in.
+
   Fields:
+    awsMetadata: The AWS metadata associated with the finding.
+    azureMetadata: The Azure metadata associated with the finding.
+    cloudProvider: Indicates which cloud provider the resource resides in.
     displayName: The human readable name of the resource.
     folders: Output only. Contains a Folder message for each folder in the
       assets ancestry. The first folder is the deepest nested folder, and the
       last folder is the folder directly under the Organization.
+    location: The region or location of the service (if applicable).
     name: The full resource name of the resource. See:
       https://cloud.google.com/apis/design/resource_names#full_resource_name
+    organization: Indicates which organization or tenant in the cloud provider
+      the finding applies to.
     parent: The full resource name of resource's parent.
     parentDisplayName: The human readable name of resource's parent.
     project: The full resource name of project that the resource belongs to.
     projectDisplayName: The project ID that the resource belongs to.
+    resourcePath: Provides the path to the resource within the resource
+      hierarchy.
+    resourcePathString: A string representation of the resource path. For
+      Google Cloud, it has the format of `organizations/{organization_id}/fold
+      ers/{folder_id}/folders/{folder_id}/projects/{project_id}` where there
+      can be any number of folders. For AWS, it has the format of `org/{organi
+      zation_id}/ou/{organizational_unit_id}/ou/{organizational_unit_id}/accou
+      nt/{account_id}` where there can be any number of organizational units.
+      For Azure, it has the format of `mg/{management_group_id}/mg/{management
+      _group_id}/subscription/{subscription_id}/rg/{resource_group_name}`
+      where there can be any number of management groups.
+    service: The parent service or product from which the resource is
+      provided, for example, GKE or SNS.
     type: The full resource type of the resource.
   """
 
-  displayName = _messages.StringField(1)
-  folders = _messages.MessageField('Folder', 2, repeated=True)
-  name = _messages.StringField(3)
-  parent = _messages.StringField(4)
-  parentDisplayName = _messages.StringField(5)
-  project = _messages.StringField(6)
-  projectDisplayName = _messages.StringField(7)
-  type = _messages.StringField(8)
+  class CloudProviderValueValuesEnum(_messages.Enum):
+    r"""Indicates which cloud provider the resource resides in.
+
+    Values:
+      CLOUD_PROVIDER_UNSPECIFIED: The cloud provider is unspecified.
+      GOOGLE_CLOUD_PLATFORM: The cloud provider is Google Cloud Platform.
+      AMAZON_WEB_SERVICES: The cloud provider is Amazon Web Services.
+      MICROSOFT_AZURE: The cloud provider is Microsoft Azure.
+    """
+    CLOUD_PROVIDER_UNSPECIFIED = 0
+    GOOGLE_CLOUD_PLATFORM = 1
+    AMAZON_WEB_SERVICES = 2
+    MICROSOFT_AZURE = 3
+
+  awsMetadata = _messages.MessageField('AwsMetadata', 1)
+  azureMetadata = _messages.MessageField('AzureMetadata', 2)
+  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 3)
+  displayName = _messages.StringField(4)
+  folders = _messages.MessageField('Folder', 5, repeated=True)
+  location = _messages.StringField(6)
+  name = _messages.StringField(7)
+  organization = _messages.StringField(8)
+  parent = _messages.StringField(9)
+  parentDisplayName = _messages.StringField(10)
+  project = _messages.StringField(11)
+  projectDisplayName = _messages.StringField(12)
+  resourcePath = _messages.MessageField('ResourcePath', 13)
+  resourcePathString = _messages.StringField(14)
+  service = _messages.StringField(15)
+  type = _messages.StringField(16)
 
 
 class GoogleCloudSecuritycenterV1ResourceSelector(_messages.Message):
@@ -2074,49 +2768,67 @@ class GoogleCloudSecuritycenterV1ResourceSelector(_messages.Message):
 
 
 class GoogleCloudSecuritycenterV1ResourceValueConfig(_messages.Message):
-  r"""A resource value config (RVC) is a mapping configuration of user's
-  resources to resource values. Used in Attack path simulations.
+  r"""A resource value configuration (RVC) is a mapping configuration of
+  user's resources to resource values. Used in Attack path simulations.
 
   Enums:
+    CloudProviderValueValuesEnum: Cloud provider this configuration applies to
     ResourceValueValueValuesEnum: Required. Resource value level this
       expression represents
 
   Messages:
     ResourceLabelsSelectorValue: List of resource labels to search for,
-      evaluated with AND. E.g. "resource_labels_selector": {"key": "value",
-      "env": "prod"} will match resources with labels "key": "value" AND
-      "env": "prod" https://cloud.google.com/resource-manager/docs/creating-
-      managing-labels
+      evaluated with `AND`. For example, `"resource_labels_selector": {"key":
+      "value", "env": "prod"}` will match resources with labels "key": "value"
+      `AND` "env": "prod" https://cloud.google.com/resource-
+      manager/docs/creating-managing-labels
 
   Fields:
-    createTime: Output only. Timestamp this resource value config was created.
-    description: Description of the resource value config.
-    name: Name for the resource value config
+    cloudProvider: Cloud provider this configuration applies to
+    createTime: Output only. Timestamp this resource value configuration was
+      created.
+    description: Description of the resource value configuration.
+    name: Name for the resource value configuration
     resourceLabelsSelector: List of resource labels to search for, evaluated
-      with AND. E.g. "resource_labels_selector": {"key": "value", "env":
-      "prod"} will match resources with labels "key": "value" AND "env":
-      "prod" https://cloud.google.com/resource-manager/docs/creating-managing-
-      labels
+      with `AND`. For example, `"resource_labels_selector": {"key": "value",
+      "env": "prod"}` will match resources with labels "key": "value" `AND`
+      "env": "prod" https://cloud.google.com/resource-manager/docs/creating-
+      managing-labels
     resourceType: Apply resource_value only to resources that match
-      resource_type. resource_type will be checked with "AND" of other
-      resources. E.g. "storage.googleapis.com/Bucket" with resource_value
-      "HIGH" will apply "HIGH" value only to "storage.googleapis.com/Bucket"
-      resources.
+      resource_type. resource_type will be checked with `AND` of other
+      resources. For example, "storage.googleapis.com/Bucket" with
+      resource_value "HIGH" will apply "HIGH" value only to
+      "storage.googleapis.com/Bucket" resources.
     resourceValue: Required. Resource value level this expression represents
-    scope: Project or folder to scope this config to. For example,
-      "project/456" would apply this config only to resources in "project/456"
-      scope will be checked with "AND" of other resources.
+    scope: Project or folder to scope this configuration to. For example,
+      "project/456" would apply this configuration only to resources in
+      "project/456" scope will be checked with `AND` of other resources.
     sensitiveDataProtectionMapping: A mapping of the sensitivity on Sensitive
       Data Protection finding to resource values. This mapping can only be
       used in combination with a resource_type that is related to BigQuery,
       e.g. "bigquery.googleapis.com/Dataset".
-    tagValues: Required. Tag values combined with AND to check against. Values
-      in the form "tagValues/123" E.g. [ "tagValues/123", "tagValues/456",
-      "tagValues/789" ] https://cloud.google.com/resource-
+    tagValues: Required. Tag values combined with `AND` to check against. For
+      Google Cloud resources, they are tag value IDs in the form of
+      "tagValues/123". Example: `[ "tagValues/123", "tagValues/456",
+      "tagValues/789" ]` https://cloud.google.com/resource-
       manager/docs/tags/tags-creating-and-managing
-    updateTime: Output only. Timestamp this resource value config was last
-      updated.
+    updateTime: Output only. Timestamp this resource value configuration was
+      last updated.
   """
+
+  class CloudProviderValueValuesEnum(_messages.Enum):
+    r"""Cloud provider this configuration applies to
+
+    Values:
+      CLOUD_PROVIDER_UNSPECIFIED: The cloud provider is unspecified.
+      GOOGLE_CLOUD_PLATFORM: The cloud provider is Google Cloud Platform.
+      AMAZON_WEB_SERVICES: The cloud provider is Amazon Web Services.
+      MICROSOFT_AZURE: The cloud provider is Microsoft Azure.
+    """
+    CLOUD_PROVIDER_UNSPECIFIED = 0
+    GOOGLE_CLOUD_PLATFORM = 1
+    AMAZON_WEB_SERVICES = 2
+    MICROSOFT_AZURE = 3
 
   class ResourceValueValueValuesEnum(_messages.Enum):
     r"""Required. Resource value level this expression represents
@@ -2136,9 +2848,9 @@ class GoogleCloudSecuritycenterV1ResourceValueConfig(_messages.Message):
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class ResourceLabelsSelectorValue(_messages.Message):
-    r"""List of resource labels to search for, evaluated with AND. E.g.
-    "resource_labels_selector": {"key": "value", "env": "prod"} will match
-    resources with labels "key": "value" AND "env": "prod"
+    r"""List of resource labels to search for, evaluated with `AND`. For
+    example, `"resource_labels_selector": {"key": "value", "env": "prod"}`
+    will match resources with labels "key": "value" `AND` "env": "prod"
     https://cloud.google.com/resource-manager/docs/creating-managing-labels
 
     Messages:
@@ -2163,16 +2875,17 @@ class GoogleCloudSecuritycenterV1ResourceValueConfig(_messages.Message):
 
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
-  createTime = _messages.StringField(1)
-  description = _messages.StringField(2)
-  name = _messages.StringField(3)
-  resourceLabelsSelector = _messages.MessageField('ResourceLabelsSelectorValue', 4)
-  resourceType = _messages.StringField(5)
-  resourceValue = _messages.EnumField('ResourceValueValueValuesEnum', 6)
-  scope = _messages.StringField(7)
-  sensitiveDataProtectionMapping = _messages.MessageField('GoogleCloudSecuritycenterV1SensitiveDataProtectionMapping', 8)
-  tagValues = _messages.StringField(9, repeated=True)
-  updateTime = _messages.StringField(10)
+  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 1)
+  createTime = _messages.StringField(2)
+  description = _messages.StringField(3)
+  name = _messages.StringField(4)
+  resourceLabelsSelector = _messages.MessageField('ResourceLabelsSelectorValue', 5)
+  resourceType = _messages.StringField(6)
+  resourceValue = _messages.EnumField('ResourceValueValueValuesEnum', 7)
+  scope = _messages.StringField(8)
+  sensitiveDataProtectionMapping = _messages.MessageField('GoogleCloudSecuritycenterV1SensitiveDataProtectionMapping', 9)
+  tagValues = _messages.StringField(10, repeated=True)
+  updateTime = _messages.StringField(11)
 
 
 class GoogleCloudSecuritycenterV1RunAssetDiscoveryResponse(_messages.Message):
@@ -2214,6 +2927,7 @@ class GoogleCloudSecuritycenterV1SecurityHealthAnalyticsCustomModule(_messages.M
   level are inherited by the child folders and projects.
 
   Enums:
+    CloudProviderValueValuesEnum: The cloud provider of the custom module.
     EnablementStateValueValuesEnum: The enablement state of the custom module.
 
   Fields:
@@ -2221,6 +2935,7 @@ class GoogleCloudSecuritycenterV1SecurityHealthAnalyticsCustomModule(_messages.M
       was created in the organization, folder, or project in which you are
       viewing the custom module. Otherwise, `ancestor_module` specifies the
       organization or folder from which the custom module is inherited.
+    cloudProvider: The cloud provider of the custom module.
     customConfig: The user specified custom configuration for the module.
     displayName: The display name of the Security Health Analytics custom
       module. This display name becomes the finding category for all findings
@@ -2240,6 +2955,20 @@ class GoogleCloudSecuritycenterV1SecurityHealthAnalyticsCustomModule(_messages.M
       updated.
   """
 
+  class CloudProviderValueValuesEnum(_messages.Enum):
+    r"""The cloud provider of the custom module.
+
+    Values:
+      CLOUD_PROVIDER_UNSPECIFIED: Unspecified cloud provider.
+      GOOGLE_CLOUD_PLATFORM: Google Cloud.
+      AMAZON_WEB_SERVICES: Amazon Web Services (AWS).
+      MICROSOFT_AZURE: Microsoft Azure.
+    """
+    CLOUD_PROVIDER_UNSPECIFIED = 0
+    GOOGLE_CLOUD_PLATFORM = 1
+    AMAZON_WEB_SERVICES = 2
+    MICROSOFT_AZURE = 3
+
   class EnablementStateValueValuesEnum(_messages.Enum):
     r"""The enablement state of the custom module.
 
@@ -2257,12 +2986,13 @@ class GoogleCloudSecuritycenterV1SecurityHealthAnalyticsCustomModule(_messages.M
     INHERITED = 3
 
   ancestorModule = _messages.StringField(1)
-  customConfig = _messages.MessageField('GoogleCloudSecuritycenterV1CustomConfig', 2)
-  displayName = _messages.StringField(3)
-  enablementState = _messages.EnumField('EnablementStateValueValuesEnum', 4)
-  lastEditor = _messages.StringField(5)
-  name = _messages.StringField(6)
-  updateTime = _messages.StringField(7)
+  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 2)
+  customConfig = _messages.MessageField('GoogleCloudSecuritycenterV1CustomConfig', 3)
+  displayName = _messages.StringField(4)
+  enablementState = _messages.EnumField('EnablementStateValueValuesEnum', 5)
+  lastEditor = _messages.StringField(6)
+  name = _messages.StringField(7)
+  updateTime = _messages.StringField(8)
 
 
 class GoogleCloudSecuritycenterV1SensitiveDataProtectionMapping(_messages.Message):
@@ -2755,6 +3485,56 @@ class GoogleCloudSecuritycenterV2AdaptiveProtection(_messages.Message):
   confidence = _messages.FloatField(1)
 
 
+class GoogleCloudSecuritycenterV2AffectedResources(_messages.Message):
+  r"""Details about resources affected by this finding.
+
+  Fields:
+    count: The count of resources affected by the finding.
+  """
+
+  count = _messages.IntegerField(1)
+
+
+class GoogleCloudSecuritycenterV2AiModel(_messages.Message):
+  r"""Contains information about the AI model associated with the finding.
+
+  Enums:
+    DeploymentPlatformValueValuesEnum: The platform on which the model is
+      deployed.
+
+  Fields:
+    deploymentPlatform: The platform on which the model is deployed.
+    displayName: The user defined display name of model. Ex. baseline-
+      classification-model
+    domain: The domain of the model, for example, "image-classification".
+    library: The name of the model library, for example, "transformers".
+    location: The region in which the model is used, for example, "us-
+      central1".
+    name: The name of the AI model, for example, "gemini:1.0.0".
+    publisher: The publisher of the model, for example, "google" or "nvidia".
+  """
+
+  class DeploymentPlatformValueValuesEnum(_messages.Enum):
+    r"""The platform on which the model is deployed.
+
+    Values:
+      DEPLOYMENT_PLATFORM_UNSPECIFIED: Unspecified deployment platform.
+      VERTEX_AI: Vertex AI.
+      GKE: Google Kubernetes Engine.
+    """
+    DEPLOYMENT_PLATFORM_UNSPECIFIED = 0
+    VERTEX_AI = 1
+    GKE = 2
+
+  deploymentPlatform = _messages.EnumField('DeploymentPlatformValueValuesEnum', 1)
+  displayName = _messages.StringField(2)
+  domain = _messages.StringField(3)
+  library = _messages.StringField(4)
+  location = _messages.StringField(5)
+  name = _messages.StringField(6)
+  publisher = _messages.StringField(7)
+
+
 class GoogleCloudSecuritycenterV2Allowed(_messages.Message):
   r"""Allowed IP rule.
 
@@ -2765,39 +3545,15 @@ class GoogleCloudSecuritycenterV2Allowed(_messages.Message):
   ipRules = _messages.MessageField('GoogleCloudSecuritycenterV2IpRule', 1, repeated=True)
 
 
-class GoogleCloudSecuritycenterV2Apigee(_messages.Message):
-  r"""Apigee-related attributes.
-
-  Fields:
-    environment: Name of the [Apigee
-      environment](https://cloud.google.com/apigee/docs/api-
-      platform/fundamentals/environments-overview#overview) associated with
-      the finding. Examples: `default`, `prod`, `local`, `env1`, etc.
-    organization: Name of the [Apigee
-      organization](https://cloud.google.com/apigee/docs/api-
-      platform/fundamentals/organization-structure) associated with the
-      finding. Examples: `my-apigee-org`, `apigee-prod-org`, etc.
-    securityProfileId: ID of the [security
-      profile](https://cloud.google.com/apigee/docs/api-security/security-
-      scores#security-profiles) that is attached to the Apigee environment.
-      Examples: `default`, `my-custom-profile`, `auth-only-profile`, etc.
-  """
-
-  environment = _messages.StringField(1)
-  organization = _messages.StringField(2)
-  securityProfileId = _messages.StringField(3)
-
-
 class GoogleCloudSecuritycenterV2Application(_messages.Message):
   r"""Represents an application associated with a finding.
 
   Fields:
     baseUri: The base URI that identifies the network location of the
-      application in which the vulnerability was detected. Examples:
-      http://11.22.33.44, http://foo.com, http://11.22.33.44:8080
+      application in which the vulnerability was detected. For example,
+      `http://example.com`.
     fullUri: The full URI with payload that could be used to reproduce the
-      vulnerability. Example: http://11.22.33.44/reflected/parameter/attribute
-      /singlequoted/js?p=aMmYgI6H
+      vulnerability. For example, `http://example.com?p=aMmYgI6H`.
   """
 
   baseUri = _messages.StringField(1)
@@ -2810,13 +3566,19 @@ class GoogleCloudSecuritycenterV2Attack(_messages.Message):
   Fields:
     classification: Type of attack, for example, 'SYN-flood', 'NTP-udp', or
       'CHARGEN-udp'.
-    volumeBps: Total BPS (bytes per second) volume of attack.
-    volumePps: Total PPS (packets per second) volume of attack.
+    volumeBps: Total BPS (bytes per second) volume of attack. Deprecated -
+      refer to volume_bps_long instead.
+    volumeBpsLong: Total BPS (bytes per second) volume of attack.
+    volumePps: Total PPS (packets per second) volume of attack. Deprecated -
+      refer to volume_pps_long instead.
+    volumePpsLong: Total PPS (packets per second) volume of attack.
   """
 
   classification = _messages.StringField(1)
   volumeBps = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  volumePps = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  volumeBpsLong = _messages.IntegerField(3)
+  volumePps = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  volumePpsLong = _messages.IntegerField(5)
 
 
 class GoogleCloudSecuritycenterV2AttackExposure(_messages.Message):
@@ -2831,7 +3593,7 @@ class GoogleCloudSecuritycenterV2AttackExposure(_messages.Message):
   Fields:
     attackExposureResult: The resource name of the attack path simulation
       result that contains the details regarding this attack exposure score.
-      Example: organizations/123/simulations/456/attackExposureResults/789
+      Example: `organizations/123/simulations/456/attackExposureResults/789`
     exposedHighValueResourcesCount: The number of high value resources that
       are exposed as a result of this finding.
     exposedLowValueResourcesCount: The number of high value resources that are
@@ -2937,7 +3699,7 @@ class GoogleCloudSecuritycenterV2AzureManagementGroup(_messages.Message):
   Fields:
     displayName: The display name of the Azure management group.
     id: The UUID of the Azure management group, for example,
-      "20000000-0001-0000-0000-000000000000".
+      `20000000-0001-0000-0000-000000000000`.
   """
 
   displayName = _messages.StringField(1)
@@ -2954,21 +3716,25 @@ class GoogleCloudSecuritycenterV2AzureMetadata(_messages.Message):
       highest level.
     resourceGroup: The Azure resource group associated with the resource.
     subscription: The Azure subscription associated with the resource.
+    tenant: The Azure Entra tenant associated with the resource.
   """
 
   managementGroups = _messages.MessageField('GoogleCloudSecuritycenterV2AzureManagementGroup', 1, repeated=True)
   resourceGroup = _messages.MessageField('GoogleCloudSecuritycenterV2AzureResourceGroup', 2)
   subscription = _messages.MessageField('GoogleCloudSecuritycenterV2AzureSubscription', 3)
+  tenant = _messages.MessageField('GoogleCloudSecuritycenterV2AzureTenant', 4)
 
 
 class GoogleCloudSecuritycenterV2AzureResourceGroup(_messages.Message):
   r"""Represents an Azure resource group.
 
   Fields:
+    id: The ID of the Azure resource group.
     name: The name of the Azure resource group. This is not a UUID.
   """
 
-  name = _messages.StringField(1)
+  id = _messages.StringField(1)
+  name = _messages.StringField(2)
 
 
 class GoogleCloudSecuritycenterV2AzureSubscription(_messages.Message):
@@ -2977,7 +3743,20 @@ class GoogleCloudSecuritycenterV2AzureSubscription(_messages.Message):
   Fields:
     displayName: The display name of the Azure subscription.
     id: The UUID of the Azure subscription, for example,
-      "291bba3f-e0a5-47bc-a099-3bdcb2a50a05".
+      `291bba3f-e0a5-47bc-a099-3bdcb2a50a05`.
+  """
+
+  displayName = _messages.StringField(1)
+  id = _messages.StringField(2)
+
+
+class GoogleCloudSecuritycenterV2AzureTenant(_messages.Message):
+  r"""Represents a Microsoft Entra tenant.
+
+  Fields:
+    displayName: The display name of the Azure tenant.
+    id: The ID of the Microsoft Entra tenant, for example,
+      "a11aaa11-aa11-1aa1-11aa-1aaa11a".
   """
 
   displayName = _messages.StringField(1)
@@ -2989,48 +3768,48 @@ class GoogleCloudSecuritycenterV2BackupDisasterRecovery(_messages.Message):
 
   Fields:
     appliance: The name of the Backup and DR appliance that captures, moves,
-      and manages the lifecycle of backup data. For example, "backup-
-      server-57137".
+      and manages the lifecycle of backup data. For example, `backup-
+      server-57137`.
     applications: The names of Backup and DR applications. An application is a
       VM, database, or file system on a managed host monitored by a backup and
-      recovery appliance. For example, "centos7-01-vol00", "centos7-01-vol01",
-      "centos7-01-vol02".
+      recovery appliance. For example, `centos7-01-vol00`, `centos7-01-vol01`,
+      `centos7-01-vol02`.
     backupCreateTime: The timestamp at which the Backup and DR backup was
       created.
     backupTemplate: The name of a Backup and DR template which comprises one
       or more backup policies. See the [Backup and DR
       documentation](https://cloud.google.com/backup-disaster-
       recovery/docs/concepts/backup-plan#temp) for more information. For
-      example, "snap-ov".
+      example, `snap-ov`.
     backupType: The backup type of the Backup and DR image. For example,
-      "Snapshot", "Remote Snapshot", "OnVault".
+      `Snapshot`, `Remote Snapshot`, `OnVault`.
     host: The name of a Backup and DR host, which is managed by the backup and
       recovery appliance and known to the management console. The host can be
       of type Generic (for example, Compute Engine, SQL Server, Oracle DB, SMB
       file system, etc.), vCenter, or an ESX server. See the [Backup and DR
       documentation on hosts](https://cloud.google.com/backup-disaster-
       recovery/docs/configuration/manage-hosts-and-their-applications) for
-      more information. For example, "centos7-01".
+      more information. For example, `centos7-01`.
     policies: The names of Backup and DR policies that are associated with a
       template and that define when to run a backup, how frequently to run a
       backup, and how long to retain the backup image. For example,
-      "onvaults".
+      `onvaults`.
     policyOptions: The names of Backup and DR advanced policy options of a
       policy applying to an application. See the [Backup and DR documentation
       on policy options](https://cloud.google.com/backup-disaster-
       recovery/docs/create-plan/policy-settings). For example,
-      "skipofflineappsincongrp, nounmap".
+      `skipofflineappsincongrp, nounmap`.
     profile: The name of the Backup and DR resource profile that specifies the
       storage media for backups of application and VM data. See the [Backup
       and DR documentation on profiles](https://cloud.google.com/backup-
       disaster-recovery/docs/concepts/backup-plan#profile). For example,
-      "GCP".
+      `GCP`.
     storagePool: The name of the Backup and DR storage pool that the backup
       and recovery appliance is storing data in. The storage pool could be of
       type Cloud, Primary, Snapshot, or OnVault. See the [Backup and DR
       documentation on storage pools](https://cloud.google.com/backup-
       disaster-recovery/docs/concepts/storage-pools). For example,
-      "DiskPoolOne".
+      `DiskPoolOne`.
   """
 
   appliance = _messages.StringField(1)
@@ -3053,7 +3832,7 @@ class GoogleCloudSecuritycenterV2BigQueryExport(_messages.Message):
       created. This field is set by the server and will be ignored if provided
       on export on creation.
     dataset: The dataset to write findings' updates to. Its format is
-      "projects/[project_id]/datasets/[bigquery_dataset_id]". BigQuery Dataset
+      "projects/[project_id]/datasets/[bigquery_dataset_id]". BigQuery dataset
       unique ID must contain only letters (a-z, A-Z), numbers (0-9), or
       underscores (_).
     description: The description of the export (max of 1024 characters).
@@ -3071,13 +3850,14 @@ class GoogleCloudSecuritycenterV2BigQueryExport(_messages.Message):
     mostRecentEditor: Output only. Email address of the user who last edited
       the BigQuery export. This field is set by the server and will be ignored
       if provided on export creation or update.
-    name: The relative resource name of this export. See: https://cloud.google
-      .com/apis/design/resource_names#relative_resource_name. The following
-      list shows some examples: + `organizations/{organization_id}/locations/{
-      location_id}/bigQueryExports/{export_id}` + `folders/{folder_id}/locatio
-      ns/{location_id}/bigQueryExports/{export_id}` + `projects/{project_id}/l
-      ocations/{location_id}/bigQueryExports/{export_id}` This field is
-      provided in responses, and is ignored when provided in create requests.
+    name: Identifier. The relative resource name of this export. See: https://
+      cloud.google.com/apis/design/resource_names#relative_resource_name. The
+      following list shows some examples: + `organizations/{organization_id}/l
+      ocations/{location_id}/bigQueryExports/{export_id}` + `folders/{folder_i
+      d}/locations/{location_id}/bigQueryExports/{export_id}` + `projects/{pro
+      ject_id}/locations/{location_id}/bigQueryExports/{export_id}` This field
+      is provided in responses, and is ignored when provided in create
+      requests.
     principal: Output only. The service account that needs permission to
       create table and upload data to the BigQuery dataset.
     updateTime: Output only. The most recent time at which the BigQuery export
@@ -3116,6 +3896,21 @@ class GoogleCloudSecuritycenterV2BulkMuteFindingsResponse(_messages.Message):
   r"""The response to a BulkMute request. Contains the LRO information."""
 
 
+class GoogleCloudSecuritycenterV2Chokepoint(_messages.Message):
+  r"""Contains details about a chokepoint, which is a resource or resource
+  group where high-risk attack paths converge, based on [attack path
+  simulations] (https://cloud.google.com/security-command-center/docs/attack-
+  exposure-learn#attack_path_simulations).
+
+  Fields:
+    relatedFindings: List of resource names of findings associated with this
+      chokepoint. For example, organizations/123/sources/456/findings/789.
+      This list will have at most 100 findings.
+  """
+
+  relatedFindings = _messages.StringField(1, repeated=True)
+
+
 class GoogleCloudSecuritycenterV2CloudArmor(_messages.Message):
   r"""Fields related to Google Cloud Armor findings.
 
@@ -3125,6 +3920,8 @@ class GoogleCloudSecuritycenterV2CloudArmor(_messages.Message):
       Protection](https://cloud.google.com/armor/docs/adaptive-protection-
       overview).
     attack: Information about DDoS attack volume and classification.
+    duration: Duration of attack from the start until the current moment
+      (updated every 5 minutes).
     requests: Information about incoming requests evaluated by [Google Cloud
       Armor security policies](https://cloud.google.com/armor/docs/security-
       policy-overview).
@@ -3138,9 +3935,10 @@ class GoogleCloudSecuritycenterV2CloudArmor(_messages.Message):
 
   adaptiveProtection = _messages.MessageField('GoogleCloudSecuritycenterV2AdaptiveProtection', 1)
   attack = _messages.MessageField('GoogleCloudSecuritycenterV2Attack', 2)
-  requests = _messages.MessageField('GoogleCloudSecuritycenterV2Requests', 3)
-  securityPolicy = _messages.MessageField('GoogleCloudSecuritycenterV2SecurityPolicy', 4)
-  threatVector = _messages.StringField(5)
+  duration = _messages.StringField(3)
+  requests = _messages.MessageField('GoogleCloudSecuritycenterV2Requests', 4)
+  securityPolicy = _messages.MessageField('GoogleCloudSecuritycenterV2SecurityPolicy', 5)
+  threatVector = _messages.StringField(6)
 
 
 class GoogleCloudSecuritycenterV2CloudDlpDataProfile(_messages.Message):
@@ -3332,8 +4130,11 @@ class GoogleCloudSecuritycenterV2Cve(_messages.Message):
   Fields:
     cvssv3: Describe Common Vulnerability Scoring System specified at
       https://www.first.org/cvss/v3.1/specification-document
+    exploitReleaseDate: Date the first publicly available exploit or PoC was
+      released.
     exploitationActivity: The exploitation activity of the vulnerability in
       the wild.
+    firstExploitationDate: Date of the earliest known exploitation.
     id: The unique identifier for the vulnerability. e.g. CVE-2021-34527
     impact: The potential impact of the vulnerability if it was to be
       exploited.
@@ -3387,13 +4188,15 @@ class GoogleCloudSecuritycenterV2Cve(_messages.Message):
     CRITICAL = 4
 
   cvssv3 = _messages.MessageField('GoogleCloudSecuritycenterV2Cvssv3', 1)
-  exploitationActivity = _messages.EnumField('ExploitationActivityValueValuesEnum', 2)
-  id = _messages.StringField(3)
-  impact = _messages.EnumField('ImpactValueValuesEnum', 4)
-  observedInTheWild = _messages.BooleanField(5)
-  references = _messages.MessageField('GoogleCloudSecuritycenterV2Reference', 6, repeated=True)
-  upstreamFixAvailable = _messages.BooleanField(7)
-  zeroDay = _messages.BooleanField(8)
+  exploitReleaseDate = _messages.StringField(2)
+  exploitationActivity = _messages.EnumField('ExploitationActivityValueValuesEnum', 3)
+  firstExploitationDate = _messages.StringField(4)
+  id = _messages.StringField(5)
+  impact = _messages.EnumField('ImpactValueValuesEnum', 6)
+  observedInTheWild = _messages.BooleanField(7)
+  references = _messages.MessageField('GoogleCloudSecuritycenterV2Reference', 8, repeated=True)
+  upstreamFixAvailable = _messages.BooleanField(9)
+  zeroDay = _messages.BooleanField(10)
 
 
 class GoogleCloudSecuritycenterV2Cvssv3(_messages.Message):
@@ -3608,43 +4411,144 @@ class GoogleCloudSecuritycenterV2Cvssv3(_messages.Message):
   userInteraction = _messages.EnumField('UserInteractionValueValuesEnum', 9)
 
 
-class GoogleCloudSecuritycenterV2DataTypeStruct(_messages.Message):
-  r"""Message containing a map of string names to PropertyDataTypes describing
-  the format of a data type whose outer most value is a struct.
-
-  Messages:
-    FieldsValue: A map of property names to their respective
-      TaxonomyDataTypes.
+class GoogleCloudSecuritycenterV2Cwe(_messages.Message):
+  r"""CWE stands for Common Weakness Enumeration. Information about this
+  weakness, as described by [CWE](https://cwe.mitre.org/).
 
   Fields:
-    fields: A map of property names to their respective TaxonomyDataTypes.
+    id: The CWE identifier, e.g. CWE-94
+    references: Any reference to the details on the CWE, for example,
+      https://cwe.mitre.org/data/definitions/94.html
   """
 
-  @encoding.MapUnrecognizedFields('additionalProperties')
-  class FieldsValue(_messages.Message):
-    r"""A map of property names to their respective TaxonomyDataTypes.
+  id = _messages.StringField(1)
+  references = _messages.MessageField('GoogleCloudSecuritycenterV2Reference', 2, repeated=True)
 
-    Messages:
-      AdditionalProperty: An additional property for a FieldsValue object.
 
-    Fields:
-      additionalProperties: Additional properties of type FieldsValue
+class GoogleCloudSecuritycenterV2DataAccessEvent(_messages.Message):
+  r"""Details about a data access attempt made by a principal not authorized
+  under applicable data security policy.
+
+  Enums:
+    OperationValueValuesEnum: The operation performed by the principal to
+      access the data.
+
+  Fields:
+    eventId: Unique identifier for data access event.
+    eventTime: Timestamp of data access event.
+    operation: The operation performed by the principal to access the data.
+    principalEmail: The email address of the principal that accessed the data.
+      The principal could be a user account, service account, Google group, or
+      other.
+  """
+
+  class OperationValueValuesEnum(_messages.Enum):
+    r"""The operation performed by the principal to access the data.
+
+    Values:
+      OPERATION_UNSPECIFIED: The operation is unspecified.
+      READ: Represents a read operation.
+      MOVE: Represents a move operation.
+      COPY: Represents a copy operation.
     """
+    OPERATION_UNSPECIFIED = 0
+    READ = 1
+    MOVE = 2
+    COPY = 3
 
-    class AdditionalProperty(_messages.Message):
-      r"""An additional property for a FieldsValue object.
+  eventId = _messages.StringField(1)
+  eventTime = _messages.StringField(2)
+  operation = _messages.EnumField('OperationValueValuesEnum', 3)
+  principalEmail = _messages.StringField(4)
 
-      Fields:
-        key: Name of the additional property.
-        value: A GoogleCloudSecuritycenterV2PropertyDataType attribute.
-      """
 
-      key = _messages.StringField(1)
-      value = _messages.MessageField('GoogleCloudSecuritycenterV2PropertyDataType', 2)
+class GoogleCloudSecuritycenterV2DataFlowEvent(_messages.Message):
+  r"""Details about a data flow event, in which either the data is moved to or
+  is accessed from a non-compliant geo-location, as defined in the applicable
+  data security policy.
 
-    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+  Enums:
+    OperationValueValuesEnum: The operation performed by the principal for the
+      data flow event.
 
-  fields = _messages.MessageField('FieldsValue', 1)
+  Fields:
+    eventId: Unique identifier for data flow event.
+    eventTime: Timestamp of data flow event.
+    operation: The operation performed by the principal for the data flow
+      event.
+    principalEmail: The email address of the principal that initiated the data
+      flow event. The principal could be a user account, service account,
+      Google group, or other.
+    violatedLocation: Non-compliant location of the principal or the data
+      destination.
+  """
+
+  class OperationValueValuesEnum(_messages.Enum):
+    r"""The operation performed by the principal for the data flow event.
+
+    Values:
+      OPERATION_UNSPECIFIED: The operation is unspecified.
+      READ: Represents a read operation.
+      MOVE: Represents a move operation.
+      COPY: Represents a copy operation.
+    """
+    OPERATION_UNSPECIFIED = 0
+    READ = 1
+    MOVE = 2
+    COPY = 3
+
+  eventId = _messages.StringField(1)
+  eventTime = _messages.StringField(2)
+  operation = _messages.EnumField('OperationValueValuesEnum', 3)
+  principalEmail = _messages.StringField(4)
+  violatedLocation = _messages.StringField(5)
+
+
+class GoogleCloudSecuritycenterV2DataRetentionDeletionEvent(_messages.Message):
+  r"""Details about data retention deletion violations, in which the data is
+  non-compliant based on their retention or deletion time, as defined in the
+  applicable data security policy. The Data Retention Deletion (DRD) control
+  is a control of the DSPM (Data Security Posture Management) suite that
+  enables organizations to manage data retention and deletion policies in
+  compliance with regulations, such as GDPR and CRPA. DRD supports two primary
+  policy types: maximum storage length (max TTL) and minimum storage length
+  (min TTL). Both are aimed at helping organizations meet regulatory and data
+  management commitments.
+
+  Enums:
+    EventTypeValueValuesEnum: Type of the DRD event.
+
+  Fields:
+    dataObjectCount: Number of objects that violated the policy for this
+      resource. If the number is less than 1,000, then the value of this field
+      is the exact number. If the number of objects that violated the policy
+      is greater than or equal to 1,000, then the value of this field is 1000.
+    eventDetectionTime: Timestamp indicating when the event was detected.
+    eventType: Type of the DRD event.
+    maxRetentionAllowed: Maximum duration of retention allowed from the DRD
+      control. This comes from the DRD control where users set a max TTL for
+      their data. For example, suppose that a user sets the max TTL for a
+      Cloud Storage bucket to 90 days. However, an object in that bucket is
+      100 days old. In this case, a DataRetentionDeletionEvent will be
+      generated for that Cloud Storage bucket, and the max_retention_allowed
+      is 90 days.
+  """
+
+  class EventTypeValueValuesEnum(_messages.Enum):
+    r"""Type of the DRD event.
+
+    Values:
+      EVENT_TYPE_UNSPECIFIED: Unspecified event type.
+      EVENT_TYPE_MAX_TTL_EXCEEDED: The maximum retention time has been
+        exceeded.
+    """
+    EVENT_TYPE_UNSPECIFIED = 0
+    EVENT_TYPE_MAX_TTL_EXCEEDED = 1
+
+  dataObjectCount = _messages.IntegerField(1)
+  eventDetectionTime = _messages.StringField(2)
+  eventType = _messages.EnumField('EventTypeValueValuesEnum', 3)
+  maxRetentionAllowed = _messages.StringField(4)
 
 
 class GoogleCloudSecuritycenterV2Database(_messages.Message):
@@ -3684,6 +4588,22 @@ class GoogleCloudSecuritycenterV2Database(_messages.Message):
   version = _messages.StringField(6)
 
 
+class GoogleCloudSecuritycenterV2Dataset(_messages.Message):
+  r"""Vertex AI dataset associated with the finding.
+
+  Fields:
+    displayName: The user defined display name of dataset, e.g. plants-dataset
+    name: Resource name of dataset, e.g.
+      projects/{project}/locations/{location}/datasets/2094040236064505856
+    source: Data source, such as BigQuery source URI, e.g. bq://scc-nexus-
+      test.AIPPtest.gsod
+  """
+
+  displayName = _messages.StringField(1)
+  name = _messages.StringField(2)
+  source = _messages.StringField(3)
+
+
 class GoogleCloudSecuritycenterV2Denied(_messages.Message):
   r"""Denied IP rule.
 
@@ -3706,6 +4626,18 @@ class GoogleCloudSecuritycenterV2Detection(_messages.Message):
 
   binary = _messages.StringField(1)
   percentPagesMatched = _messages.FloatField(2)
+
+
+class GoogleCloudSecuritycenterV2Disk(_messages.Message):
+  r"""Contains information about the disk associated with the finding.
+
+  Fields:
+    name: The name of the disk, for example,
+      "https://www.googleapis.com/compute/v1/projects/{project-
+      id}/zones/{zone-id}/disks/{disk-id}".
+  """
+
+  name = _messages.StringField(1)
 
 
 class GoogleCloudSecuritycenterV2DiskPath(_messages.Message):
@@ -3735,21 +4667,6 @@ class GoogleCloudSecuritycenterV2DynamicMuteRecord(_messages.Message):
 
   matchTime = _messages.StringField(1)
   muteConfig = _messages.StringField(2)
-
-
-class GoogleCloudSecuritycenterV2EffectiveTag(_messages.Message):
-  r"""Resource effective tag. A tag is a key-value pair where `tag_key` serves
-  as a category and namespace, and the `tag_value` serves as an instance in
-  that category. For example, `tag_key: "environment"` and `tag_value:
-  "prod"`.
-
-  Fields:
-    tagKey: Tag key.
-    tagValue: Tag value.
-  """
-
-  tagKey = _messages.StringField(1)
-  tagValue = _messages.StringField(2)
 
 
 class GoogleCloudSecuritycenterV2EnvironmentVariable(_messages.Message):
@@ -3803,30 +4720,16 @@ class GoogleCloudSecuritycenterV2Exfiltration(_messages.Message):
   totalExfiltratedBytes = _messages.IntegerField(3)
 
 
-class GoogleCloudSecuritycenterV2ExposurePathExplanation(_messages.Message):
-  r"""Explanation of a particular exposure path.
-
-  Fields:
-    content: Output only. Content of the explanation.
-    contentId: Output only. Unique identifier for the content of the
-      explanation.
-    name: Immutable. The resource name of the exposure path explanation for a
-      particular type. Its format is "organizations/{organization}/attackExpos
-      ureResults/{attack_exposure_result}/exposurePaths/{exposure_path}/explan
-      ationTypes/{type}/exposurePathExplanation"
-  """
-
-  content = _messages.StringField(1)
-  contentId = _messages.StringField(2)
-  name = _messages.StringField(3)
-
-
 class GoogleCloudSecuritycenterV2ExternalSystem(_messages.Message):
   r"""Representation of third party SIEM/SOAR fields within SCC.
 
   Fields:
     assignees: References primary/secondary etc assignees in the external
       system.
+    caseCloseTime: The time when the case was closed, as reported by the
+      external system.
+    caseCreateTime: The time when the case was created, as reported by the
+      external system.
     casePriority: The priority of the finding's corresponding case in the
       external system.
     caseSla: The SLA of the finding's corresponding case in the external
@@ -3854,14 +4757,16 @@ class GoogleCloudSecuritycenterV2ExternalSystem(_messages.Message):
   """
 
   assignees = _messages.StringField(1, repeated=True)
-  casePriority = _messages.StringField(2)
-  caseSla = _messages.StringField(3)
-  caseUri = _messages.StringField(4)
-  externalSystemUpdateTime = _messages.StringField(5)
-  externalUid = _messages.StringField(6)
-  name = _messages.StringField(7)
-  status = _messages.StringField(8)
-  ticketInfo = _messages.MessageField('GoogleCloudSecuritycenterV2TicketInfo', 9)
+  caseCloseTime = _messages.StringField(2)
+  caseCreateTime = _messages.StringField(3)
+  casePriority = _messages.StringField(4)
+  caseSla = _messages.StringField(5)
+  caseUri = _messages.StringField(6)
+  externalSystemUpdateTime = _messages.StringField(7)
+  externalUid = _messages.StringField(8)
+  name = _messages.StringField(9)
+  status = _messages.StringField(10)
+  ticketInfo = _messages.MessageField('GoogleCloudSecuritycenterV2TicketInfo', 11)
 
 
 class GoogleCloudSecuritycenterV2File(_messages.Message):
@@ -3874,6 +4779,7 @@ class GoogleCloudSecuritycenterV2File(_messages.Message):
       identifiers.
     hashedSize: The length in bytes of the file prefix that was hashed. If
       hashed_size == size, any hashes reported represent the entire file.
+    operations: Operation(s) performed on a file.
     partiallyHashed: True when the hash covers only a prefix of the file.
     path: Absolute path of the file as a JSON encoded string.
     sha256: SHA256 hash of the first hashed_size bytes of the file encoded as
@@ -3885,10 +4791,42 @@ class GoogleCloudSecuritycenterV2File(_messages.Message):
   contents = _messages.StringField(1)
   diskPath = _messages.MessageField('GoogleCloudSecuritycenterV2DiskPath', 2)
   hashedSize = _messages.IntegerField(3)
-  partiallyHashed = _messages.BooleanField(4)
-  path = _messages.StringField(5)
-  sha256 = _messages.StringField(6)
-  size = _messages.IntegerField(7)
+  operations = _messages.MessageField('GoogleCloudSecuritycenterV2FileOperation', 4, repeated=True)
+  partiallyHashed = _messages.BooleanField(5)
+  path = _messages.StringField(6)
+  sha256 = _messages.StringField(7)
+  size = _messages.IntegerField(8)
+
+
+class GoogleCloudSecuritycenterV2FileOperation(_messages.Message):
+  r"""Operation(s) performed on a file.
+
+  Enums:
+    TypeValueValuesEnum: The type of the operation
+
+  Fields:
+    type: The type of the operation
+  """
+
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""The type of the operation
+
+    Values:
+      OPERATION_TYPE_UNSPECIFIED: The operation is unspecified.
+      OPEN: Represents an open operation.
+      READ: Represents a read operation.
+      RENAME: Represents a rename operation.
+      WRITE: Represents a write operation.
+      EXECUTE: Represents an execute operation.
+    """
+    OPERATION_TYPE_UNSPECIFIED = 0
+    OPEN = 1
+    READ = 2
+    RENAME = 3
+    WRITE = 4
+    EXECUTE = 5
+
+  type = _messages.EnumField('TypeValueValuesEnum', 1)
 
 
 class GoogleCloudSecuritycenterV2Finding(_messages.Message):
@@ -3899,8 +4837,6 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
   App Engine application is a finding.
 
   Enums:
-    CloudProviderValueValuesEnum: Represents the cloud provider the finding is
-      from.
     FindingClassValueValuesEnum: The class of the finding.
     MuteValueValuesEnum: Indicates the mute state of a finding (either muted,
       unmuted or undefined). Unlike other attributes of a finding, a finding
@@ -3920,8 +4856,6 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
     ExternalSystemsValue: Output only. Third party SIEM/SOAR fields within
       SCC, contains external system information and external system finding
       fields.
-    PropertyDataTypesValue: The data types of each source property in the
-      source_properties map. Only visible to GOOGLE_INTERNAL/PANTHEON.
     SourcePropertiesValue: Source specific properties. These properties are
       managed by the source that writes the finding. The key names in the
       source_properties map must be between 1 and 255 characters, and must
@@ -3931,15 +4865,12 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
   Fields:
     access: Access details associated with the finding, such as more
       information on the caller, which method was accessed, and from where.
-    apigee: The Apigee instance that is associated with a finding.
+    affectedResources: AffectedResources associated with the finding.
+    aiModel: The AI model associated with the finding.
     application: Represents an application associated with the finding.
     attackExposure: The results of an attack path simulation relevant to this
       finding.
     backupDisasterRecovery: Fields related to Backup and DR findings.
-    caiResource: The full resource name of the Google Cloud resource, in the
-      CAI format. See: https://cloud.google.com/asset-inventory/docs/resource-
-      name-format Internal only, meant to be populated by the Security Center
-      Internal user.
     canonicalName: Output only. The canonical name of the finding. The
       following list shows some examples: + `organizations/{organization_id}/s
       ources/{source_id}/findings/{finding_id}` + `organizations/{organization
@@ -3953,12 +4884,16 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
       associated with the finding.
     category: Immutable. The additional taxonomy group within findings from a
       given source. Example: "XSS_FLASH_INJECTION"
+    chokepoint: Contains details about a chokepoint, which is a resource or
+      resource group where high-risk attack paths converge, based on [attack
+      path simulations] (https://cloud.google.com/security-command-
+      center/docs/attack-exposure-learn#attack_path_simulations). This field
+      cannot be updated. Its value is ignored in all update requests.
     cloudArmor: Fields related to Cloud Armor findings.
     cloudDlpDataProfile: Cloud DLP data profile that is associated with the
       finding.
     cloudDlpInspection: Cloud Data Loss Prevention (Cloud DLP) inspection
       results that are associated with the finding.
-    cloudProvider: Represents the cloud provider the finding is from.
     compliances: Contains compliance information for security standards
       associated to the finding.
     connections: Contains information about the IP connection associated with
@@ -3974,8 +4909,13 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
       information for both Kubernetes and non-Kubernetes containers.
     createTime: Output only. The time at which the finding was created in
       Security Command Center.
+    dataAccessEvents: Data access events associated with the finding.
+    dataFlowEvents: Data flow events associated with the finding.
+    dataRetentionDeletionEvents: Data retention deletion events associated
+      with the finding.
     database: Database associated with the finding.
     description: Contains more details about the finding.
+    disk: Disk associated with the finding.
     eventTime: The time the finding was first detected. If an existing finding
       is updated, then this is the time the update occurred. For example, if
       the finding represents an open firewall, this property captures the time
@@ -3992,6 +4932,10 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
       formed URL.
     files: File associated with the finding.
     findingClass: The class of the finding.
+    groupMemberships: Contains details about groups of which this finding is a
+      member. A group is a collection of findings that are related in some
+      way. This field cannot be updated. Its value is ignored in all update
+      requests.
     iamBindings: Represents IAM bindings associated with the finding.
     indicator: Represents what's commonly known as an *indicator of
       compromise* (IoC) in computer forensics. This is an artifact observed on
@@ -4019,26 +4963,22 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
       user who muted the finding.
     muteUpdateTime: Output only. The most recent time this finding was muted
       or unmuted.
-    name: The [relative resource name](https://cloud.google.com/apis/design/re
-      source_names#relative_resource_name) of the finding. The following list
-      shows some examples: + `organizations/{organization_id}/sources/{source_
-      id}/findings/{finding_id}` + `organizations/{organization_id}/sources/{s
-      ource_id}/locations/{location_id}/findings/{finding_id}` +
-      `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `folde
-      rs/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{fin
-      ding_id}` +
+    name: Identifier. The [relative resource name](https://cloud.google.com/ap
+      is/design/resource_names#relative_resource_name) of the finding. The
+      following list shows some examples: + `organizations/{organization_id}/s
+      ources/{source_id}/findings/{finding_id}` + `organizations/{organization
+      _id}/sources/{source_id}/locations/{location_id}/findings/{finding_id}`
+      + `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `fol
+      ders/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{f
+      inding_id}` +
       `projects/{project_id}/sources/{source_id}/findings/{finding_id}` + `pro
       jects/{project_id}/sources/{source_id}/locations/{location_id}/findings/
       {finding_id}`
+    networks: Represents the VPC networks that the resource is attached to.
     nextSteps: Steps to address the finding.
     notebook: Notebook associated with the finding.
     orgPolicies: Contains information about the org policies associated with
       the finding.
-    originalProviderId: Internal field that contains information on what
-      provider had originally reported this finding. For all first party non
-      SCC_ERROR findings, this will correspond to the finding parent. For
-      SCC_ERROR findings, this may or may not correspond to the finding
-      parent.
     parent: The relative resource name of the source and location the finding
       belongs to. See: https://cloud.google.com/apis/design/resource_names#rel
       ative_resource_name This field is immutable after creation time. The
@@ -4054,8 +4994,6 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
       Analytics".
     processes: Represents operating system processes associated with the
       Finding.
-    propertyDataTypes: The data types of each source property in the
-      source_properties map. Only visible to GOOGLE_INTERNAL/PANTHEON.
     resourceName: Immutable. For findings on Google Cloud resources, the full
       resource name of the Google Cloud resource this finding is for. See:
       https://cloud.google.com/apis/design/resource_names#full_resource_name
@@ -4076,25 +5014,13 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
     toxicCombination: Contains details about a group of security issues that,
       when the issues occur together, represent a greater risk than when the
       issues occur independently. A group of such issues is referred to as a
-      toxic combination.
+      toxic combination. This field cannot be updated. Its value is ignored in
+      all update requests.
+    vertexAi: VertexAi associated with the finding.
     vulnerability: Represents vulnerability-specific fields like CVE and CVSS
       scores. CVE stands for Common Vulnerabilities and Exposures
       (https://cve.mitre.org/about/)
   """
-
-  class CloudProviderValueValuesEnum(_messages.Enum):
-    r"""Represents the cloud provider the finding is from.
-
-    Values:
-      CLOUD_PROVIDER_UNSPECIFIED: The cloud provider is unspecified.
-      GOOGLE_CLOUD_PLATFORM: The cloud provider is Google Cloud Platform.
-      AMAZON_WEB_SERVICES: The cloud provider is Amazon Web Services.
-      MICROSOFT_AZURE: The cloud provider is Microsoft Azure.
-    """
-    CLOUD_PROVIDER_UNSPECIFIED = 0
-    GOOGLE_CLOUD_PLATFORM = 1
-    AMAZON_WEB_SERVICES = 2
-    MICROSOFT_AZURE = 3
 
   class FindingClassValueValuesEnum(_messages.Enum):
     r"""The class of the finding.
@@ -4113,6 +5039,10 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
         in the security posture.
       TOXIC_COMBINATION: Describes a combination of security issues that
         represent a more severe security problem when taken together.
+      SENSITIVE_DATA_RISK: Describes a potential security risk to data assets
+        that contain sensitive data.
+      CHOKEPOINT: Describes a resource or resource group where high risk
+        attack paths converge, based on attack path simulations (APS).
     """
     FINDING_CLASS_UNSPECIFIED = 0
     THREAT = 1
@@ -4122,6 +5052,8 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
     SCC_ERROR = 5
     POSTURE_VIOLATION = 6
     TOXIC_COMBINATION = 7
+    SENSITIVE_DATA_RISK = 8
+    CHOKEPOINT = 9
 
   class MuteValueValuesEnum(_messages.Enum):
     r"""Indicates the mute state of a finding (either muted, unmuted or
@@ -4257,33 +5189,6 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   @encoding.MapUnrecognizedFields('additionalProperties')
-  class PropertyDataTypesValue(_messages.Message):
-    r"""The data types of each source property in the source_properties map.
-    Only visible to GOOGLE_INTERNAL/PANTHEON.
-
-    Messages:
-      AdditionalProperty: An additional property for a PropertyDataTypesValue
-        object.
-
-    Fields:
-      additionalProperties: Additional properties of type
-        PropertyDataTypesValue
-    """
-
-    class AdditionalProperty(_messages.Message):
-      r"""An additional property for a PropertyDataTypesValue object.
-
-      Fields:
-        key: Name of the additional property.
-        value: A GoogleCloudSecuritycenterV2PropertyDataType attribute.
-      """
-
-      key = _messages.StringField(1)
-      value = _messages.MessageField('GoogleCloudSecuritycenterV2PropertyDataType', 2)
-
-    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
-
-  @encoding.MapUnrecognizedFields('additionalProperties')
   class SourcePropertiesValue(_messages.Message):
     r"""Source specific properties. These properties are managed by the source
     that writes the finding. The key names in the source_properties map must
@@ -4313,61 +5218,66 @@ class GoogleCloudSecuritycenterV2Finding(_messages.Message):
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   access = _messages.MessageField('GoogleCloudSecuritycenterV2Access', 1)
-  apigee = _messages.MessageField('GoogleCloudSecuritycenterV2Apigee', 2)
-  application = _messages.MessageField('GoogleCloudSecuritycenterV2Application', 3)
-  attackExposure = _messages.MessageField('GoogleCloudSecuritycenterV2AttackExposure', 4)
-  backupDisasterRecovery = _messages.MessageField('GoogleCloudSecuritycenterV2BackupDisasterRecovery', 5)
-  caiResource = _messages.StringField(6)
+  affectedResources = _messages.MessageField('GoogleCloudSecuritycenterV2AffectedResources', 2)
+  aiModel = _messages.MessageField('GoogleCloudSecuritycenterV2AiModel', 3)
+  application = _messages.MessageField('GoogleCloudSecuritycenterV2Application', 4)
+  attackExposure = _messages.MessageField('GoogleCloudSecuritycenterV2AttackExposure', 5)
+  backupDisasterRecovery = _messages.MessageField('GoogleCloudSecuritycenterV2BackupDisasterRecovery', 6)
   canonicalName = _messages.StringField(7)
   category = _messages.StringField(8)
-  cloudArmor = _messages.MessageField('GoogleCloudSecuritycenterV2CloudArmor', 9)
-  cloudDlpDataProfile = _messages.MessageField('GoogleCloudSecuritycenterV2CloudDlpDataProfile', 10)
-  cloudDlpInspection = _messages.MessageField('GoogleCloudSecuritycenterV2CloudDlpInspection', 11)
-  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 12)
+  chokepoint = _messages.MessageField('GoogleCloudSecuritycenterV2Chokepoint', 9)
+  cloudArmor = _messages.MessageField('GoogleCloudSecuritycenterV2CloudArmor', 10)
+  cloudDlpDataProfile = _messages.MessageField('GoogleCloudSecuritycenterV2CloudDlpDataProfile', 11)
+  cloudDlpInspection = _messages.MessageField('GoogleCloudSecuritycenterV2CloudDlpInspection', 12)
   compliances = _messages.MessageField('GoogleCloudSecuritycenterV2Compliance', 13, repeated=True)
   connections = _messages.MessageField('GoogleCloudSecuritycenterV2Connection', 14, repeated=True)
   contacts = _messages.MessageField('ContactsValue', 15)
   containers = _messages.MessageField('GoogleCloudSecuritycenterV2Container', 16, repeated=True)
   createTime = _messages.StringField(17)
-  database = _messages.MessageField('GoogleCloudSecuritycenterV2Database', 18)
-  description = _messages.StringField(19)
-  eventTime = _messages.StringField(20)
-  exfiltration = _messages.MessageField('GoogleCloudSecuritycenterV2Exfiltration', 21)
-  externalSystems = _messages.MessageField('ExternalSystemsValue', 22)
-  externalUri = _messages.StringField(23)
-  files = _messages.MessageField('GoogleCloudSecuritycenterV2File', 24, repeated=True)
-  findingClass = _messages.EnumField('FindingClassValueValuesEnum', 25)
-  iamBindings = _messages.MessageField('GoogleCloudSecuritycenterV2IamBinding', 26, repeated=True)
-  indicator = _messages.MessageField('GoogleCloudSecuritycenterV2Indicator', 27)
-  ipRules = _messages.MessageField('GoogleCloudSecuritycenterV2IpRules', 28)
-  job = _messages.MessageField('GoogleCloudSecuritycenterV2Job', 29)
-  kernelRootkit = _messages.MessageField('GoogleCloudSecuritycenterV2KernelRootkit', 30)
-  kubernetes = _messages.MessageField('GoogleCloudSecuritycenterV2Kubernetes', 31)
-  loadBalancers = _messages.MessageField('GoogleCloudSecuritycenterV2LoadBalancer', 32, repeated=True)
-  logEntries = _messages.MessageField('GoogleCloudSecuritycenterV2LogEntry', 33, repeated=True)
-  mitreAttack = _messages.MessageField('GoogleCloudSecuritycenterV2MitreAttack', 34)
-  moduleName = _messages.StringField(35)
-  mute = _messages.EnumField('MuteValueValuesEnum', 36)
-  muteInfo = _messages.MessageField('GoogleCloudSecuritycenterV2MuteInfo', 37)
-  muteInitiator = _messages.StringField(38)
-  muteUpdateTime = _messages.StringField(39)
-  name = _messages.StringField(40)
-  nextSteps = _messages.StringField(41)
-  notebook = _messages.MessageField('GoogleCloudSecuritycenterV2Notebook', 42)
-  orgPolicies = _messages.MessageField('GoogleCloudSecuritycenterV2OrgPolicy', 43, repeated=True)
-  originalProviderId = _messages.StringField(44)
-  parent = _messages.StringField(45)
-  parentDisplayName = _messages.StringField(46)
-  processes = _messages.MessageField('GoogleCloudSecuritycenterV2Process', 47, repeated=True)
-  propertyDataTypes = _messages.MessageField('PropertyDataTypesValue', 48)
-  resourceName = _messages.StringField(49)
-  securityMarks = _messages.MessageField('GoogleCloudSecuritycenterV2SecurityMarks', 50)
-  securityPosture = _messages.MessageField('GoogleCloudSecuritycenterV2SecurityPosture', 51)
-  severity = _messages.EnumField('SeverityValueValuesEnum', 52)
-  sourceProperties = _messages.MessageField('SourcePropertiesValue', 53)
-  state = _messages.EnumField('StateValueValuesEnum', 54)
-  toxicCombination = _messages.MessageField('GoogleCloudSecuritycenterV2ToxicCombination', 55)
-  vulnerability = _messages.MessageField('GoogleCloudSecuritycenterV2Vulnerability', 56)
+  dataAccessEvents = _messages.MessageField('GoogleCloudSecuritycenterV2DataAccessEvent', 18, repeated=True)
+  dataFlowEvents = _messages.MessageField('GoogleCloudSecuritycenterV2DataFlowEvent', 19, repeated=True)
+  dataRetentionDeletionEvents = _messages.MessageField('GoogleCloudSecuritycenterV2DataRetentionDeletionEvent', 20, repeated=True)
+  database = _messages.MessageField('GoogleCloudSecuritycenterV2Database', 21)
+  description = _messages.StringField(22)
+  disk = _messages.MessageField('GoogleCloudSecuritycenterV2Disk', 23)
+  eventTime = _messages.StringField(24)
+  exfiltration = _messages.MessageField('GoogleCloudSecuritycenterV2Exfiltration', 25)
+  externalSystems = _messages.MessageField('ExternalSystemsValue', 26)
+  externalUri = _messages.StringField(27)
+  files = _messages.MessageField('GoogleCloudSecuritycenterV2File', 28, repeated=True)
+  findingClass = _messages.EnumField('FindingClassValueValuesEnum', 29)
+  groupMemberships = _messages.MessageField('GoogleCloudSecuritycenterV2GroupMembership', 30, repeated=True)
+  iamBindings = _messages.MessageField('GoogleCloudSecuritycenterV2IamBinding', 31, repeated=True)
+  indicator = _messages.MessageField('GoogleCloudSecuritycenterV2Indicator', 32)
+  ipRules = _messages.MessageField('GoogleCloudSecuritycenterV2IpRules', 33)
+  job = _messages.MessageField('GoogleCloudSecuritycenterV2Job', 34)
+  kernelRootkit = _messages.MessageField('GoogleCloudSecuritycenterV2KernelRootkit', 35)
+  kubernetes = _messages.MessageField('GoogleCloudSecuritycenterV2Kubernetes', 36)
+  loadBalancers = _messages.MessageField('GoogleCloudSecuritycenterV2LoadBalancer', 37, repeated=True)
+  logEntries = _messages.MessageField('GoogleCloudSecuritycenterV2LogEntry', 38, repeated=True)
+  mitreAttack = _messages.MessageField('GoogleCloudSecuritycenterV2MitreAttack', 39)
+  moduleName = _messages.StringField(40)
+  mute = _messages.EnumField('MuteValueValuesEnum', 41)
+  muteInfo = _messages.MessageField('GoogleCloudSecuritycenterV2MuteInfo', 42)
+  muteInitiator = _messages.StringField(43)
+  muteUpdateTime = _messages.StringField(44)
+  name = _messages.StringField(45)
+  networks = _messages.MessageField('GoogleCloudSecuritycenterV2Network', 46, repeated=True)
+  nextSteps = _messages.StringField(47)
+  notebook = _messages.MessageField('GoogleCloudSecuritycenterV2Notebook', 48)
+  orgPolicies = _messages.MessageField('GoogleCloudSecuritycenterV2OrgPolicy', 49, repeated=True)
+  parent = _messages.StringField(50)
+  parentDisplayName = _messages.StringField(51)
+  processes = _messages.MessageField('GoogleCloudSecuritycenterV2Process', 52, repeated=True)
+  resourceName = _messages.StringField(53)
+  securityMarks = _messages.MessageField('GoogleCloudSecuritycenterV2SecurityMarks', 54)
+  securityPosture = _messages.MessageField('GoogleCloudSecuritycenterV2SecurityPosture', 55)
+  severity = _messages.EnumField('SeverityValueValuesEnum', 56)
+  sourceProperties = _messages.MessageField('SourcePropertiesValue', 57)
+  state = _messages.EnumField('StateValueValuesEnum', 58)
+  toxicCombination = _messages.MessageField('GoogleCloudSecuritycenterV2ToxicCombination', 59)
+  vertexAi = _messages.MessageField('GoogleCloudSecuritycenterV2VertexAi', 60)
+  vulnerability = _messages.MessageField('GoogleCloudSecuritycenterV2Vulnerability', 61)
 
 
 class GoogleCloudSecuritycenterV2Folder(_messages.Message):
@@ -4392,6 +5302,34 @@ class GoogleCloudSecuritycenterV2Geolocation(_messages.Message):
   """
 
   regionCode = _messages.StringField(1)
+
+
+class GoogleCloudSecuritycenterV2GroupMembership(_messages.Message):
+  r"""Contains details about groups of which this finding is a member. A group
+  is a collection of findings that are related in some way.
+
+  Enums:
+    GroupTypeValueValuesEnum: Type of group.
+
+  Fields:
+    groupId: ID of the group.
+    groupType: Type of group.
+  """
+
+  class GroupTypeValueValuesEnum(_messages.Enum):
+    r"""Type of group.
+
+    Values:
+      GROUP_TYPE_UNSPECIFIED: Default value.
+      GROUP_TYPE_TOXIC_COMBINATION: Group represents a toxic combination.
+      GROUP_TYPE_CHOKEPOINT: Group represents a chokepoint.
+    """
+    GROUP_TYPE_UNSPECIFIED = 0
+    GROUP_TYPE_TOXIC_COMBINATION = 1
+    GROUP_TYPE_CHOKEPOINT = 2
+
+  groupId = _messages.StringField(1)
+  groupType = _messages.EnumField('GroupTypeValueValuesEnum', 2)
 
 
 class GoogleCloudSecuritycenterV2IamBinding(_messages.Message):
@@ -4509,6 +5447,335 @@ class GoogleCloudSecuritycenterV2IpRules(_messages.Message):
   direction = _messages.EnumField('DirectionValueValuesEnum', 4)
   exposedServices = _messages.StringField(5, repeated=True)
   sourceIpRanges = _messages.StringField(6, repeated=True)
+
+
+class GoogleCloudSecuritycenterV2Issue(_messages.Message):
+  r"""Security Command Center Issue.
+
+  Enums:
+    IssueTypeValueValuesEnum: The type of the issue.
+    SeverityValueValuesEnum: The severity of the issue.
+    StateValueValuesEnum: Output only. The state of the issue.
+
+  Fields:
+    createTime: Output only. The time the issue was created.
+    description: The description of the issue in Markdown format.
+    detection: The finding category or rule name that generated the issue.
+    domains: The domains of the issue.
+    exposureScore: The exposure score of the issue.
+    issueType: The type of the issue.
+    lastObservationTime: The time the issue was last observed.
+    mute: The mute information of the issue.
+    name: Identifier. The name of the issue. Format:
+      organizations/{organization}/locations/{location}/issues/{issue}
+    primaryResource: The primary resource associated with the issue.
+    relatedFindings: The findings related to the issue.
+    remediations: Approaches to remediate the issue in Markdown format.
+    secondaryResources: Additional resources associated with the issue.
+    securityContexts: The security context of the issue.
+    severity: The severity of the issue.
+    state: Output only. The state of the issue.
+    updateTime: Output only. The time the issue was last updated.
+  """
+
+  class IssueTypeValueValuesEnum(_messages.Enum):
+    r"""The type of the issue.
+
+    Values:
+      ISSUE_TYPE_UNSPECIFIED: Unspecified issue type.
+      CHOKEPOINT: Chokepoint issue type.
+      TOXIC_COMBINATION: Toxic combination issue type.
+      INSIGHT: Insight issue type.
+    """
+    ISSUE_TYPE_UNSPECIFIED = 0
+    CHOKEPOINT = 1
+    TOXIC_COMBINATION = 2
+    INSIGHT = 3
+
+  class SeverityValueValuesEnum(_messages.Enum):
+    r"""The severity of the issue.
+
+    Values:
+      SEVERITY_UNSPECIFIED: Unspecified severity.
+      CRITICAL: Critical severity.
+      HIGH: High severity.
+      MEDIUM: Medium severity.
+      LOW: Low severity.
+    """
+    SEVERITY_UNSPECIFIED = 0
+    CRITICAL = 1
+    HIGH = 2
+    MEDIUM = 3
+    LOW = 4
+
+  class StateValueValuesEnum(_messages.Enum):
+    r"""Output only. The state of the issue.
+
+    Values:
+      STATE_UNSPECIFIED: Unspecified state.
+      ACTIVE: Active state.
+      INACTIVE: Inactive state.
+    """
+    STATE_UNSPECIFIED = 0
+    ACTIVE = 1
+    INACTIVE = 2
+
+  createTime = _messages.StringField(1)
+  description = _messages.StringField(2)
+  detection = _messages.StringField(3)
+  domains = _messages.MessageField('GoogleCloudSecuritycenterV2IssueDomain', 4, repeated=True)
+  exposureScore = _messages.FloatField(5)
+  issueType = _messages.EnumField('IssueTypeValueValuesEnum', 6)
+  lastObservationTime = _messages.StringField(7)
+  mute = _messages.MessageField('GoogleCloudSecuritycenterV2IssueMute', 8)
+  name = _messages.StringField(9)
+  primaryResource = _messages.MessageField('GoogleCloudSecuritycenterV2IssueResource', 10)
+  relatedFindings = _messages.MessageField('GoogleCloudSecuritycenterV2IssueFinding', 11, repeated=True)
+  remediations = _messages.StringField(12, repeated=True)
+  secondaryResources = _messages.MessageField('GoogleCloudSecuritycenterV2IssueResource', 13, repeated=True)
+  securityContexts = _messages.MessageField('GoogleCloudSecuritycenterV2IssueSecurityContext', 14, repeated=True)
+  severity = _messages.EnumField('SeverityValueValuesEnum', 15)
+  state = _messages.EnumField('StateValueValuesEnum', 16)
+  updateTime = _messages.StringField(17)
+
+
+class GoogleCloudSecuritycenterV2IssueDomain(_messages.Message):
+  r"""The domains of an issue.
+
+  Enums:
+    DomainCategoryValueValuesEnum: The domain category of the issue.
+
+  Fields:
+    domainCategory: The domain category of the issue.
+  """
+
+  class DomainCategoryValueValuesEnum(_messages.Enum):
+    r"""The domain category of the issue.
+
+    Values:
+      DOMAIN_CATEGORY_UNSPECIFIED: Unspecified domain category.
+      AI: Issues in the AI domain.
+      CODE: Issues in the code domain.
+      CONTAINER: Issues in the container domain.
+      DATA: Issues in the data domain.
+      IDENTITY_AND_ACCESS: Issues in the identity and access domain.
+      VULNERABILITY: Issues in the vulnerability domain.
+      THREAT: Issues in the threat domain.
+    """
+    DOMAIN_CATEGORY_UNSPECIFIED = 0
+    AI = 1
+    CODE = 2
+    CONTAINER = 3
+    DATA = 4
+    IDENTITY_AND_ACCESS = 5
+    VULNERABILITY = 6
+    THREAT = 7
+
+  domainCategory = _messages.EnumField('DomainCategoryValueValuesEnum', 1)
+
+
+class GoogleCloudSecuritycenterV2IssueFinding(_messages.Message):
+  r"""Finding related to an issue.
+
+  Fields:
+    cve: The CVE of the finding.
+    name: The name of the finding.
+    securityBulletin: The security bulletin of the finding.
+  """
+
+  cve = _messages.MessageField('GoogleCloudSecuritycenterV2IssueFindingCve', 1)
+  name = _messages.StringField(2)
+  securityBulletin = _messages.MessageField('GoogleCloudSecuritycenterV2IssueFindingSecurityBulletin', 3)
+
+
+class GoogleCloudSecuritycenterV2IssueFindingCve(_messages.Message):
+  r"""The CVE of the finding.
+
+  Fields:
+    name: The CVE name.
+  """
+
+  name = _messages.StringField(1)
+
+
+class GoogleCloudSecuritycenterV2IssueFindingSecurityBulletin(_messages.Message):
+  r"""The security bulletin of the finding.
+
+  Fields:
+    name: The security bulletin name.
+  """
+
+  name = _messages.StringField(1)
+
+
+class GoogleCloudSecuritycenterV2IssueMute(_messages.Message):
+  r"""The mute information of the issue.
+
+  Enums:
+    MuteStateValueValuesEnum: Output only. The mute state of the issue.
+
+  Fields:
+    muteInitiator: The email address of the user who last changed the mute
+      state of the issue.
+    muteReason: The user-provided reason for muting the issue.
+    muteState: Output only. The mute state of the issue.
+    muteUpdateTime: The time the issue was muted.
+  """
+
+  class MuteStateValueValuesEnum(_messages.Enum):
+    r"""Output only. The mute state of the issue.
+
+    Values:
+      MUTE_STATE_UNSPECIFIED: Unspecified mute state.
+      NOT_MUTED: Not muted.
+      MUTED: Muted.
+    """
+    MUTE_STATE_UNSPECIFIED = 0
+    NOT_MUTED = 1
+    MUTED = 2
+
+  muteInitiator = _messages.StringField(1)
+  muteReason = _messages.StringField(2)
+  muteState = _messages.EnumField('MuteStateValueValuesEnum', 3)
+  muteUpdateTime = _messages.StringField(4)
+
+
+class GoogleCloudSecuritycenterV2IssueResource(_messages.Message):
+  r"""A resource associated with the an issue.
+
+  Enums:
+    CloudProviderValueValuesEnum: The cloud provider of the resource
+      associated with the issue.
+
+  Fields:
+    awsMetadata: The AWS metadata of the resource associated with the issue.
+      Only populated for AWS resources.
+    azureMetadata: The Azure metadata of the resource associated with the
+      issue. Only populated for Azure resources.
+    cloudProvider: The cloud provider of the resource associated with the
+      issue.
+    displayName: The resource-type specific display name of the resource
+      associated with the issue.
+    googleCloudMetadata: The Google Cloud metadata of the resource associated
+      with the issue. Only populated for Google Cloud resources.
+    name: The full resource name of the resource associated with the issue.
+    type: The type of the resource associated with the issue.
+  """
+
+  class CloudProviderValueValuesEnum(_messages.Enum):
+    r"""The cloud provider of the resource associated with the issue.
+
+    Values:
+      CLOUD_PROVIDER_UNSPECIFIED: Unspecified cloud provider.
+      GOOGLE_CLOUD: Google Cloud.
+      AMAZON_WEB_SERVICES: Amazon Web Services.
+      MICROSOFT_AZURE: Microsoft Azure.
+    """
+    CLOUD_PROVIDER_UNSPECIFIED = 0
+    GOOGLE_CLOUD = 1
+    AMAZON_WEB_SERVICES = 2
+    MICROSOFT_AZURE = 3
+
+  awsMetadata = _messages.MessageField('GoogleCloudSecuritycenterV2IssueResourceAwsMetadata', 1)
+  azureMetadata = _messages.MessageField('GoogleCloudSecuritycenterV2IssueResourceAzureMetadata', 2)
+  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 3)
+  displayName = _messages.StringField(4)
+  googleCloudMetadata = _messages.MessageField('GoogleCloudSecuritycenterV2IssueResourceGoogleCloudMetadata', 5)
+  name = _messages.StringField(6)
+  type = _messages.StringField(7)
+
+
+class GoogleCloudSecuritycenterV2IssueResourceAwsMetadata(_messages.Message):
+  r"""The AWS metadata of a resource associated with an issue.
+
+  Fields:
+    account: The AWS account of the resource associated with the issue.
+  """
+
+  account = _messages.MessageField('GoogleCloudSecuritycenterV2IssueResourceAwsMetadataAwsAccount', 1)
+
+
+class GoogleCloudSecuritycenterV2IssueResourceAwsMetadataAwsAccount(_messages.Message):
+  r"""The AWS account of the resource associated with the issue.
+
+  Fields:
+    id: The AWS account ID of the resource associated with the issue.
+    name: The AWS account name of the resource associated with the issue.
+  """
+
+  id = _messages.StringField(1)
+  name = _messages.StringField(2)
+
+
+class GoogleCloudSecuritycenterV2IssueResourceAzureMetadata(_messages.Message):
+  r"""The Azure metadata of a resource associated with an issue.
+
+  Fields:
+    subscription: The Azure subscription of the resource associated with the
+      issue.
+  """
+
+  subscription = _messages.MessageField('GoogleCloudSecuritycenterV2IssueResourceAzureMetadataAzureSubscription', 1)
+
+
+class GoogleCloudSecuritycenterV2IssueResourceAzureMetadataAzureSubscription(_messages.Message):
+  r"""The Azure subscription of the resource associated with the issue.
+
+  Fields:
+    displayName: The Azure subscription display name of the resource
+      associated with the issue.
+    id: The Azure subscription ID of the resource associated with the issue.
+  """
+
+  displayName = _messages.StringField(1)
+  id = _messages.StringField(2)
+
+
+class GoogleCloudSecuritycenterV2IssueResourceGoogleCloudMetadata(_messages.Message):
+  r"""Google Cloud metadata of a resource associated with an issue.
+
+  Fields:
+    projectId: The project ID that the resource associated with the issue
+      belongs to.
+  """
+
+  projectId = _messages.StringField(1)
+
+
+class GoogleCloudSecuritycenterV2IssueSecurityContext(_messages.Message):
+  r"""Security context associated with an issue.
+
+  Fields:
+    aggregatedCount: The aggregated count of the security context.
+    context: The context of the security context.
+  """
+
+  aggregatedCount = _messages.MessageField('GoogleCloudSecuritycenterV2IssueSecurityContextAggregatedCount', 1)
+  context = _messages.MessageField('GoogleCloudSecuritycenterV2IssueSecurityContextContext', 2)
+
+
+class GoogleCloudSecuritycenterV2IssueSecurityContextAggregatedCount(_messages.Message):
+  r"""Aggregated count of a security context.
+
+  Fields:
+    key: Aggregation key.
+    value: Aggregation value.
+  """
+
+  key = _messages.StringField(1)
+  value = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+
+
+class GoogleCloudSecuritycenterV2IssueSecurityContextContext(_messages.Message):
+  r"""Context of a security context.
+
+  Fields:
+    type: Context type.
+    values: Context values.
+  """
+
+  type = _messages.StringField(1)
+  values = _messages.StringField(2, repeated=True)
 
 
 class GoogleCloudSecuritycenterV2Job(_messages.Message):
@@ -4740,80 +6007,280 @@ class GoogleCloudSecuritycenterV2MitreAttack(_messages.Message):
 
     Values:
       TECHNIQUE_UNSPECIFIED: Unspecified value.
-      ACTIVE_SCANNING: T1595
-      SCANNING_IP_BLOCKS: T1595.001
-      INGRESS_TOOL_TRANSFER: T1105
-      NATIVE_API: T1106
-      SHARED_MODULES: T1129
+      DATA_OBFUSCATION: T1001
+      DATA_OBFUSCATION_STEGANOGRAPHY: T1001.002
+      OS_CREDENTIAL_DUMPING: T1003
+      OS_CREDENTIAL_DUMPING_PROC_FILESYSTEM: T1003.007
+      OS_CREDENTIAL_DUMPING_ETC_PASSWORD_AND_ETC_SHADOW: T1003.008
+      DATA_FROM_LOCAL_SYSTEM: T1005
+      AUTOMATED_EXFILTRATION: T1020
+      OBFUSCATED_FILES_OR_INFO: T1027
+      STEGANOGRAPHY: T1027.003
+      COMPILE_AFTER_DELIVERY: T1027.004
+      COMMAND_OBFUSCATION: T1027.010
+      SCHEDULED_TRANSFER: T1029
+      SYSTEM_OWNER_USER_DISCOVERY: T1033
+      MASQUERADING: T1036
+      MATCH_LEGITIMATE_NAME_OR_LOCATION: T1036.005
+      BOOT_OR_LOGON_INITIALIZATION_SCRIPTS: T1037
+      STARTUP_ITEMS: T1037.005
+      NETWORK_SERVICE_DISCOVERY: T1046
+      SCHEDULED_TASK_JOB: T1053
+      SCHEDULED_TASK_JOB_CRON: T1053.003
+      CONTAINER_ORCHESTRATION_JOB: T1053.007
+      PROCESS_INJECTION: T1055
+      INPUT_CAPTURE: T1056
+      INPUT_CAPTURE_KEYLOGGING: T1056.001
+      PROCESS_DISCOVERY: T1057
       COMMAND_AND_SCRIPTING_INTERPRETER: T1059
       UNIX_SHELL: T1059.004
-      RESOURCE_HIJACKING: T1496
+      PYTHON: T1059.006
+      EXPLOITATION_FOR_PRIVILEGE_ESCALATION: T1068
+      PERMISSION_GROUPS_DISCOVERY: T1069
+      CLOUD_GROUPS: T1069.003
+      INDICATOR_REMOVAL: T1070
+      INDICATOR_REMOVAL_CLEAR_LINUX_OR_MAC_SYSTEM_LOGS: T1070.002
+      INDICATOR_REMOVAL_CLEAR_COMMAND_HISTORY: T1070.003
+      INDICATOR_REMOVAL_FILE_DELETION: T1070.004
+      INDICATOR_REMOVAL_TIMESTOMP: T1070.006
+      INDICATOR_REMOVAL_CLEAR_MAILBOX_DATA: T1070.008
+      APPLICATION_LAYER_PROTOCOL: T1071
+      DNS: T1071.004
+      SOFTWARE_DEPLOYMENT_TOOLS: T1072
+      VALID_ACCOUNTS: T1078
+      DEFAULT_ACCOUNTS: T1078.001
+      LOCAL_ACCOUNTS: T1078.003
+      CLOUD_ACCOUNTS: T1078.004
+      FILE_AND_DIRECTORY_DISCOVERY: T1083
+      ACCOUNT_DISCOVERY_LOCAL_ACCOUNT: T1087.001
       PROXY: T1090
       EXTERNAL_PROXY: T1090.002
       MULTI_HOP_PROXY: T1090.003
-      DYNAMIC_RESOLUTION: T1568
-      UNSECURED_CREDENTIALS: T1552
-      VALID_ACCOUNTS: T1078
-      LOCAL_ACCOUNTS: T1078.003
-      CLOUD_ACCOUNTS: T1078.004
+      ACCOUNT_MANIPULATION: T1098
+      ADDITIONAL_CLOUD_CREDENTIALS: T1098.001
+      ADDITIONAL_CLOUD_ROLES: T1098.003
+      SSH_AUTHORIZED_KEYS: T1098.004
+      ADDITIONAL_CONTAINER_CLUSTER_ROLES: T1098.006
+      MULTI_STAGE_CHANNELS: T1104
+      INGRESS_TOOL_TRANSFER: T1105
+      NATIVE_API: T1106
+      BRUTE_FORCE: T1110
+      AUTOMATED_COLLECTION: T1119
+      SHARED_MODULES: T1129
+      DATA_ENCODING: T1132
+      STANDARD_ENCODING: T1132.001
+      ACCESS_TOKEN_MANIPULATION: T1134
+      TOKEN_IMPERSONATION_OR_THEFT: T1134.001
+      CREATE_ACCOUNT: T1136
+      LOCAL_ACCOUNT: T1136.001
+      DEOBFUSCATE_DECODE_FILES_OR_INFO: T1140
+      EXPLOIT_PUBLIC_FACING_APPLICATION: T1190
+      SUPPLY_CHAIN_COMPROMISE: T1195
+      COMPROMISE_SOFTWARE_DEPENDENCIES_AND_DEVELOPMENT_TOOLS: T1195.001
+      EXPLOITATION_FOR_CLIENT_EXECUTION: T1203
+      USER_EXECUTION: T1204
+      LINUX_AND_MAC_FILE_AND_DIRECTORY_PERMISSIONS_MODIFICATION: T1222.002
+      DOMAIN_POLICY_MODIFICATION: T1484
+      DATA_DESTRUCTION: T1485
+      DATA_ENCRYPTED_FOR_IMPACT: T1486
+      SERVICE_STOP: T1489
+      INHIBIT_SYSTEM_RECOVERY: T1490
+      FIRMWARE_CORRUPTION: T1495
+      RESOURCE_HIJACKING: T1496
       NETWORK_DENIAL_OF_SERVICE: T1498
-      PERMISSION_GROUPS_DISCOVERY: T1069
-      CLOUD_GROUPS: T1069.003
+      CLOUD_SERVICE_DISCOVERY: T1526
+      STEAL_APPLICATION_ACCESS_TOKEN: T1528
+      ACCOUNT_ACCESS_REMOVAL: T1531
+      TRANSFER_DATA_TO_CLOUD_ACCOUNT: T1537
+      STEAL_WEB_SESSION_COOKIE: T1539
+      CREATE_OR_MODIFY_SYSTEM_PROCESS: T1543
+      EVENT_TRIGGERED_EXECUTION: T1546
+      BOOT_OR_LOGON_AUTOSTART_EXECUTION: T1547
+      KERNEL_MODULES_AND_EXTENSIONS: T1547.006
+      SHORTCUT_MODIFICATION: T1547.009
+      ABUSE_ELEVATION_CONTROL_MECHANISM: T1548
+      ABUSE_ELEVATION_CONTROL_MECHANISM_SETUID_AND_SETGID: T1548.001
+      ABUSE_ELEVATION_CONTROL_MECHANISM_SUDO_AND_SUDO_CACHING: T1548.003
+      UNSECURED_CREDENTIALS: T1552
+      CREDENTIALS_IN_FILES: T1552.001
+      BASH_HISTORY: T1552.003
+      PRIVATE_KEYS: T1552.004
+      SUBVERT_TRUST_CONTROL: T1553
+      INSTALL_ROOT_CERTIFICATE: T1553.004
+      COMPROMISE_HOST_SOFTWARE_BINARY: T1554
+      CREDENTIALS_FROM_PASSWORD_STORES: T1555
+      MODIFY_AUTHENTICATION_PROCESS: T1556
+      PLUGGABLE_AUTHENTICATION_MODULES: T1556.003
+      IMPAIR_DEFENSES: T1562
+      DISABLE_OR_MODIFY_TOOLS: T1562.001
+      INDICATOR_BLOCKING: T1562.006
+      DISABLE_OR_MODIFY_LINUX_AUDIT_SYSTEM: T1562.012
+      HIDE_ARTIFACTS: T1564
+      HIDDEN_FILES_AND_DIRECTORIES: T1564.001
+      HIDDEN_USERS: T1564.002
       EXFILTRATION_OVER_WEB_SERVICE: T1567
       EXFILTRATION_TO_CLOUD_STORAGE: T1567.002
-      ACCOUNT_MANIPULATION: T1098
-      SSH_AUTHORIZED_KEYS: T1098.004
-      CREATE_OR_MODIFY_SYSTEM_PROCESS: T1543
-      STEAL_WEB_SESSION_COOKIE: T1539
+      DYNAMIC_RESOLUTION: T1568
+      LATERAL_TOOL_TRANSFER: T1570
+      HIJACK_EXECUTION_FLOW: T1574
+      HIJACK_EXECUTION_FLOW_DYNAMIC_LINKER_HIJACKING: T1574.006
       MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE: T1578
-      EXPLOIT_PUBLIC_FACING_APPLICATION: T1190
-      MODIFY_AUTHENTICATION_PROCESS: T1556
-      DATA_DESTRUCTION: T1485
-      DOMAIN_POLICY_MODIFICATION: T1484
-      IMPAIR_DEFENSES: T1562
-      NETWORK_SERVICE_DISCOVERY: T1046
-      ACCESS_TOKEN_MANIPULATION: T1134
-      ABUSE_ELEVATION_CONTROL_MECHANISM: T1548
-      DEFAULT_ACCOUNTS: T1078.001
-      INHIBIT_SYSTEM_RECOVERY: T1490
+      CREATE_SNAPSHOT: T1578.001
+      CLOUD_INFRASTRUCTURE_DISCOVERY: T1580
+      DEVELOP_CAPABILITIES: T1587
+      DEVELOP_CAPABILITIES_MALWARE: T1587.001
+      OBTAIN_CAPABILITIES: T1588
+      OBTAIN_CAPABILITIES_MALWARE: T1588.001
+      OBTAIN_CAPABILITIES_VULNERABILITIES: T1588.006
+      ACTIVE_SCANNING: T1595
+      SCANNING_IP_BLOCKS: T1595.001
+      STAGE_CAPABILITIES: T1608
+      UPLOAD_MALWARE: T1608.001
+      CONTAINER_ADMINISTRATION_COMMAND: T1609
+      DEPLOY_CONTAINER: T1610
+      ESCAPE_TO_HOST: T1611
+      CONTAINER_AND_RESOURCE_DISCOVERY: T1613
+      REFLECTIVE_CODE_LOADING: T1620
+      STEAL_OR_FORGE_AUTHENTICATION_CERTIFICATES: T1649
+      FINANCIAL_THEFT: T1657
     """
     TECHNIQUE_UNSPECIFIED = 0
-    ACTIVE_SCANNING = 1
-    SCANNING_IP_BLOCKS = 2
-    INGRESS_TOOL_TRANSFER = 3
-    NATIVE_API = 4
-    SHARED_MODULES = 5
-    COMMAND_AND_SCRIPTING_INTERPRETER = 6
-    UNIX_SHELL = 7
-    RESOURCE_HIJACKING = 8
-    PROXY = 9
-    EXTERNAL_PROXY = 10
-    MULTI_HOP_PROXY = 11
-    DYNAMIC_RESOLUTION = 12
-    UNSECURED_CREDENTIALS = 13
-    VALID_ACCOUNTS = 14
-    LOCAL_ACCOUNTS = 15
-    CLOUD_ACCOUNTS = 16
-    NETWORK_DENIAL_OF_SERVICE = 17
-    PERMISSION_GROUPS_DISCOVERY = 18
-    CLOUD_GROUPS = 19
-    EXFILTRATION_OVER_WEB_SERVICE = 20
-    EXFILTRATION_TO_CLOUD_STORAGE = 21
-    ACCOUNT_MANIPULATION = 22
-    SSH_AUTHORIZED_KEYS = 23
-    CREATE_OR_MODIFY_SYSTEM_PROCESS = 24
-    STEAL_WEB_SESSION_COOKIE = 25
-    MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE = 26
-    EXPLOIT_PUBLIC_FACING_APPLICATION = 27
-    MODIFY_AUTHENTICATION_PROCESS = 28
-    DATA_DESTRUCTION = 29
-    DOMAIN_POLICY_MODIFICATION = 30
-    IMPAIR_DEFENSES = 31
-    NETWORK_SERVICE_DISCOVERY = 32
-    ACCESS_TOKEN_MANIPULATION = 33
-    ABUSE_ELEVATION_CONTROL_MECHANISM = 34
-    DEFAULT_ACCOUNTS = 35
-    INHIBIT_SYSTEM_RECOVERY = 36
+    DATA_OBFUSCATION = 1
+    DATA_OBFUSCATION_STEGANOGRAPHY = 2
+    OS_CREDENTIAL_DUMPING = 3
+    OS_CREDENTIAL_DUMPING_PROC_FILESYSTEM = 4
+    OS_CREDENTIAL_DUMPING_ETC_PASSWORD_AND_ETC_SHADOW = 5
+    DATA_FROM_LOCAL_SYSTEM = 6
+    AUTOMATED_EXFILTRATION = 7
+    OBFUSCATED_FILES_OR_INFO = 8
+    STEGANOGRAPHY = 9
+    COMPILE_AFTER_DELIVERY = 10
+    COMMAND_OBFUSCATION = 11
+    SCHEDULED_TRANSFER = 12
+    SYSTEM_OWNER_USER_DISCOVERY = 13
+    MASQUERADING = 14
+    MATCH_LEGITIMATE_NAME_OR_LOCATION = 15
+    BOOT_OR_LOGON_INITIALIZATION_SCRIPTS = 16
+    STARTUP_ITEMS = 17
+    NETWORK_SERVICE_DISCOVERY = 18
+    SCHEDULED_TASK_JOB = 19
+    SCHEDULED_TASK_JOB_CRON = 20
+    CONTAINER_ORCHESTRATION_JOB = 21
+    PROCESS_INJECTION = 22
+    INPUT_CAPTURE = 23
+    INPUT_CAPTURE_KEYLOGGING = 24
+    PROCESS_DISCOVERY = 25
+    COMMAND_AND_SCRIPTING_INTERPRETER = 26
+    UNIX_SHELL = 27
+    PYTHON = 28
+    EXPLOITATION_FOR_PRIVILEGE_ESCALATION = 29
+    PERMISSION_GROUPS_DISCOVERY = 30
+    CLOUD_GROUPS = 31
+    INDICATOR_REMOVAL = 32
+    INDICATOR_REMOVAL_CLEAR_LINUX_OR_MAC_SYSTEM_LOGS = 33
+    INDICATOR_REMOVAL_CLEAR_COMMAND_HISTORY = 34
+    INDICATOR_REMOVAL_FILE_DELETION = 35
+    INDICATOR_REMOVAL_TIMESTOMP = 36
+    INDICATOR_REMOVAL_CLEAR_MAILBOX_DATA = 37
+    APPLICATION_LAYER_PROTOCOL = 38
+    DNS = 39
+    SOFTWARE_DEPLOYMENT_TOOLS = 40
+    VALID_ACCOUNTS = 41
+    DEFAULT_ACCOUNTS = 42
+    LOCAL_ACCOUNTS = 43
+    CLOUD_ACCOUNTS = 44
+    FILE_AND_DIRECTORY_DISCOVERY = 45
+    ACCOUNT_DISCOVERY_LOCAL_ACCOUNT = 46
+    PROXY = 47
+    EXTERNAL_PROXY = 48
+    MULTI_HOP_PROXY = 49
+    ACCOUNT_MANIPULATION = 50
+    ADDITIONAL_CLOUD_CREDENTIALS = 51
+    ADDITIONAL_CLOUD_ROLES = 52
+    SSH_AUTHORIZED_KEYS = 53
+    ADDITIONAL_CONTAINER_CLUSTER_ROLES = 54
+    MULTI_STAGE_CHANNELS = 55
+    INGRESS_TOOL_TRANSFER = 56
+    NATIVE_API = 57
+    BRUTE_FORCE = 58
+    AUTOMATED_COLLECTION = 59
+    SHARED_MODULES = 60
+    DATA_ENCODING = 61
+    STANDARD_ENCODING = 62
+    ACCESS_TOKEN_MANIPULATION = 63
+    TOKEN_IMPERSONATION_OR_THEFT = 64
+    CREATE_ACCOUNT = 65
+    LOCAL_ACCOUNT = 66
+    DEOBFUSCATE_DECODE_FILES_OR_INFO = 67
+    EXPLOIT_PUBLIC_FACING_APPLICATION = 68
+    SUPPLY_CHAIN_COMPROMISE = 69
+    COMPROMISE_SOFTWARE_DEPENDENCIES_AND_DEVELOPMENT_TOOLS = 70
+    EXPLOITATION_FOR_CLIENT_EXECUTION = 71
+    USER_EXECUTION = 72
+    LINUX_AND_MAC_FILE_AND_DIRECTORY_PERMISSIONS_MODIFICATION = 73
+    DOMAIN_POLICY_MODIFICATION = 74
+    DATA_DESTRUCTION = 75
+    DATA_ENCRYPTED_FOR_IMPACT = 76
+    SERVICE_STOP = 77
+    INHIBIT_SYSTEM_RECOVERY = 78
+    FIRMWARE_CORRUPTION = 79
+    RESOURCE_HIJACKING = 80
+    NETWORK_DENIAL_OF_SERVICE = 81
+    CLOUD_SERVICE_DISCOVERY = 82
+    STEAL_APPLICATION_ACCESS_TOKEN = 83
+    ACCOUNT_ACCESS_REMOVAL = 84
+    TRANSFER_DATA_TO_CLOUD_ACCOUNT = 85
+    STEAL_WEB_SESSION_COOKIE = 86
+    CREATE_OR_MODIFY_SYSTEM_PROCESS = 87
+    EVENT_TRIGGERED_EXECUTION = 88
+    BOOT_OR_LOGON_AUTOSTART_EXECUTION = 89
+    KERNEL_MODULES_AND_EXTENSIONS = 90
+    SHORTCUT_MODIFICATION = 91
+    ABUSE_ELEVATION_CONTROL_MECHANISM = 92
+    ABUSE_ELEVATION_CONTROL_MECHANISM_SETUID_AND_SETGID = 93
+    ABUSE_ELEVATION_CONTROL_MECHANISM_SUDO_AND_SUDO_CACHING = 94
+    UNSECURED_CREDENTIALS = 95
+    CREDENTIALS_IN_FILES = 96
+    BASH_HISTORY = 97
+    PRIVATE_KEYS = 98
+    SUBVERT_TRUST_CONTROL = 99
+    INSTALL_ROOT_CERTIFICATE = 100
+    COMPROMISE_HOST_SOFTWARE_BINARY = 101
+    CREDENTIALS_FROM_PASSWORD_STORES = 102
+    MODIFY_AUTHENTICATION_PROCESS = 103
+    PLUGGABLE_AUTHENTICATION_MODULES = 104
+    IMPAIR_DEFENSES = 105
+    DISABLE_OR_MODIFY_TOOLS = 106
+    INDICATOR_BLOCKING = 107
+    DISABLE_OR_MODIFY_LINUX_AUDIT_SYSTEM = 108
+    HIDE_ARTIFACTS = 109
+    HIDDEN_FILES_AND_DIRECTORIES = 110
+    HIDDEN_USERS = 111
+    EXFILTRATION_OVER_WEB_SERVICE = 112
+    EXFILTRATION_TO_CLOUD_STORAGE = 113
+    DYNAMIC_RESOLUTION = 114
+    LATERAL_TOOL_TRANSFER = 115
+    HIJACK_EXECUTION_FLOW = 116
+    HIJACK_EXECUTION_FLOW_DYNAMIC_LINKER_HIJACKING = 117
+    MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE = 118
+    CREATE_SNAPSHOT = 119
+    CLOUD_INFRASTRUCTURE_DISCOVERY = 120
+    DEVELOP_CAPABILITIES = 121
+    DEVELOP_CAPABILITIES_MALWARE = 122
+    OBTAIN_CAPABILITIES = 123
+    OBTAIN_CAPABILITIES_MALWARE = 124
+    OBTAIN_CAPABILITIES_VULNERABILITIES = 125
+    ACTIVE_SCANNING = 126
+    SCANNING_IP_BLOCKS = 127
+    STAGE_CAPABILITIES = 128
+    UPLOAD_MALWARE = 129
+    CONTAINER_ADMINISTRATION_COMMAND = 130
+    DEPLOY_CONTAINER = 131
+    ESCAPE_TO_HOST = 132
+    CONTAINER_AND_RESOURCE_DISCOVERY = 133
+    REFLECTIVE_CODE_LOADING = 134
+    STEAL_OR_FORGE_AUTHENTICATION_CERTIFICATES = 135
+    FINANCIAL_THEFT = 136
 
   class PrimaryTacticValueValuesEnum(_messages.Enum):
     r"""The MITRE ATT&CK tactic most closely represented by this finding, if
@@ -4857,80 +6324,280 @@ class GoogleCloudSecuritycenterV2MitreAttack(_messages.Message):
 
     Values:
       TECHNIQUE_UNSPECIFIED: Unspecified value.
-      ACTIVE_SCANNING: T1595
-      SCANNING_IP_BLOCKS: T1595.001
-      INGRESS_TOOL_TRANSFER: T1105
-      NATIVE_API: T1106
-      SHARED_MODULES: T1129
+      DATA_OBFUSCATION: T1001
+      DATA_OBFUSCATION_STEGANOGRAPHY: T1001.002
+      OS_CREDENTIAL_DUMPING: T1003
+      OS_CREDENTIAL_DUMPING_PROC_FILESYSTEM: T1003.007
+      OS_CREDENTIAL_DUMPING_ETC_PASSWORD_AND_ETC_SHADOW: T1003.008
+      DATA_FROM_LOCAL_SYSTEM: T1005
+      AUTOMATED_EXFILTRATION: T1020
+      OBFUSCATED_FILES_OR_INFO: T1027
+      STEGANOGRAPHY: T1027.003
+      COMPILE_AFTER_DELIVERY: T1027.004
+      COMMAND_OBFUSCATION: T1027.010
+      SCHEDULED_TRANSFER: T1029
+      SYSTEM_OWNER_USER_DISCOVERY: T1033
+      MASQUERADING: T1036
+      MATCH_LEGITIMATE_NAME_OR_LOCATION: T1036.005
+      BOOT_OR_LOGON_INITIALIZATION_SCRIPTS: T1037
+      STARTUP_ITEMS: T1037.005
+      NETWORK_SERVICE_DISCOVERY: T1046
+      SCHEDULED_TASK_JOB: T1053
+      SCHEDULED_TASK_JOB_CRON: T1053.003
+      CONTAINER_ORCHESTRATION_JOB: T1053.007
+      PROCESS_INJECTION: T1055
+      INPUT_CAPTURE: T1056
+      INPUT_CAPTURE_KEYLOGGING: T1056.001
+      PROCESS_DISCOVERY: T1057
       COMMAND_AND_SCRIPTING_INTERPRETER: T1059
       UNIX_SHELL: T1059.004
-      RESOURCE_HIJACKING: T1496
+      PYTHON: T1059.006
+      EXPLOITATION_FOR_PRIVILEGE_ESCALATION: T1068
+      PERMISSION_GROUPS_DISCOVERY: T1069
+      CLOUD_GROUPS: T1069.003
+      INDICATOR_REMOVAL: T1070
+      INDICATOR_REMOVAL_CLEAR_LINUX_OR_MAC_SYSTEM_LOGS: T1070.002
+      INDICATOR_REMOVAL_CLEAR_COMMAND_HISTORY: T1070.003
+      INDICATOR_REMOVAL_FILE_DELETION: T1070.004
+      INDICATOR_REMOVAL_TIMESTOMP: T1070.006
+      INDICATOR_REMOVAL_CLEAR_MAILBOX_DATA: T1070.008
+      APPLICATION_LAYER_PROTOCOL: T1071
+      DNS: T1071.004
+      SOFTWARE_DEPLOYMENT_TOOLS: T1072
+      VALID_ACCOUNTS: T1078
+      DEFAULT_ACCOUNTS: T1078.001
+      LOCAL_ACCOUNTS: T1078.003
+      CLOUD_ACCOUNTS: T1078.004
+      FILE_AND_DIRECTORY_DISCOVERY: T1083
+      ACCOUNT_DISCOVERY_LOCAL_ACCOUNT: T1087.001
       PROXY: T1090
       EXTERNAL_PROXY: T1090.002
       MULTI_HOP_PROXY: T1090.003
-      DYNAMIC_RESOLUTION: T1568
-      UNSECURED_CREDENTIALS: T1552
-      VALID_ACCOUNTS: T1078
-      LOCAL_ACCOUNTS: T1078.003
-      CLOUD_ACCOUNTS: T1078.004
+      ACCOUNT_MANIPULATION: T1098
+      ADDITIONAL_CLOUD_CREDENTIALS: T1098.001
+      ADDITIONAL_CLOUD_ROLES: T1098.003
+      SSH_AUTHORIZED_KEYS: T1098.004
+      ADDITIONAL_CONTAINER_CLUSTER_ROLES: T1098.006
+      MULTI_STAGE_CHANNELS: T1104
+      INGRESS_TOOL_TRANSFER: T1105
+      NATIVE_API: T1106
+      BRUTE_FORCE: T1110
+      AUTOMATED_COLLECTION: T1119
+      SHARED_MODULES: T1129
+      DATA_ENCODING: T1132
+      STANDARD_ENCODING: T1132.001
+      ACCESS_TOKEN_MANIPULATION: T1134
+      TOKEN_IMPERSONATION_OR_THEFT: T1134.001
+      CREATE_ACCOUNT: T1136
+      LOCAL_ACCOUNT: T1136.001
+      DEOBFUSCATE_DECODE_FILES_OR_INFO: T1140
+      EXPLOIT_PUBLIC_FACING_APPLICATION: T1190
+      SUPPLY_CHAIN_COMPROMISE: T1195
+      COMPROMISE_SOFTWARE_DEPENDENCIES_AND_DEVELOPMENT_TOOLS: T1195.001
+      EXPLOITATION_FOR_CLIENT_EXECUTION: T1203
+      USER_EXECUTION: T1204
+      LINUX_AND_MAC_FILE_AND_DIRECTORY_PERMISSIONS_MODIFICATION: T1222.002
+      DOMAIN_POLICY_MODIFICATION: T1484
+      DATA_DESTRUCTION: T1485
+      DATA_ENCRYPTED_FOR_IMPACT: T1486
+      SERVICE_STOP: T1489
+      INHIBIT_SYSTEM_RECOVERY: T1490
+      FIRMWARE_CORRUPTION: T1495
+      RESOURCE_HIJACKING: T1496
       NETWORK_DENIAL_OF_SERVICE: T1498
-      PERMISSION_GROUPS_DISCOVERY: T1069
-      CLOUD_GROUPS: T1069.003
+      CLOUD_SERVICE_DISCOVERY: T1526
+      STEAL_APPLICATION_ACCESS_TOKEN: T1528
+      ACCOUNT_ACCESS_REMOVAL: T1531
+      TRANSFER_DATA_TO_CLOUD_ACCOUNT: T1537
+      STEAL_WEB_SESSION_COOKIE: T1539
+      CREATE_OR_MODIFY_SYSTEM_PROCESS: T1543
+      EVENT_TRIGGERED_EXECUTION: T1546
+      BOOT_OR_LOGON_AUTOSTART_EXECUTION: T1547
+      KERNEL_MODULES_AND_EXTENSIONS: T1547.006
+      SHORTCUT_MODIFICATION: T1547.009
+      ABUSE_ELEVATION_CONTROL_MECHANISM: T1548
+      ABUSE_ELEVATION_CONTROL_MECHANISM_SETUID_AND_SETGID: T1548.001
+      ABUSE_ELEVATION_CONTROL_MECHANISM_SUDO_AND_SUDO_CACHING: T1548.003
+      UNSECURED_CREDENTIALS: T1552
+      CREDENTIALS_IN_FILES: T1552.001
+      BASH_HISTORY: T1552.003
+      PRIVATE_KEYS: T1552.004
+      SUBVERT_TRUST_CONTROL: T1553
+      INSTALL_ROOT_CERTIFICATE: T1553.004
+      COMPROMISE_HOST_SOFTWARE_BINARY: T1554
+      CREDENTIALS_FROM_PASSWORD_STORES: T1555
+      MODIFY_AUTHENTICATION_PROCESS: T1556
+      PLUGGABLE_AUTHENTICATION_MODULES: T1556.003
+      IMPAIR_DEFENSES: T1562
+      DISABLE_OR_MODIFY_TOOLS: T1562.001
+      INDICATOR_BLOCKING: T1562.006
+      DISABLE_OR_MODIFY_LINUX_AUDIT_SYSTEM: T1562.012
+      HIDE_ARTIFACTS: T1564
+      HIDDEN_FILES_AND_DIRECTORIES: T1564.001
+      HIDDEN_USERS: T1564.002
       EXFILTRATION_OVER_WEB_SERVICE: T1567
       EXFILTRATION_TO_CLOUD_STORAGE: T1567.002
-      ACCOUNT_MANIPULATION: T1098
-      SSH_AUTHORIZED_KEYS: T1098.004
-      CREATE_OR_MODIFY_SYSTEM_PROCESS: T1543
-      STEAL_WEB_SESSION_COOKIE: T1539
+      DYNAMIC_RESOLUTION: T1568
+      LATERAL_TOOL_TRANSFER: T1570
+      HIJACK_EXECUTION_FLOW: T1574
+      HIJACK_EXECUTION_FLOW_DYNAMIC_LINKER_HIJACKING: T1574.006
       MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE: T1578
-      EXPLOIT_PUBLIC_FACING_APPLICATION: T1190
-      MODIFY_AUTHENTICATION_PROCESS: T1556
-      DATA_DESTRUCTION: T1485
-      DOMAIN_POLICY_MODIFICATION: T1484
-      IMPAIR_DEFENSES: T1562
-      NETWORK_SERVICE_DISCOVERY: T1046
-      ACCESS_TOKEN_MANIPULATION: T1134
-      ABUSE_ELEVATION_CONTROL_MECHANISM: T1548
-      DEFAULT_ACCOUNTS: T1078.001
-      INHIBIT_SYSTEM_RECOVERY: T1490
+      CREATE_SNAPSHOT: T1578.001
+      CLOUD_INFRASTRUCTURE_DISCOVERY: T1580
+      DEVELOP_CAPABILITIES: T1587
+      DEVELOP_CAPABILITIES_MALWARE: T1587.001
+      OBTAIN_CAPABILITIES: T1588
+      OBTAIN_CAPABILITIES_MALWARE: T1588.001
+      OBTAIN_CAPABILITIES_VULNERABILITIES: T1588.006
+      ACTIVE_SCANNING: T1595
+      SCANNING_IP_BLOCKS: T1595.001
+      STAGE_CAPABILITIES: T1608
+      UPLOAD_MALWARE: T1608.001
+      CONTAINER_ADMINISTRATION_COMMAND: T1609
+      DEPLOY_CONTAINER: T1610
+      ESCAPE_TO_HOST: T1611
+      CONTAINER_AND_RESOURCE_DISCOVERY: T1613
+      REFLECTIVE_CODE_LOADING: T1620
+      STEAL_OR_FORGE_AUTHENTICATION_CERTIFICATES: T1649
+      FINANCIAL_THEFT: T1657
     """
     TECHNIQUE_UNSPECIFIED = 0
-    ACTIVE_SCANNING = 1
-    SCANNING_IP_BLOCKS = 2
-    INGRESS_TOOL_TRANSFER = 3
-    NATIVE_API = 4
-    SHARED_MODULES = 5
-    COMMAND_AND_SCRIPTING_INTERPRETER = 6
-    UNIX_SHELL = 7
-    RESOURCE_HIJACKING = 8
-    PROXY = 9
-    EXTERNAL_PROXY = 10
-    MULTI_HOP_PROXY = 11
-    DYNAMIC_RESOLUTION = 12
-    UNSECURED_CREDENTIALS = 13
-    VALID_ACCOUNTS = 14
-    LOCAL_ACCOUNTS = 15
-    CLOUD_ACCOUNTS = 16
-    NETWORK_DENIAL_OF_SERVICE = 17
-    PERMISSION_GROUPS_DISCOVERY = 18
-    CLOUD_GROUPS = 19
-    EXFILTRATION_OVER_WEB_SERVICE = 20
-    EXFILTRATION_TO_CLOUD_STORAGE = 21
-    ACCOUNT_MANIPULATION = 22
-    SSH_AUTHORIZED_KEYS = 23
-    CREATE_OR_MODIFY_SYSTEM_PROCESS = 24
-    STEAL_WEB_SESSION_COOKIE = 25
-    MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE = 26
-    EXPLOIT_PUBLIC_FACING_APPLICATION = 27
-    MODIFY_AUTHENTICATION_PROCESS = 28
-    DATA_DESTRUCTION = 29
-    DOMAIN_POLICY_MODIFICATION = 30
-    IMPAIR_DEFENSES = 31
-    NETWORK_SERVICE_DISCOVERY = 32
-    ACCESS_TOKEN_MANIPULATION = 33
-    ABUSE_ELEVATION_CONTROL_MECHANISM = 34
-    DEFAULT_ACCOUNTS = 35
-    INHIBIT_SYSTEM_RECOVERY = 36
+    DATA_OBFUSCATION = 1
+    DATA_OBFUSCATION_STEGANOGRAPHY = 2
+    OS_CREDENTIAL_DUMPING = 3
+    OS_CREDENTIAL_DUMPING_PROC_FILESYSTEM = 4
+    OS_CREDENTIAL_DUMPING_ETC_PASSWORD_AND_ETC_SHADOW = 5
+    DATA_FROM_LOCAL_SYSTEM = 6
+    AUTOMATED_EXFILTRATION = 7
+    OBFUSCATED_FILES_OR_INFO = 8
+    STEGANOGRAPHY = 9
+    COMPILE_AFTER_DELIVERY = 10
+    COMMAND_OBFUSCATION = 11
+    SCHEDULED_TRANSFER = 12
+    SYSTEM_OWNER_USER_DISCOVERY = 13
+    MASQUERADING = 14
+    MATCH_LEGITIMATE_NAME_OR_LOCATION = 15
+    BOOT_OR_LOGON_INITIALIZATION_SCRIPTS = 16
+    STARTUP_ITEMS = 17
+    NETWORK_SERVICE_DISCOVERY = 18
+    SCHEDULED_TASK_JOB = 19
+    SCHEDULED_TASK_JOB_CRON = 20
+    CONTAINER_ORCHESTRATION_JOB = 21
+    PROCESS_INJECTION = 22
+    INPUT_CAPTURE = 23
+    INPUT_CAPTURE_KEYLOGGING = 24
+    PROCESS_DISCOVERY = 25
+    COMMAND_AND_SCRIPTING_INTERPRETER = 26
+    UNIX_SHELL = 27
+    PYTHON = 28
+    EXPLOITATION_FOR_PRIVILEGE_ESCALATION = 29
+    PERMISSION_GROUPS_DISCOVERY = 30
+    CLOUD_GROUPS = 31
+    INDICATOR_REMOVAL = 32
+    INDICATOR_REMOVAL_CLEAR_LINUX_OR_MAC_SYSTEM_LOGS = 33
+    INDICATOR_REMOVAL_CLEAR_COMMAND_HISTORY = 34
+    INDICATOR_REMOVAL_FILE_DELETION = 35
+    INDICATOR_REMOVAL_TIMESTOMP = 36
+    INDICATOR_REMOVAL_CLEAR_MAILBOX_DATA = 37
+    APPLICATION_LAYER_PROTOCOL = 38
+    DNS = 39
+    SOFTWARE_DEPLOYMENT_TOOLS = 40
+    VALID_ACCOUNTS = 41
+    DEFAULT_ACCOUNTS = 42
+    LOCAL_ACCOUNTS = 43
+    CLOUD_ACCOUNTS = 44
+    FILE_AND_DIRECTORY_DISCOVERY = 45
+    ACCOUNT_DISCOVERY_LOCAL_ACCOUNT = 46
+    PROXY = 47
+    EXTERNAL_PROXY = 48
+    MULTI_HOP_PROXY = 49
+    ACCOUNT_MANIPULATION = 50
+    ADDITIONAL_CLOUD_CREDENTIALS = 51
+    ADDITIONAL_CLOUD_ROLES = 52
+    SSH_AUTHORIZED_KEYS = 53
+    ADDITIONAL_CONTAINER_CLUSTER_ROLES = 54
+    MULTI_STAGE_CHANNELS = 55
+    INGRESS_TOOL_TRANSFER = 56
+    NATIVE_API = 57
+    BRUTE_FORCE = 58
+    AUTOMATED_COLLECTION = 59
+    SHARED_MODULES = 60
+    DATA_ENCODING = 61
+    STANDARD_ENCODING = 62
+    ACCESS_TOKEN_MANIPULATION = 63
+    TOKEN_IMPERSONATION_OR_THEFT = 64
+    CREATE_ACCOUNT = 65
+    LOCAL_ACCOUNT = 66
+    DEOBFUSCATE_DECODE_FILES_OR_INFO = 67
+    EXPLOIT_PUBLIC_FACING_APPLICATION = 68
+    SUPPLY_CHAIN_COMPROMISE = 69
+    COMPROMISE_SOFTWARE_DEPENDENCIES_AND_DEVELOPMENT_TOOLS = 70
+    EXPLOITATION_FOR_CLIENT_EXECUTION = 71
+    USER_EXECUTION = 72
+    LINUX_AND_MAC_FILE_AND_DIRECTORY_PERMISSIONS_MODIFICATION = 73
+    DOMAIN_POLICY_MODIFICATION = 74
+    DATA_DESTRUCTION = 75
+    DATA_ENCRYPTED_FOR_IMPACT = 76
+    SERVICE_STOP = 77
+    INHIBIT_SYSTEM_RECOVERY = 78
+    FIRMWARE_CORRUPTION = 79
+    RESOURCE_HIJACKING = 80
+    NETWORK_DENIAL_OF_SERVICE = 81
+    CLOUD_SERVICE_DISCOVERY = 82
+    STEAL_APPLICATION_ACCESS_TOKEN = 83
+    ACCOUNT_ACCESS_REMOVAL = 84
+    TRANSFER_DATA_TO_CLOUD_ACCOUNT = 85
+    STEAL_WEB_SESSION_COOKIE = 86
+    CREATE_OR_MODIFY_SYSTEM_PROCESS = 87
+    EVENT_TRIGGERED_EXECUTION = 88
+    BOOT_OR_LOGON_AUTOSTART_EXECUTION = 89
+    KERNEL_MODULES_AND_EXTENSIONS = 90
+    SHORTCUT_MODIFICATION = 91
+    ABUSE_ELEVATION_CONTROL_MECHANISM = 92
+    ABUSE_ELEVATION_CONTROL_MECHANISM_SETUID_AND_SETGID = 93
+    ABUSE_ELEVATION_CONTROL_MECHANISM_SUDO_AND_SUDO_CACHING = 94
+    UNSECURED_CREDENTIALS = 95
+    CREDENTIALS_IN_FILES = 96
+    BASH_HISTORY = 97
+    PRIVATE_KEYS = 98
+    SUBVERT_TRUST_CONTROL = 99
+    INSTALL_ROOT_CERTIFICATE = 100
+    COMPROMISE_HOST_SOFTWARE_BINARY = 101
+    CREDENTIALS_FROM_PASSWORD_STORES = 102
+    MODIFY_AUTHENTICATION_PROCESS = 103
+    PLUGGABLE_AUTHENTICATION_MODULES = 104
+    IMPAIR_DEFENSES = 105
+    DISABLE_OR_MODIFY_TOOLS = 106
+    INDICATOR_BLOCKING = 107
+    DISABLE_OR_MODIFY_LINUX_AUDIT_SYSTEM = 108
+    HIDE_ARTIFACTS = 109
+    HIDDEN_FILES_AND_DIRECTORIES = 110
+    HIDDEN_USERS = 111
+    EXFILTRATION_OVER_WEB_SERVICE = 112
+    EXFILTRATION_TO_CLOUD_STORAGE = 113
+    DYNAMIC_RESOLUTION = 114
+    LATERAL_TOOL_TRANSFER = 115
+    HIJACK_EXECUTION_FLOW = 116
+    HIJACK_EXECUTION_FLOW_DYNAMIC_LINKER_HIJACKING = 117
+    MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE = 118
+    CREATE_SNAPSHOT = 119
+    CLOUD_INFRASTRUCTURE_DISCOVERY = 120
+    DEVELOP_CAPABILITIES = 121
+    DEVELOP_CAPABILITIES_MALWARE = 122
+    OBTAIN_CAPABILITIES = 123
+    OBTAIN_CAPABILITIES_MALWARE = 124
+    OBTAIN_CAPABILITIES_VULNERABILITIES = 125
+    ACTIVE_SCANNING = 126
+    SCANNING_IP_BLOCKS = 127
+    STAGE_CAPABILITIES = 128
+    UPLOAD_MALWARE = 129
+    CONTAINER_ADMINISTRATION_COMMAND = 130
+    DEPLOY_CONTAINER = 131
+    ESCAPE_TO_HOST = 132
+    CONTAINER_AND_RESOURCE_DISCOVERY = 133
+    REFLECTIVE_CODE_LOADING = 134
+    STEAL_OR_FORGE_AUTHENTICATION_CERTIFICATES = 135
+    FINANCIAL_THEFT = 136
 
   additionalTactics = _messages.EnumField('AdditionalTacticsValueListEntryValuesEnum', 1, repeated=True)
   additionalTechniques = _messages.EnumField('AdditionalTechniquesValueListEntryValuesEnum', 2, repeated=True)
@@ -4971,8 +6638,8 @@ class GoogleCloudSecuritycenterV2MuteConfig(_messages.Message):
     mostRecentEditor: Output only. Email address of the user who last edited
       the mute config. This field is set by the server and will be ignored if
       provided on config creation or update.
-    name: This field will be ignored if provided on config creation. The
-      following list shows some examples of the format: +
+    name: Identifier. This field will be ignored if provided on config
+      creation. The following list shows some examples of the format: +
       `organizations/{organization}/muteConfigs/{mute_config}` + `organization
       s/{organization}locations/{location}//muteConfigs/{mute_config}` +
       `folders/{folder}/muteConfigs/{mute_config}` +
@@ -5031,6 +6698,18 @@ class GoogleCloudSecuritycenterV2MuteInfo(_messages.Message):
   staticMute = _messages.MessageField('GoogleCloudSecuritycenterV2StaticMute', 2)
 
 
+class GoogleCloudSecuritycenterV2Network(_messages.Message):
+  r"""Contains information about a VPC network associated with the finding.
+
+  Fields:
+    name: The name of the VPC network resource, for example,
+      `//compute.googleapis.com/projects/my-project/global/networks/my-
+      network`.
+  """
+
+  name = _messages.StringField(1)
+
+
 class GoogleCloudSecuritycenterV2Node(_messages.Message):
   r"""Kubernetes nodes associated with the finding.
 
@@ -5076,8 +6755,6 @@ class GoogleCloudSecuritycenterV2NotificationMessage(_messages.Message):
   r"""Cloud SCC's Notification
 
   Fields:
-    effectiveTags: Effective tags tied to the resource associated with this
-      notification.
     finding: If it's a Finding based notification config, this field will be
       populated.
     notificationConfigName: Name of the notification config that generated
@@ -5085,10 +6762,9 @@ class GoogleCloudSecuritycenterV2NotificationMessage(_messages.Message):
     resource: The Cloud resource tied to this notification's Finding.
   """
 
-  effectiveTags = _messages.MessageField('GoogleCloudSecuritycenterV2EffectiveTag', 1, repeated=True)
-  finding = _messages.MessageField('GoogleCloudSecuritycenterV2Finding', 2)
-  notificationConfigName = _messages.StringField(3)
-  resource = _messages.MessageField('GoogleCloudSecuritycenterV2Resource', 4)
+  finding = _messages.MessageField('GoogleCloudSecuritycenterV2Finding', 1)
+  notificationConfigName = _messages.StringField(2)
+  resource = _messages.MessageField('GoogleCloudSecuritycenterV2Resource', 3)
 
 
 class GoogleCloudSecuritycenterV2Object(_messages.Message):
@@ -5119,7 +6795,7 @@ class GoogleCloudSecuritycenterV2OrgPolicy(_messages.Message):
   r"""Contains information about the org policies associated with the finding.
 
   Fields:
-    name: The resource name of the org policy. Example:
+    name: Identifier. The resource name of the org policy. Example:
       "organizations/{organization_id}/policies/{constraint_name}"
   """
 
@@ -5140,6 +6816,20 @@ class GoogleCloudSecuritycenterV2Package(_messages.Message):
   packageName = _messages.StringField(2)
   packageType = _messages.StringField(3)
   packageVersion = _messages.StringField(4)
+
+
+class GoogleCloudSecuritycenterV2Pipeline(_messages.Message):
+  r"""Vertex AI training pipeline associated with the finding.
+
+  Fields:
+    displayName: The user defined display name of pipeline, e.g. plants-
+      classification
+    name: Resource name of pipeline, e.g. projects/{project}/locations/{locati
+      on}/trainingPipelines/5253428229225578496
+  """
+
+  displayName = _messages.StringField(1)
+  name = _messages.StringField(2)
 
 
 class GoogleCloudSecuritycenterV2Pod(_messages.Message):
@@ -5255,95 +6945,6 @@ class GoogleCloudSecuritycenterV2ProcessSignature(_messages.Message):
   yaraRuleSignature = _messages.MessageField('GoogleCloudSecuritycenterV2YaraRuleSignature', 3)
 
 
-class GoogleCloudSecuritycenterV2PropertyDataType(_messages.Message):
-  r"""Message used to define the format of a single property value's type in a
-  Finding. If the type of the value is a struct, the struct_value map will
-  have the same keys as the struct. If the type of the value is a list, all
-  fields inside the list will be enforced to have the same type, so only a
-  single type will be present for all values in the list. e.g: P1: { x:
-  number_value: 123, y: string_value: "some string", z: bool_value: True,
-  a_list: list_value: values: number_value: 123, number_value: 234
-  a_list_of_lists: list_value: values: list_value: values: number_value: 123,
-  number_value: 234 list_value: values: bool_value: true list_value: values:
-  string_value: "abc", string_value: "def" } would be represented as: {
-  data_type: DATA_TYPE_TAXONOMY_UNSPECIFIED, struct_value: { x: { data_type:
-  DATA_TYPE_TAXONOMY_UNSPECIFIED, primitive_data_type: NUMBER, } y: {
-  data_type: DATA_TYPE_TAXONOMY_UNSPECIFIED, primitive_data_type: STRING, } z:
-  { data_type: DATA_TYPE_TAXONOMY_UNSPECIFIED, primitive_data_type: BOOL, }
-  a_list: { data_type: DATA_TYPE_TAXONOMY_UNSPECIFIED, list_values: [ {
-  data_type: DATA_TYPE_TAXONOMY_UNSPECIFIED primitive_data_type: NUMBER } ] }
-  a_list_of_lists: { data_type: DATA_TYPE_TAXONOMY_UNSPECIFIED, list_values: [
-  { data_type: DATA_TYPE_TAXONOMY_UNSPECIFIED list_values: [ { data_type:
-  DATA_TYPE_TAXONOMY_UNSPECIFIED primitive_data_type: NUMBER }, { data_type:
-  DATA_TYPE_TAXONOMY_UNSPECIFIED primitive_data_type: BOOL } { data_type:
-  DATA_TYPE_TAXONOMY_UNSPECIFIED primitive_data_type: STRING } ] } ] } } }
-
-  Enums:
-    DataTypeValueValuesEnum: Data Type of the property name. If the property
-      name does not have a data type associated with it, DATA_TYPES_UNKNOWN
-      will be used.
-    PrimitiveDataTypeValueValuesEnum: Used to represent the format of a
-      NUMBER/STRING/BOOL property value.
-
-  Fields:
-    dataType: Data Type of the property name. If the property name does not
-      have a data type associated with it, DATA_TYPES_UNKNOWN will be used.
-    listValues: Used to represent the format of a list property value.
-    primitiveDataType: Used to represent the format of a NUMBER/STRING/BOOL
-      property value.
-    structValue: Used to represent the format of a struct property value.
-  """
-
-  class DataTypeValueValuesEnum(_messages.Enum):
-    r"""Data Type of the property name. If the property name does not have a
-    data type associated with it, DATA_TYPES_UNKNOWN will be used.
-
-    Values:
-      DATA_TYPE_TAXONOMY_UNSPECIFIED: The data type for the property name is
-        unknown.
-      TIMESTAMP: <no description>
-      HYPERLINK: <no description>
-      IPV4_ADDRESS: <no description>
-      IPV6_ADDRESS: <no description>
-    """
-    DATA_TYPE_TAXONOMY_UNSPECIFIED = 0
-    TIMESTAMP = 1
-    HYPERLINK = 2
-    IPV4_ADDRESS = 3
-    IPV6_ADDRESS = 4
-
-  class PrimitiveDataTypeValueValuesEnum(_messages.Enum):
-    r"""Used to represent the format of a NUMBER/STRING/BOOL property value.
-
-    Values:
-      PRIMITIVE_DATA_TYPE_UNSPECIFIED: Unspecified data type.
-      NUMBER: A Number (float) value.
-      STRING: A string value.
-      BOOL: A bool value.
-    """
-    PRIMITIVE_DATA_TYPE_UNSPECIFIED = 0
-    NUMBER = 1
-    STRING = 2
-    BOOL = 3
-
-  dataType = _messages.EnumField('DataTypeValueValuesEnum', 1)
-  listValues = _messages.MessageField('GoogleCloudSecuritycenterV2PropertyDataTypes', 2)
-  primitiveDataType = _messages.EnumField('PrimitiveDataTypeValueValuesEnum', 3)
-  structValue = _messages.MessageField('GoogleCloudSecuritycenterV2DataTypeStruct', 4)
-
-
-class GoogleCloudSecuritycenterV2PropertyDataTypes(_messages.Message):
-  r"""Message containing a PropertyDataType for each nested ListValue or a
-  single PropertyDataType if the inner Values are not ListValues.
-
-  Fields:
-    propertyDataTypes: A GoogleCloudSecuritycenterV2PropertyDataType
-      attribute.
-  """
-
-  propertyDataTypes = _messages.MessageField('GoogleCloudSecuritycenterV2PropertyDataType', 1, repeated=True)
-
-
 class GoogleCloudSecuritycenterV2Reference(_messages.Message):
   r"""Additional Links
 
@@ -5394,15 +6995,15 @@ class GoogleCloudSecuritycenterV2Resource(_messages.Message):
       https://cloud.google.com/apis/design/resource_names#full_resource_name
     resourcePath: Provides the path to the resource within the resource
       hierarchy.
-    resourcePathString: A string representation of the resource path. For GCP,
-      it has the format of: organizations/{organization_id}/folders/{folder_id
-      }/folders/{folder_id}/projects/{project_id} where there can be any
-      number of folders. For AWS, it has the format of: org/{organization_id}/
-      ou/{organizational_unit_id}/ou/{organizational_unit_id}/account/{account
-      _id} where there can be any number of organizational units. For Azure,
-      it has the format of: mg/{management_group_id}/mg/{management_group_id}/
-      subscription/{subscription_id}/rg/{resource_group_name} where there can
-      be any number of management groups.
+    resourcePathString: A string representation of the resource path. For
+      Google Cloud, it has the format of `organizations/{organization_id}/fold
+      ers/{folder_id}/folders/{folder_id}/projects/{project_id}` where there
+      can be any number of folders. For AWS, it has the format of `org/{organi
+      zation_id}/ou/{organizational_unit_id}/ou/{organizational_unit_id}/accou
+      nt/{account_id}` where there can be any number of organizational units.
+      For Azure, it has the format of `mg/{management_group_id}/mg/{management
+      _group_id}/subscription/{subscription_id}/rg/{resource_group_name}`
+      where there can be any number of management groups.
     service: The service or resource provider associated with the resource.
     type: The full resource type of the resource.
   """
@@ -5464,9 +7065,9 @@ class GoogleCloudSecuritycenterV2ResourcePathNode(_messages.Message):
 
     Values:
       RESOURCE_PATH_NODE_TYPE_UNSPECIFIED: Node type is unspecified.
-      GCP_ORGANIZATION: The node represents a GCP organization.
-      GCP_FOLDER: The node represents a GCP folder.
-      GCP_PROJECT: The node represents a GCP project.
+      GCP_ORGANIZATION: The node represents a Google Cloud organization.
+      GCP_FOLDER: The node represents a Google Cloud folder.
+      GCP_PROJECT: The node represents a Google Cloud project.
       AWS_ORGANIZATION: The node represents an AWS organization.
       AWS_ORGANIZATIONAL_UNIT: The node represents an AWS organizational unit.
       AWS_ACCOUNT: The node represents an AWS account.
@@ -5491,53 +7092,55 @@ class GoogleCloudSecuritycenterV2ResourcePathNode(_messages.Message):
 
 
 class GoogleCloudSecuritycenterV2ResourceValueConfig(_messages.Message):
-  r"""A resource value config (RVC) is a mapping configuration of user's
-  resources to resource values. Used in Attack path simulations.
+  r"""A resource value configuration (RVC) is a mapping configuration of
+  user's resources to resource values. Used in Attack path simulations.
 
   Enums:
     CloudProviderValueValuesEnum: Cloud provider this configuration applies to
     ResourceValueValueValuesEnum: Resource value level this expression
-      represents Only required when there is no SDP mapping in the request
+      represents Only required when there is no Sensitive Data Protection
+      mapping in the request
 
   Messages:
     ResourceLabelsSelectorValue: List of resource labels to search for,
-      evaluated with AND. E.g. "resource_labels_selector": {"key": "value",
-      "env": "prod"} will match resources with labels "key": "value" AND
-      "env": "prod" https://cloud.google.com/resource-manager/docs/creating-
-      managing-labels
+      evaluated with `AND`. For example, "resource_labels_selector": {"key":
+      "value", "env": "prod"} will match resources with labels "key": "value"
+      `AND` "env": "prod" https://cloud.google.com/resource-
+      manager/docs/creating-managing-labels
 
   Fields:
-    awsMetadata: The AWS metadata associated with the finding.
     cloudProvider: Cloud provider this configuration applies to
-    createTime: Output only. Timestamp this resource value config was created.
-    description: Description of the resource value config.
-    gcpMetadata: The GCP metadata associated with the finding.
-    name: Name for the resource value config
+    createTime: Output only. Timestamp this resource value configuration was
+      created.
+    description: Description of the resource value configuration.
+    name: Identifier. Name for the resource value configuration
     resourceLabelsSelector: List of resource labels to search for, evaluated
-      with AND. E.g. "resource_labels_selector": {"key": "value", "env":
-      "prod"} will match resources with labels "key": "value" AND "env":
-      "prod" https://cloud.google.com/resource-manager/docs/creating-managing-
-      labels
+      with `AND`. For example, "resource_labels_selector": {"key": "value",
+      "env": "prod"} will match resources with labels "key": "value" `AND`
+      "env": "prod" https://cloud.google.com/resource-manager/docs/creating-
+      managing-labels
     resourceType: Apply resource_value only to resources that match
-      resource_type. resource_type will be checked with "AND" of other
-      resources. E.g. "storage.googleapis.com/Bucket" with resource_value
-      "HIGH" will apply "HIGH" value only to "storage.googleapis.com/Bucket"
-      resources.
+      resource_type. resource_type will be checked with `AND` of other
+      resources. For example, "storage.googleapis.com/Bucket" with
+      resource_value "HIGH" will apply "HIGH" value only to
+      "storage.googleapis.com/Bucket" resources.
     resourceValue: Resource value level this expression represents Only
-      required when there is no SDP mapping in the request
-    scope: Project or folder to scope this config to. For example,
-      "project/456" would apply this config only to resources in "project/456"
-      scope will be checked with "AND" of other resources.
+      required when there is no Sensitive Data Protection mapping in the
+      request
+    scope: Project or folder to scope this configuration to. For example,
+      "project/456" would apply this configuration only to resources in
+      "project/456" scope and will be checked with `AND` of other resources.
     sensitiveDataProtectionMapping: A mapping of the sensitivity on Sensitive
       Data Protection finding to resource values. This mapping can only be
       used in combination with a resource_type that is related to BigQuery,
       e.g. "bigquery.googleapis.com/Dataset".
-    tagValues: Required. Tag values combined with AND to check against. Values
-      in the form "tagValues/123" E.g. [ "tagValues/123", "tagValues/456",
-      "tagValues/789" ] https://cloud.google.com/resource-
-      manager/docs/tags/tags-creating-and-managing
-    updateTime: Output only. Timestamp this resource value config was last
-      updated.
+    tagValues: Tag values combined with `AND` to check against. For Google
+      Cloud resources, they are tag value IDs in the form of "tagValues/123".
+      Example: `[ "tagValues/123", "tagValues/456", "tagValues/789" ]`
+      https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-
+      managing
+    updateTime: Output only. Timestamp this resource value configuration was
+      last updated.
   """
 
   class CloudProviderValueValuesEnum(_messages.Enum):
@@ -5556,7 +7159,7 @@ class GoogleCloudSecuritycenterV2ResourceValueConfig(_messages.Message):
 
   class ResourceValueValueValuesEnum(_messages.Enum):
     r"""Resource value level this expression represents Only required when
-    there is no SDP mapping in the request
+    there is no Sensitive Data Protection mapping in the request
 
     Values:
       RESOURCE_VALUE_UNSPECIFIED: Unspecific value
@@ -5573,9 +7176,9 @@ class GoogleCloudSecuritycenterV2ResourceValueConfig(_messages.Message):
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class ResourceLabelsSelectorValue(_messages.Message):
-    r"""List of resource labels to search for, evaluated with AND. E.g.
-    "resource_labels_selector": {"key": "value", "env": "prod"} will match
-    resources with labels "key": "value" AND "env": "prod"
+    r"""List of resource labels to search for, evaluated with `AND`. For
+    example, "resource_labels_selector": {"key": "value", "env": "prod"} will
+    match resources with labels "key": "value" `AND` "env": "prod"
     https://cloud.google.com/resource-manager/docs/creating-managing-labels
 
     Messages:
@@ -5600,19 +7203,17 @@ class GoogleCloudSecuritycenterV2ResourceValueConfig(_messages.Message):
 
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
-  awsMetadata = _messages.MessageField('GoogleCloudSecuritycenterV2RvcAwsMetadata', 1)
-  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 2)
-  createTime = _messages.StringField(3)
-  description = _messages.StringField(4)
-  gcpMetadata = _messages.MessageField('GoogleCloudSecuritycenterV2RvcGcpMetadata', 5)
-  name = _messages.StringField(6)
-  resourceLabelsSelector = _messages.MessageField('ResourceLabelsSelectorValue', 7)
-  resourceType = _messages.StringField(8)
-  resourceValue = _messages.EnumField('ResourceValueValueValuesEnum', 9)
-  scope = _messages.StringField(10)
-  sensitiveDataProtectionMapping = _messages.MessageField('GoogleCloudSecuritycenterV2SensitiveDataProtectionMapping', 11)
-  tagValues = _messages.StringField(12, repeated=True)
-  updateTime = _messages.StringField(13)
+  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 1)
+  createTime = _messages.StringField(2)
+  description = _messages.StringField(3)
+  name = _messages.StringField(4)
+  resourceLabelsSelector = _messages.MessageField('ResourceLabelsSelectorValue', 5)
+  resourceType = _messages.StringField(6)
+  resourceValue = _messages.EnumField('ResourceValueValueValuesEnum', 7)
+  scope = _messages.StringField(8)
+  sensitiveDataProtectionMapping = _messages.MessageField('GoogleCloudSecuritycenterV2SensitiveDataProtectionMapping', 9)
+  tagValues = _messages.StringField(10, repeated=True)
+  updateTime = _messages.StringField(11)
 
 
 class GoogleCloudSecuritycenterV2Role(_messages.Message):
@@ -5642,119 +7243,6 @@ class GoogleCloudSecuritycenterV2Role(_messages.Message):
   kind = _messages.EnumField('KindValueValuesEnum', 1)
   name = _messages.StringField(2)
   ns = _messages.StringField(3)
-
-
-class GoogleCloudSecuritycenterV2RvcAwsMetadata(_messages.Message):
-  r"""AWS metadata associated with the resource, only applicable if the
-  finding's cloud provider is Amazon Web Services.
-
-  Messages:
-    TagsValue: Key value pairs that are evaluated with AND. E.g. "'env':
-      'test'"
-
-  Fields:
-    accountId: The AWS account ID associated with the resource. E.g.
-      "1234567890"
-    region: The region in which the valued resources should belong to. E.g.
-      "us-east-1"
-    resourceType: Apply resource_value only to resources that match
-      resource_type. E.g. "AWS::S3::Bucket"
-      https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-
-      template-resource-type-ref.html
-    tags: Key value pairs that are evaluated with AND. E.g. "'env': 'test'"
-  """
-
-  @encoding.MapUnrecognizedFields('additionalProperties')
-  class TagsValue(_messages.Message):
-    r"""Key value pairs that are evaluated with AND. E.g. "'env': 'test'"
-
-    Messages:
-      AdditionalProperty: An additional property for a TagsValue object.
-
-    Fields:
-      additionalProperties: Additional properties of type TagsValue
-    """
-
-    class AdditionalProperty(_messages.Message):
-      r"""An additional property for a TagsValue object.
-
-      Fields:
-        key: Name of the additional property.
-        value: A string attribute.
-      """
-
-      key = _messages.StringField(1)
-      value = _messages.StringField(2)
-
-    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
-
-  accountId = _messages.StringField(1)
-  region = _messages.StringField(2)
-  resourceType = _messages.StringField(3)
-  tags = _messages.MessageField('TagsValue', 4)
-
-
-class GoogleCloudSecuritycenterV2RvcGcpMetadata(_messages.Message):
-  r"""GCP metadata associated with the resource value config. The
-  corresponding fields in the ResourceValueConfig message will be deprecated
-  at a later time.
-
-  Messages:
-    LabelsValue: List of resource labels to search for, evaluated with AND.
-      E.g. "resource_labels_selector": {"key": "value", "env": "prod"} will
-      match resources with labels "key": "value" AND "env": "prod"
-      https://cloud.google.com/resource-manager/docs/creating-managing-labels
-
-  Fields:
-    labels: List of resource labels to search for, evaluated with AND. E.g.
-      "resource_labels_selector": {"key": "value", "env": "prod"} will match
-      resources with labels "key": "value" AND "env": "prod"
-      https://cloud.google.com/resource-manager/docs/creating-managing-labels
-    resourceType: Apply resource_value only to resources that match
-      resource_type. resource_type will be checked with "AND" of other
-      resources. E.g. "storage.googleapis.com/Bucket" with resource_value
-      "HIGH" will apply "HIGH" value only to "storage.googleapis.com/Bucket"
-      resources.
-    scope: Project or folder to scope this config to. For example,
-      "project/456" would apply this config only to resources in "project/456"
-      scope will be checked with "AND" of other resources.
-    tagValues: Tag values combined with AND to check against. Values in the
-      form "tagValues/123" E.g. [ "tagValues/123", "tagValues/456",
-      "tagValues/789" ] https://cloud.google.com/resource-
-      manager/docs/tags/tags-creating-and-managing
-  """
-
-  @encoding.MapUnrecognizedFields('additionalProperties')
-  class LabelsValue(_messages.Message):
-    r"""List of resource labels to search for, evaluated with AND. E.g.
-    "resource_labels_selector": {"key": "value", "env": "prod"} will match
-    resources with labels "key": "value" AND "env": "prod"
-    https://cloud.google.com/resource-manager/docs/creating-managing-labels
-
-    Messages:
-      AdditionalProperty: An additional property for a LabelsValue object.
-
-    Fields:
-      additionalProperties: Additional properties of type LabelsValue
-    """
-
-    class AdditionalProperty(_messages.Message):
-      r"""An additional property for a LabelsValue object.
-
-      Fields:
-        key: Name of the additional property.
-        value: A string attribute.
-      """
-
-      key = _messages.StringField(1)
-      value = _messages.StringField(2)
-
-    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
-
-  labels = _messages.MessageField('LabelsValue', 1)
-  resourceType = _messages.StringField(2)
-  scope = _messages.StringField(3)
-  tagValues = _messages.StringField(4, repeated=True)
 
 
 class GoogleCloudSecuritycenterV2SecurityBulletin(_messages.Message):
@@ -5791,18 +7279,18 @@ class GoogleCloudSecuritycenterV2SecurityMarks(_messages.Message):
   Fields:
     canonicalName: The canonical name of the marks. The following list shows
       some examples: +
-      `organizations/{organization_id}/assets/{asset_id}/securityMarks" + `org
+      `organizations/{organization_id}/assets/{asset_id}/securityMarks` + `org
       anizations/{organization_id}/sources/{source_id}/findings/{finding_id}/s
-      ecurityMarks" + `organizations/{organization_id}/sources/{source_id}/loc
-      ations/{location}/findings/{finding_id}/securityMarks" +
-      `folders/{folder_id}/assets/{asset_id}/securityMarks" + `folders/{folder
-      _id}/sources/{source_id}/findings/{finding_id}/securityMarks" + `folders
+      ecurityMarks` + `organizations/{organization_id}/sources/{source_id}/loc
+      ations/{location}/findings/{finding_id}/securityMarks` +
+      `folders/{folder_id}/assets/{asset_id}/securityMarks` + `folders/{folder
+      _id}/sources/{source_id}/findings/{finding_id}/securityMarks` + `folders
       /{folder_id}/sources/{source_id}/locations/{location}/findings/{finding_
-      id}/securityMarks" +
-      `projects/{project_number}/assets/{asset_id}/securityMarks" + `projects/
+      id}/securityMarks` +
+      `projects/{project_number}/assets/{asset_id}/securityMarks` + `projects/
       {project_number}/sources/{source_id}/findings/{finding_id}/securityMarks
-      " + `projects/{project_number}/sources/{source_id}/locations/{location}/
-      findings/{finding_id}/securityMarks"
+      ` + `projects/{project_number}/sources/{source_id}/locations/{location}/
+      findings/{finding_id}/securityMarks`
     marks: Mutable user specified security marks belonging to the parent
       resource. Constraints are as follows: * Keys and values are treated as
       case insensitive * Keys must be between 1 - 256 characters (inclusive) *
@@ -6080,11 +7568,23 @@ class GoogleCloudSecuritycenterV2ToxicCombination(_messages.Message):
       more high-value resources to potential attack.
     relatedFindings: List of resource names of findings associated with this
       toxic combination. For example,
-      organizations/123/sources/456/findings/789.
+      `organizations/123/sources/456/findings/789`.
   """
 
   attackExposureScore = _messages.FloatField(1)
   relatedFindings = _messages.StringField(2, repeated=True)
+
+
+class GoogleCloudSecuritycenterV2VertexAi(_messages.Message):
+  r"""Vertex AI-related information associated with the finding.
+
+  Fields:
+    datasets: Datasets associated with the finding.
+    pipelines: Pipelines associated with the finding.
+  """
+
+  datasets = _messages.MessageField('GoogleCloudSecuritycenterV2Dataset', 1, repeated=True)
+  pipelines = _messages.MessageField('GoogleCloudSecuritycenterV2Pipeline', 2, repeated=True)
 
 
 class GoogleCloudSecuritycenterV2Vulnerability(_messages.Message):
@@ -6093,15 +7593,24 @@ class GoogleCloudSecuritycenterV2Vulnerability(_messages.Message):
   Fields:
     cve: CVE stands for Common Vulnerabilities and Exposures
       (https://cve.mitre.org/about/)
+    cwes: Represents one or more Common Weakness Enumeration (CWE) information
+      on this vulnerability.
     fixedPackage: The fixed package is relevant to the finding.
     offendingPackage: The offending package is relevant to the finding.
+    providerRiskScore: Provider provided risk_score based on multiple factors.
+      The higher the risk score, the more risky the vulnerability is.
+    reachable: Represents whether the vulnerability is reachable (detected via
+      static analysis)
     securityBulletin: The security bulletin is relevant to this finding.
   """
 
   cve = _messages.MessageField('GoogleCloudSecuritycenterV2Cve', 1)
-  fixedPackage = _messages.MessageField('GoogleCloudSecuritycenterV2Package', 2)
-  offendingPackage = _messages.MessageField('GoogleCloudSecuritycenterV2Package', 3)
-  securityBulletin = _messages.MessageField('GoogleCloudSecuritycenterV2SecurityBulletin', 4)
+  cwes = _messages.MessageField('GoogleCloudSecuritycenterV2Cwe', 2, repeated=True)
+  fixedPackage = _messages.MessageField('GoogleCloudSecuritycenterV2Package', 3)
+  offendingPackage = _messages.MessageField('GoogleCloudSecuritycenterV2Package', 4)
+  providerRiskScore = _messages.IntegerField(5)
+  reachable = _messages.BooleanField(6)
+  securityBulletin = _messages.MessageField('GoogleCloudSecuritycenterV2SecurityBulletin', 7)
 
 
 class GoogleCloudSecuritycenterV2YaraRuleSignature(_messages.Message):
@@ -6116,12 +7625,6 @@ class GoogleCloudSecuritycenterV2YaraRuleSignature(_messages.Message):
 
 class GroupFindingsRequest(_messages.Message):
   r"""Request message for grouping by findings.
-
-  Enums:
-    GroupByDateTimePartGranularityValueValuesEnum: The granularity to use for
-      grouping by a timestamp. When passed the timestamp fields included in
-      group_by will be grouped to the given GroupByDateTimePartGranularity,
-      e.g. HOUR, DAY, WEEK, etc. Currently only supported on event_time.
 
   Fields:
     filter: Expression that defines the filter to apply across findings. The
@@ -6145,25 +7648,7 @@ class GroupFindingsRequest(_messages.Message):
       * resource.project_display_name: `=`, `:` * resource.type: `=`, `:`
     groupBy: Required. Expression that defines what assets fields to use for
       grouping. The string value should follow SQL syntax: comma separated
-      list of fields. For example: "parent,resource_name". The following
-      fields are supported: * resource_name * category * state * parent *
-      severity
-    groupByDateTimePartGranularity: The granularity to use for grouping by a
-      timestamp. When passed the timestamp fields included in group_by will be
-      grouped to the given GroupByDateTimePartGranularity, e.g. HOUR, DAY,
-      WEEK, etc. Currently only supported on event_time.
-    omitTotalSize: Instructs the backend to not compute the total_size value
-      for the response. When this value is set total_size will be set to -1 in
-      the response. Visible to GOOGLE_INTERNAL/PANTHEON clients only.
-    orderBy: Expression that defines what fields and order to use for sorting.
-      The string value should follow SQL syntax: comma separated list of
-      fields. For example: "name,parent". The default sorting order is
-      ascending. To specify descending order for a field, a suffix " desc"
-      should be appended to the field name. For example: "name desc,parent".
-      Redundant space characters in the syntax are insignificant. "name
-      desc,parent" and " name desc , parent " are equivalent. The following
-      fields are supported: count Visible to GOOGLE_INTERNAL/PANTHEON clients
-      only
+      list of fields. For example: "parent,resource_name".
     pageSize: The maximum number of results to return in a single response.
       Default is 10, minimum is 1, maximum is 1000.
     pageToken: The value returned by the last `GroupFindingsResponse`;
@@ -6171,47 +7656,10 @@ class GroupFindingsRequest(_messages.Message):
       and that the system should return the next page of data.
   """
 
-  class GroupByDateTimePartGranularityValueValuesEnum(_messages.Enum):
-    r"""The granularity to use for grouping by a timestamp. When passed the
-    timestamp fields included in group_by will be grouped to the given
-    GroupByDateTimePartGranularity, e.g. HOUR, DAY, WEEK, etc. Currently only
-    supported on event_time.
-
-    Values:
-      GROUP_BY_DATE_TIME_PART_GRANULARITY_UNSPECIFIED: Unspecified value.
-      SECOND: Second granularity, time is truncated to the second in group by
-        results.
-      MINUTE: Minute granularity, time is truncated to the minute in group by
-        results.
-      HOUR: Hour granularity, time is truncated to the hour in group by
-        results.
-      DAY: Day granularity, time is truncated to the day in group by results.
-      WEEK: Week granularity, time is truncated to the week in group by
-        results.
-      MONTH: Second granularity, time is truncated to the month in group by
-        results.
-      QUARTER: Second granularity, time is truncated to the quarter in group
-        by results.
-      YEAR: Second granularity, time is truncated to the year in group by
-        results.
-    """
-    GROUP_BY_DATE_TIME_PART_GRANULARITY_UNSPECIFIED = 0
-    SECOND = 1
-    MINUTE = 2
-    HOUR = 3
-    DAY = 4
-    WEEK = 5
-    MONTH = 6
-    QUARTER = 7
-    YEAR = 8
-
   filter = _messages.StringField(1)
   groupBy = _messages.StringField(2)
-  groupByDateTimePartGranularity = _messages.EnumField('GroupByDateTimePartGranularityValueValuesEnum', 3)
-  omitTotalSize = _messages.BooleanField(4)
-  orderBy = _messages.StringField(5)
-  pageSize = _messages.IntegerField(6, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(7)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
 
 
 class GroupFindingsResponse(_messages.Message):
@@ -6229,6 +7677,34 @@ class GroupFindingsResponse(_messages.Message):
   groupByResults = _messages.MessageField('GroupResult', 1, repeated=True)
   nextPageToken = _messages.StringField(2)
   totalSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+
+
+class GroupMembership(_messages.Message):
+  r"""Contains details about groups of which this finding is a member. A group
+  is a collection of findings that are related in some way.
+
+  Enums:
+    GroupTypeValueValuesEnum: Type of group.
+
+  Fields:
+    groupId: ID of the group.
+    groupType: Type of group.
+  """
+
+  class GroupTypeValueValuesEnum(_messages.Enum):
+    r"""Type of group.
+
+    Values:
+      GROUP_TYPE_UNSPECIFIED: Default value.
+      GROUP_TYPE_TOXIC_COMBINATION: Group represents a toxic combination.
+      GROUP_TYPE_CHOKEPOINT: Group represents a chokepoint.
+    """
+    GROUP_TYPE_UNSPECIFIED = 0
+    GROUP_TYPE_TOXIC_COMBINATION = 1
+    GROUP_TYPE_CHOKEPOINT = 2
+
+  groupId = _messages.StringField(1)
+  groupType = _messages.EnumField('GroupTypeValueValuesEnum', 2)
 
 
 class GroupResult(_messages.Message):
@@ -6322,6 +7798,108 @@ class Indicator(_messages.Message):
   ipAddresses = _messages.StringField(2, repeated=True)
   signatures = _messages.MessageField('ProcessSignature', 3, repeated=True)
   uris = _messages.StringField(4, repeated=True)
+
+
+class IpRule(_messages.Message):
+  r"""IP rule information.
+
+  Fields:
+    portRanges: Optional. An optional list of ports to which this rule
+      applies. This field is only applicable for the UDP or (S)TCP protocols.
+      Each entry must be either an integer or a range including a min and max
+      port number.
+    protocol: The IP protocol this rule applies to. This value can either be
+      one of the following well known protocol strings (TCP, UDP, ICMP, ESP,
+      AH, IPIP, SCTP) or a string representation of the integer value.
+  """
+
+  portRanges = _messages.MessageField('PortRange', 1, repeated=True)
+  protocol = _messages.StringField(2)
+
+
+class IpRules(_messages.Message):
+  r"""IP rules associated with the finding.
+
+  Enums:
+    DirectionValueValuesEnum: The direction that the rule is applicable to,
+      one of ingress or egress.
+
+  Fields:
+    allowed: Tuple with allowed rules.
+    denied: Tuple with denied rules.
+    destinationIpRanges: If destination IP ranges are specified, the firewall
+      rule applies only to traffic that has a destination IP address in these
+      ranges. These ranges must be expressed in CIDR format. Only supports
+      IPv4.
+    direction: The direction that the rule is applicable to, one of ingress or
+      egress.
+    exposedServices: Name of the network protocol service, such as FTP, that
+      is exposed by the open port. Follows the naming convention available at:
+      https://www.iana.org/assignments/service-names-port-numbers/service-
+      names-port-numbers.xhtml.
+    sourceIpRanges: If source IP ranges are specified, the firewall rule
+      applies only to traffic that has a source IP address in these ranges.
+      These ranges must be expressed in CIDR format. Only supports IPv4.
+  """
+
+  class DirectionValueValuesEnum(_messages.Enum):
+    r"""The direction that the rule is applicable to, one of ingress or
+    egress.
+
+    Values:
+      DIRECTION_UNSPECIFIED: Unspecified direction value.
+      INGRESS: Ingress direction value.
+      EGRESS: Egress direction value.
+    """
+    DIRECTION_UNSPECIFIED = 0
+    INGRESS = 1
+    EGRESS = 2
+
+  allowed = _messages.MessageField('Allowed', 1)
+  denied = _messages.MessageField('Denied', 2)
+  destinationIpRanges = _messages.StringField(3, repeated=True)
+  direction = _messages.EnumField('DirectionValueValuesEnum', 4)
+  exposedServices = _messages.StringField(5, repeated=True)
+  sourceIpRanges = _messages.StringField(6, repeated=True)
+
+
+class Job(_messages.Message):
+  r"""Describes a job
+
+  Enums:
+    StateValueValuesEnum: Output only. State of the job, such as `RUNNING` or
+      `PENDING`.
+
+  Fields:
+    errorCode: Optional. If the job did not complete successfully, this field
+      describes why.
+    location: Optional. Gives the location where the job ran, such as `US` or
+      `europe-west1`
+    name: The fully-qualified name for a job. e.g. `projects//jobs/`
+    state: Output only. State of the job, such as `RUNNING` or `PENDING`.
+  """
+
+  class StateValueValuesEnum(_messages.Enum):
+    r"""Output only. State of the job, such as `RUNNING` or `PENDING`.
+
+    Values:
+      JOB_STATE_UNSPECIFIED: Unspecified represents an unknown state and
+        should not be used.
+      PENDING: Job is scheduled and pending for run
+      RUNNING: Job in progress
+      SUCCEEDED: Job has completed with success
+      FAILED: Job has completed but with failure
+    """
+    JOB_STATE_UNSPECIFIED = 0
+    PENDING = 1
+    RUNNING = 2
+    SUCCEEDED = 3
+    FAILED = 4
+
+  errorCode = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  location = _messages.StringField(2)
+  name = _messages.StringField(3)
+  state = _messages.EnumField('StateValueValuesEnum', 4)
 
 
 class KernelRootkit(_messages.Message):
@@ -6434,33 +8012,6 @@ class ListBigQueryExportsResponse(_messages.Message):
   """
 
   bigQueryExports = _messages.MessageField('GoogleCloudSecuritycenterV2BigQueryExport', 1, repeated=True)
-  nextPageToken = _messages.StringField(2)
-
-
-class ListComplianceSnapshotsResponse(_messages.Message):
-  r"""Response message for list compliance snapshots.
-
-  Fields:
-    complianceSnapshots: Compliance snapshot results. There exists an element
-      for each existing unique category, project, and finding count.
-    nextPageToken: Token to retrieve the next page of results, or empty if
-      there are no more results.
-  """
-
-  complianceSnapshots = _messages.MessageField('ComplianceSnapshot', 1, repeated=True)
-  nextPageToken = _messages.StringField(2)
-
-
-class ListFindingFieldDetailsResponse(_messages.Message):
-  r"""Response message for listing finding field details.
-
-  Fields:
-    fieldDetails: Distinct finding property names.
-    nextPageToken: Token to retrieve the next page of results, or empty if
-      there are no more results.
-  """
-
-  fieldDetails = _messages.MessageField('FieldDetails', 1, repeated=True)
   nextPageToken = _messages.StringField(2)
 
 
@@ -6679,80 +8230,280 @@ class MitreAttack(_messages.Message):
 
     Values:
       TECHNIQUE_UNSPECIFIED: Unspecified value.
-      ACTIVE_SCANNING: T1595
-      SCANNING_IP_BLOCKS: T1595.001
-      INGRESS_TOOL_TRANSFER: T1105
-      NATIVE_API: T1106
-      SHARED_MODULES: T1129
+      DATA_OBFUSCATION: T1001
+      DATA_OBFUSCATION_STEGANOGRAPHY: T1001.002
+      OS_CREDENTIAL_DUMPING: T1003
+      OS_CREDENTIAL_DUMPING_PROC_FILESYSTEM: T1003.007
+      OS_CREDENTIAL_DUMPING_ETC_PASSWORD_AND_ETC_SHADOW: T1003.008
+      DATA_FROM_LOCAL_SYSTEM: T1005
+      AUTOMATED_EXFILTRATION: T1020
+      OBFUSCATED_FILES_OR_INFO: T1027
+      STEGANOGRAPHY: T1027.003
+      COMPILE_AFTER_DELIVERY: T1027.004
+      COMMAND_OBFUSCATION: T1027.010
+      SCHEDULED_TRANSFER: T1029
+      SYSTEM_OWNER_USER_DISCOVERY: T1033
+      MASQUERADING: T1036
+      MATCH_LEGITIMATE_NAME_OR_LOCATION: T1036.005
+      BOOT_OR_LOGON_INITIALIZATION_SCRIPTS: T1037
+      STARTUP_ITEMS: T1037.005
+      NETWORK_SERVICE_DISCOVERY: T1046
+      SCHEDULED_TASK_JOB: T1053
+      SCHEDULED_TASK_JOB_CRON: T1053.003
+      CONTAINER_ORCHESTRATION_JOB: T1053.007
+      PROCESS_INJECTION: T1055
+      INPUT_CAPTURE: T1056
+      INPUT_CAPTURE_KEYLOGGING: T1056.001
+      PROCESS_DISCOVERY: T1057
       COMMAND_AND_SCRIPTING_INTERPRETER: T1059
       UNIX_SHELL: T1059.004
-      RESOURCE_HIJACKING: T1496
+      PYTHON: T1059.006
+      EXPLOITATION_FOR_PRIVILEGE_ESCALATION: T1068
+      PERMISSION_GROUPS_DISCOVERY: T1069
+      CLOUD_GROUPS: T1069.003
+      INDICATOR_REMOVAL: T1070
+      INDICATOR_REMOVAL_CLEAR_LINUX_OR_MAC_SYSTEM_LOGS: T1070.002
+      INDICATOR_REMOVAL_CLEAR_COMMAND_HISTORY: T1070.003
+      INDICATOR_REMOVAL_FILE_DELETION: T1070.004
+      INDICATOR_REMOVAL_TIMESTOMP: T1070.006
+      INDICATOR_REMOVAL_CLEAR_MAILBOX_DATA: T1070.008
+      APPLICATION_LAYER_PROTOCOL: T1071
+      DNS: T1071.004
+      SOFTWARE_DEPLOYMENT_TOOLS: T1072
+      VALID_ACCOUNTS: T1078
+      DEFAULT_ACCOUNTS: T1078.001
+      LOCAL_ACCOUNTS: T1078.003
+      CLOUD_ACCOUNTS: T1078.004
+      FILE_AND_DIRECTORY_DISCOVERY: T1083
+      ACCOUNT_DISCOVERY_LOCAL_ACCOUNT: T1087.001
       PROXY: T1090
       EXTERNAL_PROXY: T1090.002
       MULTI_HOP_PROXY: T1090.003
-      DYNAMIC_RESOLUTION: T1568
-      UNSECURED_CREDENTIALS: T1552
-      VALID_ACCOUNTS: T1078
-      LOCAL_ACCOUNTS: T1078.003
-      CLOUD_ACCOUNTS: T1078.004
+      ACCOUNT_MANIPULATION: T1098
+      ADDITIONAL_CLOUD_CREDENTIALS: T1098.001
+      ADDITIONAL_CLOUD_ROLES: T1098.003
+      SSH_AUTHORIZED_KEYS: T1098.004
+      ADDITIONAL_CONTAINER_CLUSTER_ROLES: T1098.006
+      MULTI_STAGE_CHANNELS: T1104
+      INGRESS_TOOL_TRANSFER: T1105
+      NATIVE_API: T1106
+      BRUTE_FORCE: T1110
+      AUTOMATED_COLLECTION: T1119
+      SHARED_MODULES: T1129
+      DATA_ENCODING: T1132
+      STANDARD_ENCODING: T1132.001
+      ACCESS_TOKEN_MANIPULATION: T1134
+      TOKEN_IMPERSONATION_OR_THEFT: T1134.001
+      CREATE_ACCOUNT: T1136
+      LOCAL_ACCOUNT: T1136.001
+      DEOBFUSCATE_DECODE_FILES_OR_INFO: T1140
+      EXPLOIT_PUBLIC_FACING_APPLICATION: T1190
+      SUPPLY_CHAIN_COMPROMISE: T1195
+      COMPROMISE_SOFTWARE_DEPENDENCIES_AND_DEVELOPMENT_TOOLS: T1195.001
+      EXPLOITATION_FOR_CLIENT_EXECUTION: T1203
+      USER_EXECUTION: T1204
+      LINUX_AND_MAC_FILE_AND_DIRECTORY_PERMISSIONS_MODIFICATION: T1222.002
+      DOMAIN_POLICY_MODIFICATION: T1484
+      DATA_DESTRUCTION: T1485
+      DATA_ENCRYPTED_FOR_IMPACT: T1486
+      SERVICE_STOP: T1489
+      INHIBIT_SYSTEM_RECOVERY: T1490
+      FIRMWARE_CORRUPTION: T1495
+      RESOURCE_HIJACKING: T1496
       NETWORK_DENIAL_OF_SERVICE: T1498
-      PERMISSION_GROUPS_DISCOVERY: T1069
-      CLOUD_GROUPS: T1069.003
+      CLOUD_SERVICE_DISCOVERY: T1526
+      STEAL_APPLICATION_ACCESS_TOKEN: T1528
+      ACCOUNT_ACCESS_REMOVAL: T1531
+      TRANSFER_DATA_TO_CLOUD_ACCOUNT: T1537
+      STEAL_WEB_SESSION_COOKIE: T1539
+      CREATE_OR_MODIFY_SYSTEM_PROCESS: T1543
+      EVENT_TRIGGERED_EXECUTION: T1546
+      BOOT_OR_LOGON_AUTOSTART_EXECUTION: T1547
+      KERNEL_MODULES_AND_EXTENSIONS: T1547.006
+      SHORTCUT_MODIFICATION: T1547.009
+      ABUSE_ELEVATION_CONTROL_MECHANISM: T1548
+      ABUSE_ELEVATION_CONTROL_MECHANISM_SETUID_AND_SETGID: T1548.001
+      ABUSE_ELEVATION_CONTROL_MECHANISM_SUDO_AND_SUDO_CACHING: T1548.003
+      UNSECURED_CREDENTIALS: T1552
+      CREDENTIALS_IN_FILES: T1552.001
+      BASH_HISTORY: T1552.003
+      PRIVATE_KEYS: T1552.004
+      SUBVERT_TRUST_CONTROL: T1553
+      INSTALL_ROOT_CERTIFICATE: T1553.004
+      COMPROMISE_HOST_SOFTWARE_BINARY: T1554
+      CREDENTIALS_FROM_PASSWORD_STORES: T1555
+      MODIFY_AUTHENTICATION_PROCESS: T1556
+      PLUGGABLE_AUTHENTICATION_MODULES: T1556.003
+      IMPAIR_DEFENSES: T1562
+      DISABLE_OR_MODIFY_TOOLS: T1562.001
+      INDICATOR_BLOCKING: T1562.006
+      DISABLE_OR_MODIFY_LINUX_AUDIT_SYSTEM: T1562.012
+      HIDE_ARTIFACTS: T1564
+      HIDDEN_FILES_AND_DIRECTORIES: T1564.001
+      HIDDEN_USERS: T1564.002
       EXFILTRATION_OVER_WEB_SERVICE: T1567
       EXFILTRATION_TO_CLOUD_STORAGE: T1567.002
-      ACCOUNT_MANIPULATION: T1098
-      SSH_AUTHORIZED_KEYS: T1098.004
-      CREATE_OR_MODIFY_SYSTEM_PROCESS: T1543
-      STEAL_WEB_SESSION_COOKIE: T1539
+      DYNAMIC_RESOLUTION: T1568
+      LATERAL_TOOL_TRANSFER: T1570
+      HIJACK_EXECUTION_FLOW: T1574
+      HIJACK_EXECUTION_FLOW_DYNAMIC_LINKER_HIJACKING: T1574.006
       MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE: T1578
-      EXPLOIT_PUBLIC_FACING_APPLICATION: T1190
-      MODIFY_AUTHENTICATION_PROCESS: T1556
-      DATA_DESTRUCTION: T1485
-      DOMAIN_POLICY_MODIFICATION: T1484
-      IMPAIR_DEFENSES: T1562
-      NETWORK_SERVICE_DISCOVERY: T1046
-      ACCESS_TOKEN_MANIPULATION: T1134
-      ABUSE_ELEVATION_CONTROL_MECHANISM: T1548
-      DEFAULT_ACCOUNTS: T1078.001
-      INHIBIT_SYSTEM_RECOVERY: T1490
+      CREATE_SNAPSHOT: T1578.001
+      CLOUD_INFRASTRUCTURE_DISCOVERY: T1580
+      DEVELOP_CAPABILITIES: T1587
+      DEVELOP_CAPABILITIES_MALWARE: T1587.001
+      OBTAIN_CAPABILITIES: T1588
+      OBTAIN_CAPABILITIES_MALWARE: T1588.001
+      OBTAIN_CAPABILITIES_VULNERABILITIES: T1588.006
+      ACTIVE_SCANNING: T1595
+      SCANNING_IP_BLOCKS: T1595.001
+      STAGE_CAPABILITIES: T1608
+      UPLOAD_MALWARE: T1608.001
+      CONTAINER_ADMINISTRATION_COMMAND: T1609
+      DEPLOY_CONTAINER: T1610
+      ESCAPE_TO_HOST: T1611
+      CONTAINER_AND_RESOURCE_DISCOVERY: T1613
+      REFLECTIVE_CODE_LOADING: T1620
+      STEAL_OR_FORGE_AUTHENTICATION_CERTIFICATES: T1649
+      FINANCIAL_THEFT: T1657
     """
     TECHNIQUE_UNSPECIFIED = 0
-    ACTIVE_SCANNING = 1
-    SCANNING_IP_BLOCKS = 2
-    INGRESS_TOOL_TRANSFER = 3
-    NATIVE_API = 4
-    SHARED_MODULES = 5
-    COMMAND_AND_SCRIPTING_INTERPRETER = 6
-    UNIX_SHELL = 7
-    RESOURCE_HIJACKING = 8
-    PROXY = 9
-    EXTERNAL_PROXY = 10
-    MULTI_HOP_PROXY = 11
-    DYNAMIC_RESOLUTION = 12
-    UNSECURED_CREDENTIALS = 13
-    VALID_ACCOUNTS = 14
-    LOCAL_ACCOUNTS = 15
-    CLOUD_ACCOUNTS = 16
-    NETWORK_DENIAL_OF_SERVICE = 17
-    PERMISSION_GROUPS_DISCOVERY = 18
-    CLOUD_GROUPS = 19
-    EXFILTRATION_OVER_WEB_SERVICE = 20
-    EXFILTRATION_TO_CLOUD_STORAGE = 21
-    ACCOUNT_MANIPULATION = 22
-    SSH_AUTHORIZED_KEYS = 23
-    CREATE_OR_MODIFY_SYSTEM_PROCESS = 24
-    STEAL_WEB_SESSION_COOKIE = 25
-    MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE = 26
-    EXPLOIT_PUBLIC_FACING_APPLICATION = 27
-    MODIFY_AUTHENTICATION_PROCESS = 28
-    DATA_DESTRUCTION = 29
-    DOMAIN_POLICY_MODIFICATION = 30
-    IMPAIR_DEFENSES = 31
-    NETWORK_SERVICE_DISCOVERY = 32
-    ACCESS_TOKEN_MANIPULATION = 33
-    ABUSE_ELEVATION_CONTROL_MECHANISM = 34
-    DEFAULT_ACCOUNTS = 35
-    INHIBIT_SYSTEM_RECOVERY = 36
+    DATA_OBFUSCATION = 1
+    DATA_OBFUSCATION_STEGANOGRAPHY = 2
+    OS_CREDENTIAL_DUMPING = 3
+    OS_CREDENTIAL_DUMPING_PROC_FILESYSTEM = 4
+    OS_CREDENTIAL_DUMPING_ETC_PASSWORD_AND_ETC_SHADOW = 5
+    DATA_FROM_LOCAL_SYSTEM = 6
+    AUTOMATED_EXFILTRATION = 7
+    OBFUSCATED_FILES_OR_INFO = 8
+    STEGANOGRAPHY = 9
+    COMPILE_AFTER_DELIVERY = 10
+    COMMAND_OBFUSCATION = 11
+    SCHEDULED_TRANSFER = 12
+    SYSTEM_OWNER_USER_DISCOVERY = 13
+    MASQUERADING = 14
+    MATCH_LEGITIMATE_NAME_OR_LOCATION = 15
+    BOOT_OR_LOGON_INITIALIZATION_SCRIPTS = 16
+    STARTUP_ITEMS = 17
+    NETWORK_SERVICE_DISCOVERY = 18
+    SCHEDULED_TASK_JOB = 19
+    SCHEDULED_TASK_JOB_CRON = 20
+    CONTAINER_ORCHESTRATION_JOB = 21
+    PROCESS_INJECTION = 22
+    INPUT_CAPTURE = 23
+    INPUT_CAPTURE_KEYLOGGING = 24
+    PROCESS_DISCOVERY = 25
+    COMMAND_AND_SCRIPTING_INTERPRETER = 26
+    UNIX_SHELL = 27
+    PYTHON = 28
+    EXPLOITATION_FOR_PRIVILEGE_ESCALATION = 29
+    PERMISSION_GROUPS_DISCOVERY = 30
+    CLOUD_GROUPS = 31
+    INDICATOR_REMOVAL = 32
+    INDICATOR_REMOVAL_CLEAR_LINUX_OR_MAC_SYSTEM_LOGS = 33
+    INDICATOR_REMOVAL_CLEAR_COMMAND_HISTORY = 34
+    INDICATOR_REMOVAL_FILE_DELETION = 35
+    INDICATOR_REMOVAL_TIMESTOMP = 36
+    INDICATOR_REMOVAL_CLEAR_MAILBOX_DATA = 37
+    APPLICATION_LAYER_PROTOCOL = 38
+    DNS = 39
+    SOFTWARE_DEPLOYMENT_TOOLS = 40
+    VALID_ACCOUNTS = 41
+    DEFAULT_ACCOUNTS = 42
+    LOCAL_ACCOUNTS = 43
+    CLOUD_ACCOUNTS = 44
+    FILE_AND_DIRECTORY_DISCOVERY = 45
+    ACCOUNT_DISCOVERY_LOCAL_ACCOUNT = 46
+    PROXY = 47
+    EXTERNAL_PROXY = 48
+    MULTI_HOP_PROXY = 49
+    ACCOUNT_MANIPULATION = 50
+    ADDITIONAL_CLOUD_CREDENTIALS = 51
+    ADDITIONAL_CLOUD_ROLES = 52
+    SSH_AUTHORIZED_KEYS = 53
+    ADDITIONAL_CONTAINER_CLUSTER_ROLES = 54
+    MULTI_STAGE_CHANNELS = 55
+    INGRESS_TOOL_TRANSFER = 56
+    NATIVE_API = 57
+    BRUTE_FORCE = 58
+    AUTOMATED_COLLECTION = 59
+    SHARED_MODULES = 60
+    DATA_ENCODING = 61
+    STANDARD_ENCODING = 62
+    ACCESS_TOKEN_MANIPULATION = 63
+    TOKEN_IMPERSONATION_OR_THEFT = 64
+    CREATE_ACCOUNT = 65
+    LOCAL_ACCOUNT = 66
+    DEOBFUSCATE_DECODE_FILES_OR_INFO = 67
+    EXPLOIT_PUBLIC_FACING_APPLICATION = 68
+    SUPPLY_CHAIN_COMPROMISE = 69
+    COMPROMISE_SOFTWARE_DEPENDENCIES_AND_DEVELOPMENT_TOOLS = 70
+    EXPLOITATION_FOR_CLIENT_EXECUTION = 71
+    USER_EXECUTION = 72
+    LINUX_AND_MAC_FILE_AND_DIRECTORY_PERMISSIONS_MODIFICATION = 73
+    DOMAIN_POLICY_MODIFICATION = 74
+    DATA_DESTRUCTION = 75
+    DATA_ENCRYPTED_FOR_IMPACT = 76
+    SERVICE_STOP = 77
+    INHIBIT_SYSTEM_RECOVERY = 78
+    FIRMWARE_CORRUPTION = 79
+    RESOURCE_HIJACKING = 80
+    NETWORK_DENIAL_OF_SERVICE = 81
+    CLOUD_SERVICE_DISCOVERY = 82
+    STEAL_APPLICATION_ACCESS_TOKEN = 83
+    ACCOUNT_ACCESS_REMOVAL = 84
+    TRANSFER_DATA_TO_CLOUD_ACCOUNT = 85
+    STEAL_WEB_SESSION_COOKIE = 86
+    CREATE_OR_MODIFY_SYSTEM_PROCESS = 87
+    EVENT_TRIGGERED_EXECUTION = 88
+    BOOT_OR_LOGON_AUTOSTART_EXECUTION = 89
+    KERNEL_MODULES_AND_EXTENSIONS = 90
+    SHORTCUT_MODIFICATION = 91
+    ABUSE_ELEVATION_CONTROL_MECHANISM = 92
+    ABUSE_ELEVATION_CONTROL_MECHANISM_SETUID_AND_SETGID = 93
+    ABUSE_ELEVATION_CONTROL_MECHANISM_SUDO_AND_SUDO_CACHING = 94
+    UNSECURED_CREDENTIALS = 95
+    CREDENTIALS_IN_FILES = 96
+    BASH_HISTORY = 97
+    PRIVATE_KEYS = 98
+    SUBVERT_TRUST_CONTROL = 99
+    INSTALL_ROOT_CERTIFICATE = 100
+    COMPROMISE_HOST_SOFTWARE_BINARY = 101
+    CREDENTIALS_FROM_PASSWORD_STORES = 102
+    MODIFY_AUTHENTICATION_PROCESS = 103
+    PLUGGABLE_AUTHENTICATION_MODULES = 104
+    IMPAIR_DEFENSES = 105
+    DISABLE_OR_MODIFY_TOOLS = 106
+    INDICATOR_BLOCKING = 107
+    DISABLE_OR_MODIFY_LINUX_AUDIT_SYSTEM = 108
+    HIDE_ARTIFACTS = 109
+    HIDDEN_FILES_AND_DIRECTORIES = 110
+    HIDDEN_USERS = 111
+    EXFILTRATION_OVER_WEB_SERVICE = 112
+    EXFILTRATION_TO_CLOUD_STORAGE = 113
+    DYNAMIC_RESOLUTION = 114
+    LATERAL_TOOL_TRANSFER = 115
+    HIJACK_EXECUTION_FLOW = 116
+    HIJACK_EXECUTION_FLOW_DYNAMIC_LINKER_HIJACKING = 117
+    MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE = 118
+    CREATE_SNAPSHOT = 119
+    CLOUD_INFRASTRUCTURE_DISCOVERY = 120
+    DEVELOP_CAPABILITIES = 121
+    DEVELOP_CAPABILITIES_MALWARE = 122
+    OBTAIN_CAPABILITIES = 123
+    OBTAIN_CAPABILITIES_MALWARE = 124
+    OBTAIN_CAPABILITIES_VULNERABILITIES = 125
+    ACTIVE_SCANNING = 126
+    SCANNING_IP_BLOCKS = 127
+    STAGE_CAPABILITIES = 128
+    UPLOAD_MALWARE = 129
+    CONTAINER_ADMINISTRATION_COMMAND = 130
+    DEPLOY_CONTAINER = 131
+    ESCAPE_TO_HOST = 132
+    CONTAINER_AND_RESOURCE_DISCOVERY = 133
+    REFLECTIVE_CODE_LOADING = 134
+    STEAL_OR_FORGE_AUTHENTICATION_CERTIFICATES = 135
+    FINANCIAL_THEFT = 136
 
   class PrimaryTacticValueValuesEnum(_messages.Enum):
     r"""The MITRE ATT&CK tactic most closely represented by this finding, if
@@ -6796,86 +8547,313 @@ class MitreAttack(_messages.Message):
 
     Values:
       TECHNIQUE_UNSPECIFIED: Unspecified value.
-      ACTIVE_SCANNING: T1595
-      SCANNING_IP_BLOCKS: T1595.001
-      INGRESS_TOOL_TRANSFER: T1105
-      NATIVE_API: T1106
-      SHARED_MODULES: T1129
+      DATA_OBFUSCATION: T1001
+      DATA_OBFUSCATION_STEGANOGRAPHY: T1001.002
+      OS_CREDENTIAL_DUMPING: T1003
+      OS_CREDENTIAL_DUMPING_PROC_FILESYSTEM: T1003.007
+      OS_CREDENTIAL_DUMPING_ETC_PASSWORD_AND_ETC_SHADOW: T1003.008
+      DATA_FROM_LOCAL_SYSTEM: T1005
+      AUTOMATED_EXFILTRATION: T1020
+      OBFUSCATED_FILES_OR_INFO: T1027
+      STEGANOGRAPHY: T1027.003
+      COMPILE_AFTER_DELIVERY: T1027.004
+      COMMAND_OBFUSCATION: T1027.010
+      SCHEDULED_TRANSFER: T1029
+      SYSTEM_OWNER_USER_DISCOVERY: T1033
+      MASQUERADING: T1036
+      MATCH_LEGITIMATE_NAME_OR_LOCATION: T1036.005
+      BOOT_OR_LOGON_INITIALIZATION_SCRIPTS: T1037
+      STARTUP_ITEMS: T1037.005
+      NETWORK_SERVICE_DISCOVERY: T1046
+      SCHEDULED_TASK_JOB: T1053
+      SCHEDULED_TASK_JOB_CRON: T1053.003
+      CONTAINER_ORCHESTRATION_JOB: T1053.007
+      PROCESS_INJECTION: T1055
+      INPUT_CAPTURE: T1056
+      INPUT_CAPTURE_KEYLOGGING: T1056.001
+      PROCESS_DISCOVERY: T1057
       COMMAND_AND_SCRIPTING_INTERPRETER: T1059
       UNIX_SHELL: T1059.004
-      RESOURCE_HIJACKING: T1496
+      PYTHON: T1059.006
+      EXPLOITATION_FOR_PRIVILEGE_ESCALATION: T1068
+      PERMISSION_GROUPS_DISCOVERY: T1069
+      CLOUD_GROUPS: T1069.003
+      INDICATOR_REMOVAL: T1070
+      INDICATOR_REMOVAL_CLEAR_LINUX_OR_MAC_SYSTEM_LOGS: T1070.002
+      INDICATOR_REMOVAL_CLEAR_COMMAND_HISTORY: T1070.003
+      INDICATOR_REMOVAL_FILE_DELETION: T1070.004
+      INDICATOR_REMOVAL_TIMESTOMP: T1070.006
+      INDICATOR_REMOVAL_CLEAR_MAILBOX_DATA: T1070.008
+      APPLICATION_LAYER_PROTOCOL: T1071
+      DNS: T1071.004
+      SOFTWARE_DEPLOYMENT_TOOLS: T1072
+      VALID_ACCOUNTS: T1078
+      DEFAULT_ACCOUNTS: T1078.001
+      LOCAL_ACCOUNTS: T1078.003
+      CLOUD_ACCOUNTS: T1078.004
+      FILE_AND_DIRECTORY_DISCOVERY: T1083
+      ACCOUNT_DISCOVERY_LOCAL_ACCOUNT: T1087.001
       PROXY: T1090
       EXTERNAL_PROXY: T1090.002
       MULTI_HOP_PROXY: T1090.003
-      DYNAMIC_RESOLUTION: T1568
-      UNSECURED_CREDENTIALS: T1552
-      VALID_ACCOUNTS: T1078
-      LOCAL_ACCOUNTS: T1078.003
-      CLOUD_ACCOUNTS: T1078.004
+      ACCOUNT_MANIPULATION: T1098
+      ADDITIONAL_CLOUD_CREDENTIALS: T1098.001
+      ADDITIONAL_CLOUD_ROLES: T1098.003
+      SSH_AUTHORIZED_KEYS: T1098.004
+      ADDITIONAL_CONTAINER_CLUSTER_ROLES: T1098.006
+      MULTI_STAGE_CHANNELS: T1104
+      INGRESS_TOOL_TRANSFER: T1105
+      NATIVE_API: T1106
+      BRUTE_FORCE: T1110
+      AUTOMATED_COLLECTION: T1119
+      SHARED_MODULES: T1129
+      DATA_ENCODING: T1132
+      STANDARD_ENCODING: T1132.001
+      ACCESS_TOKEN_MANIPULATION: T1134
+      TOKEN_IMPERSONATION_OR_THEFT: T1134.001
+      CREATE_ACCOUNT: T1136
+      LOCAL_ACCOUNT: T1136.001
+      DEOBFUSCATE_DECODE_FILES_OR_INFO: T1140
+      EXPLOIT_PUBLIC_FACING_APPLICATION: T1190
+      SUPPLY_CHAIN_COMPROMISE: T1195
+      COMPROMISE_SOFTWARE_DEPENDENCIES_AND_DEVELOPMENT_TOOLS: T1195.001
+      EXPLOITATION_FOR_CLIENT_EXECUTION: T1203
+      USER_EXECUTION: T1204
+      LINUX_AND_MAC_FILE_AND_DIRECTORY_PERMISSIONS_MODIFICATION: T1222.002
+      DOMAIN_POLICY_MODIFICATION: T1484
+      DATA_DESTRUCTION: T1485
+      DATA_ENCRYPTED_FOR_IMPACT: T1486
+      SERVICE_STOP: T1489
+      INHIBIT_SYSTEM_RECOVERY: T1490
+      FIRMWARE_CORRUPTION: T1495
+      RESOURCE_HIJACKING: T1496
       NETWORK_DENIAL_OF_SERVICE: T1498
-      PERMISSION_GROUPS_DISCOVERY: T1069
-      CLOUD_GROUPS: T1069.003
+      CLOUD_SERVICE_DISCOVERY: T1526
+      STEAL_APPLICATION_ACCESS_TOKEN: T1528
+      ACCOUNT_ACCESS_REMOVAL: T1531
+      TRANSFER_DATA_TO_CLOUD_ACCOUNT: T1537
+      STEAL_WEB_SESSION_COOKIE: T1539
+      CREATE_OR_MODIFY_SYSTEM_PROCESS: T1543
+      EVENT_TRIGGERED_EXECUTION: T1546
+      BOOT_OR_LOGON_AUTOSTART_EXECUTION: T1547
+      KERNEL_MODULES_AND_EXTENSIONS: T1547.006
+      SHORTCUT_MODIFICATION: T1547.009
+      ABUSE_ELEVATION_CONTROL_MECHANISM: T1548
+      ABUSE_ELEVATION_CONTROL_MECHANISM_SETUID_AND_SETGID: T1548.001
+      ABUSE_ELEVATION_CONTROL_MECHANISM_SUDO_AND_SUDO_CACHING: T1548.003
+      UNSECURED_CREDENTIALS: T1552
+      CREDENTIALS_IN_FILES: T1552.001
+      BASH_HISTORY: T1552.003
+      PRIVATE_KEYS: T1552.004
+      SUBVERT_TRUST_CONTROL: T1553
+      INSTALL_ROOT_CERTIFICATE: T1553.004
+      COMPROMISE_HOST_SOFTWARE_BINARY: T1554
+      CREDENTIALS_FROM_PASSWORD_STORES: T1555
+      MODIFY_AUTHENTICATION_PROCESS: T1556
+      PLUGGABLE_AUTHENTICATION_MODULES: T1556.003
+      IMPAIR_DEFENSES: T1562
+      DISABLE_OR_MODIFY_TOOLS: T1562.001
+      INDICATOR_BLOCKING: T1562.006
+      DISABLE_OR_MODIFY_LINUX_AUDIT_SYSTEM: T1562.012
+      HIDE_ARTIFACTS: T1564
+      HIDDEN_FILES_AND_DIRECTORIES: T1564.001
+      HIDDEN_USERS: T1564.002
       EXFILTRATION_OVER_WEB_SERVICE: T1567
       EXFILTRATION_TO_CLOUD_STORAGE: T1567.002
-      ACCOUNT_MANIPULATION: T1098
-      SSH_AUTHORIZED_KEYS: T1098.004
-      CREATE_OR_MODIFY_SYSTEM_PROCESS: T1543
-      STEAL_WEB_SESSION_COOKIE: T1539
+      DYNAMIC_RESOLUTION: T1568
+      LATERAL_TOOL_TRANSFER: T1570
+      HIJACK_EXECUTION_FLOW: T1574
+      HIJACK_EXECUTION_FLOW_DYNAMIC_LINKER_HIJACKING: T1574.006
       MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE: T1578
-      EXPLOIT_PUBLIC_FACING_APPLICATION: T1190
-      MODIFY_AUTHENTICATION_PROCESS: T1556
-      DATA_DESTRUCTION: T1485
-      DOMAIN_POLICY_MODIFICATION: T1484
-      IMPAIR_DEFENSES: T1562
-      NETWORK_SERVICE_DISCOVERY: T1046
-      ACCESS_TOKEN_MANIPULATION: T1134
-      ABUSE_ELEVATION_CONTROL_MECHANISM: T1548
-      DEFAULT_ACCOUNTS: T1078.001
-      INHIBIT_SYSTEM_RECOVERY: T1490
+      CREATE_SNAPSHOT: T1578.001
+      CLOUD_INFRASTRUCTURE_DISCOVERY: T1580
+      DEVELOP_CAPABILITIES: T1587
+      DEVELOP_CAPABILITIES_MALWARE: T1587.001
+      OBTAIN_CAPABILITIES: T1588
+      OBTAIN_CAPABILITIES_MALWARE: T1588.001
+      OBTAIN_CAPABILITIES_VULNERABILITIES: T1588.006
+      ACTIVE_SCANNING: T1595
+      SCANNING_IP_BLOCKS: T1595.001
+      STAGE_CAPABILITIES: T1608
+      UPLOAD_MALWARE: T1608.001
+      CONTAINER_ADMINISTRATION_COMMAND: T1609
+      DEPLOY_CONTAINER: T1610
+      ESCAPE_TO_HOST: T1611
+      CONTAINER_AND_RESOURCE_DISCOVERY: T1613
+      REFLECTIVE_CODE_LOADING: T1620
+      STEAL_OR_FORGE_AUTHENTICATION_CERTIFICATES: T1649
+      FINANCIAL_THEFT: T1657
     """
     TECHNIQUE_UNSPECIFIED = 0
-    ACTIVE_SCANNING = 1
-    SCANNING_IP_BLOCKS = 2
-    INGRESS_TOOL_TRANSFER = 3
-    NATIVE_API = 4
-    SHARED_MODULES = 5
-    COMMAND_AND_SCRIPTING_INTERPRETER = 6
-    UNIX_SHELL = 7
-    RESOURCE_HIJACKING = 8
-    PROXY = 9
-    EXTERNAL_PROXY = 10
-    MULTI_HOP_PROXY = 11
-    DYNAMIC_RESOLUTION = 12
-    UNSECURED_CREDENTIALS = 13
-    VALID_ACCOUNTS = 14
-    LOCAL_ACCOUNTS = 15
-    CLOUD_ACCOUNTS = 16
-    NETWORK_DENIAL_OF_SERVICE = 17
-    PERMISSION_GROUPS_DISCOVERY = 18
-    CLOUD_GROUPS = 19
-    EXFILTRATION_OVER_WEB_SERVICE = 20
-    EXFILTRATION_TO_CLOUD_STORAGE = 21
-    ACCOUNT_MANIPULATION = 22
-    SSH_AUTHORIZED_KEYS = 23
-    CREATE_OR_MODIFY_SYSTEM_PROCESS = 24
-    STEAL_WEB_SESSION_COOKIE = 25
-    MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE = 26
-    EXPLOIT_PUBLIC_FACING_APPLICATION = 27
-    MODIFY_AUTHENTICATION_PROCESS = 28
-    DATA_DESTRUCTION = 29
-    DOMAIN_POLICY_MODIFICATION = 30
-    IMPAIR_DEFENSES = 31
-    NETWORK_SERVICE_DISCOVERY = 32
-    ACCESS_TOKEN_MANIPULATION = 33
-    ABUSE_ELEVATION_CONTROL_MECHANISM = 34
-    DEFAULT_ACCOUNTS = 35
-    INHIBIT_SYSTEM_RECOVERY = 36
+    DATA_OBFUSCATION = 1
+    DATA_OBFUSCATION_STEGANOGRAPHY = 2
+    OS_CREDENTIAL_DUMPING = 3
+    OS_CREDENTIAL_DUMPING_PROC_FILESYSTEM = 4
+    OS_CREDENTIAL_DUMPING_ETC_PASSWORD_AND_ETC_SHADOW = 5
+    DATA_FROM_LOCAL_SYSTEM = 6
+    AUTOMATED_EXFILTRATION = 7
+    OBFUSCATED_FILES_OR_INFO = 8
+    STEGANOGRAPHY = 9
+    COMPILE_AFTER_DELIVERY = 10
+    COMMAND_OBFUSCATION = 11
+    SCHEDULED_TRANSFER = 12
+    SYSTEM_OWNER_USER_DISCOVERY = 13
+    MASQUERADING = 14
+    MATCH_LEGITIMATE_NAME_OR_LOCATION = 15
+    BOOT_OR_LOGON_INITIALIZATION_SCRIPTS = 16
+    STARTUP_ITEMS = 17
+    NETWORK_SERVICE_DISCOVERY = 18
+    SCHEDULED_TASK_JOB = 19
+    SCHEDULED_TASK_JOB_CRON = 20
+    CONTAINER_ORCHESTRATION_JOB = 21
+    PROCESS_INJECTION = 22
+    INPUT_CAPTURE = 23
+    INPUT_CAPTURE_KEYLOGGING = 24
+    PROCESS_DISCOVERY = 25
+    COMMAND_AND_SCRIPTING_INTERPRETER = 26
+    UNIX_SHELL = 27
+    PYTHON = 28
+    EXPLOITATION_FOR_PRIVILEGE_ESCALATION = 29
+    PERMISSION_GROUPS_DISCOVERY = 30
+    CLOUD_GROUPS = 31
+    INDICATOR_REMOVAL = 32
+    INDICATOR_REMOVAL_CLEAR_LINUX_OR_MAC_SYSTEM_LOGS = 33
+    INDICATOR_REMOVAL_CLEAR_COMMAND_HISTORY = 34
+    INDICATOR_REMOVAL_FILE_DELETION = 35
+    INDICATOR_REMOVAL_TIMESTOMP = 36
+    INDICATOR_REMOVAL_CLEAR_MAILBOX_DATA = 37
+    APPLICATION_LAYER_PROTOCOL = 38
+    DNS = 39
+    SOFTWARE_DEPLOYMENT_TOOLS = 40
+    VALID_ACCOUNTS = 41
+    DEFAULT_ACCOUNTS = 42
+    LOCAL_ACCOUNTS = 43
+    CLOUD_ACCOUNTS = 44
+    FILE_AND_DIRECTORY_DISCOVERY = 45
+    ACCOUNT_DISCOVERY_LOCAL_ACCOUNT = 46
+    PROXY = 47
+    EXTERNAL_PROXY = 48
+    MULTI_HOP_PROXY = 49
+    ACCOUNT_MANIPULATION = 50
+    ADDITIONAL_CLOUD_CREDENTIALS = 51
+    ADDITIONAL_CLOUD_ROLES = 52
+    SSH_AUTHORIZED_KEYS = 53
+    ADDITIONAL_CONTAINER_CLUSTER_ROLES = 54
+    MULTI_STAGE_CHANNELS = 55
+    INGRESS_TOOL_TRANSFER = 56
+    NATIVE_API = 57
+    BRUTE_FORCE = 58
+    AUTOMATED_COLLECTION = 59
+    SHARED_MODULES = 60
+    DATA_ENCODING = 61
+    STANDARD_ENCODING = 62
+    ACCESS_TOKEN_MANIPULATION = 63
+    TOKEN_IMPERSONATION_OR_THEFT = 64
+    CREATE_ACCOUNT = 65
+    LOCAL_ACCOUNT = 66
+    DEOBFUSCATE_DECODE_FILES_OR_INFO = 67
+    EXPLOIT_PUBLIC_FACING_APPLICATION = 68
+    SUPPLY_CHAIN_COMPROMISE = 69
+    COMPROMISE_SOFTWARE_DEPENDENCIES_AND_DEVELOPMENT_TOOLS = 70
+    EXPLOITATION_FOR_CLIENT_EXECUTION = 71
+    USER_EXECUTION = 72
+    LINUX_AND_MAC_FILE_AND_DIRECTORY_PERMISSIONS_MODIFICATION = 73
+    DOMAIN_POLICY_MODIFICATION = 74
+    DATA_DESTRUCTION = 75
+    DATA_ENCRYPTED_FOR_IMPACT = 76
+    SERVICE_STOP = 77
+    INHIBIT_SYSTEM_RECOVERY = 78
+    FIRMWARE_CORRUPTION = 79
+    RESOURCE_HIJACKING = 80
+    NETWORK_DENIAL_OF_SERVICE = 81
+    CLOUD_SERVICE_DISCOVERY = 82
+    STEAL_APPLICATION_ACCESS_TOKEN = 83
+    ACCOUNT_ACCESS_REMOVAL = 84
+    TRANSFER_DATA_TO_CLOUD_ACCOUNT = 85
+    STEAL_WEB_SESSION_COOKIE = 86
+    CREATE_OR_MODIFY_SYSTEM_PROCESS = 87
+    EVENT_TRIGGERED_EXECUTION = 88
+    BOOT_OR_LOGON_AUTOSTART_EXECUTION = 89
+    KERNEL_MODULES_AND_EXTENSIONS = 90
+    SHORTCUT_MODIFICATION = 91
+    ABUSE_ELEVATION_CONTROL_MECHANISM = 92
+    ABUSE_ELEVATION_CONTROL_MECHANISM_SETUID_AND_SETGID = 93
+    ABUSE_ELEVATION_CONTROL_MECHANISM_SUDO_AND_SUDO_CACHING = 94
+    UNSECURED_CREDENTIALS = 95
+    CREDENTIALS_IN_FILES = 96
+    BASH_HISTORY = 97
+    PRIVATE_KEYS = 98
+    SUBVERT_TRUST_CONTROL = 99
+    INSTALL_ROOT_CERTIFICATE = 100
+    COMPROMISE_HOST_SOFTWARE_BINARY = 101
+    CREDENTIALS_FROM_PASSWORD_STORES = 102
+    MODIFY_AUTHENTICATION_PROCESS = 103
+    PLUGGABLE_AUTHENTICATION_MODULES = 104
+    IMPAIR_DEFENSES = 105
+    DISABLE_OR_MODIFY_TOOLS = 106
+    INDICATOR_BLOCKING = 107
+    DISABLE_OR_MODIFY_LINUX_AUDIT_SYSTEM = 108
+    HIDE_ARTIFACTS = 109
+    HIDDEN_FILES_AND_DIRECTORIES = 110
+    HIDDEN_USERS = 111
+    EXFILTRATION_OVER_WEB_SERVICE = 112
+    EXFILTRATION_TO_CLOUD_STORAGE = 113
+    DYNAMIC_RESOLUTION = 114
+    LATERAL_TOOL_TRANSFER = 115
+    HIJACK_EXECUTION_FLOW = 116
+    HIJACK_EXECUTION_FLOW_DYNAMIC_LINKER_HIJACKING = 117
+    MODIFY_CLOUD_COMPUTE_INFRASTRUCTURE = 118
+    CREATE_SNAPSHOT = 119
+    CLOUD_INFRASTRUCTURE_DISCOVERY = 120
+    DEVELOP_CAPABILITIES = 121
+    DEVELOP_CAPABILITIES_MALWARE = 122
+    OBTAIN_CAPABILITIES = 123
+    OBTAIN_CAPABILITIES_MALWARE = 124
+    OBTAIN_CAPABILITIES_VULNERABILITIES = 125
+    ACTIVE_SCANNING = 126
+    SCANNING_IP_BLOCKS = 127
+    STAGE_CAPABILITIES = 128
+    UPLOAD_MALWARE = 129
+    CONTAINER_ADMINISTRATION_COMMAND = 130
+    DEPLOY_CONTAINER = 131
+    ESCAPE_TO_HOST = 132
+    CONTAINER_AND_RESOURCE_DISCOVERY = 133
+    REFLECTIVE_CODE_LOADING = 134
+    STEAL_OR_FORGE_AUTHENTICATION_CERTIFICATES = 135
+    FINANCIAL_THEFT = 136
 
   additionalTactics = _messages.EnumField('AdditionalTacticsValueListEntryValuesEnum', 1, repeated=True)
   additionalTechniques = _messages.EnumField('AdditionalTechniquesValueListEntryValuesEnum', 2, repeated=True)
   primaryTactic = _messages.EnumField('PrimaryTacticValueValuesEnum', 3)
   primaryTechniques = _messages.EnumField('PrimaryTechniquesValueListEntryValuesEnum', 4, repeated=True)
   version = _messages.StringField(5)
+
+
+class MuteInfo(_messages.Message):
+  r"""Mute information about the finding, including whether the finding has a
+  static mute or any matching dynamic mute rules.
+
+  Fields:
+    dynamicMuteRecords: The list of dynamic mute rules that currently match
+      the finding.
+    staticMute: If set, the static mute applied to this finding. Static mutes
+      override dynamic mutes. If unset, there is no static mute.
+  """
+
+  dynamicMuteRecords = _messages.MessageField('DynamicMuteRecord', 1, repeated=True)
+  staticMute = _messages.MessageField('StaticMute', 2)
+
+
+class Network(_messages.Message):
+  r"""Contains information about a VPC network associated with the finding.
+
+  Fields:
+    name: The name of the VPC network resource, for example,
+      `//compute.googleapis.com/projects/my-project/global/networks/my-
+      network`.
+  """
+
+  name = _messages.StringField(1)
 
 
 class Node(_messages.Message):
@@ -6901,6 +8879,24 @@ class NodePool(_messages.Message):
   nodes = _messages.MessageField('Node', 2, repeated=True)
 
 
+class Notebook(_messages.Message):
+  r"""Represents a Jupyter notebook IPYNB file, such as a [Colab Enterprise
+  notebook](https://cloud.google.com/colab/docs/introduction) file, that is
+  associated with a finding.
+
+  Fields:
+    lastAuthor: The user ID of the latest author to modify the notebook.
+    name: The name of the notebook.
+    notebookUpdateTime: The most recent time the notebook was updated.
+    service: The source notebook service, for example, "Colab Enterprise".
+  """
+
+  lastAuthor = _messages.StringField(1)
+  name = _messages.StringField(2)
+  notebookUpdateTime = _messages.StringField(3)
+  service = _messages.StringField(4)
+
+
 class NotificationConfig(_messages.Message):
   r"""Cloud Security Command Center (Cloud SCC) notification configs. A
   notification config is a Cloud SCC resource that contains the configuration
@@ -6909,28 +8905,28 @@ class NotificationConfig(_messages.Message):
   Fields:
     description: The description of the notification config (max of 1024
       characters).
-    includeTags: Indicates whether the tags will be added to the Notifications
-      for this Notification config.
-    name: The relative resource name of this notification config. See:
-      https://cloud.google.com/apis/design/resource_names#relative_resource_na
-      me The following list shows some examples: + `organizations/{organizatio
-      n_id}/locations/{location_id}/notificationConfigs/notify_public_bucket`
-      + `folders/{folder_id}/locations/{location_id}/notificationConfigs/notif
-      y_public_bucket` + `projects/{project_id}/locations/{location_id}/notifi
-      cationConfigs/notify_public_bucket`
+    name: Identifier. The relative resource name of this notification config.
+      See: https://cloud.google.com/apis/design/resource_names#relative_resour
+      ce_name The following list shows some examples: + `organizations/{organi
+      zation_id}/locations/{location_id}/notificationConfigs/notify_public_buc
+      ket` + `folders/{folder_id}/locations/{location_id}/notificationConfigs/
+      notify_public_bucket` + `projects/{project_id}/locations/{location_id}/n
+      otificationConfigs/notify_public_bucket`
     pubsubTopic: The Pub/Sub topic to send notifications to. Its format is
       "projects/[project_id]/topics/[topic]".
     serviceAccount: Output only. The service account that needs
       "pubsub.topics.publish" permission to publish to the Pub/Sub topic.
     streamingConfig: The config for triggering streaming-based notifications.
+    updateTime: Output only. The timestamp of when the notification config was
+      last updated.
   """
 
   description = _messages.StringField(1)
-  includeTags = _messages.BooleanField(2)
-  name = _messages.StringField(3)
-  pubsubTopic = _messages.StringField(4)
-  serviceAccount = _messages.StringField(5)
-  streamingConfig = _messages.MessageField('StreamingConfig', 6)
+  name = _messages.StringField(2)
+  pubsubTopic = _messages.StringField(3)
+  serviceAccount = _messages.StringField(4)
+  streamingConfig = _messages.MessageField('StreamingConfig', 5)
+  updateTime = _messages.StringField(6)
 
 
 class Object(_messages.Message):
@@ -7097,7 +9093,7 @@ class PathNodeAssociatedFinding(_messages.Message):
 
   Fields:
     canonicalFinding: Canonical name of the associated findings. Example:
-      organizations/123/sources/456/findings/789
+      `organizations/123/sources/456/findings/789`
     findingCategory: The additional taxonomy group within findings from a
       given source.
     name: Full resource name of the finding.
@@ -7106,6 +9102,20 @@ class PathNodeAssociatedFinding(_messages.Message):
   canonicalFinding = _messages.StringField(1)
   findingCategory = _messages.StringField(2)
   name = _messages.StringField(3)
+
+
+class Pipeline(_messages.Message):
+  r"""Vertex AI training pipeline associated with the finding.
+
+  Fields:
+    displayName: The user defined display name of pipeline, e.g. plants-
+      classification
+    name: Resource name of pipeline, e.g. projects/{project}/locations/{locati
+      on}/trainingPipelines/5253428229225578496
+  """
+
+  displayName = _messages.StringField(1)
+  name = _messages.StringField(2)
 
 
 class Pod(_messages.Message):
@@ -7205,7 +9215,7 @@ class Policy(_messages.Message):
 
 class PolicyDriftDetails(_messages.Message):
   r"""The policy field that violates the deployed posture and its expected and
-  and detected values.
+  detected values.
 
   Fields:
     detectedValue: The detected value that violates the deployed posture, for
@@ -7219,6 +9229,20 @@ class PolicyDriftDetails(_messages.Message):
   detectedValue = _messages.StringField(1)
   expectedValue = _messages.StringField(2)
   field = _messages.StringField(3)
+
+
+class PortRange(_messages.Message):
+  r"""A port range which is inclusive of the min and max values. Values are
+  between 0 and 2^16-1. The max can be equal / must be not smaller than the
+  min value. If min and max are equal this indicates that it is a single port.
+
+  Fields:
+    max: Maximum port value.
+    min: Minimum port value.
+  """
+
+  max = _messages.IntegerField(1)
+  min = _messages.IntegerField(2)
 
 
 class Process(_messages.Message):
@@ -7298,6 +9322,25 @@ class Reference(_messages.Message):
   uri = _messages.StringField(2)
 
 
+class Requests(_messages.Message):
+  r"""Information about the requests relevant to the finding.
+
+  Fields:
+    longTermAllowed: Allowed RPS (requests per second) over the long term.
+    longTermDenied: Denied RPS (requests per second) over the long term.
+    ratio: For 'Increasing deny ratio', the ratio is the denied traffic
+      divided by the allowed traffic. For 'Allowed traffic spike', the ratio
+      is the allowed traffic in the short term divided by allowed traffic in
+      the long term.
+    shortTermAllowed: Allowed RPS (requests per second) in the short term.
+  """
+
+  longTermAllowed = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  longTermDenied = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  ratio = _messages.FloatField(3)
+  shortTermAllowed = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+
+
 class Resource(_messages.Message):
   r"""Information related to the Google Cloud resource that is associated with
   this finding.
@@ -7317,15 +9360,15 @@ class Resource(_messages.Message):
       https://cloud.google.com/apis/design/resource_names#full_resource_name
     resourcePath: Provides the path to the resource within the resource
       hierarchy.
-    resourcePathString: A string representation of the resource path. For GCP,
-      it has the format of: organizations/{organization_id}/folders/{folder_id
-      }/folders/{folder_id}/projects/{project_id} where there can be any
-      number of folders. For AWS, it has the format of: org/{organization_id}/
-      ou/{organizational_unit_id}/ou/{organizational_unit_id}/account/{account
-      _id} where there can be any number of organizational units. For Azure,
-      it has the format of: mg/{management_group_id}/mg/{management_group_id}/
-      subscription/{subscription_id}/rg/{resource_group_name} where there can
-      be any number of management groups.
+    resourcePathString: A string representation of the resource path. For
+      Google Cloud, it has the format of `organizations/{organization_id}/fold
+      ers/{folder_id}/folders/{folder_id}/projects/{project_id}` where there
+      can be any number of folders. For AWS, it has the format of `org/{organi
+      zation_id}/ou/{organizational_unit_id}/ou/{organizational_unit_id}/accou
+      nt/{account_id}` where there can be any number of organizational units.
+      For Azure, it has the format of `mg/{management_group_id}/mg/{management
+      _group_id}/subscription/{subscription_id}/rg/{resource_group_name}`
+      where there can be any number of management groups.
     service: The service or resource provider associated with the resource.
     type: The full resource type of the resource.
   """
@@ -7355,6 +9398,62 @@ class Resource(_messages.Message):
   resourcePathString = _messages.StringField(9)
   service = _messages.StringField(10)
   type = _messages.StringField(11)
+
+
+class ResourcePath(_messages.Message):
+  r"""Represents the path of resources leading up to the resource this finding
+  is about.
+
+  Fields:
+    nodes: The list of nodes that make the up resource path, ordered from
+      lowest level to highest level.
+  """
+
+  nodes = _messages.MessageField('ResourcePathNode', 1, repeated=True)
+
+
+class ResourcePathNode(_messages.Message):
+  r"""A node within the resource path. Each node represents a resource within
+  the resource hierarchy.
+
+  Enums:
+    NodeTypeValueValuesEnum: The type of resource this node represents.
+
+  Fields:
+    displayName: The display name of the resource this node represents.
+    id: The ID of the resource this node represents.
+    nodeType: The type of resource this node represents.
+  """
+
+  class NodeTypeValueValuesEnum(_messages.Enum):
+    r"""The type of resource this node represents.
+
+    Values:
+      RESOURCE_PATH_NODE_TYPE_UNSPECIFIED: Node type is unspecified.
+      GCP_ORGANIZATION: The node represents a Google Cloud organization.
+      GCP_FOLDER: The node represents a Google Cloud folder.
+      GCP_PROJECT: The node represents a Google Cloud project.
+      AWS_ORGANIZATION: The node represents an AWS organization.
+      AWS_ORGANIZATIONAL_UNIT: The node represents an AWS organizational unit.
+      AWS_ACCOUNT: The node represents an AWS account.
+      AZURE_MANAGEMENT_GROUP: The node represents an Azure management group.
+      AZURE_SUBSCRIPTION: The node represents an Azure subscription.
+      AZURE_RESOURCE_GROUP: The node represents an Azure resource group.
+    """
+    RESOURCE_PATH_NODE_TYPE_UNSPECIFIED = 0
+    GCP_ORGANIZATION = 1
+    GCP_FOLDER = 2
+    GCP_PROJECT = 3
+    AWS_ORGANIZATION = 4
+    AWS_ORGANIZATIONAL_UNIT = 5
+    AWS_ACCOUNT = 6
+    AZURE_MANAGEMENT_GROUP = 7
+    AZURE_SUBSCRIPTION = 8
+    AZURE_RESOURCE_GROUP = 9
+
+  displayName = _messages.StringField(1)
+  id = _messages.StringField(2)
+  nodeType = _messages.EnumField('NodeTypeValueValuesEnum', 3)
 
 
 class ResourceValueConfigMetadata(_messages.Message):
@@ -7484,6 +9583,25 @@ class SecurityMarks(_messages.Message):
   name = _messages.StringField(3)
 
 
+class SecurityPolicy(_messages.Message):
+  r"""Information about the [Google Cloud Armor security
+  policy](https://cloud.google.com/armor/docs/security-policy-overview)
+  relevant to the finding.
+
+  Fields:
+    name: The name of the Google Cloud Armor security policy, for example,
+      "my-security-policy".
+    preview: Whether or not the associated rule or policy is in preview mode.
+    type: The type of Google Cloud Armor security policy for example, 'backend
+      security policy', 'edge security policy', 'network edge security
+      policy', or 'always-on DDoS protection'.
+  """
+
+  name = _messages.StringField(1)
+  preview = _messages.BooleanField(2)
+  type = _messages.StringField(3)
+
+
 class SecurityPosture(_messages.Message):
   r"""Represents a posture that is deployed on Google Cloud by the Security
   Command Center Posture Management service. A posture contains one or more
@@ -7573,9 +9691,9 @@ class SecuritycenterFoldersLocationsBigQueryExportsCreateRequest(_messages.Messa
       request body.
     parent: Required. The name of the parent resource of the new BigQuery
       export. Its format is
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   bigQueryExportId = _messages.StringField(1)
@@ -7625,9 +9743,9 @@ class SecuritycenterFoldersLocationsBigQueryExportsListRequest(_messages.Message
       that provided the page token.
     parent: Required. The parent, which owns the collection of BigQuery
       exports. Its format is
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -7642,13 +9760,14 @@ class SecuritycenterFoldersLocationsBigQueryExportsPatchRequest(_messages.Messag
     googleCloudSecuritycenterV2BigQueryExport: A
       GoogleCloudSecuritycenterV2BigQueryExport resource to be passed as the
       request body.
-    name: The relative resource name of this export. See: https://cloud.google
-      .com/apis/design/resource_names#relative_resource_name. The following
-      list shows some examples: + `organizations/{organization_id}/locations/{
-      location_id}/bigQueryExports/{export_id}` + `folders/{folder_id}/locatio
-      ns/{location_id}/bigQueryExports/{export_id}` + `projects/{project_id}/l
-      ocations/{location_id}/bigQueryExports/{export_id}` This field is
-      provided in responses, and is ignored when provided in create requests.
+    name: Identifier. The relative resource name of this export. See: https://
+      cloud.google.com/apis/design/resource_names#relative_resource_name. The
+      following list shows some examples: + `organizations/{organization_id}/l
+      ocations/{location_id}/bigQueryExports/{export_id}` + `folders/{folder_i
+      d}/locations/{location_id}/bigQueryExports/{export_id}` + `projects/{pro
+      ject_id}/locations/{location_id}/bigQueryExports/{export_id}` This field
+      is provided in responses, and is ignored when provided in create
+      requests.
     updateMask: The list of fields to be updated. If empty all mutable fields
       will be updated.
   """
@@ -7689,9 +9808,9 @@ class SecuritycenterFoldersLocationsMuteConfigsCreateRequest(_messages.Message):
       and hyphens, must start with a letter, must end with either a letter or
       a number, and must be 63 characters or less.
     parent: Required. Resource name of the new mute configs's parent. Its
-      format is "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      format is `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   googleCloudSecuritycenterV2MuteConfig = _messages.MessageField('GoogleCloudSecuritycenterV2MuteConfig', 1)
@@ -7746,11 +9865,11 @@ class SecuritycenterFoldersLocationsMuteConfigsListRequest(_messages.Message):
       parameters provided to `ListMuteConfigs` must match the call that
       provided the page token.
     parent: Required. The parent, which owns the collection of mute configs.
-      Its format is "organizations/[organization_id]", "folders/[folder_id]",
-      "projects/[project_id]",
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]",
-      "projects/[project_id]/locations/[location_id]".
+      Its format is `organizations/[organization_id]", "folders/[folder_id]`,
+      `projects/[project_id]`,
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`,
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -7765,8 +9884,8 @@ class SecuritycenterFoldersLocationsMuteConfigsPatchRequest(_messages.Message):
     googleCloudSecuritycenterV2MuteConfig: A
       GoogleCloudSecuritycenterV2MuteConfig resource to be passed as the
       request body.
-    name: This field will be ignored if provided on config creation. The
-      following list shows some examples of the format: +
+    name: Identifier. This field will be ignored if provided on config
+      creation. The following list shows some examples of the format: +
       `organizations/{organization}/muteConfigs/{mute_config}` + `organization
       s/{organization}locations/{location}//muteConfigs/{mute_config}` +
       `folders/{folder}/muteConfigs/{mute_config}` +
@@ -7792,9 +9911,9 @@ class SecuritycenterFoldersLocationsNotificationConfigsCreateRequest(_messages.M
     notificationConfig: A NotificationConfig resource to be passed as the
       request body.
     parent: Required. Resource name of the new notification config's parent.
-      Its format is "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      Its format is `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   configId = _messages.StringField(1)
@@ -7857,13 +9976,13 @@ class SecuritycenterFoldersLocationsNotificationConfigsPatchRequest(_messages.Me
   r"""A SecuritycenterFoldersLocationsNotificationConfigsPatchRequest object.
 
   Fields:
-    name: The relative resource name of this notification config. See:
-      https://cloud.google.com/apis/design/resource_names#relative_resource_na
-      me The following list shows some examples: + `organizations/{organizatio
-      n_id}/locations/{location_id}/notificationConfigs/notify_public_bucket`
-      + `folders/{folder_id}/locations/{location_id}/notificationConfigs/notif
-      y_public_bucket` + `projects/{project_id}/locations/{location_id}/notifi
-      cationConfigs/notify_public_bucket`
+    name: Identifier. The relative resource name of this notification config.
+      See: https://cloud.google.com/apis/design/resource_names#relative_resour
+      ce_name The following list shows some examples: + `organizations/{organi
+      zation_id}/locations/{location_id}/notificationConfigs/notify_public_buc
+      ket` + `folders/{folder_id}/locations/{location_id}/notificationConfigs/
+      notify_public_bucket` + `projects/{project_id}/locations/{location_id}/n
+      otificationConfigs/notify_public_bucket`
     notificationConfig: A NotificationConfig resource to be passed as the
       request body.
     updateMask: The FieldMask to use when updating the notification config. If
@@ -7887,9 +10006,9 @@ class SecuritycenterFoldersMuteConfigsCreateRequest(_messages.Message):
       and hyphens, must start with a letter, must end with either a letter or
       a number, and must be 63 characters or less.
     parent: Required. Resource name of the new mute configs's parent. Its
-      format is "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      format is `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   googleCloudSecuritycenterV2MuteConfig = _messages.MessageField('GoogleCloudSecuritycenterV2MuteConfig', 1)
@@ -7944,11 +10063,11 @@ class SecuritycenterFoldersMuteConfigsListRequest(_messages.Message):
       parameters provided to `ListMuteConfigs` must match the call that
       provided the page token.
     parent: Required. The parent, which owns the collection of mute configs.
-      Its format is "organizations/[organization_id]", "folders/[folder_id]",
-      "projects/[project_id]",
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]",
-      "projects/[project_id]/locations/[location_id]".
+      Its format is `organizations/[organization_id]", "folders/[folder_id]`,
+      `projects/[project_id]`,
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`,
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -7963,8 +10082,8 @@ class SecuritycenterFoldersMuteConfigsPatchRequest(_messages.Message):
     googleCloudSecuritycenterV2MuteConfig: A
       GoogleCloudSecuritycenterV2MuteConfig resource to be passed as the
       request body.
-    name: This field will be ignored if provided on config creation. The
-      following list shows some examples of the format: +
+    name: Identifier. This field will be ignored if provided on config
+      creation. The following list shows some examples of the format: +
       `organizations/{organization}/muteConfigs/{mute_config}` + `organization
       s/{organization}locations/{location}//muteConfigs/{mute_config}` +
       `folders/{folder}/muteConfigs/{mute_config}` +
@@ -7978,19 +10097,6 @@ class SecuritycenterFoldersMuteConfigsPatchRequest(_messages.Message):
   googleCloudSecuritycenterV2MuteConfig = _messages.MessageField('GoogleCloudSecuritycenterV2MuteConfig', 1)
   name = _messages.StringField(2, required=True)
   updateMask = _messages.StringField(3)
-
-
-class SecuritycenterFoldersSourcesFindingsExplanationsGetRequest(_messages.Message):
-  r"""A SecuritycenterFoldersSourcesFindingsExplanationsGetRequest object.
-
-  Fields:
-    name: Required. Name of the finding explanation. Its format is "organizati
-      ons/{organization}/sources/{source}/findings/{finding}/explanations/{exp
-      lanation}" or "organizations/{organization}/sources/{source}/locations/{
-      location}/findings/{finding}/explanations/{explanation}"
-  """
-
-  name = _messages.StringField(1, required=True)
 
 
 class SecuritycenterFoldersSourcesFindingsExternalSystemsPatchRequest(_messages.Message):
@@ -8074,9 +10180,6 @@ class SecuritycenterFoldersSourcesFindingsListRequest(_messages.Message):
       * resource.project_display_name: `=`, `:` * resource.type: `=`, `:` *
       resource.folders.resource_folder: `=`, `:` * resource.display_name: `=`,
       `:`
-    omitTotalSize: Instructs the backend to not compute the total_size value
-      for the response. When this value is set total_size will be set to -1 in
-      the response.
     orderBy: Expression that defines what fields and order to use for sorting.
       The string value should follow SQL syntax: comma separated list of
       fields. For example: "name,parent". The default sorting order is
@@ -8110,11 +10213,10 @@ class SecuritycenterFoldersSourcesFindingsListRequest(_messages.Message):
 
   fieldMask = _messages.StringField(1)
   filter = _messages.StringField(2)
-  omitTotalSize = _messages.BooleanField(3)
-  orderBy = _messages.StringField(4)
-  pageSize = _messages.IntegerField(5, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(6)
-  parent = _messages.StringField(7, required=True)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
 
 
 class SecuritycenterFoldersSourcesFindingsPatchRequest(_messages.Message):
@@ -8123,14 +10225,14 @@ class SecuritycenterFoldersSourcesFindingsPatchRequest(_messages.Message):
   Fields:
     googleCloudSecuritycenterV2Finding: A GoogleCloudSecuritycenterV2Finding
       resource to be passed as the request body.
-    name: The [relative resource name](https://cloud.google.com/apis/design/re
-      source_names#relative_resource_name) of the finding. The following list
-      shows some examples: + `organizations/{organization_id}/sources/{source_
-      id}/findings/{finding_id}` + `organizations/{organization_id}/sources/{s
-      ource_id}/locations/{location_id}/findings/{finding_id}` +
-      `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `folde
-      rs/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{fin
-      ding_id}` +
+    name: Identifier. The [relative resource name](https://cloud.google.com/ap
+      is/design/resource_names#relative_resource_name) of the finding. The
+      following list shows some examples: + `organizations/{organization_id}/s
+      ources/{source_id}/findings/{finding_id}` + `organizations/{organization
+      _id}/sources/{source_id}/locations/{location_id}/findings/{finding_id}`
+      + `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `fol
+      ders/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{f
+      inding_id}` +
       `projects/{project_id}/sources/{source_id}/findings/{finding_id}` + `pro
       jects/{project_id}/sources/{source_id}/locations/{location_id}/findings/
       {finding_id}`
@@ -8229,8 +10331,8 @@ class SecuritycenterFoldersSourcesListRequest(_messages.Message):
       that this is a continuation of a prior `ListSources` call, and that the
       system should return the next page of data.
     parent: Required. Resource name of the parent of sources to list. Its
-      format should be "organizations/[organization_id]",
-      "folders/[folder_id]", or "projects/[project_id]".
+      format should be `organizations/[organization_id]`,
+      `folders/[folder_id]`, or `projects/[project_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -8238,46 +10340,18 @@ class SecuritycenterFoldersSourcesListRequest(_messages.Message):
   parent = _messages.StringField(3, required=True)
 
 
-class SecuritycenterFoldersSourcesLocationsComplianceSnapshotsListRequest(_messages.Message):
-  r"""A SecuritycenterFoldersSourcesLocationsComplianceSnapshotsListRequest
-  object.
+class SecuritycenterFoldersSourcesLocationsFindingsExportRequest(_messages.Message):
+  r"""A SecuritycenterFoldersSourcesLocationsFindingsExportRequest object.
 
   Fields:
-    filter: Optional. The filter for compliance snapshots.
-    pageSize: Optional. The maximum number of results to return in a single
-      response. Default is 10, minimum is 1, maximum is 1000.
-    pageToken: Optional. The value returned by the last
-      `ListComplianceSnapshotRequest`; indicates that this is a continuation
-      of a prior `ListComplianceSnapshotRequest` call and that the system
-      should return the next page of data.
-    parent: Required. The parent, which has the collection of finding
-      responses. Valid Formats:
-      "organizations/{organization}/sources/{sourceId}/locations/{location}"
-      "folders/{folder}/sources/{sourceId}/locations/{location}"
-      "projects/{project}/sources/{sourceId}/locations/{location}"
-      "organizations/{organization}/sources/-/locations/{location}"
-      "folders/{folder}/sources/-/locations/{location}"
-      "projects/{project}/sources/-/locations/{location}"
+    exportFindingsRequest: A ExportFindingsRequest resource to be passed as
+      the request body.
+    parent: Required. The relative name of the export scope. Example formats:
+      organizations/{organization}/sources/-/locations/{location}
   """
 
-  filter = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
-
-
-class SecuritycenterFoldersSourcesLocationsFindingsExplanationsGetRequest(_messages.Message):
-  r"""A SecuritycenterFoldersSourcesLocationsFindingsExplanationsGetRequest
-  object.
-
-  Fields:
-    name: Required. Name of the finding explanation. Its format is "organizati
-      ons/{organization}/sources/{source}/findings/{finding}/explanations/{exp
-      lanation}" or "organizations/{organization}/sources/{source}/locations/{
-      location}/findings/{finding}/explanations/{explanation}"
-  """
-
-  name = _messages.StringField(1, required=True)
+  exportFindingsRequest = _messages.MessageField('ExportFindingsRequest', 1)
+  parent = _messages.StringField(2, required=True)
 
 
 class SecuritycenterFoldersSourcesLocationsFindingsExternalSystemsPatchRequest(_messages.Message):
@@ -8335,61 +10409,6 @@ class SecuritycenterFoldersSourcesLocationsFindingsGroupRequest(_messages.Messag
   parent = _messages.StringField(2, required=True)
 
 
-class SecuritycenterFoldersSourcesLocationsFindingsListFindingFieldDetailsRequest(_messages.Message):
-  r"""A
-  SecuritycenterFoldersSourcesLocationsFindingsListFindingFieldDetailsRequest
-  object.
-
-  Enums:
-    PropertyTypeValueValuesEnum: Property type to filter on
-
-  Fields:
-    includeNestedContainsSubfields: The first level of contains subfields is
-      always included. This boolean determines whether subfields of subfield
-      lists and beyond should be included. e.g. { list: [{"subfield":1,
-      "list_subfield": [{"a":1}]}] } If below is false, we will not return
-      info about list_subfield using contains, and it's contains subfield "a".
-      If true the whole list hierarchy tree will be returned.
-    pageSize: The maximum number of results to return in a single response.
-      Default is 10, minimum is 1, maximum is 1000.
-    pageToken: The value returned by the last
-      `ListFindingFieldDetailsResponse; indicates that this is a continuation
-      of a prior `ListFindingFieldDetails` call, and that the system should
-      return the next page of data.
-    parent: Required. Name of the parent resource to list property names. The
-      following list shows some examples: + `organizations/[organization_id]/s
-      ources/[source_id]/locations/[location_id]` +
-      `folders/[folder_id]/sources/[source_id]/locations/[location_id]` +
-      `projects/[project_id]/sources/[source_id]/locations/[location_id]` To
-      retrieve names across all sources for a location, the source_id can be
-      `-`
-    propertyType: Property type to filter on
-  """
-
-  class PropertyTypeValueValuesEnum(_messages.Enum):
-    r"""Property type to filter on
-
-    Values:
-      PROPERTY_TYPE_UNSPECIFIED: Unspecified property type. Will not filter on
-        property type.
-      SOURCE: Source property type.
-      SECURITY_MARK: Security mark type.
-      SECURITY_CENTER: Security center attribute type.
-      RELATED_RESOURCE: Related resource type.
-    """
-    PROPERTY_TYPE_UNSPECIFIED = 0
-    SOURCE = 1
-    SECURITY_MARK = 2
-    SECURITY_CENTER = 3
-    RELATED_RESOURCE = 4
-
-  includeNestedContainsSubfields = _messages.BooleanField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
-  propertyType = _messages.EnumField('PropertyTypeValueValuesEnum', 5)
-
-
 class SecuritycenterFoldersSourcesLocationsFindingsListRequest(_messages.Message):
   r"""A SecuritycenterFoldersSourcesLocationsFindingsListRequest object.
 
@@ -8417,9 +10436,6 @@ class SecuritycenterFoldersSourcesLocationsFindingsListRequest(_messages.Message
       * resource.project_display_name: `=`, `:` * resource.type: `=`, `:` *
       resource.folders.resource_folder: `=`, `:` * resource.display_name: `=`,
       `:`
-    omitTotalSize: Instructs the backend to not compute the total_size value
-      for the response. When this value is set total_size will be set to -1 in
-      the response.
     orderBy: Expression that defines what fields and order to use for sorting.
       The string value should follow SQL syntax: comma separated list of
       fields. For example: "name,parent". The default sorting order is
@@ -8453,11 +10469,10 @@ class SecuritycenterFoldersSourcesLocationsFindingsListRequest(_messages.Message
 
   fieldMask = _messages.StringField(1)
   filter = _messages.StringField(2)
-  omitTotalSize = _messages.BooleanField(3)
-  orderBy = _messages.StringField(4)
-  pageSize = _messages.IntegerField(5, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(6)
-  parent = _messages.StringField(7, required=True)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
 
 
 class SecuritycenterFoldersSourcesLocationsFindingsPatchRequest(_messages.Message):
@@ -8466,14 +10481,14 @@ class SecuritycenterFoldersSourcesLocationsFindingsPatchRequest(_messages.Messag
   Fields:
     googleCloudSecuritycenterV2Finding: A GoogleCloudSecuritycenterV2Finding
       resource to be passed as the request body.
-    name: The [relative resource name](https://cloud.google.com/apis/design/re
-      source_names#relative_resource_name) of the finding. The following list
-      shows some examples: + `organizations/{organization_id}/sources/{source_
-      id}/findings/{finding_id}` + `organizations/{organization_id}/sources/{s
-      ource_id}/locations/{location_id}/findings/{finding_id}` +
-      `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `folde
-      rs/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{fin
-      ding_id}` +
+    name: Identifier. The [relative resource name](https://cloud.google.com/ap
+      is/design/resource_names#relative_resource_name) of the finding. The
+      following list shows some examples: + `organizations/{organization_id}/s
+      ources/{source_id}/findings/{finding_id}` + `organizations/{organization
+      _id}/sources/{source_id}/locations/{location_id}/findings/{finding_id}`
+      + `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `fol
+      ders/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{f
+      inding_id}` +
       `projects/{project_id}/sources/{source_id}/findings/{finding_id}` + `pro
       jects/{project_id}/sources/{source_id}/locations/{location_id}/findings/
       {finding_id}`
@@ -8589,26 +10604,29 @@ class SecuritycenterOrganizationsAssetsUpdateSecurityMarksRequest(_messages.Mess
   updateMask = _messages.StringField(3)
 
 
-class SecuritycenterOrganizationsAttackExposureResultsExposurePathsExplanationTypesGetExposurePathExplanationRequest(_messages.Message):
-  r"""A SecuritycenterOrganizationsAttackExposureResultsExposurePathsExplanati
-  onTypesGetExposurePathExplanationRequest object.
+class SecuritycenterOrganizationsAttackPathsListRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsAttackPathsListRequest object.
 
   Fields:
-    attackPathExplanationName: Optional. The name of the exposure path
-      explanation as a child of an attack path. If this field is populated,
-      the request name can have "0" as the resource ID for all segments except
-      the organization name. Its format is (note the difference from the
-      exposure path explanation): organizations/{organization}/simulations/{si
-      mulation_id}/valuedResources/{valued_resource}/attackPaths/{attack_path}
-      /explanations/{explanation}.
-    name: Required. Name of the exposure path explanation. Its format is organ
-      izations/{organization}/attackExposureResults/{attack_exposure_result}/e
-      xposurePaths/{exposure_path}/explanationTypes/{type}/exposurePathExplana
-      tion
+    filter: The filter expression that filters the attack path in the
+      response. Supported fields: * `valued_resources` supports =
+    pageSize: The maximum number of results to return in a single response.
+      Default is 10, minimum is 1, maximum is 1000.
+    pageToken: The value returned by the last `ListAttackPathsResponse`;
+      indicates that this is a continuation of a prior `ListAttackPaths` call,
+      and that the system should return the next page of data.
+    parent: Required. Name of parent to list attack paths. Valid formats:
+      `organizations/{organization}`,
+      `organizations/{organization}/simulations/{simulation}` `organizations/{
+      organization}/simulations/{simulation}/attackExposureResults/{attack_exp
+      osure_result_v2}` `organizations/{organization}/simulations/{simulation}
+      /valuedResources/{valued_resource}`
   """
 
-  attackPathExplanationName = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
+  filter = _messages.StringField(1)
+  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(3)
+  parent = _messages.StringField(4, required=True)
 
 
 class SecuritycenterOrganizationsFindingsBulkMuteRequest(_messages.Message):
@@ -8644,9 +10662,9 @@ class SecuritycenterOrganizationsLocationsBigQueryExportsCreateRequest(_messages
       request body.
     parent: Required. The name of the parent resource of the new BigQuery
       export. Its format is
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   bigQueryExportId = _messages.StringField(1)
@@ -8697,9 +10715,9 @@ class SecuritycenterOrganizationsLocationsBigQueryExportsListRequest(_messages.M
       that provided the page token.
     parent: Required. The parent, which owns the collection of BigQuery
       exports. Its format is
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -8715,13 +10733,14 @@ class SecuritycenterOrganizationsLocationsBigQueryExportsPatchRequest(_messages.
     googleCloudSecuritycenterV2BigQueryExport: A
       GoogleCloudSecuritycenterV2BigQueryExport resource to be passed as the
       request body.
-    name: The relative resource name of this export. See: https://cloud.google
-      .com/apis/design/resource_names#relative_resource_name. The following
-      list shows some examples: + `organizations/{organization_id}/locations/{
-      location_id}/bigQueryExports/{export_id}` + `folders/{folder_id}/locatio
-      ns/{location_id}/bigQueryExports/{export_id}` + `projects/{project_id}/l
-      ocations/{location_id}/bigQueryExports/{export_id}` This field is
-      provided in responses, and is ignored when provided in create requests.
+    name: Identifier. The relative resource name of this export. See: https://
+      cloud.google.com/apis/design/resource_names#relative_resource_name. The
+      following list shows some examples: + `organizations/{organization_id}/l
+      ocations/{location_id}/bigQueryExports/{export_id}` + `folders/{folder_i
+      d}/locations/{location_id}/bigQueryExports/{export_id}` + `projects/{pro
+      ject_id}/locations/{location_id}/bigQueryExports/{export_id}` This field
+      is provided in responses, and is ignored when provided in create
+      requests.
     updateMask: The list of fields to be updated. If empty all mutable fields
       will be updated.
   """
@@ -8762,9 +10781,9 @@ class SecuritycenterOrganizationsLocationsMuteConfigsCreateRequest(_messages.Mes
       and hyphens, must start with a letter, must end with either a letter or
       a number, and must be 63 characters or less.
     parent: Required. Resource name of the new mute configs's parent. Its
-      format is "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      format is `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   googleCloudSecuritycenterV2MuteConfig = _messages.MessageField('GoogleCloudSecuritycenterV2MuteConfig', 1)
@@ -8819,11 +10838,11 @@ class SecuritycenterOrganizationsLocationsMuteConfigsListRequest(_messages.Messa
       parameters provided to `ListMuteConfigs` must match the call that
       provided the page token.
     parent: Required. The parent, which owns the collection of mute configs.
-      Its format is "organizations/[organization_id]", "folders/[folder_id]",
-      "projects/[project_id]",
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]",
-      "projects/[project_id]/locations/[location_id]".
+      Its format is `organizations/[organization_id]", "folders/[folder_id]`,
+      `projects/[project_id]`,
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`,
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -8838,8 +10857,8 @@ class SecuritycenterOrganizationsLocationsMuteConfigsPatchRequest(_messages.Mess
     googleCloudSecuritycenterV2MuteConfig: A
       GoogleCloudSecuritycenterV2MuteConfig resource to be passed as the
       request body.
-    name: This field will be ignored if provided on config creation. The
-      following list shows some examples of the format: +
+    name: Identifier. This field will be ignored if provided on config
+      creation. The following list shows some examples of the format: +
       `organizations/{organization}/muteConfigs/{mute_config}` + `organization
       s/{organization}locations/{location}//muteConfigs/{mute_config}` +
       `folders/{folder}/muteConfigs/{mute_config}` +
@@ -8866,9 +10885,9 @@ class SecuritycenterOrganizationsLocationsNotificationConfigsCreateRequest(_mess
     notificationConfig: A NotificationConfig resource to be passed as the
       request body.
     parent: Required. Resource name of the new notification config's parent.
-      Its format is "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      Its format is `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   configId = _messages.StringField(1)
@@ -8935,13 +10954,13 @@ class SecuritycenterOrganizationsLocationsNotificationConfigsPatchRequest(_messa
   object.
 
   Fields:
-    name: The relative resource name of this notification config. See:
-      https://cloud.google.com/apis/design/resource_names#relative_resource_na
-      me The following list shows some examples: + `organizations/{organizatio
-      n_id}/locations/{location_id}/notificationConfigs/notify_public_bucket`
-      + `folders/{folder_id}/locations/{location_id}/notificationConfigs/notif
-      y_public_bucket` + `projects/{project_id}/locations/{location_id}/notifi
-      cationConfigs/notify_public_bucket`
+    name: Identifier. The relative resource name of this notification config.
+      See: https://cloud.google.com/apis/design/resource_names#relative_resour
+      ce_name The following list shows some examples: + `organizations/{organi
+      zation_id}/locations/{location_id}/notificationConfigs/notify_public_buc
+      ket` + `folders/{folder_id}/locations/{location_id}/notificationConfigs/
+      notify_public_bucket` + `projects/{project_id}/locations/{location_id}/n
+      otificationConfigs/notify_public_bucket`
     notificationConfig: A NotificationConfig resource to be passed as the
       request body.
     updateMask: The FieldMask to use when updating the notification config. If
@@ -8951,6 +10970,169 @@ class SecuritycenterOrganizationsLocationsNotificationConfigsPatchRequest(_messa
   name = _messages.StringField(1, required=True)
   notificationConfig = _messages.MessageField('NotificationConfig', 2)
   updateMask = _messages.StringField(3)
+
+
+class SecuritycenterOrganizationsLocationsResourceValueConfigsBatchCreateRequest(_messages.Message):
+  r"""A
+  SecuritycenterOrganizationsLocationsResourceValueConfigsBatchCreateRequest
+  object.
+
+  Fields:
+    batchCreateResourceValueConfigsRequest: A
+      BatchCreateResourceValueConfigsRequest resource to be passed as the
+      request body.
+    parent: Required. Resource name of the new ResourceValueConfig's parent.
+      The parent field in the CreateResourceValueConfigRequest messages must
+      either be empty or match this field.
+  """
+
+  batchCreateResourceValueConfigsRequest = _messages.MessageField('BatchCreateResourceValueConfigsRequest', 1)
+  parent = _messages.StringField(2, required=True)
+
+
+class SecuritycenterOrganizationsLocationsResourceValueConfigsDeleteRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsLocationsResourceValueConfigsDeleteRequest
+  object.
+
+  Fields:
+    name: Required. Name of the ResourceValueConfig to delete
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class SecuritycenterOrganizationsLocationsResourceValueConfigsGetRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsLocationsResourceValueConfigsGetRequest
+  object.
+
+  Fields:
+    name: Required. Name of the resource value config to retrieve. Its format
+      is organizations/{organization}/resourceValueConfigs/{config_id}.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class SecuritycenterOrganizationsLocationsResourceValueConfigsListRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsLocationsResourceValueConfigsListRequest
+  object.
+
+  Fields:
+    pageSize: The maximum number of configs to return. The service may return
+      fewer than this value. If unspecified, at most 10 configs will be
+      returned. The maximum value is 1000; values above 1000 will be coerced
+      to 1000.
+    pageToken: A page token, received from a previous
+      `ListResourceValueConfigs` call. Provide this to retrieve the subsequent
+      page. When paginating, all other parameters provided to
+      `ListResourceValueConfigs` must match the call that provided the page
+      token. page_size can be specified, and the new page_size will be used.
+    parent: Required. The parent, which owns the collection of resource value
+      configs. Its format is `organizations/[organization_id]`
+  """
+
+  pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+
+
+class SecuritycenterOrganizationsLocationsResourceValueConfigsPatchRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsLocationsResourceValueConfigsPatchRequest
+  object.
+
+  Fields:
+    googleCloudSecuritycenterV2ResourceValueConfig: A
+      GoogleCloudSecuritycenterV2ResourceValueConfig resource to be passed as
+      the request body.
+    name: Identifier. Name for the resource value configuration
+    updateMask: The list of fields to be updated. If empty all mutable fields
+      will be updated. To update nested fields, include the top level field in
+      the mask For example, to update gcp_metadata.resource_type, include the
+      "gcp_metadata" field mask
+  """
+
+  googleCloudSecuritycenterV2ResourceValueConfig = _messages.MessageField('GoogleCloudSecuritycenterV2ResourceValueConfig', 1)
+  name = _messages.StringField(2, required=True)
+  updateMask = _messages.StringField(3)
+
+
+class SecuritycenterOrganizationsLocationsSimulationsAttackExposureResultsAttackPathsListRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsLocationsSimulationsAttackExposureResultsAt
+  tackPathsListRequest object.
+
+  Fields:
+    filter: The filter expression that filters the attack path in the
+      response. Supported fields: * `valued_resources` supports =
+    pageSize: The maximum number of results to return in a single response.
+      Default is 10, minimum is 1, maximum is 1000.
+    pageToken: The value returned by the last `ListAttackPathsResponse`;
+      indicates that this is a continuation of a prior `ListAttackPaths` call,
+      and that the system should return the next page of data.
+    parent: Required. Name of parent to list attack paths. Valid formats:
+      `organizations/{organization}`,
+      `organizations/{organization}/simulations/{simulation}` `organizations/{
+      organization}/simulations/{simulation}/attackExposureResults/{attack_exp
+      osure_result_v2}` `organizations/{organization}/simulations/{simulation}
+      /valuedResources/{valued_resource}`
+  """
+
+  filter = _messages.StringField(1)
+  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(3)
+  parent = _messages.StringField(4, required=True)
+
+
+class SecuritycenterOrganizationsLocationsSimulationsGetRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsLocationsSimulationsGetRequest object.
+
+  Fields:
+    name: Required. The organization name or simulation name of this
+      simulation Valid format:
+      `organizations/{organization}/simulations/latest`
+      `organizations/{organization}/simulations/{simulation}`
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class SecuritycenterOrganizationsLocationsSimulationsValuedResourcesAttackPathsListRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsLocationsSimulationsValuedResourcesAttackPa
+  thsListRequest object.
+
+  Fields:
+    filter: The filter expression that filters the attack path in the
+      response. Supported fields: * `valued_resources` supports =
+    pageSize: The maximum number of results to return in a single response.
+      Default is 10, minimum is 1, maximum is 1000.
+    pageToken: The value returned by the last `ListAttackPathsResponse`;
+      indicates that this is a continuation of a prior `ListAttackPaths` call,
+      and that the system should return the next page of data.
+    parent: Required. Name of parent to list attack paths. Valid formats:
+      `organizations/{organization}`,
+      `organizations/{organization}/simulations/{simulation}` `organizations/{
+      organization}/simulations/{simulation}/attackExposureResults/{attack_exp
+      osure_result_v2}` `organizations/{organization}/simulations/{simulation}
+      /valuedResources/{valued_resource}`
+  """
+
+  filter = _messages.StringField(1)
+  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(3)
+  parent = _messages.StringField(4, required=True)
+
+
+class SecuritycenterOrganizationsLocationsSimulationsValuedResourcesGetRequest(_messages.Message):
+  r"""A
+  SecuritycenterOrganizationsLocationsSimulationsValuedResourcesGetRequest
+  object.
+
+  Fields:
+    name: Required. The name of this valued resource Valid format: `organizati
+      ons/{organization}/simulations/{simulation}/valuedResources/{valued_reso
+      urce}`
+  """
+
+  name = _messages.StringField(1, required=True)
 
 
 class SecuritycenterOrganizationsMuteConfigsCreateRequest(_messages.Message):
@@ -8965,9 +11147,9 @@ class SecuritycenterOrganizationsMuteConfigsCreateRequest(_messages.Message):
       and hyphens, must start with a letter, must end with either a letter or
       a number, and must be 63 characters or less.
     parent: Required. Resource name of the new mute configs's parent. Its
-      format is "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      format is `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   googleCloudSecuritycenterV2MuteConfig = _messages.MessageField('GoogleCloudSecuritycenterV2MuteConfig', 1)
@@ -9022,11 +11204,11 @@ class SecuritycenterOrganizationsMuteConfigsListRequest(_messages.Message):
       parameters provided to `ListMuteConfigs` must match the call that
       provided the page token.
     parent: Required. The parent, which owns the collection of mute configs.
-      Its format is "organizations/[organization_id]", "folders/[folder_id]",
-      "projects/[project_id]",
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]",
-      "projects/[project_id]/locations/[location_id]".
+      Its format is `organizations/[organization_id]", "folders/[folder_id]`,
+      `projects/[project_id]`,
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`,
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -9041,8 +11223,8 @@ class SecuritycenterOrganizationsMuteConfigsPatchRequest(_messages.Message):
     googleCloudSecuritycenterV2MuteConfig: A
       GoogleCloudSecuritycenterV2MuteConfig resource to be passed as the
       request body.
-    name: This field will be ignored if provided on config creation. The
-      following list shows some examples of the format: +
+    name: Identifier. This field will be ignored if provided on config
+      creation. The following list shows some examples of the format: +
       `organizations/{organization}/muteConfigs/{mute_config}` + `organization
       s/{organization}locations/{location}//muteConfigs/{mute_config}` +
       `folders/{folder}/muteConfigs/{mute_config}` +
@@ -9156,7 +11338,7 @@ class SecuritycenterOrganizationsResourceValueConfigsListRequest(_messages.Messa
       `ListResourceValueConfigs` must match the call that provided the page
       token. page_size can be specified, and the new page_size will be used.
     parent: Required. The parent, which owns the collection of resource value
-      configs. Its format is "organizations/[organization_id]"
+      configs. Its format is `organizations/[organization_id]`
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -9171,9 +11353,11 @@ class SecuritycenterOrganizationsResourceValueConfigsPatchRequest(_messages.Mess
     googleCloudSecuritycenterV2ResourceValueConfig: A
       GoogleCloudSecuritycenterV2ResourceValueConfig resource to be passed as
       the request body.
-    name: Name for the resource value config
+    name: Identifier. Name for the resource value configuration
     updateMask: The list of fields to be updated. If empty all mutable fields
-      will be updated.
+      will be updated. To update nested fields, include the top level field in
+      the mask For example, to update gcp_metadata.resource_type, include the
+      "gcp_metadata" field mask
   """
 
   googleCloudSecuritycenterV2ResourceValueConfig = _messages.MessageField('GoogleCloudSecuritycenterV2ResourceValueConfig', 1)
@@ -9194,11 +11378,11 @@ class SecuritycenterOrganizationsSimulationsAttackExposureResultsAttackPathsList
       indicates that this is a continuation of a prior `ListAttackPaths` call,
       and that the system should return the next page of data.
     parent: Required. Name of parent to list attack paths. Valid formats:
-      "organizations/{organization}",
-      "organizations/{organization}/simulations/{simulation}" "organizations/{
+      `organizations/{organization}`,
+      `organizations/{organization}/simulations/{simulation}` `organizations/{
       organization}/simulations/{simulation}/attackExposureResults/{attack_exp
-      osure_result_v2}" "organizations/{organization}/simulations/{simulation}
-      /valuedResources/{valued_resource}"
+      osure_result_v2}` `organizations/{organization}/simulations/{simulation}
+      /valuedResources/{valued_resource}`
   """
 
   filter = _messages.StringField(1)
@@ -9228,10 +11412,10 @@ class SecuritycenterOrganizationsSimulationsAttackExposureResultsValuedResources
       indicates that this is a continuation of a prior `ListValuedResources`
       call, and that the system should return the next page of data.
     parent: Required. Name of parent to list exposed resources. Valid formats:
-      "organizations/{organization}",
-      "organizations/{organization}/simulations/{simulation}" "organizations/{
+      `organizations/{organization}`,
+      `organizations/{organization}/simulations/{simulation}` `organizations/{
       organization}/simulations/{simulation}/attackExposureResults/{attack_exp
-      osure_result_v2}"
+      osure_result_v2}`
   """
 
   filter = _messages.StringField(1)
@@ -9253,11 +11437,11 @@ class SecuritycenterOrganizationsSimulationsAttackPathsListRequest(_messages.Mes
       indicates that this is a continuation of a prior `ListAttackPaths` call,
       and that the system should return the next page of data.
     parent: Required. Name of parent to list attack paths. Valid formats:
-      "organizations/{organization}",
-      "organizations/{organization}/simulations/{simulation}" "organizations/{
+      `organizations/{organization}`,
+      `organizations/{organization}/simulations/{simulation}` `organizations/{
       organization}/simulations/{simulation}/attackExposureResults/{attack_exp
-      osure_result_v2}" "organizations/{organization}/simulations/{simulation}
-      /valuedResources/{valued_resource}"
+      osure_result_v2}` `organizations/{organization}/simulations/{simulation}
+      /valuedResources/{valued_resource}`
   """
 
   filter = _messages.StringField(1)
@@ -9272,8 +11456,8 @@ class SecuritycenterOrganizationsSimulationsGetRequest(_messages.Message):
   Fields:
     name: Required. The organization name or simulation name of this
       simulation Valid format:
-      "organizations/{organization}/simulations/latest"
-      "organizations/{organization}/simulations/{simulation}"
+      `organizations/{organization}/simulations/latest`
+      `organizations/{organization}/simulations/{simulation}`
   """
 
   name = _messages.StringField(1, required=True)
@@ -9293,11 +11477,11 @@ class SecuritycenterOrganizationsSimulationsValuedResourcesAttackPathsListReques
       indicates that this is a continuation of a prior `ListAttackPaths` call,
       and that the system should return the next page of data.
     parent: Required. Name of parent to list attack paths. Valid formats:
-      "organizations/{organization}",
-      "organizations/{organization}/simulations/{simulation}" "organizations/{
+      `organizations/{organization}`,
+      `organizations/{organization}/simulations/{simulation}` `organizations/{
       organization}/simulations/{simulation}/attackExposureResults/{attack_exp
-      osure_result_v2}" "organizations/{organization}/simulations/{simulation}
-      /valuedResources/{valued_resource}"
+      osure_result_v2}` `organizations/{organization}/simulations/{simulation}
+      /valuedResources/{valued_resource}`
   """
 
   filter = _messages.StringField(1)
@@ -9311,9 +11495,9 @@ class SecuritycenterOrganizationsSimulationsValuedResourcesGetRequest(_messages.
   object.
 
   Fields:
-    name: Required. The name of this valued resource Valid format: "organizati
+    name: Required. The name of this valued resource Valid format: `organizati
       ons/{organization}/simulations/{simulation}/valuedResources/{valued_reso
-      urce}"
+      urce}`
   """
 
   name = _messages.StringField(1, required=True)
@@ -9340,10 +11524,10 @@ class SecuritycenterOrganizationsSimulationsValuedResourcesListRequest(_messages
       indicates that this is a continuation of a prior `ListValuedResources`
       call, and that the system should return the next page of data.
     parent: Required. Name of parent to list exposed resources. Valid formats:
-      "organizations/{organization}",
-      "organizations/{organization}/simulations/{simulation}" "organizations/{
+      `organizations/{organization}`,
+      `organizations/{organization}/simulations/{simulation}` `organizations/{
       organization}/simulations/{simulation}/attackExposureResults/{attack_exp
-      osure_result_v2}"
+      osure_result_v2}`
   """
 
   filter = _messages.StringField(1)
@@ -9358,7 +11542,7 @@ class SecuritycenterOrganizationsSourcesCreateRequest(_messages.Message):
 
   Fields:
     parent: Required. Resource name of the new source's parent. Its format
-      should be "organizations/[organization_id]".
+      should be `organizations/[organization_id]`.
     source: A Source resource to be passed as the request body.
   """
 
@@ -9384,20 +11568,6 @@ class SecuritycenterOrganizationsSourcesFindingsCreateRequest(_messages.Message)
   findingId = _messages.StringField(1)
   googleCloudSecuritycenterV2Finding = _messages.MessageField('GoogleCloudSecuritycenterV2Finding', 2)
   parent = _messages.StringField(3, required=True)
-
-
-class SecuritycenterOrganizationsSourcesFindingsExplanationsGetRequest(_messages.Message):
-  r"""A SecuritycenterOrganizationsSourcesFindingsExplanationsGetRequest
-  object.
-
-  Fields:
-    name: Required. Name of the finding explanation. Its format is "organizati
-      ons/{organization}/sources/{source}/findings/{finding}/explanations/{exp
-      lanation}" or "organizations/{organization}/sources/{source}/locations/{
-      location}/findings/{finding}/explanations/{explanation}"
-  """
-
-  name = _messages.StringField(1, required=True)
 
 
 class SecuritycenterOrganizationsSourcesFindingsExternalSystemsPatchRequest(_messages.Message):
@@ -9481,9 +11651,6 @@ class SecuritycenterOrganizationsSourcesFindingsListRequest(_messages.Message):
       * resource.project_display_name: `=`, `:` * resource.type: `=`, `:` *
       resource.folders.resource_folder: `=`, `:` * resource.display_name: `=`,
       `:`
-    omitTotalSize: Instructs the backend to not compute the total_size value
-      for the response. When this value is set total_size will be set to -1 in
-      the response.
     orderBy: Expression that defines what fields and order to use for sorting.
       The string value should follow SQL syntax: comma separated list of
       fields. For example: "name,parent". The default sorting order is
@@ -9517,11 +11684,10 @@ class SecuritycenterOrganizationsSourcesFindingsListRequest(_messages.Message):
 
   fieldMask = _messages.StringField(1)
   filter = _messages.StringField(2)
-  omitTotalSize = _messages.BooleanField(3)
-  orderBy = _messages.StringField(4)
-  pageSize = _messages.IntegerField(5, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(6)
-  parent = _messages.StringField(7, required=True)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
 
 
 class SecuritycenterOrganizationsSourcesFindingsPatchRequest(_messages.Message):
@@ -9530,14 +11696,14 @@ class SecuritycenterOrganizationsSourcesFindingsPatchRequest(_messages.Message):
   Fields:
     googleCloudSecuritycenterV2Finding: A GoogleCloudSecuritycenterV2Finding
       resource to be passed as the request body.
-    name: The [relative resource name](https://cloud.google.com/apis/design/re
-      source_names#relative_resource_name) of the finding. The following list
-      shows some examples: + `organizations/{organization_id}/sources/{source_
-      id}/findings/{finding_id}` + `organizations/{organization_id}/sources/{s
-      ource_id}/locations/{location_id}/findings/{finding_id}` +
-      `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `folde
-      rs/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{fin
-      ding_id}` +
+    name: Identifier. The [relative resource name](https://cloud.google.com/ap
+      is/design/resource_names#relative_resource_name) of the finding. The
+      following list shows some examples: + `organizations/{organization_id}/s
+      ources/{source_id}/findings/{finding_id}` + `organizations/{organization
+      _id}/sources/{source_id}/locations/{location_id}/findings/{finding_id}`
+      + `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `fol
+      ders/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{f
+      inding_id}` +
       `projects/{project_id}/sources/{source_id}/findings/{finding_id}` + `pro
       jects/{project_id}/sources/{source_id}/locations/{location_id}/findings/
       {finding_id}`
@@ -9648,7 +11814,7 @@ class SecuritycenterOrganizationsSourcesGetRequest(_messages.Message):
 
   Fields:
     name: Required. Relative resource name of the source. Its format is
-      "organizations/[organization_id]/source/[source_id]".
+      `organizations/[organization_id]/source/[source_id]`.
   """
 
   name = _messages.StringField(1, required=True)
@@ -9664,42 +11830,13 @@ class SecuritycenterOrganizationsSourcesListRequest(_messages.Message):
       that this is a continuation of a prior `ListSources` call, and that the
       system should return the next page of data.
     parent: Required. Resource name of the parent of sources to list. Its
-      format should be "organizations/[organization_id]",
-      "folders/[folder_id]", or "projects/[project_id]".
+      format should be `organizations/[organization_id]`,
+      `folders/[folder_id]`, or `projects/[project_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   pageToken = _messages.StringField(2)
   parent = _messages.StringField(3, required=True)
-
-
-class SecuritycenterOrganizationsSourcesLocationsComplianceSnapshotsListRequest(_messages.Message):
-  r"""A
-  SecuritycenterOrganizationsSourcesLocationsComplianceSnapshotsListRequest
-  object.
-
-  Fields:
-    filter: Optional. The filter for compliance snapshots.
-    pageSize: Optional. The maximum number of results to return in a single
-      response. Default is 10, minimum is 1, maximum is 1000.
-    pageToken: Optional. The value returned by the last
-      `ListComplianceSnapshotRequest`; indicates that this is a continuation
-      of a prior `ListComplianceSnapshotRequest` call and that the system
-      should return the next page of data.
-    parent: Required. The parent, which has the collection of finding
-      responses. Valid Formats:
-      "organizations/{organization}/sources/{sourceId}/locations/{location}"
-      "folders/{folder}/sources/{sourceId}/locations/{location}"
-      "projects/{project}/sources/{sourceId}/locations/{location}"
-      "organizations/{organization}/sources/-/locations/{location}"
-      "folders/{folder}/sources/-/locations/{location}"
-      "projects/{project}/sources/-/locations/{location}"
-  """
-
-  filter = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
 
 
 class SecuritycenterOrganizationsSourcesLocationsFindingsCreateRequest(_messages.Message):
@@ -9723,19 +11860,19 @@ class SecuritycenterOrganizationsSourcesLocationsFindingsCreateRequest(_messages
   parent = _messages.StringField(3, required=True)
 
 
-class SecuritycenterOrganizationsSourcesLocationsFindingsExplanationsGetRequest(_messages.Message):
-  r"""A
-  SecuritycenterOrganizationsSourcesLocationsFindingsExplanationsGetRequest
+class SecuritycenterOrganizationsSourcesLocationsFindingsExportRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsSourcesLocationsFindingsExportRequest
   object.
 
   Fields:
-    name: Required. Name of the finding explanation. Its format is "organizati
-      ons/{organization}/sources/{source}/findings/{finding}/explanations/{exp
-      lanation}" or "organizations/{organization}/sources/{source}/locations/{
-      location}/findings/{finding}/explanations/{explanation}"
+    exportFindingsRequest: A ExportFindingsRequest resource to be passed as
+      the request body.
+    parent: Required. The relative name of the export scope. Example formats:
+      organizations/{organization}/sources/-/locations/{location}
   """
 
-  name = _messages.StringField(1, required=True)
+  exportFindingsRequest = _messages.MessageField('ExportFindingsRequest', 1)
+  parent = _messages.StringField(2, required=True)
 
 
 class SecuritycenterOrganizationsSourcesLocationsFindingsExternalSystemsPatchRequest(_messages.Message):
@@ -9793,60 +11930,6 @@ class SecuritycenterOrganizationsSourcesLocationsFindingsGroupRequest(_messages.
   parent = _messages.StringField(2, required=True)
 
 
-class SecuritycenterOrganizationsSourcesLocationsFindingsListFindingFieldDetailsRequest(_messages.Message):
-  r"""A SecuritycenterOrganizationsSourcesLocationsFindingsListFindingFieldDet
-  ailsRequest object.
-
-  Enums:
-    PropertyTypeValueValuesEnum: Property type to filter on
-
-  Fields:
-    includeNestedContainsSubfields: The first level of contains subfields is
-      always included. This boolean determines whether subfields of subfield
-      lists and beyond should be included. e.g. { list: [{"subfield":1,
-      "list_subfield": [{"a":1}]}] } If below is false, we will not return
-      info about list_subfield using contains, and it's contains subfield "a".
-      If true the whole list hierarchy tree will be returned.
-    pageSize: The maximum number of results to return in a single response.
-      Default is 10, minimum is 1, maximum is 1000.
-    pageToken: The value returned by the last
-      `ListFindingFieldDetailsResponse; indicates that this is a continuation
-      of a prior `ListFindingFieldDetails` call, and that the system should
-      return the next page of data.
-    parent: Required. Name of the parent resource to list property names. The
-      following list shows some examples: + `organizations/[organization_id]/s
-      ources/[source_id]/locations/[location_id]` +
-      `folders/[folder_id]/sources/[source_id]/locations/[location_id]` +
-      `projects/[project_id]/sources/[source_id]/locations/[location_id]` To
-      retrieve names across all sources for a location, the source_id can be
-      `-`
-    propertyType: Property type to filter on
-  """
-
-  class PropertyTypeValueValuesEnum(_messages.Enum):
-    r"""Property type to filter on
-
-    Values:
-      PROPERTY_TYPE_UNSPECIFIED: Unspecified property type. Will not filter on
-        property type.
-      SOURCE: Source property type.
-      SECURITY_MARK: Security mark type.
-      SECURITY_CENTER: Security center attribute type.
-      RELATED_RESOURCE: Related resource type.
-    """
-    PROPERTY_TYPE_UNSPECIFIED = 0
-    SOURCE = 1
-    SECURITY_MARK = 2
-    SECURITY_CENTER = 3
-    RELATED_RESOURCE = 4
-
-  includeNestedContainsSubfields = _messages.BooleanField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
-  propertyType = _messages.EnumField('PropertyTypeValueValuesEnum', 5)
-
-
 class SecuritycenterOrganizationsSourcesLocationsFindingsListRequest(_messages.Message):
   r"""A SecuritycenterOrganizationsSourcesLocationsFindingsListRequest object.
 
@@ -9874,9 +11957,6 @@ class SecuritycenterOrganizationsSourcesLocationsFindingsListRequest(_messages.M
       * resource.project_display_name: `=`, `:` * resource.type: `=`, `:` *
       resource.folders.resource_folder: `=`, `:` * resource.display_name: `=`,
       `:`
-    omitTotalSize: Instructs the backend to not compute the total_size value
-      for the response. When this value is set total_size will be set to -1 in
-      the response.
     orderBy: Expression that defines what fields and order to use for sorting.
       The string value should follow SQL syntax: comma separated list of
       fields. For example: "name,parent". The default sorting order is
@@ -9910,11 +11990,10 @@ class SecuritycenterOrganizationsSourcesLocationsFindingsListRequest(_messages.M
 
   fieldMask = _messages.StringField(1)
   filter = _messages.StringField(2)
-  omitTotalSize = _messages.BooleanField(3)
-  orderBy = _messages.StringField(4)
-  pageSize = _messages.IntegerField(5, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(6)
-  parent = _messages.StringField(7, required=True)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
 
 
 class SecuritycenterOrganizationsSourcesLocationsFindingsPatchRequest(_messages.Message):
@@ -9924,14 +12003,14 @@ class SecuritycenterOrganizationsSourcesLocationsFindingsPatchRequest(_messages.
   Fields:
     googleCloudSecuritycenterV2Finding: A GoogleCloudSecuritycenterV2Finding
       resource to be passed as the request body.
-    name: The [relative resource name](https://cloud.google.com/apis/design/re
-      source_names#relative_resource_name) of the finding. The following list
-      shows some examples: + `organizations/{organization_id}/sources/{source_
-      id}/findings/{finding_id}` + `organizations/{organization_id}/sources/{s
-      ource_id}/locations/{location_id}/findings/{finding_id}` +
-      `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `folde
-      rs/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{fin
-      ding_id}` +
+    name: Identifier. The [relative resource name](https://cloud.google.com/ap
+      is/design/resource_names#relative_resource_name) of the finding. The
+      following list shows some examples: + `organizations/{organization_id}/s
+      ources/{source_id}/findings/{finding_id}` + `organizations/{organization
+      _id}/sources/{source_id}/locations/{location_id}/findings/{finding_id}`
+      + `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `fol
+      ders/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{f
+      inding_id}` +
       `projects/{project_id}/sources/{source_id}/findings/{finding_id}` + `pro
       jects/{project_id}/sources/{source_id}/locations/{location_id}/findings/
       {finding_id}`
@@ -10072,6 +12151,39 @@ class SecuritycenterOrganizationsSourcesTestIamPermissionsRequest(_messages.Mess
   testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
 
 
+class SecuritycenterOrganizationsValuedResourcesListRequest(_messages.Message):
+  r"""A SecuritycenterOrganizationsValuedResourcesListRequest object.
+
+  Fields:
+    filter: The filter expression that filters the valued resources in the
+      response. Supported fields: * `resource_value` supports = *
+      `resource_type` supports =
+    orderBy: Optional. The fields by which to order the valued resources
+      response. Supported fields: * `exposed_score` * `resource_value` *
+      `resource_type` Values should be a comma separated list of fields. For
+      example: `exposed_score,resource_value`. The default sorting order is
+      descending. To specify ascending or descending order for a field, append
+      a " ASC" or a " DESC" suffix, respectively; for example: `exposed_score
+      DESC`.
+    pageSize: The maximum number of results to return in a single response.
+      Default is 10, minimum is 1, maximum is 1000.
+    pageToken: The value returned by the last `ListValuedResourcesResponse`;
+      indicates that this is a continuation of a prior `ListValuedResources`
+      call, and that the system should return the next page of data.
+    parent: Required. Name of parent to list exposed resources. Valid formats:
+      `organizations/{organization}`,
+      `organizations/{organization}/simulations/{simulation}` `organizations/{
+      organization}/simulations/{simulation}/attackExposureResults/{attack_exp
+      osure_result_v2}`
+  """
+
+  filter = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
 class SecuritycenterProjectsAssetsUpdateSecurityMarksRequest(_messages.Message):
   r"""A SecuritycenterProjectsAssetsUpdateSecurityMarksRequest object.
 
@@ -10129,9 +12241,9 @@ class SecuritycenterProjectsLocationsBigQueryExportsCreateRequest(_messages.Mess
       request body.
     parent: Required. The name of the parent resource of the new BigQuery
       export. Its format is
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   bigQueryExportId = _messages.StringField(1)
@@ -10181,9 +12293,9 @@ class SecuritycenterProjectsLocationsBigQueryExportsListRequest(_messages.Messag
       that provided the page token.
     parent: Required. The parent, which owns the collection of BigQuery
       exports. Its format is
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -10198,13 +12310,14 @@ class SecuritycenterProjectsLocationsBigQueryExportsPatchRequest(_messages.Messa
     googleCloudSecuritycenterV2BigQueryExport: A
       GoogleCloudSecuritycenterV2BigQueryExport resource to be passed as the
       request body.
-    name: The relative resource name of this export. See: https://cloud.google
-      .com/apis/design/resource_names#relative_resource_name. The following
-      list shows some examples: + `organizations/{organization_id}/locations/{
-      location_id}/bigQueryExports/{export_id}` + `folders/{folder_id}/locatio
-      ns/{location_id}/bigQueryExports/{export_id}` + `projects/{project_id}/l
-      ocations/{location_id}/bigQueryExports/{export_id}` This field is
-      provided in responses, and is ignored when provided in create requests.
+    name: Identifier. The relative resource name of this export. See: https://
+      cloud.google.com/apis/design/resource_names#relative_resource_name. The
+      following list shows some examples: + `organizations/{organization_id}/l
+      ocations/{location_id}/bigQueryExports/{export_id}` + `folders/{folder_i
+      d}/locations/{location_id}/bigQueryExports/{export_id}` + `projects/{pro
+      ject_id}/locations/{location_id}/bigQueryExports/{export_id}` This field
+      is provided in responses, and is ignored when provided in create
+      requests.
     updateMask: The list of fields to be updated. If empty all mutable fields
       will be updated.
   """
@@ -10245,9 +12358,9 @@ class SecuritycenterProjectsLocationsMuteConfigsCreateRequest(_messages.Message)
       and hyphens, must start with a letter, must end with either a letter or
       a number, and must be 63 characters or less.
     parent: Required. Resource name of the new mute configs's parent. Its
-      format is "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      format is `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   googleCloudSecuritycenterV2MuteConfig = _messages.MessageField('GoogleCloudSecuritycenterV2MuteConfig', 1)
@@ -10302,11 +12415,11 @@ class SecuritycenterProjectsLocationsMuteConfigsListRequest(_messages.Message):
       parameters provided to `ListMuteConfigs` must match the call that
       provided the page token.
     parent: Required. The parent, which owns the collection of mute configs.
-      Its format is "organizations/[organization_id]", "folders/[folder_id]",
-      "projects/[project_id]",
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]",
-      "projects/[project_id]/locations/[location_id]".
+      Its format is `organizations/[organization_id]", "folders/[folder_id]`,
+      `projects/[project_id]`,
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`,
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -10321,8 +12434,8 @@ class SecuritycenterProjectsLocationsMuteConfigsPatchRequest(_messages.Message):
     googleCloudSecuritycenterV2MuteConfig: A
       GoogleCloudSecuritycenterV2MuteConfig resource to be passed as the
       request body.
-    name: This field will be ignored if provided on config creation. The
-      following list shows some examples of the format: +
+    name: Identifier. This field will be ignored if provided on config
+      creation. The following list shows some examples of the format: +
       `organizations/{organization}/muteConfigs/{mute_config}` + `organization
       s/{organization}locations/{location}//muteConfigs/{mute_config}` +
       `folders/{folder}/muteConfigs/{mute_config}` +
@@ -10349,9 +12462,9 @@ class SecuritycenterProjectsLocationsNotificationConfigsCreateRequest(_messages.
     notificationConfig: A NotificationConfig resource to be passed as the
       request body.
     parent: Required. Resource name of the new notification config's parent.
-      Its format is "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      Its format is `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   configId = _messages.StringField(1)
@@ -10415,13 +12528,13 @@ class SecuritycenterProjectsLocationsNotificationConfigsPatchRequest(_messages.M
   r"""A SecuritycenterProjectsLocationsNotificationConfigsPatchRequest object.
 
   Fields:
-    name: The relative resource name of this notification config. See:
-      https://cloud.google.com/apis/design/resource_names#relative_resource_na
-      me The following list shows some examples: + `organizations/{organizatio
-      n_id}/locations/{location_id}/notificationConfigs/notify_public_bucket`
-      + `folders/{folder_id}/locations/{location_id}/notificationConfigs/notif
-      y_public_bucket` + `projects/{project_id}/locations/{location_id}/notifi
-      cationConfigs/notify_public_bucket`
+    name: Identifier. The relative resource name of this notification config.
+      See: https://cloud.google.com/apis/design/resource_names#relative_resour
+      ce_name The following list shows some examples: + `organizations/{organi
+      zation_id}/locations/{location_id}/notificationConfigs/notify_public_buc
+      ket` + `folders/{folder_id}/locations/{location_id}/notificationConfigs/
+      notify_public_bucket` + `projects/{project_id}/locations/{location_id}/n
+      otificationConfigs/notify_public_bucket`
     notificationConfig: A NotificationConfig resource to be passed as the
       request body.
     updateMask: The FieldMask to use when updating the notification config. If
@@ -10445,9 +12558,9 @@ class SecuritycenterProjectsMuteConfigsCreateRequest(_messages.Message):
       and hyphens, must start with a letter, must end with either a letter or
       a number, and must be 63 characters or less.
     parent: Required. Resource name of the new mute configs's parent. Its
-      format is "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]", or
-      "projects/[project_id]/locations/[location_id]".
+      format is `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`, or
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   googleCloudSecuritycenterV2MuteConfig = _messages.MessageField('GoogleCloudSecuritycenterV2MuteConfig', 1)
@@ -10502,11 +12615,11 @@ class SecuritycenterProjectsMuteConfigsListRequest(_messages.Message):
       parameters provided to `ListMuteConfigs` must match the call that
       provided the page token.
     parent: Required. The parent, which owns the collection of mute configs.
-      Its format is "organizations/[organization_id]", "folders/[folder_id]",
-      "projects/[project_id]",
-      "organizations/[organization_id]/locations/[location_id]",
-      "folders/[folder_id]/locations/[location_id]",
-      "projects/[project_id]/locations/[location_id]".
+      Its format is `organizations/[organization_id]", "folders/[folder_id]`,
+      `projects/[project_id]`,
+      `organizations/[organization_id]/locations/[location_id]`,
+      `folders/[folder_id]/locations/[location_id]`,
+      `projects/[project_id]/locations/[location_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -10521,8 +12634,8 @@ class SecuritycenterProjectsMuteConfigsPatchRequest(_messages.Message):
     googleCloudSecuritycenterV2MuteConfig: A
       GoogleCloudSecuritycenterV2MuteConfig resource to be passed as the
       request body.
-    name: This field will be ignored if provided on config creation. The
-      following list shows some examples of the format: +
+    name: Identifier. This field will be ignored if provided on config
+      creation. The following list shows some examples of the format: +
       `organizations/{organization}/muteConfigs/{mute_config}` + `organization
       s/{organization}locations/{location}//muteConfigs/{mute_config}` +
       `folders/{folder}/muteConfigs/{mute_config}` +
@@ -10536,19 +12649,6 @@ class SecuritycenterProjectsMuteConfigsPatchRequest(_messages.Message):
   googleCloudSecuritycenterV2MuteConfig = _messages.MessageField('GoogleCloudSecuritycenterV2MuteConfig', 1)
   name = _messages.StringField(2, required=True)
   updateMask = _messages.StringField(3)
-
-
-class SecuritycenterProjectsSourcesFindingsExplanationsGetRequest(_messages.Message):
-  r"""A SecuritycenterProjectsSourcesFindingsExplanationsGetRequest object.
-
-  Fields:
-    name: Required. Name of the finding explanation. Its format is "organizati
-      ons/{organization}/sources/{source}/findings/{finding}/explanations/{exp
-      lanation}" or "organizations/{organization}/sources/{source}/locations/{
-      location}/findings/{finding}/explanations/{explanation}"
-  """
-
-  name = _messages.StringField(1, required=True)
 
 
 class SecuritycenterProjectsSourcesFindingsExternalSystemsPatchRequest(_messages.Message):
@@ -10632,9 +12732,6 @@ class SecuritycenterProjectsSourcesFindingsListRequest(_messages.Message):
       * resource.project_display_name: `=`, `:` * resource.type: `=`, `:` *
       resource.folders.resource_folder: `=`, `:` * resource.display_name: `=`,
       `:`
-    omitTotalSize: Instructs the backend to not compute the total_size value
-      for the response. When this value is set total_size will be set to -1 in
-      the response.
     orderBy: Expression that defines what fields and order to use for sorting.
       The string value should follow SQL syntax: comma separated list of
       fields. For example: "name,parent". The default sorting order is
@@ -10668,11 +12765,10 @@ class SecuritycenterProjectsSourcesFindingsListRequest(_messages.Message):
 
   fieldMask = _messages.StringField(1)
   filter = _messages.StringField(2)
-  omitTotalSize = _messages.BooleanField(3)
-  orderBy = _messages.StringField(4)
-  pageSize = _messages.IntegerField(5, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(6)
-  parent = _messages.StringField(7, required=True)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
 
 
 class SecuritycenterProjectsSourcesFindingsPatchRequest(_messages.Message):
@@ -10681,14 +12777,14 @@ class SecuritycenterProjectsSourcesFindingsPatchRequest(_messages.Message):
   Fields:
     googleCloudSecuritycenterV2Finding: A GoogleCloudSecuritycenterV2Finding
       resource to be passed as the request body.
-    name: The [relative resource name](https://cloud.google.com/apis/design/re
-      source_names#relative_resource_name) of the finding. The following list
-      shows some examples: + `organizations/{organization_id}/sources/{source_
-      id}/findings/{finding_id}` + `organizations/{organization_id}/sources/{s
-      ource_id}/locations/{location_id}/findings/{finding_id}` +
-      `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `folde
-      rs/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{fin
-      ding_id}` +
+    name: Identifier. The [relative resource name](https://cloud.google.com/ap
+      is/design/resource_names#relative_resource_name) of the finding. The
+      following list shows some examples: + `organizations/{organization_id}/s
+      ources/{source_id}/findings/{finding_id}` + `organizations/{organization
+      _id}/sources/{source_id}/locations/{location_id}/findings/{finding_id}`
+      + `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `fol
+      ders/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{f
+      inding_id}` +
       `projects/{project_id}/sources/{source_id}/findings/{finding_id}` + `pro
       jects/{project_id}/sources/{source_id}/locations/{location_id}/findings/
       {finding_id}`
@@ -10788,8 +12884,8 @@ class SecuritycenterProjectsSourcesListRequest(_messages.Message):
       that this is a continuation of a prior `ListSources` call, and that the
       system should return the next page of data.
     parent: Required. Resource name of the parent of sources to list. Its
-      format should be "organizations/[organization_id]",
-      "folders/[folder_id]", or "projects/[project_id]".
+      format should be `organizations/[organization_id]`,
+      `folders/[folder_id]`, or `projects/[project_id]`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -10797,46 +12893,18 @@ class SecuritycenterProjectsSourcesListRequest(_messages.Message):
   parent = _messages.StringField(3, required=True)
 
 
-class SecuritycenterProjectsSourcesLocationsComplianceSnapshotsListRequest(_messages.Message):
-  r"""A SecuritycenterProjectsSourcesLocationsComplianceSnapshotsListRequest
-  object.
+class SecuritycenterProjectsSourcesLocationsFindingsExportRequest(_messages.Message):
+  r"""A SecuritycenterProjectsSourcesLocationsFindingsExportRequest object.
 
   Fields:
-    filter: Optional. The filter for compliance snapshots.
-    pageSize: Optional. The maximum number of results to return in a single
-      response. Default is 10, minimum is 1, maximum is 1000.
-    pageToken: Optional. The value returned by the last
-      `ListComplianceSnapshotRequest`; indicates that this is a continuation
-      of a prior `ListComplianceSnapshotRequest` call and that the system
-      should return the next page of data.
-    parent: Required. The parent, which has the collection of finding
-      responses. Valid Formats:
-      "organizations/{organization}/sources/{sourceId}/locations/{location}"
-      "folders/{folder}/sources/{sourceId}/locations/{location}"
-      "projects/{project}/sources/{sourceId}/locations/{location}"
-      "organizations/{organization}/sources/-/locations/{location}"
-      "folders/{folder}/sources/-/locations/{location}"
-      "projects/{project}/sources/-/locations/{location}"
+    exportFindingsRequest: A ExportFindingsRequest resource to be passed as
+      the request body.
+    parent: Required. The relative name of the export scope. Example formats:
+      organizations/{organization}/sources/-/locations/{location}
   """
 
-  filter = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
-
-
-class SecuritycenterProjectsSourcesLocationsFindingsExplanationsGetRequest(_messages.Message):
-  r"""A SecuritycenterProjectsSourcesLocationsFindingsExplanationsGetRequest
-  object.
-
-  Fields:
-    name: Required. Name of the finding explanation. Its format is "organizati
-      ons/{organization}/sources/{source}/findings/{finding}/explanations/{exp
-      lanation}" or "organizations/{organization}/sources/{source}/locations/{
-      location}/findings/{finding}/explanations/{explanation}"
-  """
-
-  name = _messages.StringField(1, required=True)
+  exportFindingsRequest = _messages.MessageField('ExportFindingsRequest', 1)
+  parent = _messages.StringField(2, required=True)
 
 
 class SecuritycenterProjectsSourcesLocationsFindingsExternalSystemsPatchRequest(_messages.Message):
@@ -10894,61 +12962,6 @@ class SecuritycenterProjectsSourcesLocationsFindingsGroupRequest(_messages.Messa
   parent = _messages.StringField(2, required=True)
 
 
-class SecuritycenterProjectsSourcesLocationsFindingsListFindingFieldDetailsRequest(_messages.Message):
-  r"""A
-  SecuritycenterProjectsSourcesLocationsFindingsListFindingFieldDetailsRequest
-  object.
-
-  Enums:
-    PropertyTypeValueValuesEnum: Property type to filter on
-
-  Fields:
-    includeNestedContainsSubfields: The first level of contains subfields is
-      always included. This boolean determines whether subfields of subfield
-      lists and beyond should be included. e.g. { list: [{"subfield":1,
-      "list_subfield": [{"a":1}]}] } If below is false, we will not return
-      info about list_subfield using contains, and it's contains subfield "a".
-      If true the whole list hierarchy tree will be returned.
-    pageSize: The maximum number of results to return in a single response.
-      Default is 10, minimum is 1, maximum is 1000.
-    pageToken: The value returned by the last
-      `ListFindingFieldDetailsResponse; indicates that this is a continuation
-      of a prior `ListFindingFieldDetails` call, and that the system should
-      return the next page of data.
-    parent: Required. Name of the parent resource to list property names. The
-      following list shows some examples: + `organizations/[organization_id]/s
-      ources/[source_id]/locations/[location_id]` +
-      `folders/[folder_id]/sources/[source_id]/locations/[location_id]` +
-      `projects/[project_id]/sources/[source_id]/locations/[location_id]` To
-      retrieve names across all sources for a location, the source_id can be
-      `-`
-    propertyType: Property type to filter on
-  """
-
-  class PropertyTypeValueValuesEnum(_messages.Enum):
-    r"""Property type to filter on
-
-    Values:
-      PROPERTY_TYPE_UNSPECIFIED: Unspecified property type. Will not filter on
-        property type.
-      SOURCE: Source property type.
-      SECURITY_MARK: Security mark type.
-      SECURITY_CENTER: Security center attribute type.
-      RELATED_RESOURCE: Related resource type.
-    """
-    PROPERTY_TYPE_UNSPECIFIED = 0
-    SOURCE = 1
-    SECURITY_MARK = 2
-    SECURITY_CENTER = 3
-    RELATED_RESOURCE = 4
-
-  includeNestedContainsSubfields = _messages.BooleanField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
-  propertyType = _messages.EnumField('PropertyTypeValueValuesEnum', 5)
-
-
 class SecuritycenterProjectsSourcesLocationsFindingsListRequest(_messages.Message):
   r"""A SecuritycenterProjectsSourcesLocationsFindingsListRequest object.
 
@@ -10976,9 +12989,6 @@ class SecuritycenterProjectsSourcesLocationsFindingsListRequest(_messages.Messag
       * resource.project_display_name: `=`, `:` * resource.type: `=`, `:` *
       resource.folders.resource_folder: `=`, `:` * resource.display_name: `=`,
       `:`
-    omitTotalSize: Instructs the backend to not compute the total_size value
-      for the response. When this value is set total_size will be set to -1 in
-      the response.
     orderBy: Expression that defines what fields and order to use for sorting.
       The string value should follow SQL syntax: comma separated list of
       fields. For example: "name,parent". The default sorting order is
@@ -11012,11 +13022,10 @@ class SecuritycenterProjectsSourcesLocationsFindingsListRequest(_messages.Messag
 
   fieldMask = _messages.StringField(1)
   filter = _messages.StringField(2)
-  omitTotalSize = _messages.BooleanField(3)
-  orderBy = _messages.StringField(4)
-  pageSize = _messages.IntegerField(5, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(6)
-  parent = _messages.StringField(7, required=True)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
 
 
 class SecuritycenterProjectsSourcesLocationsFindingsPatchRequest(_messages.Message):
@@ -11025,14 +13034,14 @@ class SecuritycenterProjectsSourcesLocationsFindingsPatchRequest(_messages.Messa
   Fields:
     googleCloudSecuritycenterV2Finding: A GoogleCloudSecuritycenterV2Finding
       resource to be passed as the request body.
-    name: The [relative resource name](https://cloud.google.com/apis/design/re
-      source_names#relative_resource_name) of the finding. The following list
-      shows some examples: + `organizations/{organization_id}/sources/{source_
-      id}/findings/{finding_id}` + `organizations/{organization_id}/sources/{s
-      ource_id}/locations/{location_id}/findings/{finding_id}` +
-      `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `folde
-      rs/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{fin
-      ding_id}` +
+    name: Identifier. The [relative resource name](https://cloud.google.com/ap
+      is/design/resource_names#relative_resource_name) of the finding. The
+      following list shows some examples: + `organizations/{organization_id}/s
+      ources/{source_id}/findings/{finding_id}` + `organizations/{organization
+      _id}/sources/{source_id}/locations/{location_id}/findings/{finding_id}`
+      + `folders/{folder_id}/sources/{source_id}/findings/{finding_id}` + `fol
+      ders/{folder_id}/sources/{source_id}/locations/{location_id}/findings/{f
+      inding_id}` +
       `projects/{project_id}/sources/{source_id}/findings/{finding_id}` + `pro
       jects/{project_id}/sources/{source_id}/locations/{location_id}/findings/
       {finding_id}`
@@ -11223,10 +13232,9 @@ class Simulation(_messages.Message):
     cloudProvider: Indicates which cloud provider was used in this simulation.
     createTime: Output only. Time simulation was created
     name: Full resource name of the Simulation:
-      organizations/123/simulations/456
+      `organizations/123/simulations/456`
     resourceValueConfigsMetadata: Resource value configurations' metadata used
       in this simulation. Maximum of 100.
-    stats: Output only. Statistics about the simulation.
   """
 
   class CloudProviderValueValuesEnum(_messages.Enum):
@@ -11247,22 +13255,6 @@ class Simulation(_messages.Message):
   createTime = _messages.StringField(2)
   name = _messages.StringField(3)
   resourceValueConfigsMetadata = _messages.MessageField('ResourceValueConfigMetadata', 4, repeated=True)
-  stats = _messages.MessageField('SimulationStats', 5)
-
-
-class SimulationStats(_messages.Message):
-  r"""Statistics about the simulation.
-
-  Fields:
-    aeZeroFindings: Number of findings with AE = 0
-    buckets: Buckets in the histogram
-    threshold: Threshold for a finding to be considered CRITICAL Measured in
-      normalized criticality score
-  """
-
-  aeZeroFindings = _messages.IntegerField(1, variant=_messages.Variant.INT32)
-  buckets = _messages.MessageField('Bucket', 2, repeated=True)
-  threshold = _messages.IntegerField(3, variant=_messages.Variant.INT32)
 
 
 class Source(_messages.Message):
@@ -11360,6 +13352,41 @@ class StandardQueryParameters(_messages.Message):
   upload_protocol = _messages.StringField(12)
 
 
+class StaticMute(_messages.Message):
+  r"""Information about the static mute state. A static mute state overrides
+  any dynamic mute rules that apply to this finding. The static mute state can
+  be set by a static mute rule or by muting the finding directly.
+
+  Enums:
+    StateValueValuesEnum: The static mute state. If the value is `MUTED` or
+      `UNMUTED`, then the finding's overall mute state will have the same
+      value.
+
+  Fields:
+    applyTime: When the static mute was applied.
+    state: The static mute state. If the value is `MUTED` or `UNMUTED`, then
+      the finding's overall mute state will have the same value.
+  """
+
+  class StateValueValuesEnum(_messages.Enum):
+    r"""The static mute state. If the value is `MUTED` or `UNMUTED`, then the
+    finding's overall mute state will have the same value.
+
+    Values:
+      MUTE_UNSPECIFIED: Unspecified.
+      MUTED: Finding has been muted.
+      UNMUTED: Finding has been unmuted.
+      UNDEFINED: Finding has never been muted/unmuted.
+    """
+    MUTE_UNSPECIFIED = 0
+    MUTED = 1
+    UNMUTED = 2
+    UNDEFINED = 3
+
+  applyTime = _messages.StringField(1)
+  state = _messages.EnumField('StateValueValuesEnum', 2)
+
+
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
@@ -11430,23 +13457,6 @@ class StreamingConfig(_messages.Message):
   """
 
   filter = _messages.StringField(1)
-
-
-class SubfieldDetails(_messages.Message):
-  r"""FieldDetails for fields that are not top level fields or list fields.
-
-  Fields:
-    field: the field name
-    isContainsSupported: true if the field can be used in the contains
-      function (if ListValue or repeated field).
-    listContainsSubfields: FieldDetails for each subfield that can be used
-      again this field within contains. Contains can be nested, which is why
-      nested subfields for contains are supported.
-  """
-
-  field = _messages.StringField(1)
-  isContainsSupported = _messages.BooleanField(2)
-  listContainsSubfields = _messages.MessageField('SubfieldDetails', 3, repeated=True)
 
 
 class Subject(_messages.Message):
@@ -11527,6 +13537,26 @@ class TicketInfo(_messages.Message):
   uri = _messages.StringField(6)
 
 
+class ToxicCombination(_messages.Message):
+  r"""Contains details about a group of security issues that, when the issues
+  occur together, represent a greater risk than when the issues occur
+  independently. A group of such issues is referred to as a toxic combination.
+
+  Fields:
+    attackExposureScore: The [Attack exposure
+      score](https://cloud.google.com/security-command-center/docs/attack-
+      exposure-learn#attack_exposure_scores) of this toxic combination. The
+      score is a measure of how much this toxic combination exposes one or
+      more high-value resources to potential attack.
+    relatedFindings: List of resource names of findings associated with this
+      toxic combination. For example,
+      `organizations/123/sources/456/findings/789`.
+  """
+
+  attackExposureScore = _messages.FloatField(1)
+  relatedFindings = _messages.StringField(2, repeated=True)
+
+
 class ValuedResource(_messages.Message):
   r"""A resource that is determined to have value to a user's system
 
@@ -11571,21 +13601,117 @@ class ValuedResource(_messages.Message):
   resourceValueConfigsUsed = _messages.MessageField('ResourceValueConfigMetadata', 7, repeated=True)
 
 
+class VertexAi(_messages.Message):
+  r"""Vertex AI-related information associated with the finding.
+
+  Fields:
+    datasets: Datasets associated with the finding.
+    pipelines: Pipelines associated with the finding.
+  """
+
+  datasets = _messages.MessageField('Dataset', 1, repeated=True)
+  pipelines = _messages.MessageField('Pipeline', 2, repeated=True)
+
+
 class Vulnerability(_messages.Message):
   r"""Refers to common vulnerability fields e.g. cve, cvss, cwe etc.
 
   Fields:
     cve: CVE stands for Common Vulnerabilities and Exposures
       (https://cve.mitre.org/about/)
+    cwes: Represents one or more Common Weakness Enumeration (CWE) information
+      on this vulnerability.
     fixedPackage: The fixed package is relevant to the finding.
     offendingPackage: The offending package is relevant to the finding.
+    providerRiskScore: Provider provided risk_score based on multiple factors.
+      The higher the risk score, the more risky the vulnerability is.
+    reachable: Represents whether the vulnerability is reachable (detected via
+      static analysis)
     securityBulletin: The security bulletin is relevant to this finding.
   """
 
   cve = _messages.MessageField('Cve', 1)
-  fixedPackage = _messages.MessageField('Package', 2)
-  offendingPackage = _messages.MessageField('Package', 3)
-  securityBulletin = _messages.MessageField('SecurityBulletin', 4)
+  cwes = _messages.MessageField('Cwe', 2, repeated=True)
+  fixedPackage = _messages.MessageField('Package', 3)
+  offendingPackage = _messages.MessageField('Package', 4)
+  providerRiskScore = _messages.IntegerField(5)
+  reachable = _messages.BooleanField(6)
+  securityBulletin = _messages.MessageField('SecurityBulletin', 7)
+
+
+class VulnerabilityCountBySeverity(_messages.Message):
+  r"""Vulnerability count by severity.
+
+  Messages:
+    SeverityToFindingCountValue: Key is the Severity enum.
+
+  Fields:
+    severityToFindingCount: Key is the Severity enum.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class SeverityToFindingCountValue(_messages.Message):
+    r"""Key is the Severity enum.
+
+    Messages:
+      AdditionalProperty: An additional property for a
+        SeverityToFindingCountValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type
+        SeverityToFindingCountValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a SeverityToFindingCountValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.IntegerField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  severityToFindingCount = _messages.MessageField('SeverityToFindingCountValue', 1)
+
+
+class VulnerabilitySnapshot(_messages.Message):
+  r"""Result containing the properties and count of a VulnerabilitySnapshot
+  request.
+
+  Enums:
+    CloudProviderValueValuesEnum: The cloud provider for the vulnerability
+      snapshot.
+
+  Fields:
+    cloudProvider: The cloud provider for the vulnerability snapshot.
+    findingCount: The vulnerability count by severity.
+    name: Identifier. The vulnerability snapshot name. Format:
+      //locations//vulnerabilitySnapshots/
+    snapshotTime: The time that the snapshot was taken.
+  """
+
+  class CloudProviderValueValuesEnum(_messages.Enum):
+    r"""The cloud provider for the vulnerability snapshot.
+
+    Values:
+      CLOUD_PROVIDER_UNSPECIFIED: The cloud provider is unspecified.
+      GOOGLE_CLOUD_PLATFORM: The cloud provider is Google Cloud Platform.
+      AMAZON_WEB_SERVICES: The cloud provider is Amazon Web Services.
+      MICROSOFT_AZURE: The cloud provider is Microsoft Azure.
+    """
+    CLOUD_PROVIDER_UNSPECIFIED = 0
+    GOOGLE_CLOUD_PLATFORM = 1
+    AMAZON_WEB_SERVICES = 2
+    MICROSOFT_AZURE = 3
+
+  cloudProvider = _messages.EnumField('CloudProviderValueValuesEnum', 1)
+  findingCount = _messages.MessageField('VulnerabilityCountBySeverity', 2)
+  name = _messages.StringField(3)
+  snapshotTime = _messages.StringField(4)
 
 
 class YaraRuleSignature(_messages.Message):

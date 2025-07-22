@@ -19,6 +19,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from typing import Any
+
 from googlecloudsdk.core.console import console_io
 from googlecloudsdk.core.console import progress_tracker
 import six
@@ -34,8 +36,9 @@ class Walker(object):
     _progress_callback: The progress bar function to call to update progress.
   """
 
-  def __init__(self, cli, progress_callback=None, ignore_load_errors=False,
-               restrict=None):
+  def __init__(
+      self, cli, progress_callback=None, ignore_load_errors=False, restrict=None
+  ):
     """Constructor.
 
     Args:
@@ -63,15 +66,18 @@ class Walker(object):
       with progress_tracker.ProgressTracker('Loading CLI Tree'):
         for root in self._roots:
           self._num_nodes += 1.0 + root.LoadAllSubElements(
-              recursive=True, ignore_load_errors=ignore_load_errors)
+              recursive=True, ignore_load_errors=ignore_load_errors
+          )
     else:
       for root in self._roots:
         self._num_nodes += 1.0 + root.LoadAllSubElements(
-            recursive=True, ignore_load_errors=ignore_load_errors)
+            recursive=True, ignore_load_errors=ignore_load_errors
+        )
 
     self._num_visited = 0
-    self._progress_callback = (progress_callback or
-                               console_io.DefaultProgressBarCallback)
+    self._progress_callback = (
+        progress_callback or console_io.DefaultProgressBarCallback
+    )
 
   def _GetSubElement(self, top_element, path):
     parts = path.split('.')[1:]
@@ -82,13 +88,15 @@ class Walker(object):
         return None
     return current
 
-  def Walk(self, hidden=False, restrict=None):
+  def Walk(self, hidden=False, universe_compatible=False, restrict=None):
     """Calls self.Visit() on each node in the CLI tree.
 
     The walk is DFS, ordered by command name for reproducability.
 
     Args:
       hidden: Include hidden groups and commands if True.
+      universe_compatible: Exclusively include commands which are marked
+        universe compatible.
       restrict: Restricts the walk to the command/group dotted paths in this
         list. For example, restrict=['gcloud.alpha.test', 'gcloud.topic']
         restricts the walk to the 'gcloud topic' and 'gcloud alpha test'
@@ -99,6 +107,18 @@ class Walker(object):
     Returns:
       The return value of the top level Visit() call.
     """
+
+    def _IsUniverseCompatible(command: Any) -> bool:
+      """Determines if a command is universe compatible.
+
+      Args:
+        command: CommandCommon command node.
+
+      Returns:
+        True if command is universe compatible.
+      """
+      return not isinstance(command, dict) and (command.IsUniverseCompatible())
+
     def _Include(command, traverse=False):
       """Determines if command should be included in the walk.
 
@@ -110,6 +130,8 @@ class Walker(object):
         True if command should be included in the walk.
       """
       if not hidden and command.IsHidden():
+        return False
+      if universe_compatible and not _IsUniverseCompatible(command):
         return False
       if not restrict:
         return True

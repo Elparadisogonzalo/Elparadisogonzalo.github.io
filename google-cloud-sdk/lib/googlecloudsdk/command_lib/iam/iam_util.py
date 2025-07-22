@@ -32,98 +32,15 @@ from googlecloudsdk.calliope import exceptions as gcloud_exceptions
 from googlecloudsdk.command_lib.iam import completers
 from googlecloudsdk.core import exceptions as core_exceptions
 from googlecloudsdk.core import log
+from googlecloudsdk.core import properties
 from googlecloudsdk.core import resources
 from googlecloudsdk.core import yaml
 from googlecloudsdk.core.console import console_io
 from googlecloudsdk.core.util import files
 import six
 
-# Kluge for fixing inconsistency in python message
-# generation from proto. See b/124063772.
-kms_message = core_apis.GetMessagesModule('cloudkms', 'v1')
-encoding.AddCustomJsonFieldMapping(
-    kms_message.CloudkmsProjectsLocationsEkmConfigGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-encoding.AddCustomJsonFieldMapping(
-    kms_message.CloudkmsProjectsLocationsEkmConnectionsGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-encoding.AddCustomJsonFieldMapping(
-    kms_message.CloudkmsProjectsLocationsKeyRingsGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-
-encoding.AddCustomJsonFieldMapping(
-    kms_message.CloudkmsProjectsLocationsKeyRingsCryptoKeysGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-
-encoding.AddCustomJsonFieldMapping(
-    kms_message.CloudkmsProjectsLocationsKeyRingsImportJobsGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-secrets_message = core_apis.GetMessagesModule('secretmanager', 'v1')
-encoding.AddCustomJsonFieldMapping(
-    secrets_message.SecretmanagerProjectsSecretsGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
 
 msgs = core_apis.GetMessagesModule('iam', 'v1')
-encoding.AddCustomJsonFieldMapping(
-    msgs.IamProjectsServiceAccountsGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-
-privateca_message = core_apis.GetMessagesModule('privateca', 'v1')
-encoding.AddCustomJsonFieldMapping(
-    privateca_message.PrivatecaProjectsLocationsCaPoolsGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-encoding.AddCustomJsonFieldMapping(
-    privateca_message
-    .PrivatecaProjectsLocationsCertificateTemplatesGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-
-clouddeploy_message = core_apis.GetMessagesModule('clouddeploy', 'v1')
-encoding.AddCustomJsonFieldMapping(
-    clouddeploy_message
-    .ClouddeployProjectsLocationsDeliveryPipelinesGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-encoding.AddCustomJsonFieldMapping(
-    clouddeploy_message.ClouddeployProjectsLocationsTargetsGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-encoding.AddCustomJsonFieldMapping(
-    clouddeploy_message
-    .ClouddeployProjectsLocationsCustomTargetTypesGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-
-binaryauthorization_message_v1alpha2 = core_apis.GetMessagesModule(
-    'binaryauthorization', 'v1alpha2')
-encoding.AddCustomJsonFieldMapping(
-    binaryauthorization_message_v1alpha2
-    .BinaryauthorizationProjectsAttestorsGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-encoding.AddCustomJsonFieldMapping(
-    binaryauthorization_message_v1alpha2
-    .BinaryauthorizationProjectsPolicyGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-
-binaryauthorization_message_v1beta1 = core_apis.GetMessagesModule(
-    'binaryauthorization', 'v1beta1')
-encoding.AddCustomJsonFieldMapping(
-    binaryauthorization_message_v1beta1
-    .BinaryauthorizationProjectsAttestorsGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-encoding.AddCustomJsonFieldMapping(
-    binaryauthorization_message_v1beta1
-    .BinaryauthorizationProjectsPolicyGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-
-binaryauthorization_message_v1 = core_apis.GetMessagesModule(
-    'binaryauthorization', 'v1')
-encoding.AddCustomJsonFieldMapping(
-    binaryauthorization_message_v1
-    .BinaryauthorizationProjectsPolicyGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-
-run_message_v1 = core_apis.GetMessagesModule('run', 'v1')
-encoding.AddCustomJsonFieldMapping(
-    run_message_v1.RunProjectsLocationsServicesGetIamPolicyRequest,
-    'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
-
 MANAGED_BY = (
     msgs.IamProjectsServiceAccountsKeysListRequest.KeyTypesValueValuesEnum)
 CREATE_KEY_TYPES = (
@@ -142,7 +59,9 @@ SERVICE_ACCOUNT_KEY_FORMAT = """
         name.scope(keys):label=KEY_ID,
         validAfterTime:label=CREATED_AT,
         validBeforeTime:label=EXPIRES_AT,
-        disabled:label=DISABLED
+        disabled:label=DISABLED,
+        disable_reason:label=DISABLE_REASON,
+        extended_status:label=EXTENDED_STATUS
     )
 """
 CONDITION_FORMAT_EXCEPTION = gcloud_exceptions.InvalidArgumentException(
@@ -402,7 +321,7 @@ def AddArgsForAddIamPolicyBinding(parser,
     _AddConditionFlagsForAddBindingToIamPolicy(parser)
 
 
-# TODO (b/114447521): implement a completer for condition
+# TODO(b/114447521): implement a completer for condition
 def AddArgsForRemoveIamPolicyBinding(parser,
                                      role_completer=None,
                                      add_condition=False,
@@ -989,7 +908,7 @@ def ParseYamlToTrustStore(yaml_dict):
   """Construct a TrustStore protorpc.Message from the content of a Yaml file.
 
   Args:
-    file_content: YAML file content to parse.
+    yaml_dict: YAML file content to parse.
 
   Returns:
     a TrustStore from the parsed YAML file.
@@ -1000,17 +919,53 @@ def ParseYamlToTrustStore(yaml_dict):
   return config.trustStore
 
 
-def GetDetailedHelpForSetIamPolicy(collection,
-                                   example_id='',
-                                   example_see_more='',
-                                   additional_flags='',
-                                   use_an=False):
+def ParseYamlOrJsonToInlineCertificateIssuanceConfig(yaml_dict):
+  """Construct a InlineCertificateIssuanceConfig protorpc.Message from the content of a Yaml file.
+
+  Args:
+    yaml_dict: YAML file content to parse.
+
+  Returns:
+    a InlineCertificateIssuanceConfig from the parsed YAML file.
+  Raises:
+    DecodeError if the Yaml file content could not be parsed.
+  """
+  config = messages_util.DictToMessageWithErrorCheck(
+      yaml_dict, msgs.WorkloadIdentityPool
+  )
+  return config.inlineCertificateIssuanceConfig
+
+
+def ParseYamlOrJsonToInlineTrustConfig(yaml_dict):
+  """Construct a InlineTrustConfig protorpc.Message from the content of a Yaml file.
+
+  Args:
+    yaml_dict: YAML file content to parse.
+
+  Returns:
+    a InlineTrustConfig from the parsed YAML file.
+  Raises:
+    DecodeError if the Yaml file content could not be parsed.
+  """
+  config = messages_util.DictToMessageWithErrorCheck(
+      yaml_dict, msgs.WorkloadIdentityPool
+  )
+  return config.inlineTrustConfig
+
+
+def GetDetailedHelpForSetIamPolicy(
+    collection,
+    example_id='',
+    example_see_more='',
+    additional_flags='',
+    use_an=False,
+):
   """Returns a detailed_help for a set-iam-policy command.
 
   Args:
     collection: Name of the command collection (ex: "project", "dataset")
-    example_id: Collection identifier to display in a sample command
-        (ex: "my-project", '1234')
+    example_id: Collection identifier to display in a sample command (ex:
+      "my-project", '1234')
     example_see_more: Optional "See ... for details" message. If not specified,
       includes a default reference to IAM managing-policies documentation
     additional_flags: str, additional flags to include in the example command
@@ -1082,20 +1037,20 @@ def GetDetailedHelpForAddIamPolicyBinding(collection,
       'DESCRIPTION':
           '{description}',
       'EXAMPLES':
-          """To add an IAM policy binding for the role of '{role}' for the user
-'test-user@gmail.com' on {a} {collection} with identifier
-'{example_id}', run:
+          """To add an IAM policy binding for the role of `{role}` for the user
+`test-user@gmail.com` on {a} {collection} with identifier
+`{example_id}`, run:
 
   $ {{command}} {example_id} --member='user:test-user@gmail.com' --role='{role}'
 
-To add an IAM policy binding for the role of '{role}' to the service
-account 'test-proj1@example.domain.com', run:
+To add an IAM policy binding for the role of `{role}` to the service
+account `test-proj1@example.domain.com`, run:
 
   $ {{command}} {example_id} --member='serviceAccount:test-proj1@example.domain.com' --role='{role}'
 
-To add an IAM policy binding for the role of '{role}' for all
+To add an IAM policy binding for the role of `{role}` for all
 authenticated users on {a} {collection} with identifier
-'{example_id}', run:
+`{example_id}`, run:
 
   $ {{command}} {example_id} --member='allAuthenticatedUsers' --role='{role}'
   """.format(collection=collection, example_id=example_id, role=role, a=a)
@@ -1103,8 +1058,8 @@ authenticated users on {a} {collection} with identifier
   if condition:
     detailed_help['EXAMPLES'] = detailed_help['EXAMPLES'] + """\n
 To add an IAM policy binding that expires at the end of the year 2018 for the
-role of '{role}' and the user 'test-user@gmail.com' on {a} {collection} with
-identifier '{example_id}', run:
+role of `{role}` and the user `test-user@gmail.com` on {a} {collection} with
+identifier `{example_id}`, run:
 
   $ {{command}} {example_id} --member='user:test-user@gmail.com' --role='{role}' --condition='expression=request.time < timestamp("2019-01-01T00:00:00Z"),title=expires_end_of_2018,description=Expires at midnight on 2018-12-31'
   """.format(
@@ -1146,14 +1101,14 @@ def GetDetailedHelpForRemoveIamPolicyBinding(collection,
           '{description}',
       'EXAMPLES':
           """\
-To remove an IAM policy binding for the role of '{role}' for the
-user 'test-user@gmail.com' on {collection} with identifier
-'{example_id}', run:
+To remove an IAM policy binding for the role of `{role}` for the
+user `test-user@gmail.com` on {collection} with identifier
+`{example_id}`, run:
 
   $ {{command}} {example_id} --member='user:test-user@gmail.com' --role='{role}'
 
-To remove an IAM policy binding for the role of '{role}' from all
-authenticated users on {collection} '{example_id}', run:
+To remove an IAM policy binding for the role of `{role}` from all
+authenticated users on {collection} `{example_id}`, run:
 
   $ {{command}} {example_id} --member='allAuthenticatedUsers' --role='{role}'
   """.format(collection=collection, example_id=example_id, role=role)
@@ -1161,16 +1116,17 @@ authenticated users on {collection} '{example_id}', run:
   if condition:
     detailed_help['EXAMPLES'] = detailed_help['EXAMPLES'] + """\n
 To remove an IAM policy binding with a condition of
-expression='request.time < timestamp("2019-01-01T00:00:00Z")',
-title='expires_end_of_2018', and description='Expires at midnight on 2018-12-31'
-for the role of '{role}' for the user 'test-user@gmail.com' on {collection}
-with identifier '{example_id}', run:
+`expression='request.time < timestamp("2019-01-01T00:00:00Z"),
+title='expires_end_of_2018'`, and
+description=`Expires at midnight on 2018-12-31` for the role of `{role}` for
+the user `test-user@gmail.com` on {collection}
+with identifier `{example_id}`, run:
 
   $ {{command}} {example_id} --member='user:test-user@gmail.com' --role='{role}' --condition='expression=request.time < timestamp("2019-01-01T00:00:00Z"),title=expires_end_of_2018,description=Expires at midnight on 2018-12-31'
 
 To remove all IAM policy bindings regardless of the condition for the role of
-'{role}' and for the user 'test-user@gmail.com' on {collection} with
-identifier '{example_id}', run:
+`{role}` and for the user `test-user@gmail.com` on {collection} with
+identifier `{example_id}`, run:
 
   $ {{command}} {example_id} --member='user:test-user@gmail.com' --role='{role}' --all
   """.format(
@@ -1403,11 +1359,28 @@ def GetParentName(organization, project, attribute='custom roles'):
   return 'projects/{0}'.format(project)
 
 
-def GetResourceName(resource_ref):
-  """Convert a full resource URL to an atomic path."""
+def GetFullResourceName(resource_ref):
+  """Convert a full resource URL to a full resource name (FRN).
+
+  See https://cloud.google.com/iam/docs/full-resource-names.
+
+  Args:
+    resource_ref: googlecloudsdk.core.resources.Resource.
+
+  Returns:
+    str: Full resource name of the resource
+  """
   full_name = resource_ref.SelfLink()
   full_name = re.sub(r'\w+://', '//', full_name)  # no protocol at the start
   full_name = re.sub(r'/v[0-9]+[0-9a-zA-Z]*/', '/', full_name)  # no version
+
+  universe_domain_property = properties.VALUES.core.universe_domain
+  universe_domain = universe_domain_property.Get()
+  if universe_domain_property.default != universe_domain:
+    # FRNs use the same format in all universes.
+    full_name = full_name.replace(universe_domain,
+                                  universe_domain_property.default, 1)
+
   if full_name.startswith('//www.'):
     # Convert '//www.googleapis.com/compute/' to '//compute.googleapis.com/'
     splitted_list = full_name.split('/')

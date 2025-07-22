@@ -1,0 +1,108 @@
+2025-07-22 01:57:09,680 DEBUG    root            Metrics collector initialized...
+2025-07-22 01:57:09,683 DEBUG    root            Loaded Command Group: ['gcloud', 'components']
+2025-07-22 01:57:09,696 DEBUG    root            Loaded Command Group: ['gcloud', 'components', 'list']
+2025-07-22 01:57:09,705 DEBUG    root            Running [gcloud.components.list] with arguments: [--quiet: "True"]
+2025-07-22 01:57:09,727 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): dl.google.com:443
+2025-07-22 01:57:15,304 DEBUG    urllib3.connectionpool https://dl.google.com:443 "GET /dl/cloudsdk/channels/rapid/components-2.json HTTP/1.1" 200 239798
+2025-07-22 01:57:51,188 DEBUG    root            ("Connection broken: BrokenPipeError(32, 'Broken pipe')", BrokenPipeError(32, 'Broken pipe'))
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/urllib3/response.py", line 441, in _error_catcher
+    yield
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/urllib3/response.py", line 522, in read
+    data = self._fp.read(amt) if not fp_closed else b""
+           ^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.12/http/client.py", line 479, in read
+    s = self.fp.read(amt)
+        ^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.12/socket.py", line 720, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.12/ssl.py", line 1251, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.12/ssl.py", line 1103, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+BrokenPipeError: [Errno 32] Broken pipe
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/requests/models.py", line 753, in generate
+    for chunk in self.raw.stream(chunk_size, decode_content=True):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/urllib3/response.py", line 579, in stream
+    data = self.read(amt=amt, decode_content=decode_content)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/urllib3/response.py", line 515, in read
+    with self._error_catcher():
+         ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/urllib3/response.py", line 458, in _error_catcher
+    raise ProtocolError("Connection broken: %r" % e, e)
+urllib3.exceptions.ProtocolError: ("Connection broken: BrokenPipeError(32, 'Broken pipe')", BrokenPipeError(32, 'Broken pipe'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 987, in Execute
+    resources = calliope_command.Run(cli=self, args=args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 807, in Run
+    resources = command_instance.Run(args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/surface/components/list.py", line 102, in Run
+    result = update_manager.List(show_hidden=args.show_hidden,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 788, in List
+    to_print, current_version, latest_version = self._GetPrintListWithDiff()
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 825, in _GetPrintListWithDiff
+    _, diff = self._GetStateAndDiff(command_path='components.list')
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 714, in _GetStateAndDiff
+    latest_snapshot = self._GetLatestSnapshot(version=version,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/update_manager.py", line 697, in _GetLatestSnapshot
+    return snapshots.ComponentSnapshot.FromURLs(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/snapshots.py", line 176, in FromURLs
+    (ComponentSnapshot._DictFromURL(
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/snapshots.py", line 200, in _DictFromURL
+    response = installers.MakeRequest(url, command_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/installers.py", line 114, in MakeRequest
+    return _RawRequest(url, headers=headers, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/installers.py", line 162, in _RawRequest
+    return retryer.RetryOnException(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/util/retry.py", line 201, in RetryOnException
+    exceptions.reraise(exc_info[1], tb=exc_info[2])
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/exceptions.py", line 146, in reraise
+    six.reraise(type(exc_value), exc_value, tb)
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/six/__init__.py", line 719, in reraise
+    raise value
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/util/retry.py", line 182, in TryFunc
+    return func(*args, **kwargs), None
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/updater/installers.py", line 192, in _ExecuteRequestAndRaiseExceptions
+    response = requests_session.get(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/requests/sessions.py", line 557, in get
+    return self.request('GET', url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/transport.py", line 270, in WrappedRequest
+    handler_response = self.response_class.FromResponse(response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/requests.py", line 382, in FromResponse
+    return cls(response.status_code, response.headers, response.content)
+                                                       ^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/requests/models.py", line 831, in content
+    self._content = b''.join(self.iter_content(CONTENT_CHUNK_SIZE)) or b''
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/requests/models.py", line 756, in generate
+    raise ChunkedEncodingError(e)
+requests.exceptions.ChunkedEncodingError: ("Connection broken: BrokenPipeError(32, 'Broken pipe')", BrokenPipeError(32, 'Broken pipe'))

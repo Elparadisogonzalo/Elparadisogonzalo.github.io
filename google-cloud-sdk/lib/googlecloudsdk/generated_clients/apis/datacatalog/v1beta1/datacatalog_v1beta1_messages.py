@@ -118,7 +118,7 @@ class DatacatalogEntriesLookupRequest(_messages.Message):
       `bigquery.table.project_id.dataset_id.table_id` *
       `bigquery.dataset.project_id.dataset_id` *
       `datacatalog.entry.project_id.location_id.entry_group_id.entry_id`
-      `*_id`s should satisfy the standard SQL rules for identifiers.
+      `*_id`s should satisfy the GoogleSQL rules for identifiers.
       https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical.
   """
 
@@ -247,10 +247,11 @@ class DatacatalogProjectsLocationsEntryGroupsEntriesPatchRequest(_messages.Messa
   Fields:
     googleCloudDatacatalogV1beta1Entry: A GoogleCloudDatacatalogV1beta1Entry
       resource to be passed as the request body.
-    name: Output only. The Data Catalog resource name of the entry in URL
-      format. Example: * projects/{project_id}/locations/{location}/entryGroup
-      s/{entry_group_id}/entries/{entry_id} Note that this Entry and its child
-      resources may not actually be stored in the location in this name.
+    name: Output only. Identifier. The Data Catalog resource name of the entry
+      in URL format. Example: * projects/{project_id}/locations/{location}/ent
+      ryGroups/{entry_group_id}/entries/{entry_id} Note that this Entry and
+      its child resources may not actually be stored in the location in this
+      name.
     updateMask: Names of fields whose values to overwrite on an entry. If this
       parameter is absent or empty, all modifiable fields are overwritten. If
       such fields are non-required and omitted in the request body, their
@@ -325,11 +326,11 @@ class DatacatalogProjectsLocationsEntryGroupsEntriesTagsPatchRequest(_messages.M
   Fields:
     googleCloudDatacatalogV1beta1Tag: A GoogleCloudDatacatalogV1beta1Tag
       resource to be passed as the request body.
-    name: The resource name of the tag in URL format. Example: * projects/{pro
-      ject_id}/locations/{location}/entrygroups/{entry_group_id}/entries/{entr
-      y_id}/tags/{tag_id} where `tag_id` is a system-generated identifier.
-      Note that this Tag may not actually be stored in the location in this
-      name.
+    name: Identifier. The resource name of the tag in URL format. Example: * p
+      rojects/{project_id}/locations/{location}/entrygroups/{entry_group_id}/e
+      ntries/{entry_id}/tags/{tag_id} where `tag_id` is a system-generated
+      identifier. Note that this Tag may not actually be stored in the
+      location in this name.
     updateMask: Note: Currently, this parameter can only take `"fields"` as
       value. Names of fields whose values to overwrite on a tag. Currently, a
       tag has the only modifiable field with the name `fields`. In general, if
@@ -417,7 +418,8 @@ class DatacatalogProjectsLocationsEntryGroupsPatchRequest(_messages.Message):
     googleCloudDatacatalogV1beta1EntryGroup: A
       GoogleCloudDatacatalogV1beta1EntryGroup resource to be passed as the
       request body.
-    name: The resource name of the entry group in URL format. Example: *
+    name: Identifier. The resource name of the entry group in URL format.
+      Example: *
       projects/{project_id}/locations/{location}/entryGroups/{entry_group_id}
       Note that this EntryGroup and its child resources may not actually be
       stored in the location in this name.
@@ -503,11 +505,11 @@ class DatacatalogProjectsLocationsEntryGroupsTagsPatchRequest(_messages.Message)
   Fields:
     googleCloudDatacatalogV1beta1Tag: A GoogleCloudDatacatalogV1beta1Tag
       resource to be passed as the request body.
-    name: The resource name of the tag in URL format. Example: * projects/{pro
-      ject_id}/locations/{location}/entrygroups/{entry_group_id}/entries/{entr
-      y_id}/tags/{tag_id} where `tag_id` is a system-generated identifier.
-      Note that this Tag may not actually be stored in the location in this
-      name.
+    name: Identifier. The resource name of the tag in URL format. Example: * p
+      rojects/{project_id}/locations/{location}/entrygroups/{entry_group_id}/e
+      ntries/{entry_id}/tags/{tag_id} where `tag_id` is a system-generated
+      identifier. Note that this Tag may not actually be stored in the
+      location in this name.
     updateMask: Note: Currently, this parameter can only take `"fields"` as
       value. Names of fields whose values to overwrite on a tag. Currently, a
       tag has the only modifiable field with the name `fields`. In general, if
@@ -706,10 +708,10 @@ class DatacatalogProjectsLocationsTagTemplatesPatchRequest(_messages.Message):
     googleCloudDatacatalogV1beta1TagTemplate: A
       GoogleCloudDatacatalogV1beta1TagTemplate resource to be passed as the
       request body.
-    name: The resource name of the tag template in URL format. Example: *
-      projects/{project_id}/locations/{location}/tagTemplates/{tag_template_id
-      } Note that this TagTemplate and its child resources may not actually be
-      stored in the location in this name.
+    name: Identifier. The resource name of the tag template in URL format.
+      Example: * projects/{project_id}/locations/{location}/tagTemplates/{tag_
+      template_id} Note that this TagTemplate and its child resources may not
+      actually be stored in the location in this name.
     updateMask: Names of fields whose values to overwrite on a tag template.
       Currently, only `display_name` can be overwritten. In general, if this
       parameter is absent or empty, all modifiable fields are overwritten. If
@@ -1316,6 +1318,10 @@ class GoogleCloudDatacatalogV1ColumnSchema(_messages.Message):
       are required, nullable, or repeated. Only `NULLABLE`, `REQUIRED`, and
       `REPEATED` values are supported. Default mode is `NULLABLE`.
     ordinalPosition: Optional. Ordinal position
+    rangeElementType: Optional. The subtype of the RANGE, if the type of this
+      field is RANGE. If the type is RANGE, this field is required. Possible
+      values for the field element type of a RANGE include: * DATE * DATETIME
+      * TIMESTAMP
     subcolumns: Optional. Schema of sub-columns. A column can have zero or
       more sub-columns.
     type: Required. Type of the column. Must be a UTF-8 string with the
@@ -1346,8 +1352,19 @@ class GoogleCloudDatacatalogV1ColumnSchema(_messages.Message):
   lookerColumnSpec = _messages.MessageField('GoogleCloudDatacatalogV1ColumnSchemaLookerColumnSpec', 6)
   mode = _messages.StringField(7)
   ordinalPosition = _messages.IntegerField(8, variant=_messages.Variant.INT32)
-  subcolumns = _messages.MessageField('GoogleCloudDatacatalogV1ColumnSchema', 9, repeated=True)
-  type = _messages.StringField(10)
+  rangeElementType = _messages.MessageField('GoogleCloudDatacatalogV1ColumnSchemaFieldElementType', 9)
+  subcolumns = _messages.MessageField('GoogleCloudDatacatalogV1ColumnSchema', 10, repeated=True)
+  type = _messages.StringField(11)
+
+
+class GoogleCloudDatacatalogV1ColumnSchemaFieldElementType(_messages.Message):
+  r"""Represents the type of a field element.
+
+  Fields:
+    type: Required. The type of a field element. See ColumnSchema.type.
+  """
+
+  type = _messages.StringField(1)
 
 
 class GoogleCloudDatacatalogV1ColumnSchemaLookerColumnSpec(_messages.Message):
@@ -1468,10 +1485,11 @@ class GoogleCloudDatacatalogV1DatabaseTableSpec(_messages.Message):
     TypeValueValuesEnum: Type of this table.
 
   Fields:
-    databaseViewSpec: Spec what aplies to tables that are actually views. Not
+    databaseViewSpec: Spec what applies to tables that are actually views. Not
       set for "real" tables.
-    dataplexTable: Output only. Fields specific to a Dataplex table and
-      present only in the Dataplex table entries.
+    dataplexTable: Output only. Fields specific to a Dataplex Universal
+      Catalog table and present only in the Dataplex Universal Catalog table
+      entries.
     type: Type of this table.
   """
 
@@ -1522,12 +1540,12 @@ class GoogleCloudDatacatalogV1DatabaseTableSpecDatabaseViewSpec(_messages.Messag
 
 
 class GoogleCloudDatacatalogV1DataplexExternalTable(_messages.Message):
-  r"""External table registered by Dataplex. Dataplex publishes data
-  discovered from an asset into multiple other systems (BigQuery, DPMS) in
-  form of tables. We call them "external tables". External tables are also
-  synced into the Data Catalog. This message contains pointers to those
-  external tables (fully qualified name, resource name et cetera) within the
-  Data Catalog.
+  r"""External table registered by Dataplex Universal Catalog. Dataplex
+  Universal Catalog publishes data discovered from an asset into multiple
+  other systems (BigQuery, DPMS) in form of tables. We call them "external
+  tables". External tables are also synced into the Data Catalog. This message
+  contains pointers to those external tables (fully qualified name, resource
+  name et cetera) within the Data Catalog.
 
   Enums:
     SystemValueValuesEnum: Service in which the external table is registered.
@@ -1548,7 +1566,7 @@ class GoogleCloudDatacatalogV1DataplexExternalTable(_messages.Message):
       BIGQUERY: BigQuery.
       CLOUD_PUBSUB: Cloud Pub/Sub.
       DATAPROC_METASTORE: Dataproc Metastore.
-      DATAPLEX: Dataplex.
+      DATAPLEX: Dataplex Universal Catalog.
       CLOUD_SPANNER: Cloud Spanner
       CLOUD_BIGTABLE: Cloud Bigtable
       CLOUD_SQL: Cloud Sql
@@ -1573,27 +1591,27 @@ class GoogleCloudDatacatalogV1DataplexExternalTable(_messages.Message):
 
 
 class GoogleCloudDatacatalogV1DataplexFilesetSpec(_messages.Message):
-  r"""Entry specyfication for a Dataplex fileset.
+  r"""Entry specification for a Dataplex Universal Catalog fileset.
 
   Fields:
-    dataplexSpec: Common Dataplex fields.
+    dataplexSpec: Common Dataplex Universal Catalog fields.
   """
 
   dataplexSpec = _messages.MessageField('GoogleCloudDatacatalogV1DataplexSpec', 1)
 
 
 class GoogleCloudDatacatalogV1DataplexSpec(_messages.Message):
-  r"""Common Dataplex fields.
+  r"""Common Dataplex Universal Catalog fields.
 
   Fields:
-    asset: Fully qualified resource name of an asset in Dataplex, to which the
-      underlying data source (Cloud Storage bucket or BigQuery dataset) of the
-      entity is attached.
+    asset: Fully qualified resource name of an asset in Dataplex Universal
+      Catalog, to which the underlying data source (Cloud Storage bucket or
+      BigQuery dataset) of the entity is attached.
     compressionFormat: Compression format of the data, e.g., zip, gzip etc.
     dataFormat: Format of the data.
     projectId: Project ID of the underlying Cloud Storage or BigQuery data.
-      Note that this may not be the same project as the correspondingly
-      Dataplex lake / zone / asset.
+      Note that this may not be the same project as the corresponding Dataplex
+      Universal Catalog lake / zone / asset.
   """
 
   asset = _messages.StringField(1)
@@ -1603,13 +1621,13 @@ class GoogleCloudDatacatalogV1DataplexSpec(_messages.Message):
 
 
 class GoogleCloudDatacatalogV1DataplexTableSpec(_messages.Message):
-  r"""Entry specification for a Dataplex table.
+  r"""Entry specification for a Dataplex Universal Catalog table.
 
   Fields:
-    dataplexSpec: Common Dataplex fields.
-    externalTables: List of external tables registered by Dataplex in other
-      systems based on the same underlying data. External tables allow to
-      query this data in those systems.
+    dataplexSpec: Common Dataplex Universal Catalog fields.
+    externalTables: List of external tables registered by Dataplex Universal
+      Catalog in other systems based on the same underlying data. External
+      tables allow to query this data in those systems.
     userManaged: Indicates if the table schema is managed by the user or not.
   """
 
@@ -1687,6 +1705,8 @@ class GoogleCloudDatacatalogV1Entry(_messages.Message):
       an empty string.
     displayName: Display name of an entry. The maximum size is 500 bytes when
       encoded in UTF-8. Default value is an empty string.
+    featureOnlineStoreSpec: FeatureonlineStore spec for Vertex AI Feature
+      Store.
     filesetSpec: Specification that applies to a fileset resource. Valid only
       for entries with the `FILESET` type.
     fullyQualifiedName: [Fully Qualified Name
@@ -1716,9 +1736,9 @@ class GoogleCloudDatacatalogV1Entry(_messages.Message):
     lookerSystemSpec: Specification that applies to Looker sysstem. Only
       settable when `user_specified_system` is equal to `LOOKER`
     modelSpec: Model specification.
-    name: Output only. The resource name of an entry in URL format. Note: The
-      entry itself and its child resources might not be stored in the location
-      specified in its name.
+    name: Output only. Identifier. The resource name of an entry in URL
+      format. Note: The entry itself and its child resources might not be
+      stored in the location specified in its name.
     personalDetails: Output only. Additional information related to the entry.
       Private to the current user.
     routineSpec: Specification that applies to a user-defined function or
@@ -1761,7 +1781,7 @@ class GoogleCloudDatacatalogV1Entry(_messages.Message):
       BIGQUERY: BigQuery.
       CLOUD_PUBSUB: Cloud Pub/Sub.
       DATAPROC_METASTORE: Dataproc Metastore.
-      DATAPLEX: Dataplex.
+      DATAPLEX: Dataplex Universal Catalog.
       CLOUD_SPANNER: Cloud Spanner
       CLOUD_BIGTABLE: Cloud Bigtable
       CLOUD_SQL: Cloud Sql
@@ -1798,8 +1818,8 @@ class GoogleCloudDatacatalogV1Entry(_messages.Message):
       DATA_SOURCE_CONNECTION: Connection to a data source. For example, a
         BigQuery connection.
       ROUTINE: Routine, for example, a BigQuery routine.
-      LAKE: A Dataplex lake.
-      ZONE: A Dataplex zone.
+      LAKE: A Dataplex Universal Catalog lake.
+      ZONE: A Dataplex Universal Catalog zone.
       SERVICE: A service, for example, a Dataproc Metastore service.
       DATABASE_SCHEMA: Schema within a relational database.
       DASHBOARD: A Dashboard, for example from Looker.
@@ -1808,6 +1828,10 @@ class GoogleCloudDatacatalogV1Entry(_messages.Message):
         el/lookml_model_explore).
       LOOK: A Looker Look. For more information, see [Looker Look API]
         (https://developers.looker.com/api/explorer/4.0/methods/Look).
+      FEATURE_ONLINE_STORE: Feature Online Store resource in Vertex AI Feature
+        Store.
+      FEATURE_VIEW: Feature View resource in Vertex AI Feature Store.
+      FEATURE_GROUP: Feature Group resource in Vertex AI Feature Store.
     """
     ENTRY_TYPE_UNSPECIFIED = 0
     TABLE = 1
@@ -1825,6 +1849,9 @@ class GoogleCloudDatacatalogV1Entry(_messages.Message):
     DASHBOARD = 13
     EXPLORE = 14
     LOOK = 15
+    FEATURE_ONLINE_STORE = 16
+    FEATURE_VIEW = 17
+    FEATURE_GROUP = 18
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class LabelsValue(_messages.Message):
@@ -1862,25 +1889,26 @@ class GoogleCloudDatacatalogV1Entry(_messages.Message):
   datasetSpec = _messages.MessageField('GoogleCloudDatacatalogV1DatasetSpec', 8)
   description = _messages.StringField(9)
   displayName = _messages.StringField(10)
-  filesetSpec = _messages.MessageField('GoogleCloudDatacatalogV1FilesetSpec', 11)
-  fullyQualifiedName = _messages.StringField(12)
-  gcsFilesetSpec = _messages.MessageField('GoogleCloudDatacatalogV1GcsFilesetSpec', 13)
-  integratedSystem = _messages.EnumField('IntegratedSystemValueValuesEnum', 14)
-  labels = _messages.MessageField('LabelsValue', 15)
-  linkedResource = _messages.StringField(16)
-  lookerSystemSpec = _messages.MessageField('GoogleCloudDatacatalogV1LookerSystemSpec', 17)
-  modelSpec = _messages.MessageField('GoogleCloudDatacatalogV1ModelSpec', 18)
-  name = _messages.StringField(19)
-  personalDetails = _messages.MessageField('GoogleCloudDatacatalogV1PersonalDetails', 20)
-  routineSpec = _messages.MessageField('GoogleCloudDatacatalogV1RoutineSpec', 21)
-  schema = _messages.MessageField('GoogleCloudDatacatalogV1Schema', 22)
-  serviceSpec = _messages.MessageField('GoogleCloudDatacatalogV1ServiceSpec', 23)
-  sourceSystemTimestamps = _messages.MessageField('GoogleCloudDatacatalogV1SystemTimestamps', 24)
-  sqlDatabaseSystemSpec = _messages.MessageField('GoogleCloudDatacatalogV1SqlDatabaseSystemSpec', 25)
-  type = _messages.EnumField('TypeValueValuesEnum', 26)
-  usageSignal = _messages.MessageField('GoogleCloudDatacatalogV1UsageSignal', 27)
-  userSpecifiedSystem = _messages.StringField(28)
-  userSpecifiedType = _messages.StringField(29)
+  featureOnlineStoreSpec = _messages.MessageField('GoogleCloudDatacatalogV1FeatureOnlineStoreSpec', 11)
+  filesetSpec = _messages.MessageField('GoogleCloudDatacatalogV1FilesetSpec', 12)
+  fullyQualifiedName = _messages.StringField(13)
+  gcsFilesetSpec = _messages.MessageField('GoogleCloudDatacatalogV1GcsFilesetSpec', 14)
+  integratedSystem = _messages.EnumField('IntegratedSystemValueValuesEnum', 15)
+  labels = _messages.MessageField('LabelsValue', 16)
+  linkedResource = _messages.StringField(17)
+  lookerSystemSpec = _messages.MessageField('GoogleCloudDatacatalogV1LookerSystemSpec', 18)
+  modelSpec = _messages.MessageField('GoogleCloudDatacatalogV1ModelSpec', 19)
+  name = _messages.StringField(20)
+  personalDetails = _messages.MessageField('GoogleCloudDatacatalogV1PersonalDetails', 21)
+  routineSpec = _messages.MessageField('GoogleCloudDatacatalogV1RoutineSpec', 22)
+  schema = _messages.MessageField('GoogleCloudDatacatalogV1Schema', 23)
+  serviceSpec = _messages.MessageField('GoogleCloudDatacatalogV1ServiceSpec', 24)
+  sourceSystemTimestamps = _messages.MessageField('GoogleCloudDatacatalogV1SystemTimestamps', 25)
+  sqlDatabaseSystemSpec = _messages.MessageField('GoogleCloudDatacatalogV1SqlDatabaseSystemSpec', 26)
+  type = _messages.EnumField('TypeValueValuesEnum', 27)
+  usageSignal = _messages.MessageField('GoogleCloudDatacatalogV1UsageSignal', 28)
+  userSpecifiedSystem = _messages.StringField(29)
+  userSpecifiedType = _messages.StringField(30)
 
 
 class GoogleCloudDatacatalogV1EntryOverview(_messages.Message):
@@ -1897,13 +1925,41 @@ class GoogleCloudDatacatalogV1EntryOverview(_messages.Message):
   overview = _messages.StringField(1)
 
 
+class GoogleCloudDatacatalogV1FeatureOnlineStoreSpec(_messages.Message):
+  r"""Detail description of the source information of a Vertex Feature Online
+  Store.
+
+  Enums:
+    StorageTypeValueValuesEnum: Output only. Type of underlying storage for
+      the FeatureOnlineStore.
+
+  Fields:
+    storageType: Output only. Type of underlying storage for the
+      FeatureOnlineStore.
+  """
+
+  class StorageTypeValueValuesEnum(_messages.Enum):
+    r"""Output only. Type of underlying storage for the FeatureOnlineStore.
+
+    Values:
+      STORAGE_TYPE_UNSPECIFIED: Should not be used.
+      BIGTABLE: Underlsying storgae is Bigtable.
+      OPTIMIZED: Underlying is optimized online server (Lightning).
+    """
+    STORAGE_TYPE_UNSPECIFIED = 0
+    BIGTABLE = 1
+    OPTIMIZED = 2
+
+  storageType = _messages.EnumField('StorageTypeValueValuesEnum', 1)
+
+
 class GoogleCloudDatacatalogV1FilesetSpec(_messages.Message):
   r"""Specification that applies to a fileset. Valid only for entries with the
   'FILESET' type.
 
   Fields:
-    dataplexFileset: Fields specific to a Dataplex fileset and present only in
-      the Dataplex fileset entries.
+    dataplexFileset: Fields specific to a Dataplex Universal Catalog fileset
+      and present only in the Dataplex Universal Catalog fileset entries.
   """
 
   dataplexFileset = _messages.MessageField('GoogleCloudDatacatalogV1DataplexFilesetSpec', 1)
@@ -1930,22 +1986,22 @@ class GoogleCloudDatacatalogV1GcsFilesetSpec(_messages.Message):
   Fields:
     filePatterns: Required. Patterns to identify a set of files in Google
       Cloud Storage. For more information, see [Wildcard Names]
-      (https://cloud.google.com/storage/docs/gsutil/addlhelp/WildcardNames).
-      Note: Currently, bucket wildcards are not supported. Examples of valid
-      `file_patterns`: * `gs://bucket_name/dir/*`: matches all files in
-      `bucket_name/dir` directory * `gs://bucket_name/dir/**`: matches all
-      files in `bucket_name/dir` and all subdirectories *
-      `gs://bucket_name/file*`: matches files prefixed by `file` in
-      `bucket_name` * `gs://bucket_name/??.txt`: matches files with two
-      characters followed by `.txt` in `bucket_name` *
-      `gs://bucket_name/[aeiou].txt`: matches files that contain a single
-      vowel character followed by `.txt` in `bucket_name` *
-      `gs://bucket_name/[a-m].txt`: matches files that contain `a`, `b`, ...
-      or `m` followed by `.txt` in `bucket_name` * `gs://bucket_name/a/*/b`:
-      matches all files in `bucket_name` that match the `a/*/b` pattern, such
-      as `a/c/b`, `a/d/b` * `gs://another_bucket/a.txt`: matches
-      `gs://another_bucket/a.txt` You can combine wildcards to match complex
-      sets of files, for example: `gs://bucket_name/[a-m]??.j*g`
+      (https://cloud.google.com/storage/docs/wildcards). Note: Currently,
+      bucket wildcards are not supported. Examples of valid `file_patterns`: *
+      `gs://bucket_name/dir/*`: matches all files in `bucket_name/dir`
+      directory * `gs://bucket_name/dir/**`: matches all files in
+      `bucket_name/dir` and all subdirectories * `gs://bucket_name/file*`:
+      matches files prefixed by `file` in `bucket_name` *
+      `gs://bucket_name/??.txt`: matches files with two characters followed by
+      `.txt` in `bucket_name` * `gs://bucket_name/[aeiou].txt`: matches files
+      that contain a single vowel character followed by `.txt` in
+      `bucket_name` * `gs://bucket_name/[a-m].txt`: matches files that contain
+      `a`, `b`, ... or `m` followed by `.txt` in `bucket_name` *
+      `gs://bucket_name/a/*/b`: matches all files in `bucket_name` that match
+      the `a/*/b` pattern, such as `a/c/b`, `a/d/b` *
+      `gs://another_bucket/a.txt`: matches `gs://another_bucket/a.txt` You can
+      combine wildcards to match complex sets of files, for example:
+      `gs://bucket_name/[a-m]??.j*g`
     sampleGcsFileSpecs: Output only. Sample files contained in this fileset,
       not all files contained in this fileset are represented here.
   """
@@ -2369,6 +2425,10 @@ class GoogleCloudDatacatalogV1Tag(_messages.Message):
   IAM](https://cloud.google.com/data-catalog/docs/concepts/iam) for
   information on the permissions needed to create or view tags.
 
+  Enums:
+    DataplexTransferStatusValueValuesEnum: Output only. Denotes the transfer
+      status of the Tag Template.
+
   Messages:
     FieldsValue: Required. Maps the ID of a tag field to its value and
       additional information about that field. Tag template defines valid
@@ -2379,17 +2439,38 @@ class GoogleCloudDatacatalogV1Tag(_messages.Message):
       scope allows you to attach tags to an individual column based on that
       schema. To attach a tag to a nested column, separate column names with a
       dot (`.`). Example: `column.nested_column`.
+    dataplexTransferStatus: Output only. Denotes the transfer status of the
+      Tag Template.
     fields: Required. Maps the ID of a tag field to its value and additional
       information about that field. Tag template defines valid field IDs. A
       tag must have at least 1 field and at most 500 fields.
-    name: The resource name of the tag in URL format where tag ID is a system-
-      generated identifier. Note: The tag itself might not be stored in the
-      location specified in its name.
+    name: Identifier. The resource name of the tag in URL format where tag ID
+      is a system-generated identifier. Note: The tag itself might not be
+      stored in the location specified in its name.
     template: Required. The resource name of the tag template this tag uses.
       Example: `projects/{PROJECT_ID}/locations/{LOCATION}/tagTemplates/{TAG_T
       EMPLATE_ID}` This field cannot be modified after creation.
     templateDisplayName: Output only. The display name of the tag template.
   """
+
+  class DataplexTransferStatusValueValuesEnum(_messages.Enum):
+    r"""Output only. Denotes the transfer status of the Tag Template.
+
+    Values:
+      DATAPLEX_TRANSFER_STATUS_UNSPECIFIED: Default value. TagTemplate and its
+        tags are only visible and editable in Data Catalog.
+      MIGRATED: TagTemplate and its tags are auto-copied to Dataplex Universal
+        Catalog service. Visible in both services. Editable in Data Catalog,
+        read-only in Dataplex Universal Catalog. Deprecated: Individual
+        TagTemplate migration is deprecated in favor of organization or
+        project wide TagTemplate migration opt-in.
+      TRANSFERRED: TagTemplate and its tags are auto-copied to Dataplex
+        Universal Catalog service. Visible in both services. Editable in
+        Dataplex Universal Catalog, read-only in Data Catalog.
+    """
+    DATAPLEX_TRANSFER_STATUS_UNSPECIFIED = 0
+    MIGRATED = 1
+    TRANSFERRED = 2
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class FieldsValue(_messages.Message):
@@ -2418,10 +2499,11 @@ class GoogleCloudDatacatalogV1Tag(_messages.Message):
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   column = _messages.StringField(1)
-  fields = _messages.MessageField('FieldsValue', 2)
-  name = _messages.StringField(3)
-  template = _messages.StringField(4)
-  templateDisplayName = _messages.StringField(5)
+  dataplexTransferStatus = _messages.EnumField('DataplexTransferStatusValueValuesEnum', 2)
+  fields = _messages.MessageField('FieldsValue', 3)
+  name = _messages.StringField(4)
+  template = _messages.StringField(5)
+  templateDisplayName = _messages.StringField(6)
 
 
 class GoogleCloudDatacatalogV1TagField(_messages.Message):
@@ -2664,12 +2746,19 @@ class GoogleCloudDatacatalogV1VertexModelSourceInfo(_messages.Message):
       CUSTOM: The Model is uploaded by user or custom training pipeline.
       BQML: The Model is registered and sync'ed from BigQuery ML.
       MODEL_GARDEN: The Model is saved or tuned from Model Garden.
+      GENIE: The Model is saved or tuned from Genie.
+      CUSTOM_TEXT_EMBEDDING: The Model is uploaded by text embedding
+        finetuning pipeline.
+      MARKETPLACE: The Model is saved or tuned from Marketplace.
     """
     MODEL_SOURCE_TYPE_UNSPECIFIED = 0
     AUTOML = 1
     CUSTOM = 2
     BQML = 3
     MODEL_GARDEN = 4
+    GENIE = 5
+    CUSTOM_TEXT_EMBEDDING = 6
+    MARKETPLACE = 7
 
   copy = _messages.BooleanField(1)
   sourceType = _messages.EnumField('SourceTypeValueValuesEnum', 2)
@@ -2823,10 +2912,11 @@ class GoogleCloudDatacatalogV1beta1Entry(_messages.Message):
       asetId/tables/tableId Output only when Entry is of type in the EntryType
       enum. For entries with user_specified_type, this field is optional and
       defaults to an empty string.
-    name: Output only. The Data Catalog resource name of the entry in URL
-      format. Example: * projects/{project_id}/locations/{location}/entryGroup
-      s/{entry_group_id}/entries/{entry_id} Note that this Entry and its child
-      resources may not actually be stored in the location in this name.
+    name: Output only. Identifier. The Data Catalog resource name of the entry
+      in URL format. Example: * projects/{project_id}/locations/{location}/ent
+      ryGroups/{entry_group_id}/entries/{entry_id} Note that this Entry and
+      its child resources may not actually be stored in the location in this
+      name.
     schema: Schema of the entry. An entry might not have any schema attached
       to it.
     sourceSystemTimestamps: Output only. Timestamps about the underlying
@@ -2914,7 +3004,8 @@ class GoogleCloudDatacatalogV1beta1EntryGroup(_messages.Message):
       value is an empty string.
     displayName: A short name to identify the entry group, for example,
       "analytics data - jan 2011". Default value is an empty string.
-    name: The resource name of the entry group in URL format. Example: *
+    name: Identifier. The resource name of the entry group in URL format.
+      Example: *
       projects/{project_id}/locations/{location}/entryGroups/{entry_group_id}
       Note that this EntryGroup and its child resources may not actually be
       stored in the location in this name.
@@ -3011,12 +3102,12 @@ class GoogleCloudDatacatalogV1beta1GcsFilesetSpec(_messages.Message):
 
   Fields:
     filePatterns: Required. Patterns to identify a set of files in Google
-      Cloud Storage. See [Cloud Storage documentation](https://cloud.google.co
-      m/storage/docs/gsutil/addlhelp/WildcardNames) for more information. Note
-      that bucket wildcards are currently not supported. Examples of valid
-      file_patterns: * `gs://bucket_name/dir/*`: matches all files within
-      `bucket_name/dir` directory. * `gs://bucket_name/dir/**`: matches all
-      files in `bucket_name/dir` spanning all subdirectories. *
+      Cloud Storage. See [Cloud Storage
+      documentation](https://cloud.google.com/storage/docs/wildcards) for more
+      information. Note that bucket wildcards are currently not supported.
+      Examples of valid file_patterns: * `gs://bucket_name/dir/*`: matches all
+      files within `bucket_name/dir` directory. * `gs://bucket_name/dir/**`:
+      matches all files in `bucket_name/dir` spanning all subdirectories. *
       `gs://bucket_name/file*`: matches files prefixed by `file` in
       `bucket_name` * `gs://bucket_name/??.txt`: matches files with two
       characters followed by `.txt` in `bucket_name` *
@@ -3449,11 +3540,11 @@ class GoogleCloudDatacatalogV1beta1Tag(_messages.Message):
       additional information about that field. Valid field IDs are defined by
       the tag's template. A tag must have at least 1 field and at most 500
       fields.
-    name: The resource name of the tag in URL format. Example: * projects/{pro
-      ject_id}/locations/{location}/entrygroups/{entry_group_id}/entries/{entr
-      y_id}/tags/{tag_id} where `tag_id` is a system-generated identifier.
-      Note that this Tag may not actually be stored in the location in this
-      name.
+    name: Identifier. The resource name of the tag in URL format. Example: * p
+      rojects/{project_id}/locations/{location}/entrygroups/{entry_group_id}/e
+      ntries/{entry_id}/tags/{tag_id} where `tag_id` is a system-generated
+      identifier. Note that this Tag may not actually be stored in the
+      location in this name.
     template: Required. The resource name of the tag template that this tag
       uses. Example: * projects/{project_id}/locations/{location}/tagTemplates
       /{tag_template_id} This field cannot be modified after creation.
@@ -3540,6 +3631,10 @@ class GoogleCloudDatacatalogV1beta1TagTemplate(_messages.Message):
   User](https://cloud.google.com/data-catalog/docs/how-to/template-user) role,
   which includes permission to use the tag template to tag resources.
 
+  Enums:
+    DataplexTransferStatusValueValuesEnum: Output only. Transfer status of the
+      TagTemplate
+
   Messages:
     FieldsValue: Required. Map of tag template field IDs to the settings for
       the field. This map is an exhaustive list of the allowed fields. This
@@ -3550,6 +3645,7 @@ class GoogleCloudDatacatalogV1beta1TagTemplate(_messages.Message):
       IDs must start with a letter or underscore.
 
   Fields:
+    dataplexTransferStatus: Output only. Transfer status of the TagTemplate
     displayName: The display name for this template. Defaults to an empty
       string.
     fields: Required. Map of tag template field IDs to the settings for the
@@ -3559,11 +3655,26 @@ class GoogleCloudDatacatalogV1beta1TagTemplate(_messages.Message):
       uppercase and lowercase), numbers (0-9) and underscores (_). Field IDs
       must be at least 1 character long and at most 64 characters long. Field
       IDs must start with a letter or underscore.
-    name: The resource name of the tag template in URL format. Example: *
-      projects/{project_id}/locations/{location}/tagTemplates/{tag_template_id
-      } Note that this TagTemplate and its child resources may not actually be
-      stored in the location in this name.
+    name: Identifier. The resource name of the tag template in URL format.
+      Example: * projects/{project_id}/locations/{location}/tagTemplates/{tag_
+      template_id} Note that this TagTemplate and its child resources may not
+      actually be stored in the location in this name.
   """
+
+  class DataplexTransferStatusValueValuesEnum(_messages.Enum):
+    r"""Output only. Transfer status of the TagTemplate
+
+    Values:
+      DATAPLEX_TRANSFER_STATUS_UNSPECIFIED: Default value. TagTemplate and its
+        tags are only visible and editable in DataCatalog.
+      MIGRATED: TagTemplate and its tags are auto-copied to Dataplex Universal
+        Catalog service. Visible in both services. Editable in Data Catalog,
+        read-only in Dataplex Universal Catalog. Deprecated: Individual
+        TagTemplate migration is deprecated in favor of organization or
+        project wide TagTemplate migration opt-in.
+    """
+    DATAPLEX_TRANSFER_STATUS_UNSPECIFIED = 0
+    MIGRATED = 1
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class FieldsValue(_messages.Message):
@@ -3595,9 +3706,10 @@ class GoogleCloudDatacatalogV1beta1TagTemplate(_messages.Message):
 
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
-  displayName = _messages.StringField(1)
-  fields = _messages.MessageField('FieldsValue', 2)
-  name = _messages.StringField(3)
+  dataplexTransferStatus = _messages.EnumField('DataplexTransferStatusValueValuesEnum', 1)
+  displayName = _messages.StringField(2)
+  fields = _messages.MessageField('FieldsValue', 3)
+  name = _messages.StringField(4)
 
 
 class GoogleCloudDatacatalogV1beta1TagTemplateField(_messages.Message):
@@ -3607,10 +3719,10 @@ class GoogleCloudDatacatalogV1beta1TagTemplateField(_messages.Message):
     description: The description for this field. Defaults to an empty string.
     displayName: The display name for this field. Defaults to an empty string.
     isRequired: Whether this is a required field. Defaults to false.
-    name: Output only. The resource name of the tag template field in URL
-      format. Example: * projects/{project_id}/locations/{location}/tagTemplat
-      es/{tag_template}/fields/{field} Note that this TagTemplateField may not
-      actually be stored in the location in this name.
+    name: Output only. Identifier. The resource name of the tag template field
+      in URL format. Example: * projects/{project_id}/locations/{location}/tag
+      Templates/{tag_template}/fields/{field} Note that this TagTemplateField
+      may not actually be stored in the location in this name.
     order: The order of this field with respect to other fields in this tag
       template. A higher value indicates a more important field. The value can
       be negative. Multiple fields can have the same order, and field orders
@@ -3695,7 +3807,7 @@ class GoogleCloudDatacatalogV1beta1TaxonomyService(_messages.Message):
 
     Values:
       MANAGING_SYSTEM_UNSPECIFIED: Default value
-      MANAGING_SYSTEM_DATAPLEX: Dataplex.
+      MANAGING_SYSTEM_DATAPLEX: Dataplex Universal Catalog.
       MANAGING_SYSTEM_OTHER: Other
     """
     MANAGING_SYSTEM_UNSPECIFIED = 0

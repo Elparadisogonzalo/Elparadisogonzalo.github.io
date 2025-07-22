@@ -1,7 +1,4 @@
-node_modules/
-*.tar.gz
-*.zip
-*.png
-Assets-backup/
-downloads/
-.bash_history
+node_modules
+.env
+dist
+.cache

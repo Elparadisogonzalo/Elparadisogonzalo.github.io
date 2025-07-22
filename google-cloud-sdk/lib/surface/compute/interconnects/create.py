@@ -64,6 +64,7 @@ _DOCUMENTATION_LINK = 'https://cloud.google.com/interconnect/docs/how-to/dedicat
 _CCI_DOCUMENTATION_LINK = 'https://cloud.google.com/network-connectivity/docs/interconnect/concepts/cci-overview'
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create a Compute Engine interconnect.
@@ -143,8 +144,9 @@ class Create(base.CreateCommand):
     log.status.Print(message)
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class CreateAlphaBeta(Create):
+@base.UniverseCompatible
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class CreateBeta(Create):
   """Create a Compute Engine interconnect.
 
   *{command}* is used to create interconnects. An interconnect represents a
@@ -203,6 +205,16 @@ class CreateAlphaBeta(Create):
             messages, args.requested_features
         ),
     )
+
+
+@base.UniverseCompatible
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class CreateAlpha(CreateBeta):
+  """Create a Compute Engine interconnect.
+
+  *{command}* is used to create interconnects. An interconnect represents a
+  single specific connection between Google and the customer.
+  """
 
 
 Create.detailed_help = DETAILED_HELP

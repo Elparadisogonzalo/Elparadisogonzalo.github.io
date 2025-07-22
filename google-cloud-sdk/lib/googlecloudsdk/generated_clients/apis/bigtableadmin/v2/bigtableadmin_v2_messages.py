@@ -36,8 +36,9 @@ class AppProfile(_messages.Message):
       [Wikipedia](https://en.wikipedia.org/wiki/HTTP_ETag) and [RFC
       7232](https://tools.ietf.org/html/rfc7232#section-2.3) for more details.
     multiClusterRoutingUseAny: Use a multi-cluster routing policy.
-    name: The unique name of the app profile. Values are of the form
-      `projects/{project}/instances/{instance}/appProfiles/_a-zA-Z0-9*`.
+    name: The unique name of the app profile, up to 50 characters long. Values
+      are of the form `projects/{project}/instances/{instance}/appProfiles/_a-
+      zA-Z0-9*`.
     priority: This field has been deprecated in favor of
       `standard_isolation.priority`. If you set this field,
       `standard_isolation.priority` will be set instead. The priority of
@@ -139,7 +140,7 @@ class AuditLogConfig(_messages.Message):
 
 
 class AuthorizedView(_messages.Message):
-  r"""Placeholder for admin API work while we work out the internals.
+  r"""An Authorized View of a Cloud Bigtable Table.
 
   Fields:
     deletionProtection: Set to true to make the AuthorizedView protected
@@ -165,10 +166,11 @@ class AutomatedBackupPolicy(_messages.Message):
   r"""Defines an automated backup policy for a table
 
   Fields:
-    frequency: Required. How frequently automated backups should occur. The
-      only supported value at this time is 24 hours.
+    frequency: How frequently automated backups should occur. The only
+      supported value at this time is 24 hours. An undefined frequency is
+      treated as 24 hours.
     retentionPeriod: Required. How long the automated backups should be
-      retained. The only supported value at this time is 3 days.
+      retained. Values must be at least 3 days and at most 90 days.
   """
 
   frequency = _messages.StringField(1)
@@ -212,17 +214,24 @@ class Backup(_messages.Message):
   r"""A backup of a Cloud Bigtable table.
 
   Enums:
+    BackupTypeValueValuesEnum: Indicates the backup type of the backup.
     StateValueValuesEnum: Output only. The current state of the backup.
 
   Fields:
+    backupType: Indicates the backup type of the backup.
     encryptionInfo: Output only. The encryption information for the backup.
     endTime: Output only. `end_time` is the time that the backup was finished.
       The row data in the backup will be no newer than this timestamp.
-    expireTime: Required. The expiration time of the backup, with microseconds
-      granularity that must be at least 6 hours and at most 90 days from the
-      time the request is received. Once the `expire_time` has passed, Cloud
-      Bigtable will delete the backup and free the resources used by the
-      backup.
+    expireTime: Required. The expiration time of the backup. When creating a
+      backup or updating its `expire_time`, the value must be greater than the
+      backup creation time by: - At least 6 hours - At most 90 days Once the
+      `expire_time` has passed, Cloud Bigtable will delete the backup.
+    hotToStandardTime: The time at which the hot backup will be converted to a
+      standard backup. Once the `hot_to_standard_time` has passed, Cloud
+      Bigtable will convert the hot backup to a standard backup. This value
+      must be greater than the backup creation time by: - At least 24 hours
+      This field only applies for hot backups. When creating or updating a
+      standard backup, attempting to set this field will fail the request.
     name: A globally unique identifier for the backup which cannot be changed.
       Values are of the form
       `projects/{project}/instances/{instance}/clusters/{cluster}/ backups/_a-
@@ -246,6 +255,23 @@ class Backup(_messages.Message):
     state: Output only. The current state of the backup.
   """
 
+  class BackupTypeValueValuesEnum(_messages.Enum):
+    r"""Indicates the backup type of the backup.
+
+    Values:
+      BACKUP_TYPE_UNSPECIFIED: Not specified.
+      STANDARD: The default type for Cloud Bigtable managed backups. Supported
+        for backups created in both HDD and SSD instances. Requires
+        optimization when restored to a table in an SSD instance.
+      HOT: A backup type with faster restore to SSD performance. Only
+        supported for backups created in SSD instances. A new SSD table
+        restored from a hot backup reaches production performance more quickly
+        than a standard backup.
+    """
+    BACKUP_TYPE_UNSPECIFIED = 0
+    STANDARD = 1
+    HOT = 2
+
   class StateValueValuesEnum(_messages.Enum):
     r"""Output only. The current state of the backup.
 
@@ -259,15 +285,17 @@ class Backup(_messages.Message):
     CREATING = 1
     READY = 2
 
-  encryptionInfo = _messages.MessageField('EncryptionInfo', 1)
-  endTime = _messages.StringField(2)
-  expireTime = _messages.StringField(3)
-  name = _messages.StringField(4)
-  sizeBytes = _messages.IntegerField(5)
-  sourceBackup = _messages.StringField(6)
-  sourceTable = _messages.StringField(7)
-  startTime = _messages.StringField(8)
-  state = _messages.EnumField('StateValueValuesEnum', 9)
+  backupType = _messages.EnumField('BackupTypeValueValuesEnum', 1)
+  encryptionInfo = _messages.MessageField('EncryptionInfo', 2)
+  endTime = _messages.StringField(3)
+  expireTime = _messages.StringField(4)
+  hotToStandardTime = _messages.StringField(5)
+  name = _messages.StringField(6)
+  sizeBytes = _messages.IntegerField(7)
+  sourceBackup = _messages.StringField(8)
+  sourceTable = _messages.StringField(9)
+  startTime = _messages.StringField(10)
+  state = _messages.EnumField('StateValueValuesEnum', 11)
 
 
 class BackupInfo(_messages.Message):
@@ -291,6 +319,26 @@ class BackupInfo(_messages.Message):
   sourceBackup = _messages.StringField(3)
   sourceTable = _messages.StringField(4)
   startTime = _messages.StringField(5)
+
+
+class BigtableadminOperationsCancelRequest(_messages.Message):
+  r"""A BigtableadminOperationsCancelRequest object.
+
+  Fields:
+    name: The name of the operation resource to be cancelled.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class BigtableadminOperationsDeleteRequest(_messages.Message):
+  r"""A BigtableadminOperationsDeleteRequest object.
+
+  Fields:
+    name: The name of the operation resource to be deleted.
+  """
+
+  name = _messages.StringField(1, required=True)
 
 
 class BigtableadminOperationsGetRequest(_messages.Message):
@@ -398,8 +446,9 @@ class BigtableadminProjectsInstancesAppProfilesPatchRequest(_messages.Message):
     appProfile: A AppProfile resource to be passed as the request body.
     ignoreWarnings: If true, ignore safety checks when updating the app
       profile.
-    name: The unique name of the app profile. Values are of the form
-      `projects/{project}/instances/{instance}/appProfiles/_a-zA-Z0-9*`.
+    name: The unique name of the app profile, up to 50 characters long. Values
+      are of the form `projects/{project}/instances/{instance}/appProfiles/_a-
+      zA-Z0-9*`.
     updateMask: Required. The subset of app profile fields which should be
       replaced. If unset, all fields will be replaced.
   """
@@ -417,8 +466,8 @@ class BigtableadminProjectsInstancesClustersBackupsCopyRequest(_messages.Message
     copyBackupRequest: A CopyBackupRequest resource to be passed as the
       request body.
     parent: Required. The name of the destination cluster that will contain
-      the backup copy. The cluster must already exists. Values are of the
-      form: `projects/{project}/instances/{instance}/clusters/{cluster}`.
+      the backup copy. The cluster must already exist. Values are of the form:
+      `projects/{project}/instances/{instance}/clusters/{cluster}`.
   """
 
   copyBackupRequest = _messages.MessageField('CopyBackupRequest', 1)
@@ -757,6 +806,269 @@ class BigtableadminProjectsInstancesListRequest(_messages.Message):
   parent = _messages.StringField(2, required=True)
 
 
+class BigtableadminProjectsInstancesLogicalViewsCreateRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesLogicalViewsCreateRequest object.
+
+  Fields:
+    logicalView: A LogicalView resource to be passed as the request body.
+    logicalViewId: Required. The ID to use for the logical view, which will
+      become the final component of the logical view's resource name.
+    parent: Required. The parent instance where this logical view will be
+      created. Format: `projects/{project}/instances/{instance}`.
+  """
+
+  logicalView = _messages.MessageField('LogicalView', 1)
+  logicalViewId = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+
+
+class BigtableadminProjectsInstancesLogicalViewsDeleteRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesLogicalViewsDeleteRequest object.
+
+  Fields:
+    etag: Optional. The current etag of the logical view. If an etag is
+      provided and does not match the current etag of the logical view,
+      deletion will be blocked and an ABORTED error will be returned.
+    name: Required. The unique name of the logical view to be deleted. Format:
+      `projects/{project}/instances/{instance}/logicalViews/{logical_view}`.
+  """
+
+  etag = _messages.StringField(1)
+  name = _messages.StringField(2, required=True)
+
+
+class BigtableadminProjectsInstancesLogicalViewsGetIamPolicyRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesLogicalViewsGetIamPolicyRequest object.
+
+  Fields:
+    getIamPolicyRequest: A GetIamPolicyRequest resource to be passed as the
+      request body.
+    resource: REQUIRED: The resource for which the policy is being requested.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+  """
+
+  getIamPolicyRequest = _messages.MessageField('GetIamPolicyRequest', 1)
+  resource = _messages.StringField(2, required=True)
+
+
+class BigtableadminProjectsInstancesLogicalViewsGetRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesLogicalViewsGetRequest object.
+
+  Fields:
+    name: Required. The unique name of the requested logical view. Values are
+      of the form
+      `projects/{project}/instances/{instance}/logicalViews/{logical_view}`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class BigtableadminProjectsInstancesLogicalViewsListRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesLogicalViewsListRequest object.
+
+  Fields:
+    pageSize: Optional. The maximum number of logical views to return. The
+      service may return fewer than this value
+    pageToken: Optional. A page token, received from a previous
+      `ListLogicalViews` call. Provide this to retrieve the subsequent page.
+      When paginating, all other parameters provided to `ListLogicalViews`
+      must match the call that provided the page token.
+    parent: Required. The unique name of the instance for which the list of
+      logical views is requested. Values are of the form
+      `projects/{project}/instances/{instance}`.
+  """
+
+  pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+
+
+class BigtableadminProjectsInstancesLogicalViewsPatchRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesLogicalViewsPatchRequest object.
+
+  Fields:
+    logicalView: A LogicalView resource to be passed as the request body.
+    name: Identifier. The unique name of the logical view. Format:
+      `projects/{project}/instances/{instance}/logicalViews/{logical_view}`
+    updateMask: Optional. The list of fields to update.
+  """
+
+  logicalView = _messages.MessageField('LogicalView', 1)
+  name = _messages.StringField(2, required=True)
+  updateMask = _messages.StringField(3)
+
+
+class BigtableadminProjectsInstancesLogicalViewsSetIamPolicyRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesLogicalViewsSetIamPolicyRequest object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy is being specified.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    setIamPolicyRequest: A SetIamPolicyRequest resource to be passed as the
+      request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  setIamPolicyRequest = _messages.MessageField('SetIamPolicyRequest', 2)
+
+
+class BigtableadminProjectsInstancesLogicalViewsTestIamPermissionsRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesLogicalViewsTestIamPermissionsRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy detail is being
+      requested. See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    testIamPermissionsRequest: A TestIamPermissionsRequest resource to be
+      passed as the request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
+
+
+class BigtableadminProjectsInstancesMaterializedViewsCreateRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesMaterializedViewsCreateRequest object.
+
+  Fields:
+    materializedView: A MaterializedView resource to be passed as the request
+      body.
+    materializedViewId: Required. The ID to use for the materialized view,
+      which will become the final component of the materialized view's
+      resource name.
+    parent: Required. The parent instance where this materialized view will be
+      created. Format: `projects/{project}/instances/{instance}`.
+  """
+
+  materializedView = _messages.MessageField('MaterializedView', 1)
+  materializedViewId = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+
+
+class BigtableadminProjectsInstancesMaterializedViewsDeleteRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesMaterializedViewsDeleteRequest object.
+
+  Fields:
+    etag: Optional. The current etag of the materialized view. If an etag is
+      provided and does not match the current etag of the materialized view,
+      deletion will be blocked and an ABORTED error will be returned.
+    name: Required. The unique name of the materialized view to be deleted.
+      Format: `projects/{project}/instances/{instance}/materializedViews/{mate
+      rialized_view}`.
+  """
+
+  etag = _messages.StringField(1)
+  name = _messages.StringField(2, required=True)
+
+
+class BigtableadminProjectsInstancesMaterializedViewsGetIamPolicyRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesMaterializedViewsGetIamPolicyRequest
+  object.
+
+  Fields:
+    getIamPolicyRequest: A GetIamPolicyRequest resource to be passed as the
+      request body.
+    resource: REQUIRED: The resource for which the policy is being requested.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+  """
+
+  getIamPolicyRequest = _messages.MessageField('GetIamPolicyRequest', 1)
+  resource = _messages.StringField(2, required=True)
+
+
+class BigtableadminProjectsInstancesMaterializedViewsGetRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesMaterializedViewsGetRequest object.
+
+  Fields:
+    name: Required. The unique name of the requested materialized view. Values
+      are of the form `projects/{project}/instances/{instance}/materializedVie
+      ws/{materialized_view}`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class BigtableadminProjectsInstancesMaterializedViewsListRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesMaterializedViewsListRequest object.
+
+  Fields:
+    pageSize: Optional. The maximum number of materialized views to return.
+      The service may return fewer than this value
+    pageToken: Optional. A page token, received from a previous
+      `ListMaterializedViews` call. Provide this to retrieve the subsequent
+      page. When paginating, all other parameters provided to
+      `ListMaterializedViews` must match the call that provided the page
+      token.
+    parent: Required. The unique name of the instance for which the list of
+      materialized views is requested. Values are of the form
+      `projects/{project}/instances/{instance}`.
+  """
+
+  pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+
+
+class BigtableadminProjectsInstancesMaterializedViewsPatchRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesMaterializedViewsPatchRequest object.
+
+  Fields:
+    materializedView: A MaterializedView resource to be passed as the request
+      body.
+    name: Identifier. The unique name of the materialized view. Format: `proje
+      cts/{project}/instances/{instance}/materializedViews/{materialized_view}
+      `
+    updateMask: Optional. The list of fields to update.
+  """
+
+  materializedView = _messages.MessageField('MaterializedView', 1)
+  name = _messages.StringField(2, required=True)
+  updateMask = _messages.StringField(3)
+
+
+class BigtableadminProjectsInstancesMaterializedViewsSetIamPolicyRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesMaterializedViewsSetIamPolicyRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy is being specified.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    setIamPolicyRequest: A SetIamPolicyRequest resource to be passed as the
+      request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  setIamPolicyRequest = _messages.MessageField('SetIamPolicyRequest', 2)
+
+
+class BigtableadminProjectsInstancesMaterializedViewsTestIamPermissionsRequest(_messages.Message):
+  r"""A
+  BigtableadminProjectsInstancesMaterializedViewsTestIamPermissionsRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy detail is being
+      requested. See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    testIamPermissionsRequest: A TestIamPermissionsRequest resource to be
+      passed as the request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
+
+
 class BigtableadminProjectsInstancesPartialUpdateInstanceRequest(_messages.Message):
   r"""A BigtableadminProjectsInstancesPartialUpdateInstanceRequest object.
 
@@ -828,6 +1140,23 @@ class BigtableadminProjectsInstancesTablesAuthorizedViewsDeleteRequest(_messages
   name = _messages.StringField(2, required=True)
 
 
+class BigtableadminProjectsInstancesTablesAuthorizedViewsGetIamPolicyRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesTablesAuthorizedViewsGetIamPolicyRequest
+  object.
+
+  Fields:
+    getIamPolicyRequest: A GetIamPolicyRequest resource to be passed as the
+      request body.
+    resource: REQUIRED: The resource for which the policy is being requested.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+  """
+
+  getIamPolicyRequest = _messages.MessageField('GetIamPolicyRequest', 1)
+  resource = _messages.StringField(2, required=True)
+
+
 class BigtableadminProjectsInstancesTablesAuthorizedViewsGetRequest(_messages.Message):
   r"""A BigtableadminProjectsInstancesTablesAuthorizedViewsGetRequest object.
 
@@ -869,7 +1198,7 @@ class BigtableadminProjectsInstancesTablesAuthorizedViewsListRequest(_messages.M
 
   Enums:
     ViewValueValuesEnum: Optional. The resource_view to be applied to the
-      returned views' fields. Default to NAME_ONLY.
+      returned AuthorizedViews' fields. Default to NAME_ONLY.
 
   Fields:
     pageSize: Optional. Maximum number of results per page. A page_size of
@@ -884,13 +1213,13 @@ class BigtableadminProjectsInstancesTablesAuthorizedViewsListRequest(_messages.M
     parent: Required. The unique name of the table for which AuthorizedViews
       should be listed. Values are of the form
       `projects/{project}/instances/{instance}/tables/{table}`.
-    view: Optional. The resource_view to be applied to the returned views'
-      fields. Default to NAME_ONLY.
+    view: Optional. The resource_view to be applied to the returned
+      AuthorizedViews' fields. Default to NAME_ONLY.
   """
 
   class ViewValueValuesEnum(_messages.Enum):
-    r"""Optional. The resource_view to be applied to the returned views'
-    fields. Default to NAME_ONLY.
+    r"""Optional. The resource_view to be applied to the returned
+    AuthorizedViews' fields. Default to NAME_ONLY.
 
     Values:
       RESPONSE_VIEW_UNSPECIFIED: Uses the default view for each method as
@@ -918,6 +1247,8 @@ class BigtableadminProjectsInstancesTablesAuthorizedViewsPatchRequest(_messages.
   Fields:
     authorizedView: A AuthorizedView resource to be passed as the request
       body.
+    ignoreWarnings: Optional. If true, ignore the safety checks when updating
+      the AuthorizedView.
     name: Identifier. The name of this AuthorizedView. Values are of the form
       `projects/{project}/instances/{instance}/tables/{table}/authorizedViews/
       {authorized_view}`
@@ -930,8 +1261,44 @@ class BigtableadminProjectsInstancesTablesAuthorizedViewsPatchRequest(_messages.
   """
 
   authorizedView = _messages.MessageField('AuthorizedView', 1)
-  name = _messages.StringField(2, required=True)
-  updateMask = _messages.StringField(3)
+  ignoreWarnings = _messages.BooleanField(2)
+  name = _messages.StringField(3, required=True)
+  updateMask = _messages.StringField(4)
+
+
+class BigtableadminProjectsInstancesTablesAuthorizedViewsSetIamPolicyRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesTablesAuthorizedViewsSetIamPolicyRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy is being specified.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    setIamPolicyRequest: A SetIamPolicyRequest resource to be passed as the
+      request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  setIamPolicyRequest = _messages.MessageField('SetIamPolicyRequest', 2)
+
+
+class BigtableadminProjectsInstancesTablesAuthorizedViewsTestIamPermissionsRequest(_messages.Message):
+  r"""A
+  BigtableadminProjectsInstancesTablesAuthorizedViewsTestIamPermissionsRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy detail is being
+      requested. See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    testIamPermissionsRequest: A TestIamPermissionsRequest resource to be
+      passed as the request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
 
 
 class BigtableadminProjectsInstancesTablesCheckConsistencyRequest(_messages.Message):
@@ -1144,6 +1511,8 @@ class BigtableadminProjectsInstancesTablesPatchRequest(_messages.Message):
   r"""A BigtableadminProjectsInstancesTablesPatchRequest object.
 
   Fields:
+    ignoreWarnings: Optional. If true, ignore safety checks when updating the
+      table.
     name: The unique name of the table. Values are of the form
       `projects/{project}/instances/{instance}/tables/_a-zA-Z0-9*`. Views:
       `NAME_ONLY`, `SCHEMA_VIEW`, `REPLICATION_VIEW`, `STATS_VIEW`, `FULL`
@@ -1154,13 +1523,17 @@ class BigtableadminProjectsInstancesTablesPatchRequest(_messages.Message):
       request message. The wildcard (*) path is currently not supported.
       Currently UpdateTable is only supported for the following fields: *
       `change_stream_config` * `change_stream_config.retention_period` *
-      `deletion_protection` If `column_families` is set in `update_mask`, it
-      will return an UNIMPLEMENTED error.
+      `deletion_protection` * `automated_backup_policy` *
+      `automated_backup_policy.retention_period` *
+      `automated_backup_policy.frequency` * `row_key_schema` If
+      `column_families` is set in `update_mask`, it will return an
+      UNIMPLEMENTED error.
   """
 
-  name = _messages.StringField(1, required=True)
-  table = _messages.MessageField('Table', 2)
-  updateMask = _messages.StringField(3)
+  ignoreWarnings = _messages.BooleanField(1)
+  name = _messages.StringField(2, required=True)
+  table = _messages.MessageField('Table', 3)
+  updateMask = _messages.StringField(4)
 
 
 class BigtableadminProjectsInstancesTablesRestoreRequest(_messages.Message):
@@ -1175,6 +1548,145 @@ class BigtableadminProjectsInstancesTablesRestoreRequest(_messages.Message):
 
   parent = _messages.StringField(1, required=True)
   restoreTableRequest = _messages.MessageField('RestoreTableRequest', 2)
+
+
+class BigtableadminProjectsInstancesTablesSchemaBundlesCreateRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesTablesSchemaBundlesCreateRequest object.
+
+  Fields:
+    parent: Required. The parent resource where this schema bundle will be
+      created. Values are of the form
+      `projects/{project}/instances/{instance}/tables/{table}`.
+    schemaBundle: A SchemaBundle resource to be passed as the request body.
+    schemaBundleId: Required. The unique ID to use for the schema bundle,
+      which will become the final component of the schema bundle's resource
+      name.
+  """
+
+  parent = _messages.StringField(1, required=True)
+  schemaBundle = _messages.MessageField('SchemaBundle', 2)
+  schemaBundleId = _messages.StringField(3)
+
+
+class BigtableadminProjectsInstancesTablesSchemaBundlesDeleteRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesTablesSchemaBundlesDeleteRequest object.
+
+  Fields:
+    etag: Optional. The etag of the schema bundle. If this is provided, it
+      must match the server's etag. The server returns an ABORTED error on a
+      mismatched etag.
+    name: Required. The unique name of the schema bundle to delete. Values are
+      of the form `projects/{project}/instances/{instance}/tables/{table}/sche
+      maBundles/{schema_bundle}`
+  """
+
+  etag = _messages.StringField(1)
+  name = _messages.StringField(2, required=True)
+
+
+class BigtableadminProjectsInstancesTablesSchemaBundlesGetIamPolicyRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesTablesSchemaBundlesGetIamPolicyRequest
+  object.
+
+  Fields:
+    getIamPolicyRequest: A GetIamPolicyRequest resource to be passed as the
+      request body.
+    resource: REQUIRED: The resource for which the policy is being requested.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+  """
+
+  getIamPolicyRequest = _messages.MessageField('GetIamPolicyRequest', 1)
+  resource = _messages.StringField(2, required=True)
+
+
+class BigtableadminProjectsInstancesTablesSchemaBundlesGetRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesTablesSchemaBundlesGetRequest object.
+
+  Fields:
+    name: Required. The unique name of the schema bundle to retrieve. Values
+      are of the form `projects/{project}/instances/{instance}/tables/{table}/
+      schemaBundles/{schema_bundle}`
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class BigtableadminProjectsInstancesTablesSchemaBundlesListRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesTablesSchemaBundlesListRequest object.
+
+  Fields:
+    pageSize: The maximum number of schema bundles to return. If the value is
+      positive, the server may return at most this value. If unspecified, the
+      server will return the maximum allowed page size.
+    pageToken: A page token, received from a previous `ListSchemaBundles`
+      call. Provide this to retrieve the subsequent page. When paginating, all
+      other parameters provided to `ListSchemaBundles` must match the call
+      that provided the page token.
+    parent: Required. The parent, which owns this collection of schema
+      bundles. Values are of the form
+      `projects/{project}/instances/{instance}/tables/{table}`.
+  """
+
+  pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+
+
+class BigtableadminProjectsInstancesTablesSchemaBundlesPatchRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesTablesSchemaBundlesPatchRequest object.
+
+  Fields:
+    ignoreWarnings: Optional. If set, ignore the safety checks when updating
+      the Schema Bundle. The safety checks are: - The new Schema Bundle is
+      backwards compatible with the existing Schema Bundle.
+    name: Identifier. The unique name identifying this schema bundle. Values
+      are of the form `projects/{project}/instances/{instance}/tables/{table}/
+      schemaBundles/{schema_bundle}`
+    schemaBundle: A SchemaBundle resource to be passed as the request body.
+    updateMask: Optional. The list of fields to update.
+  """
+
+  ignoreWarnings = _messages.BooleanField(1)
+  name = _messages.StringField(2, required=True)
+  schemaBundle = _messages.MessageField('SchemaBundle', 3)
+  updateMask = _messages.StringField(4)
+
+
+class BigtableadminProjectsInstancesTablesSchemaBundlesSetIamPolicyRequest(_messages.Message):
+  r"""A BigtableadminProjectsInstancesTablesSchemaBundlesSetIamPolicyRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy is being specified.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    setIamPolicyRequest: A SetIamPolicyRequest resource to be passed as the
+      request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  setIamPolicyRequest = _messages.MessageField('SetIamPolicyRequest', 2)
+
+
+class BigtableadminProjectsInstancesTablesSchemaBundlesTestIamPermissionsRequest(_messages.Message):
+  r"""A
+  BigtableadminProjectsInstancesTablesSchemaBundlesTestIamPermissionsRequest
+  object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy detail is being
+      requested. See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    testIamPermissionsRequest: A TestIamPermissionsRequest resource to be
+      passed as the request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
 
 
 class BigtableadminProjectsInstancesTablesSetIamPolicyRequest(_messages.Message):
@@ -1223,143 +1735,6 @@ class BigtableadminProjectsInstancesTablesUndeleteRequest(_messages.Message):
   undeleteTableRequest = _messages.MessageField('UndeleteTableRequest', 2)
 
 
-class BigtableadminProjectsInstancesTablesViewsCreateRequest(_messages.Message):
-  r"""A BigtableadminProjectsInstancesTablesViewsCreateRequest object.
-
-  Fields:
-    parent: Required. This is the name of the table the view belongs to.
-      Values are of the form
-      `projects/{project}/instances/{instance}/tables/{table}`.
-    view: A View resource to be passed as the request body.
-    viewId: Required. The id of the view to create. This view must not already
-      exist. The `view_id` appended to `parent` forms the full view name of
-      the form
-      `projects/{project}/instances/{instance}/tables/{table}/views/{view}`.
-  """
-
-  parent = _messages.StringField(1, required=True)
-  view = _messages.MessageField('View', 2)
-  viewId = _messages.StringField(3)
-
-
-class BigtableadminProjectsInstancesTablesViewsDeleteRequest(_messages.Message):
-  r"""A BigtableadminProjectsInstancesTablesViewsDeleteRequest object.
-
-  Fields:
-    etag: Optional. The current etag of the view. If an etag is provided and
-      does not match the current etag of the view, deletion will be blocked
-      and an ABORTED error will be returned.
-    name: Required. The unique name of the view to be deleted. Values are of
-      the form
-      `projects/{project}/instances/{instance}/tables/{table}/views/{view}`.
-  """
-
-  etag = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-
-
-class BigtableadminProjectsInstancesTablesViewsGetRequest(_messages.Message):
-  r"""A BigtableadminProjectsInstancesTablesViewsGetRequest object.
-
-  Enums:
-    ViewValueValuesEnum: The resource_view to be applied to the returned
-      views' fields. Default to BASIC.
-
-  Fields:
-    name: Required. The unique name of the requested view. Values are of the
-      form
-      `projects/{project}/instances/{instance}/tables/{table}/views/{view}`.
-    view: The resource_view to be applied to the returned views' fields.
-      Default to BASIC.
-  """
-
-  class ViewValueValuesEnum(_messages.Enum):
-    r"""The resource_view to be applied to the returned views' fields. Default
-    to BASIC.
-
-    Values:
-      RESPONSE_VIEW_UNSPECIFIED: Uses the default view for each method as
-        documented in the request
-      NAME_ONLY: Only populates `name`.
-      BASIC: Only populates the view's basic metadata. This includes: name,
-        view_type, deletion_protection, etag.
-      FULL: Populates every fields
-    """
-    RESPONSE_VIEW_UNSPECIFIED = 0
-    NAME_ONLY = 1
-    BASIC = 2
-    FULL = 3
-
-  name = _messages.StringField(1, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 2)
-
-
-class BigtableadminProjectsInstancesTablesViewsListRequest(_messages.Message):
-  r"""A BigtableadminProjectsInstancesTablesViewsListRequest object.
-
-  Enums:
-    ViewValueValuesEnum: The resource_view to be applied to the returned
-      views' fields. Default to NAME_ONLY.
-
-  Fields:
-    pageSize: Maximum number of results per page. A page_size of zero lets the
-      server choose the number of items to return. A page_size which is
-      strictly positive will return at most that many items. A negative
-      page_size will cause an error. Following the first request, subsequent
-      paginated calls are not required to pass a page_size. If a page_size is
-      set in subsequent calls, it must match the page_size given in the first
-      request.
-    pageToken: The value of `next_page_token` returned by a previous call.
-    parent: Required. The unique name of the table for which views should be
-      listed. Values are of the form
-      `projects/{project}/instances/{instance}/tables/{table}`.
-    view: The resource_view to be applied to the returned views' fields.
-      Default to NAME_ONLY.
-  """
-
-  class ViewValueValuesEnum(_messages.Enum):
-    r"""The resource_view to be applied to the returned views' fields. Default
-    to NAME_ONLY.
-
-    Values:
-      RESPONSE_VIEW_UNSPECIFIED: Uses the default view for each method as
-        documented in the request
-      NAME_ONLY: Only populates `name`.
-      BASIC: Only populates the view's basic metadata. This includes: name,
-        view_type, deletion_protection, etag.
-      FULL: Populates every fields
-    """
-    RESPONSE_VIEW_UNSPECIFIED = 0
-    NAME_ONLY = 1
-    BASIC = 2
-    FULL = 3
-
-  pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(2)
-  parent = _messages.StringField(3, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 4)
-
-
-class BigtableadminProjectsInstancesTablesViewsPatchRequest(_messages.Message):
-  r"""A BigtableadminProjectsInstancesTablesViewsPatchRequest object.
-
-  Fields:
-    name: The name of the view. Values are of the form
-      `projects/{project}/instances/{instance}/tables/{table}/views/{view}`
-    updateMask: Optional. The list of fields to update. A mask specifying
-      which fields in the View resource should be updated. This mask is
-      relative to the View resource, not to the request message. A field will
-      be overwritten if it is in the mask. If empty, all fields set in the
-      request will be overwritten. A special value `*` means to overwrite all
-      fields (including fields not set in the request).
-    view: A View resource to be passed as the request body.
-  """
-
-  name = _messages.StringField(1, required=True)
-  updateMask = _messages.StringField(2)
-  view = _messages.MessageField('View', 3)
-
-
 class BigtableadminProjectsInstancesTestIamPermissionsRequest(_messages.Message):
   r"""A BigtableadminProjectsInstancesTestIamPermissionsRequest object.
 
@@ -1376,10 +1751,22 @@ class BigtableadminProjectsInstancesTestIamPermissionsRequest(_messages.Message)
   testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
 
 
+class BigtableadminProjectsLocationsGetRequest(_messages.Message):
+  r"""A BigtableadminProjectsLocationsGetRequest object.
+
+  Fields:
+    name: Resource name for the location.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
 class BigtableadminProjectsLocationsListRequest(_messages.Message):
   r"""A BigtableadminProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -1390,10 +1777,11 @@ class BigtableadminProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class Binding(_messages.Message):
@@ -1538,6 +1926,8 @@ class Cluster(_messages.Message):
     DefaultStorageTypeValueValuesEnum: Immutable. The type of storage used by
       this cluster to serve its parent instance's tables, unless explicitly
       overridden.
+    NodeScalingFactorValueValuesEnum: Immutable. The node scaling factor of
+      this cluster.
     StateValueValuesEnum: Output only. The current state of the cluster.
 
   Fields:
@@ -1552,6 +1942,7 @@ class Cluster(_messages.Message):
       should be of the form `projects/{project}/locations/{zone}`.
     name: The unique name of the cluster. Values are of the form
       `projects/{project}/instances/{instance}/clusters/a-z*`.
+    nodeScalingFactor: Immutable. The node scaling factor of this cluster.
     serveNodes: The number of nodes in the cluster. If no value is set, Cloud
       Bigtable automatically allocates nodes based on your data footprint and
       optimized for 50% storage utilization.
@@ -1570,6 +1961,22 @@ class Cluster(_messages.Message):
     STORAGE_TYPE_UNSPECIFIED = 0
     SSD = 1
     HDD = 2
+
+  class NodeScalingFactorValueValuesEnum(_messages.Enum):
+    r"""Immutable. The node scaling factor of this cluster.
+
+    Values:
+      NODE_SCALING_FACTOR_UNSPECIFIED: No node scaling specified. Defaults to
+        NODE_SCALING_FACTOR_1X.
+      NODE_SCALING_FACTOR_1X: The cluster is running with a scaling factor of
+        1.
+      NODE_SCALING_FACTOR_2X: The cluster is running with a scaling factor of
+        2. All node count values must be in increments of 2 with this scaling
+        factor enabled, otherwise an INVALID_ARGUMENT error will be returned.
+    """
+    NODE_SCALING_FACTOR_UNSPECIFIED = 0
+    NODE_SCALING_FACTOR_1X = 1
+    NODE_SCALING_FACTOR_2X = 2
 
   class StateValueValuesEnum(_messages.Enum):
     r"""Output only. The current state of the cluster.
@@ -1600,8 +2007,9 @@ class Cluster(_messages.Message):
   encryptionConfig = _messages.MessageField('EncryptionConfig', 3)
   location = _messages.StringField(4)
   name = _messages.StringField(5)
-  serveNodes = _messages.IntegerField(6, variant=_messages.Variant.INT32)
-  state = _messages.EnumField('StateValueValuesEnum', 7)
+  nodeScalingFactor = _messages.EnumField('NodeScalingFactorValueValuesEnum', 6)
+  serveNodes = _messages.IntegerField(7, variant=_messages.Variant.INT32)
+  state = _messages.EnumField('StateValueValuesEnum', 8)
 
 
 class ClusterAutoscalingConfig(_messages.Message):
@@ -1686,10 +2094,17 @@ class ColumnFamily(_messages.Message):
     stats: Output only. Only available with STATS_VIEW, this includes summary
       statistics about column family contents. For statistics over an entire
       table, see TableStats above.
+    valueType: The type of data stored in each of this family's cell values,
+      including its full encoding. If omitted, the family only serves raw
+      untyped bytes. For now, only the `Aggregate` type is supported.
+      `Aggregate` can only be set at family creation and is immutable
+      afterwards. If `value_type` is `Aggregate`, written data must be
+      compatible with: * `value_type.input_type` for `AddInput` mutations
   """
 
   gcRule = _messages.MessageField('GcRule', 1)
   stats = _messages.MessageField('ColumnFamilyStats', 2)
+  valueType = _messages.MessageField('Type', 3)
 
 
 class ColumnFamilyStats(_messages.Message):
@@ -1776,7 +2191,7 @@ class CreateAuthorizedViewMetadata(_messages.Message):
     finishTime: The time at which the operation failed or was completed
       successfully.
     originalRequest: The request that prompted the initiation of this
-      CreateInstance operation.
+      CreateAuthorizedView operation.
     requestTime: The time at which the original request was received.
   """
 
@@ -1972,6 +2387,88 @@ class CreateInstanceRequest(_messages.Message):
   parent = _messages.StringField(4)
 
 
+class CreateLogicalViewMetadata(_messages.Message):
+  r"""The metadata for the Operation returned by CreateLogicalView.
+
+  Fields:
+    endTime: If set, the time at which this operation finished or was
+      canceled.
+    originalRequest: The request that prompted the initiation of this
+      CreateLogicalView operation.
+    startTime: The time at which this operation started.
+  """
+
+  endTime = _messages.StringField(1)
+  originalRequest = _messages.MessageField('CreateLogicalViewRequest', 2)
+  startTime = _messages.StringField(3)
+
+
+class CreateLogicalViewRequest(_messages.Message):
+  r"""Request message for BigtableInstanceAdmin.CreateLogicalView.
+
+  Fields:
+    logicalView: Required. The logical view to create.
+    logicalViewId: Required. The ID to use for the logical view, which will
+      become the final component of the logical view's resource name.
+    parent: Required. The parent instance where this logical view will be
+      created. Format: `projects/{project}/instances/{instance}`.
+  """
+
+  logicalView = _messages.MessageField('LogicalView', 1)
+  logicalViewId = _messages.StringField(2)
+  parent = _messages.StringField(3)
+
+
+class CreateMaterializedViewMetadata(_messages.Message):
+  r"""The metadata for the Operation returned by CreateMaterializedView.
+
+  Fields:
+    endTime: If set, the time at which this operation finished or was
+      canceled.
+    originalRequest: The request that prompted the initiation of this
+      CreateMaterializedView operation.
+    startTime: The time at which this operation started.
+  """
+
+  endTime = _messages.StringField(1)
+  originalRequest = _messages.MessageField('CreateMaterializedViewRequest', 2)
+  startTime = _messages.StringField(3)
+
+
+class CreateMaterializedViewRequest(_messages.Message):
+  r"""Request message for BigtableInstanceAdmin.CreateMaterializedView.
+
+  Fields:
+    materializedView: Required. The materialized view to create.
+    materializedViewId: Required. The ID to use for the materialized view,
+      which will become the final component of the materialized view's
+      resource name.
+    parent: Required. The parent instance where this materialized view will be
+      created. Format: `projects/{project}/instances/{instance}`.
+  """
+
+  materializedView = _messages.MessageField('MaterializedView', 1)
+  materializedViewId = _messages.StringField(2)
+  parent = _messages.StringField(3)
+
+
+class CreateSchemaBundleMetadata(_messages.Message):
+  r"""The metadata for the Operation returned by CreateSchemaBundle.
+
+  Fields:
+    endTime: If set, the time at which this operation finished or was
+      canceled.
+    name: The unique name identifying this schema bundle. Values are of the
+      form `projects/{project}/instances/{instance}/tables/{table}/schemaBundl
+      es/{schema_bundle}`
+    startTime: The time at which this operation started.
+  """
+
+  endTime = _messages.StringField(1)
+  name = _messages.StringField(2)
+  startTime = _messages.StringField(3)
+
+
 class CreateTableRequest(_messages.Message):
   r"""Request message for
   google.bigtable.admin.v2.BigtableTableAdmin.CreateTable
@@ -1999,52 +2496,11 @@ class CreateTableRequest(_messages.Message):
   tableId = _messages.StringField(3)
 
 
-class CreateViewMetadata(_messages.Message):
-  r"""The metadata for the Operation returned by CreateView.
-
-  Fields:
-    finishTime: The time at which the operation failed or was completed
-      successfully.
-    originalRequest: The request that prompted the initiation of this
-      CreateInstance operation.
-    requestTime: The time at which the original request was received.
-  """
-
-  finishTime = _messages.StringField(1)
-  originalRequest = _messages.MessageField('CreateViewRequest', 2)
-  requestTime = _messages.StringField(3)
-
-
-class CreateViewRequest(_messages.Message):
-  r"""The request for CreateView
-
-  Fields:
-    parent: Required. This is the name of the table the view belongs to.
-      Values are of the form
-      `projects/{project}/instances/{instance}/tables/{table}`.
-    view: Required. The view to create.
-    viewId: Required. The id of the view to create. This view must not already
-      exist. The `view_id` appended to `parent` forms the full view name of
-      the form
-      `projects/{project}/instances/{instance}/tables/{table}/views/{view}`.
-  """
-
-  parent = _messages.StringField(1)
-  view = _messages.MessageField('View', 2)
-  viewId = _messages.StringField(3)
-
-
 class DataBoostIsolationReadOnly(_messages.Message):
-  r"""Data Boost allows a customer to bypass Bigtable nodes when it comes to
-
-  fetching their data. The data is instead read directly from the filesystem,
-  which enables the customer to isolate specific read-only workflows. Data
-  Boost reads are only guaranteed to see the results of writes that were
-  written more than 30 minutes ago. This means newly written values may not
-  become visible for up to 30m, and also means that old values may remain
-  visible for up to 30m after being deleted or overwritten. To mitigate the
-  staleness of the data, users may either wait 30m, or use CheckConsistency.
-  At the moment, Data Boost only supports single-cluster requests.
+  r"""Data Boost is a serverless compute capability that lets you run high-
+  throughput read jobs and queries on your Bigtable data, without impacting
+  the performance of the clusters that handle your application traffic. Data
+  Boost supports read-only use cases with single-cluster routing.
 
   Enums:
     ComputeBillingOwnerValueValuesEnum: The Compute Billing Owner for this
@@ -2062,23 +2518,18 @@ class DataBoostIsolationReadOnly(_messages.Message):
       COMPUTE_BILLING_OWNER_UNSPECIFIED: Unspecified value.
       HOST_PAYS: The host Cloud Project containing the targeted Bigtable
         Instance / Table pays for compute.
-      REQUESTER_PAYS: The requester Cloud Project targeting the Bigtable
-        Instance / Table with Data Boost pays for compute.
     """
-
     COMPUTE_BILLING_OWNER_UNSPECIFIED = 0
     HOST_PAYS = 1
-    REQUESTER_PAYS = 2
 
-  computeBillingOwner = _messages.EnumField(
-      'ComputeBillingOwnerValueValuesEnum', 1
-  )
+  computeBillingOwner = _messages.EnumField('ComputeBillingOwnerValueValuesEnum', 1)
 
 
 class DataBoostReadLocalWrites(_messages.Message):
   r"""Checks that all writes before the consistency token was generated in the
-  same cluster is readable by Databoost.
+  same cluster are readable by Databoost.
   """
+
 
 
 class DropRowRangeRequest(_messages.Message):
@@ -2102,6 +2553,7 @@ class Empty(_messages.Message):
   or the response type of an API method. For instance: service Foo { rpc
   Bar(google.protobuf.Empty) returns (google.protobuf.Empty); }
   """
+
 
 
 class EncryptionConfig(_messages.Message):
@@ -2226,6 +2678,7 @@ class GenerateConsistencyTokenRequest(_messages.Message):
   """
 
 
+
 class GenerateConsistencyTokenResponse(_messages.Message):
   r"""Response message for
   google.bigtable.admin.v2.BigtableTableAdmin.GenerateConsistencyToken
@@ -2330,63 +2783,345 @@ class GoogleBigtableAdminV2AuthorizedViewSubsetView(_messages.Message):
   rowPrefixes = _messages.BytesField(2, repeated=True)
 
 
-class GoogleBigtableAdminV2ViewFamilySubsets(_messages.Message):
-  r"""Subsets of a column family that are included in this View.
+class GoogleBigtableAdminV2TypeAggregate(_messages.Message):
+  r"""A value that combines incremental updates into a summarized value. Data
+  is never directly written or read using type `Aggregate`. Writes provide
+  either the `input_type` or `state_type`, and reads always return the
+  `state_type` .
 
   Fields:
-    qualifierPrefixes: Prefixes for qualifiers to be included in the View.
-      Every qualifier starting with one of these prefixes is included in the
-      View. To provide access to all qualifiers, include the empty string as a
-      prefix ("").
-    qualifiers: Individual exact column qualifiers to be included in the View.
+    hllppUniqueCount: HyperLogLogPlusPlusUniqueCount aggregator.
+    inputType: Type of the inputs that are accumulated by this `Aggregate`.
+      Use `AddInput` mutations to accumulate new inputs.
+    max: Max aggregator.
+    min: Min aggregator.
+    stateType: Output only. Type that holds the internal accumulator state for
+      the `Aggregate`. This is a function of the `input_type` and `aggregator`
+      chosen.
+    sum: Sum aggregator.
   """
 
-  qualifierPrefixes = _messages.BytesField(1, repeated=True)
-  qualifiers = _messages.BytesField(2, repeated=True)
+  hllppUniqueCount = _messages.MessageField('GoogleBigtableAdminV2TypeAggregateHyperLogLogPlusPlusUniqueCount', 1)
+  inputType = _messages.MessageField('Type', 2)
+  max = _messages.MessageField('GoogleBigtableAdminV2TypeAggregateMax', 3)
+  min = _messages.MessageField('GoogleBigtableAdminV2TypeAggregateMin', 4)
+  stateType = _messages.MessageField('Type', 5)
+  sum = _messages.MessageField('GoogleBigtableAdminV2TypeAggregateSum', 6)
 
 
-class GoogleBigtableAdminV2ViewSubsetView(_messages.Message):
-  r"""Defines a simple view that is a subset of the underlying Table.
+class GoogleBigtableAdminV2TypeAggregateHyperLogLogPlusPlusUniqueCount(_messages.Message):
+  r"""Computes an approximate unique count over the input values. When using
+  raw data as input, be careful to use a consistent encoding. Otherwise the
+  same value encoded differently could count more than once, or two distinct
+  values could count as identical. Input: Any, or omit for Raw State: TBD
+  Special state conversions: `Int64` (the unique count estimate)
+  """
 
-  Messages:
-    FamilySubsetsValue: Map from column family name to the columns in this
-      family to be included in the view.
+
+
+class GoogleBigtableAdminV2TypeAggregateMax(_messages.Message):
+  r"""Computes the max of the input values. Allowed input: `Int64` State: same
+  as input
+  """
+
+
+
+class GoogleBigtableAdminV2TypeAggregateMin(_messages.Message):
+  r"""Computes the min of the input values. Allowed input: `Int64` State: same
+  as input
+  """
+
+
+
+class GoogleBigtableAdminV2TypeAggregateSum(_messages.Message):
+  r"""Computes the sum of the input values. Allowed input: `Int64` State: same
+  as input
+  """
+
+
+
+class GoogleBigtableAdminV2TypeArray(_messages.Message):
+  r"""An ordered list of elements of a given type. Values of type `Array` are
+  stored in `Value.array_value`.
 
   Fields:
-    familySubsets: Map from column family name to the columns in this family
-      to be included in the view.
-    rowPrefixes: Row prefixes to be included in the View. To provide access to
-      all rows, include the empty string as a prefix ("").
+    elementType: The type of the elements in the array. This must not be
+      `Array`.
   """
 
-  @encoding.MapUnrecognizedFields('additionalProperties')
-  class FamilySubsetsValue(_messages.Message):
-    r"""Map from column family name to the columns in this family to be
-    included in the view.
+  elementType = _messages.MessageField('Type', 1)
 
-    Messages:
-      AdditionalProperty: An additional property for a FamilySubsetsValue
-        object.
 
-    Fields:
-      additionalProperties: Additional properties of type FamilySubsetsValue
-    """
+class GoogleBigtableAdminV2TypeBool(_messages.Message):
+  r"""bool Values of type `Bool` are stored in `Value.bool_value`."""
 
-    class AdditionalProperty(_messages.Message):
-      r"""An additional property for a FamilySubsetsValue object.
 
-      Fields:
-        key: Name of the additional property.
-        value: A GoogleBigtableAdminV2ViewFamilySubsets attribute.
-      """
+class GoogleBigtableAdminV2TypeBytes(_messages.Message):
+  r"""Bytes Values of type `Bytes` are stored in `Value.bytes_value`.
 
-      key = _messages.StringField(1)
-      value = _messages.MessageField('GoogleBigtableAdminV2ViewFamilySubsets', 2)
+  Fields:
+    encoding: The encoding to use when converting to or from lower level
+      types.
+  """
 
-    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+  encoding = _messages.MessageField('GoogleBigtableAdminV2TypeBytesEncoding', 1)
 
-  familySubsets = _messages.MessageField('FamilySubsetsValue', 1)
-  rowPrefixes = _messages.BytesField(2, repeated=True)
+
+class GoogleBigtableAdminV2TypeBytesEncoding(_messages.Message):
+  r"""Rules used to convert to or from lower level types.
+
+  Fields:
+    raw: Use `Raw` encoding.
+  """
+
+  raw = _messages.MessageField('GoogleBigtableAdminV2TypeBytesEncodingRaw', 1)
+
+
+class GoogleBigtableAdminV2TypeBytesEncodingRaw(_messages.Message):
+  r"""Leaves the value as-is. Sorted mode: all values are supported. Distinct
+  mode: all values are supported.
+
+  Fields:
+    escapeNulls: If set, allows NULL values to be encoded as the empty string
+      "". The actual empty string, or any value which only contains the null
+      byte 0x00, has one more null byte appended.
+  """
+
+  escapeNulls = _messages.BooleanField(1)
+
+
+class GoogleBigtableAdminV2TypeDate(_messages.Message):
+  r"""Date Values of type `Date` are stored in `Value.date_value`."""
+
+
+class GoogleBigtableAdminV2TypeFloat32(_messages.Message):
+  r"""Float32 Values of type `Float32` are stored in `Value.float_value`."""
+
+
+class GoogleBigtableAdminV2TypeFloat64(_messages.Message):
+  r"""Float64 Values of type `Float64` are stored in `Value.float_value`."""
+
+
+class GoogleBigtableAdminV2TypeInt64(_messages.Message):
+  r"""Int64 Values of type `Int64` are stored in `Value.int_value`.
+
+  Fields:
+    encoding: The encoding to use when converting to or from lower level
+      types.
+  """
+
+  encoding = _messages.MessageField('GoogleBigtableAdminV2TypeInt64Encoding', 1)
+
+
+class GoogleBigtableAdminV2TypeInt64Encoding(_messages.Message):
+  r"""Rules used to convert to or from lower level types.
+
+  Fields:
+    bigEndianBytes: Use `BigEndianBytes` encoding.
+    orderedCodeBytes: Use `OrderedCodeBytes` encoding.
+  """
+
+  bigEndianBytes = _messages.MessageField('GoogleBigtableAdminV2TypeInt64EncodingBigEndianBytes', 1)
+  orderedCodeBytes = _messages.MessageField('GoogleBigtableAdminV2TypeInt64EncodingOrderedCodeBytes', 2)
+
+
+class GoogleBigtableAdminV2TypeInt64EncodingBigEndianBytes(_messages.Message):
+  r"""Encodes the value as an 8-byte big-endian two's complement value. Sorted
+  mode: non-negative values are supported. Distinct mode: all values are
+  supported. Compatible with: - BigQuery `BINARY` encoding - HBase
+  `Bytes.toBytes` - Java `ByteBuffer.putLong()` with `ByteOrder.BIG_ENDIAN`
+
+  Fields:
+    bytesType: Deprecated: ignored if set.
+  """
+
+  bytesType = _messages.MessageField('GoogleBigtableAdminV2TypeBytes', 1)
+
+
+class GoogleBigtableAdminV2TypeInt64EncodingOrderedCodeBytes(_messages.Message):
+  r"""Encodes the value in a variable length binary format of up to 10 bytes.
+  Values that are closer to zero use fewer bytes. Sorted mode: all values are
+  supported. Distinct mode: all values are supported.
+  """
+
+
+
+class GoogleBigtableAdminV2TypeMap(_messages.Message):
+  r"""A mapping of keys to values of a given type. Values of type `Map` are
+  stored in a `Value.array_value` where each entry is another
+  `Value.array_value` with two elements (the key and the value, in that
+  order). Normally encoded Map values won't have repeated keys, however,
+  clients are expected to handle the case in which they do. If the same key
+  appears multiple times, the _last_ value takes precedence.
+
+  Fields:
+    keyType: The type of a map key. Only `Bytes`, `String`, and `Int64` are
+      allowed as key types.
+    valueType: The type of the values in a map.
+  """
+
+  keyType = _messages.MessageField('Type', 1)
+  valueType = _messages.MessageField('Type', 2)
+
+
+class GoogleBigtableAdminV2TypeString(_messages.Message):
+  r"""String Values of type `String` are stored in `Value.string_value`.
+
+  Fields:
+    encoding: The encoding to use when converting to or from lower level
+      types.
+  """
+
+  encoding = _messages.MessageField('GoogleBigtableAdminV2TypeStringEncoding', 1)
+
+
+class GoogleBigtableAdminV2TypeStringEncoding(_messages.Message):
+  r"""Rules used to convert to or from lower level types.
+
+  Fields:
+    utf8Bytes: Use `Utf8Bytes` encoding.
+    utf8Raw: Deprecated: if set, converts to an empty `utf8_bytes`.
+  """
+
+  utf8Bytes = _messages.MessageField('GoogleBigtableAdminV2TypeStringEncodingUtf8Bytes', 1)
+  utf8Raw = _messages.MessageField('GoogleBigtableAdminV2TypeStringEncodingUtf8Raw', 2)
+
+
+class GoogleBigtableAdminV2TypeStringEncodingUtf8Bytes(_messages.Message):
+  r"""UTF-8 encoding. Sorted mode: - All values are supported. - Code point
+  order is preserved. Distinct mode: all values are supported. Compatible
+  with: - BigQuery `TEXT` encoding - HBase `Bytes.toBytes` - Java
+  `String#getBytes(StandardCharsets.UTF_8)`
+
+  Fields:
+    nullEscapeChar: Single-character escape sequence used to support NULL
+      values. If set, allows NULL values to be encoded as the empty string "".
+      The actual empty string, or any value where every character equals
+      `null_escape_char`, has one more `null_escape_char` appended. If
+      `null_escape_char` is set and does not equal the ASCII null character
+      0x00, then the encoding will not support sorted mode. .
+  """
+
+  nullEscapeChar = _messages.StringField(1)
+
+
+class GoogleBigtableAdminV2TypeStringEncodingUtf8Raw(_messages.Message):
+  r"""Deprecated: prefer the equivalent `Utf8Bytes`."""
+
+
+class GoogleBigtableAdminV2TypeStruct(_messages.Message):
+  r"""A structured data value, consisting of fields which map to dynamically
+  typed values. Values of type `Struct` are stored in `Value.array_value`
+  where entries are in the same order and number as `field_types`.
+
+  Fields:
+    encoding: The encoding to use when converting to or from lower level
+      types.
+    fields: The names and types of the fields in this struct.
+  """
+
+  encoding = _messages.MessageField('GoogleBigtableAdminV2TypeStructEncoding', 1)
+  fields = _messages.MessageField('GoogleBigtableAdminV2TypeStructField', 2, repeated=True)
+
+
+class GoogleBigtableAdminV2TypeStructEncoding(_messages.Message):
+  r"""Rules used to convert to or from lower level types.
+
+  Fields:
+    delimitedBytes: Use `DelimitedBytes` encoding.
+    orderedCodeBytes: User `OrderedCodeBytes` encoding.
+    singleton: Use `Singleton` encoding.
+  """
+
+  delimitedBytes = _messages.MessageField('GoogleBigtableAdminV2TypeStructEncodingDelimitedBytes', 1)
+  orderedCodeBytes = _messages.MessageField('GoogleBigtableAdminV2TypeStructEncodingOrderedCodeBytes', 2)
+  singleton = _messages.MessageField('GoogleBigtableAdminV2TypeStructEncodingSingleton', 3)
+
+
+class GoogleBigtableAdminV2TypeStructEncodingDelimitedBytes(_messages.Message):
+  r"""Fields are encoded independently and concatenated with a configurable
+  `delimiter` in between. A struct with no fields defined is encoded as a
+  single `delimiter`. Sorted mode: - Fields are encoded in sorted mode. -
+  Encoded field values must not contain any bytes <= `delimiter[0]` - Element-
+  wise order is preserved: `A < B` if `A[0] < B[0]`, or if `A[0] == B[0] &&
+  A[1] < B[1]`, etc. Strict prefixes sort first. Distinct mode: - Fields are
+  encoded in distinct mode. - Encoded field values must not contain
+  `delimiter[0]`.
+
+  Fields:
+    delimiter: Byte sequence used to delimit concatenated fields. The
+      delimiter must contain at least 1 character and at most 50 characters.
+  """
+
+  delimiter = _messages.BytesField(1)
+
+
+class GoogleBigtableAdminV2TypeStructEncodingOrderedCodeBytes(_messages.Message):
+  r"""Fields are encoded independently and concatenated with the fixed byte
+  pair {0x00, 0x01} in between. Any null (0x00) byte in an encoded field is
+  replaced by the fixed byte pair {0x00, 0xFF}. Fields that encode to the
+  empty string "" have special handling: - If *every* field encodes to "", or
+  if the STRUCT has no fields defined, then the STRUCT is encoded as the fixed
+  byte pair {0x00, 0x00}. - Otherwise, the STRUCT only encodes until the last
+  non-empty field, omitting any trailing empty fields. Any empty fields that
+  aren't omitted are replaced with the fixed byte pair {0x00, 0x00}. Examples:
+  - STRUCT() -> "\00\00" - STRUCT("") -> "\00\00" - STRUCT("", "") -> "\00\00"
+  - STRUCT("", "B") -> "\00\00" + "\00\01" + "B" - STRUCT("A", "") -> "A" -
+  STRUCT("", "B", "") -> "\00\00" + "\00\01" + "B" - STRUCT("A", "", "C") ->
+  "A" + "\00\01" + "\00\00" + "\00\01" + "C" Since null bytes are always
+  escaped, this encoding can cause size blowup for encodings like
+  `Int64.BigEndianBytes` that are likely to produce many such bytes. Sorted
+  mode: - Fields are encoded in sorted mode. - All values supported by the
+  field encodings are allowed - Element-wise order is preserved: `A < B` if
+  `A[0] < B[0]`, or if `A[0] == B[0] && A[1] < B[1]`, etc. Strict prefixes
+  sort first. Distinct mode: - Fields are encoded in distinct mode. - All
+  values supported by the field encodings are allowed.
+  """
+
+
+
+class GoogleBigtableAdminV2TypeStructEncodingSingleton(_messages.Message):
+  r"""Uses the encoding of `fields[0].type` as-is. Only valid if `fields.size
+  == 1`.
+  """
+
+
+
+class GoogleBigtableAdminV2TypeStructField(_messages.Message):
+  r"""A struct field and its type.
+
+  Fields:
+    fieldName: The field name (optional). Fields without a `field_name` are
+      considered anonymous and cannot be referenced by name.
+    type: The type of values in this field.
+  """
+
+  fieldName = _messages.StringField(1)
+  type = _messages.MessageField('Type', 2)
+
+
+class GoogleBigtableAdminV2TypeTimestamp(_messages.Message):
+  r"""Timestamp Values of type `Timestamp` are stored in
+  `Value.timestamp_value`.
+
+  Fields:
+    encoding: The encoding to use when converting to or from lower level
+      types.
+  """
+
+  encoding = _messages.MessageField('GoogleBigtableAdminV2TypeTimestampEncoding', 1)
+
+
+class GoogleBigtableAdminV2TypeTimestampEncoding(_messages.Message):
+  r"""Rules used to convert to or from lower level types.
+
+  Fields:
+    unixMicrosInt64: Encodes the number of microseconds since the Unix epoch
+      using the given `Int64` encoding. Values must be microsecond-aligned.
+      Compatible with: - Java `Instant.truncatedTo()` with `ChronoUnit.MICROS`
+  """
+
+  unixMicrosInt64 = _messages.MessageField('GoogleBigtableAdminV2TypeInt64Encoding', 1)
 
 
 class HotTablet(_messages.Message):
@@ -2441,6 +3176,12 @@ class Instance(_messages.Message):
       `[\p{Ll}\p{Lo}\p{N}_-]{0,63}`. * No more than 64 labels can be
       associated with a given resource. * Keys and values must both be under
       128 bytes.
+    TagsValue: Optional. Input only. Immutable. Tag keys/values directly bound
+      to this resource. For example: "123/environment": "production",
+      "123/costCenter": "marketing" Tags and Labels (above) are both used to
+      bind metadata to resources, with different use-cases. See
+      https://cloud.google.com/resource-manager/docs/tags/tags-overview for an
+      in-depth overview on the difference between tags and labels.
 
   Fields:
     createTime: Output only. A commit timestamp representing when this
@@ -2460,8 +3201,15 @@ class Instance(_messages.Message):
       must both be under 128 bytes.
     name: The unique name of the instance. Values are of the form
       `projects/{project}/instances/a-z+[a-z0-9]`.
+    satisfiesPzi: Output only. Reserved for future use.
     satisfiesPzs: Output only. Reserved for future use.
     state: Output only. The current state of the instance.
+    tags: Optional. Input only. Immutable. Tag keys/values directly bound to
+      this resource. For example: "123/environment": "production",
+      "123/costCenter": "marketing" Tags and Labels (above) are both used to
+      bind metadata to resources, with different use-cases. See
+      https://cloud.google.com/resource-manager/docs/tags/tags-overview for an
+      in-depth overview on the difference between tags and labels.
     type: The type of the instance. Defaults to `PRODUCTION`.
   """
 
@@ -2527,13 +3275,44 @@ class Instance(_messages.Message):
 
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class TagsValue(_messages.Message):
+    r"""Optional. Input only. Immutable. Tag keys/values directly bound to
+    this resource. For example: "123/environment": "production",
+    "123/costCenter": "marketing" Tags and Labels (above) are both used to
+    bind metadata to resources, with different use-cases. See
+    https://cloud.google.com/resource-manager/docs/tags/tags-overview for an
+    in-depth overview on the difference between tags and labels.
+
+    Messages:
+      AdditionalProperty: An additional property for a TagsValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type TagsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a TagsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
   createTime = _messages.StringField(1)
   displayName = _messages.StringField(2)
   labels = _messages.MessageField('LabelsValue', 3)
   name = _messages.StringField(4)
-  satisfiesPzs = _messages.BooleanField(5)
-  state = _messages.EnumField('StateValueValuesEnum', 6)
-  type = _messages.EnumField('TypeValueValuesEnum', 7)
+  satisfiesPzi = _messages.BooleanField(5)
+  satisfiesPzs = _messages.BooleanField(6)
+  state = _messages.EnumField('StateValueValuesEnum', 7)
+  tags = _messages.MessageField('TagsValue', 8)
+  type = _messages.EnumField('TypeValueValuesEnum', 9)
 
 
 class Intersection(_messages.Message):
@@ -2662,6 +3441,32 @@ class ListLocationsResponse(_messages.Message):
   nextPageToken = _messages.StringField(2)
 
 
+class ListLogicalViewsResponse(_messages.Message):
+  r"""Response message for BigtableInstanceAdmin.ListLogicalViews.
+
+  Fields:
+    logicalViews: The list of requested logical views.
+    nextPageToken: A token, which can be sent as `page_token` to retrieve the
+      next page. If this field is omitted, there are no subsequent pages.
+  """
+
+  logicalViews = _messages.MessageField('LogicalView', 1, repeated=True)
+  nextPageToken = _messages.StringField(2)
+
+
+class ListMaterializedViewsResponse(_messages.Message):
+  r"""Response message for BigtableInstanceAdmin.ListMaterializedViews.
+
+  Fields:
+    materializedViews: The list of requested materialized views.
+    nextPageToken: A token, which can be sent as `page_token` to retrieve the
+      next page. If this field is omitted, there are no subsequent pages.
+  """
+
+  materializedViews = _messages.MessageField('MaterializedView', 1, repeated=True)
+  nextPageToken = _messages.StringField(2)
+
+
 class ListOperationsResponse(_messages.Message):
   r"""The response message for Operations.ListOperations.
 
@@ -2673,6 +3478,19 @@ class ListOperationsResponse(_messages.Message):
 
   nextPageToken = _messages.StringField(1)
   operations = _messages.MessageField('Operation', 2, repeated=True)
+
+
+class ListSchemaBundlesResponse(_messages.Message):
+  r"""The response for ListSchemaBundles.
+
+  Fields:
+    nextPageToken: A token, which can be sent as `page_token` to retrieve the
+      next page. If this field is omitted, there are no subsequent pages.
+    schemaBundles: The schema bundles from the specified table.
+  """
+
+  nextPageToken = _messages.StringField(1)
+  schemaBundles = _messages.MessageField('SchemaBundle', 2, repeated=True)
 
 
 class ListTablesResponse(_messages.Message):
@@ -2688,21 +3506,6 @@ class ListTablesResponse(_messages.Message):
 
   nextPageToken = _messages.StringField(1)
   tables = _messages.MessageField('Table', 2, repeated=True)
-
-
-class ListViewsResponse(_messages.Message):
-  r"""Response message for
-  google.bigtable.admin.v2.BigtableTableAdmin.ListViews
-
-  Fields:
-    nextPageToken: Set if not all tables could be returned in a single
-      response. Pass this value to `page_token` in another request to get the
-      next page of results.
-    views: The views present in the requested table.
-  """
-
-  nextPageToken = _messages.StringField(1)
-  views = _messages.MessageField('View', 2, repeated=True)
 
 
 class Location(_messages.Message):
@@ -2785,6 +3588,47 @@ class Location(_messages.Message):
   name = _messages.StringField(5)
 
 
+class LogicalView(_messages.Message):
+  r"""A SQL logical view object that can be referenced in SQL queries.
+
+  Fields:
+    deletionProtection: Optional. Set to true to make the LogicalView
+      protected against deletion.
+    etag: Optional. The etag for this logical view. This may be sent on update
+      requests to ensure that the client has an up-to-date value before
+      proceeding. The server returns an ABORTED error on a mismatched etag.
+    name: Identifier. The unique name of the logical view. Format:
+      `projects/{project}/instances/{instance}/logicalViews/{logical_view}`
+    query: Required. The logical view's select query.
+  """
+
+  deletionProtection = _messages.BooleanField(1)
+  etag = _messages.StringField(2)
+  name = _messages.StringField(3)
+  query = _messages.StringField(4)
+
+
+class MaterializedView(_messages.Message):
+  r"""A materialized view object that can be referenced in SQL queries.
+
+  Fields:
+    deletionProtection: Set to true to make the MaterializedView protected
+      against deletion.
+    etag: Optional. The etag for this materialized view. This may be sent on
+      update requests to ensure that the client has an up-to-date value before
+      proceeding. The server returns an ABORTED error on a mismatched etag.
+    name: Identifier. The unique name of the materialized view. Format: `proje
+      cts/{project}/instances/{instance}/materializedViews/{materialized_view}
+      `
+    query: Required. Immutable. The materialized view's select query.
+  """
+
+  deletionProtection = _messages.BooleanField(1)
+  etag = _messages.StringField(2)
+  name = _messages.StringField(3)
+  query = _messages.StringField(4)
+
+
 class Modification(_messages.Message):
   r"""A create, update, or delete of a particular column family.
 
@@ -2796,12 +3640,17 @@ class Modification(_messages.Message):
     id: The ID of the column family to be modified.
     update: Update an existing column family to the specified schema, or fail
       if no column family exists with the given ID.
+    updateMask: Optional. A mask specifying which fields (e.g. `gc_rule`) in
+      the `update` mod should be updated, ignored for other modification
+      types. If unset or empty, we treat it as updating `gc_rule` to be
+      backward compatible.
   """
 
   create = _messages.MessageField('ColumnFamily', 1)
   drop = _messages.BooleanField(2)
   id = _messages.StringField(3)
   update = _messages.MessageField('ColumnFamily', 4)
+  updateMask = _messages.StringField(5)
 
 
 class ModifyColumnFamiliesRequest(_messages.Message):
@@ -2828,76 +3677,17 @@ class MultiClusterRoutingUseAny(_messages.Message):
   Choosing this option sacrifices read-your-writes consistency to improve
   availability.
 
-  Enums:
-    FailoverRadiusValueValuesEnum: The failover radius of this app profile,
-      determining which clusters request failovers could be routed to.
-      FAILOVER_RADIUS_UNSPECIFIED is interpreted as ANY_REGION. If specified
-      in addition to cluster_ids, both restrictions will be applied. For
-      example, let there be four clusters in the following zones: - us-east1-b
-      - us-east1-c - us-east1-d - europe-west1-b If a multi-cluster app
-      profile specifies the set of cluster IDs in us-east1-b, us-east1-c, and
-      europe-west1-b, requests will never arrive at or fail over to us-
-      east1-d. If the app profile also specifies a INITIAL_REGION_ONLY
-      failover radius, requests will, in addition, only be able to fail over
-      within the region of the first cluster routed to. As an example,
-      requests that are first routed to us-east1-b will only be able to fail
-      over to us-east1-c (since us-east1-d is not in the set of cluster IDs
-      specified and europe-west1-b is in a different region). Requests that
-      are first routed to europe-west1-b will not fail over at all.
-
   Fields:
     clusterIds: The set of clusters to route to. The order is ignored;
       clusters will be tried in order of distance. If left empty, all clusters
       are eligible.
-    failoverRadius: The failover radius of this app profile, determining which
-      clusters request failovers could be routed to.
-      FAILOVER_RADIUS_UNSPECIFIED is interpreted as ANY_REGION. If specified
-      in addition to cluster_ids, both restrictions will be applied. For
-      example, let there be four clusters in the following zones: - us-east1-b
-      - us-east1-c - us-east1-d - europe-west1-b If a multi-cluster app
-      profile specifies the set of cluster IDs in us-east1-b, us-east1-c, and
-      europe-west1-b, requests will never arrive at or fail over to us-
-      east1-d. If the app profile also specifies a INITIAL_REGION_ONLY
-      failover radius, requests will, in addition, only be able to fail over
-      within the region of the first cluster routed to. As an example,
-      requests that are first routed to us-east1-b will only be able to fail
-      over to us-east1-c (since us-east1-d is not in the set of cluster IDs
-      specified and europe-west1-b is in a different region). Requests that
-      are first routed to europe-west1-b will not fail over at all.
     rowAffinity: Row affinity sticky routing based on the row key of the
       request. Requests that span multiple rows are routed non-
       deterministically.
   """
 
-  class FailoverRadiusValueValuesEnum(_messages.Enum):
-    r"""The failover radius of this app profile, determining which clusters
-    request failovers could be routed to. FAILOVER_RADIUS_UNSPECIFIED is
-    interpreted as ANY_REGION. If specified in addition to cluster_ids, both
-    restrictions will be applied. For example, let there be four clusters in
-    the following zones: - us-east1-b - us-east1-c - us-east1-d - europe-
-    west1-b If a multi-cluster app profile specifies the set of cluster IDs in
-    us-east1-b, us-east1-c, and europe-west1-b, requests will never arrive at
-    or fail over to us-east1-d. If the app profile also specifies a
-    INITIAL_REGION_ONLY failover radius, requests will, in addition, only be
-    able to fail over within the region of the first cluster routed to. As an
-    example, requests that are first routed to us-east1-b will only be able to
-    fail over to us-east1-c (since us-east1-d is not in the set of cluster IDs
-    specified and europe-west1-b is in a different region). Requests that are
-    first routed to europe-west1-b will not fail over at all.
-
-    Values:
-      FAILOVER_RADIUS_UNSPECIFIED: No failover radius specified.
-      ANY_REGION: Fail over to all clusters in the instance.
-      INITIAL_REGION_ONLY: Fail over only to clusters in the same region as
-        the first cluster routed to.
-    """
-    FAILOVER_RADIUS_UNSPECIFIED = 0
-    ANY_REGION = 1
-    INITIAL_REGION_ONLY = 2
-
   clusterIds = _messages.StringField(1, repeated=True)
-  failoverRadius = _messages.EnumField('FailoverRadiusValueValuesEnum', 2)
-  rowAffinity = _messages.MessageField('RowAffinity', 3)
+  rowAffinity = _messages.MessageField('RowAffinity', 2)
 
 
 class Operation(_messages.Message):
@@ -3161,6 +3951,27 @@ class Policy(_messages.Message):
   version = _messages.IntegerField(4, variant=_messages.Variant.INT32)
 
 
+class ProtoSchema(_messages.Message):
+  r"""Represents a protobuf schema.
+
+  Fields:
+    protoDescriptors: Required. Contains a protobuf-serialized [google.protobu
+      f.FileDescriptorSet](https://github.com/protocolbuffers/protobuf/blob/ma
+      in/src/google/protobuf/descriptor.proto), which could include multiple
+      proto files. To generate it, [install](https://grpc.io/docs/protoc-
+      installation/) and run `protoc` with `--include_imports` and
+      `--descriptor_set_out`. For example, to generate for
+      moon/shot/app.proto, run ``` $protoc --proto_path=/app_path
+      --proto_path=/lib_path \ --include_imports \
+      --descriptor_set_out=descriptors.pb \ moon/shot/app.proto ``` For more
+      details, see protobuffer [self
+      description](https://developers.google.com/protocol-
+      buffers/docs/techniques#self-description).
+  """
+
+  protoDescriptors = _messages.BytesField(1)
+
+
 class RestoreInfo(_messages.Message):
   r"""Information about a table restore.
 
@@ -3199,7 +4010,7 @@ class RestoreTableMetadata(_messages.Message):
     optimizeTableOperationName: If exists, the name of the long-running
       operation that will be used to track the post-restore optimization
       process to optimize the performance of the restored table. The metadata
-      type of the long-running operation is OptimizeRestoreTableMetadata. The
+      type of the long-running operation is OptimizeRestoredTableMetadata. The
       response type is Empty. This long-running operation may be automatically
       created by the system if applicable after the RestoreTable long-running
       operation completes successfully. This operation may not be created if
@@ -3241,12 +4052,36 @@ class RestoreTableRequest(_messages.Message):
 
 
 class RowAffinity(_messages.Message):
-  r"""If enabled, the AFE will route the request based on the row key of the
+  r"""If enabled, Bigtable will route the request based on the row key of the
   request, rather than randomly. Instead, each row key will be assigned to a
   cluster, and will stick to that cluster. If clusters are added or removed,
   then this may affect which row keys stick to which clusters. To avoid this,
-  users can specify a group cluster.
+  users can use a cluster group to specify which clusters are to be used. In
+  this case, new clusters that are not a part of the cluster group will not be
+  routed to, and routing will be unaffected by the new cluster. Moreover,
+  clusters specified in the cluster group cannot be deleted unless removed
+  from the cluster group.
   """
+
+
+
+class SchemaBundle(_messages.Message):
+  r"""A named collection of related schemas.
+
+  Fields:
+    etag: Optional. The etag for this schema bundle. This may be sent on
+      update and delete requests to ensure the client has an up-to-date value
+      before proceeding. The server returns an ABORTED error on a mismatched
+      etag.
+    name: Identifier. The unique name identifying this schema bundle. Values
+      are of the form `projects/{project}/instances/{instance}/tables/{table}/
+      schemaBundles/{schema_bundle}`
+    protoSchema: Schema for Protobufs.
+  """
+
+  etag = _messages.StringField(1)
+  name = _messages.StringField(2)
+  protoSchema = _messages.MessageField('ProtoSchema', 3)
 
 
 class SetIamPolicyRequest(_messages.Message):
@@ -3387,9 +4222,10 @@ class StandardQueryParameters(_messages.Message):
 
 
 class StandardReadRemoteWrites(_messages.Message):
-  r"""Checks that all writes before the consistency token was generated is
+  r"""Checks that all writes before the consistency token was generated are
   replicated in every cluster and readable.
   """
+
 
 
 class Status(_messages.Message):
@@ -3444,9 +4280,8 @@ class Status(_messages.Message):
 
 
 class Table(_messages.Message):
-  r"""A collection of user data indexed by row, column, and timestamp.
-
-  Each table is served using the resources of its parent cluster.
+  r"""A collection of user data indexed by row, column, and timestamp. Each
+  table is served using the resources of its parent cluster.
 
   Enums:
     GranularityValueValuesEnum: Immutable. The granularity (i.e. `MILLIS`) at
@@ -3493,10 +4328,52 @@ class Table(_messages.Message):
     restoreInfo: Output only. If this table was restored from another data
       source (e.g. a backup), this field will be populated with information
       about the restore.
+    rowKeySchema: The row key schema for this table. The schema is used to
+      decode the raw row key bytes into a structured format. The order of
+      field declarations in this schema is important, as it reflects how the
+      raw row key bytes are structured. Currently, this only affects how the
+      key is read via a GoogleSQL query from the ExecuteQuery API. For a SQL
+      query, the _key column is still read as raw bytes. But queries can
+      reference the key fields by name, which will be decoded from _key using
+      provided type and encoding. Queries that reference key fields will fail
+      if they encounter an invalid row key. For example, if _key =
+      "some_id#2024-04-30#\x00\x13\x00\xf3" with the following schema: {
+      fields { field_name: "id" type { string { encoding: utf8_bytes {} } } }
+      fields { field_name: "date" type { string { encoding: utf8_bytes {} } }
+      } fields { field_name: "product_code" type { int64 { encoding:
+      big_endian_bytes {} } } } encoding { delimited_bytes { delimiter: "#" }
+      } } The decoded key parts would be: id = "some_id", date = "2024-04-30",
+      product_code = 1245427 The query "SELECT _key, product_code FROM table"
+      will return two columns:
+      /------------------------------------------------------\ | _key |
+      product_code | | --------------------------------------|--------------|
+      | "some_id#2024-04-30#\x00\x13\x00\xf3" | 1245427 |
+      \------------------------------------------------------/ The schema has
+      the following invariants: (1) The decoded field values are order-
+      preserved. For read, the field values will be decoded in sorted mode
+      from the raw bytes. (2) Every field in the schema must specify a non-
+      empty name. (3) Every field must specify a type with an associated
+      encoding. The type is limited to scalar types only: Array, Map,
+      Aggregate, and Struct are not allowed. (4) The field names must not
+      collide with existing column family names and reserved keywords "_key"
+      and "_timestamp". The following update operations are allowed for
+      row_key_schema: - Update from an empty schema to a new schema. - Remove
+      the existing schema. This operation requires setting the
+      `ignore_warnings` flag to `true`, since it might be a backward
+      incompatible change. Without the flag, the update request will fail with
+      an INVALID_ARGUMENT error. Any other row key schema update operation
+      (e.g. update existing schema columns names or types) is currently
+      unsupported.
     stats: Output only. Only available with STATS_VIEW, this includes summary
       statistics about the entire table contents. For statistics about a
       specific column family, see ColumnFamilyStats in the mapped ColumnFamily
       collection above.
+    tieredStorageConfig: Rules to specify what data is stored in each storage
+      tier. Different tiers store data differently, providing different trade-
+      offs between cost and performance. Different parts of a table can be
+      stored separately on different tiers. If a config is specified, tiered
+      storage is enabled for this table. Otherwise, tiered storage is
+      disabled. Only SSD instances can configure tiered storage.
   """
 
   class GranularityValueValuesEnum(_messages.Enum):
@@ -3577,7 +4454,9 @@ class Table(_messages.Message):
   granularity = _messages.EnumField('GranularityValueValuesEnum', 6)
   name = _messages.StringField(7)
   restoreInfo = _messages.MessageField('RestoreInfo', 8)
-  stats = _messages.MessageField('TableStats', 9)
+  rowKeySchema = _messages.MessageField('GoogleBigtableAdminV2TypeStruct', 9)
+  stats = _messages.MessageField('TableStats', 10)
+  tieredStorageConfig = _messages.MessageField('TieredStorageConfig', 11)
 
 
 class TableProgress(_messages.Message):
@@ -3674,6 +4553,79 @@ class TestIamPermissionsResponse(_messages.Message):
   permissions = _messages.StringField(1, repeated=True)
 
 
+class TieredStorageConfig(_messages.Message):
+  r"""Config for tiered storage. A valid config must have a valid
+  TieredStorageRule. Otherwise the whole TieredStorageConfig must be unset. By
+  default all data is stored in the SSD tier (only SSD instances can configure
+  tiered storage).
+
+  Fields:
+    infrequentAccess: Rule to specify what data is stored in the infrequent
+      access(IA) tier. The IA tier allows storing more data per node with
+      reduced performance.
+  """
+
+  infrequentAccess = _messages.MessageField('TieredStorageRule', 1)
+
+
+class TieredStorageRule(_messages.Message):
+  r"""Rule to specify what data is stored in a storage tier.
+
+  Fields:
+    includeIfOlderThan: Include cells older than the given age. For the
+      infrequent access tier, this value must be at least 30 days.
+  """
+
+  includeIfOlderThan = _messages.StringField(1)
+
+
+class Type(_messages.Message):
+  r"""`Type` represents the type of data that is written to, read from, or
+  stored in Bigtable. It is heavily based on the GoogleSQL standard to help
+  maintain familiarity and consistency across products and features. For
+  compatibility with Bigtable's existing untyped APIs, each `Type` includes an
+  `Encoding` which describes how to convert to or from the underlying data.
+  Each encoding can operate in one of two modes: - Sorted: In this mode,
+  Bigtable guarantees that `Encode(X) <= Encode(Y)` if and only if `X <= Y`.
+  This is useful anywhere sort order is important, for example when encoding
+  keys. - Distinct: In this mode, Bigtable guarantees that if `X != Y` then
+  `Encode(X) != Encode(Y)`. However, the converse is not guaranteed. For
+  example, both "{'foo': '1', 'bar': '2'}" and "{'bar': '2', 'foo': '1'}" are
+  valid encodings of the same JSON value. The API clearly documents which mode
+  is used wherever an encoding can be configured. Each encoding also documents
+  which values are supported in which modes. For example, when encoding INT64
+  as a numeric STRING, negative numbers cannot be encoded in sorted mode. This
+  is because `INT64(1) > INT64(-1)`, but `STRING("-00001") > STRING("00001")`.
+
+  Fields:
+    aggregateType: Aggregate
+    arrayType: Array
+    boolType: Bool
+    bytesType: Bytes
+    dateType: Date
+    float32Type: Float32
+    float64Type: Float64
+    int64Type: Int64
+    mapType: Map
+    stringType: String
+    structType: Struct
+    timestampType: Timestamp
+  """
+
+  aggregateType = _messages.MessageField('GoogleBigtableAdminV2TypeAggregate', 1)
+  arrayType = _messages.MessageField('GoogleBigtableAdminV2TypeArray', 2)
+  boolType = _messages.MessageField('GoogleBigtableAdminV2TypeBool', 3)
+  bytesType = _messages.MessageField('GoogleBigtableAdminV2TypeBytes', 4)
+  dateType = _messages.MessageField('GoogleBigtableAdminV2TypeDate', 5)
+  float32Type = _messages.MessageField('GoogleBigtableAdminV2TypeFloat32', 6)
+  float64Type = _messages.MessageField('GoogleBigtableAdminV2TypeFloat64', 7)
+  int64Type = _messages.MessageField('GoogleBigtableAdminV2TypeInt64', 8)
+  mapType = _messages.MessageField('GoogleBigtableAdminV2TypeMap', 9)
+  stringType = _messages.MessageField('GoogleBigtableAdminV2TypeString', 10)
+  structType = _messages.MessageField('GoogleBigtableAdminV2TypeStruct', 11)
+  timestampType = _messages.MessageField('GoogleBigtableAdminV2TypeTimestamp', 12)
+
+
 class UndeleteTableMetadata(_messages.Message):
   r"""Metadata type for the operation returned by
   google.bigtable.admin.v2.BigtableTableAdmin.UndeleteTable.
@@ -3694,6 +4646,7 @@ class UndeleteTableRequest(_messages.Message):
   r"""Request message for
   google.bigtable.admin.v2.BigtableTableAdmin.UndeleteTable
   """
+
 
 
 class Union(_messages.Message):
@@ -3733,7 +4686,10 @@ class UpdateAuthorizedViewRequest(_messages.Message):
   Fields:
     authorizedView: Required. The AuthorizedView to update. The `name` in
       `authorized_view` is used to identify the AuthorizedView. AuthorizedView
-      name must in this format projects//instances//tables//authorizedViews/
+      name must in this format: `projects/{project}/instances/{instance}/table
+      s/{table}/authorizedViews/{authorized_view}`.
+    ignoreWarnings: Optional. If true, ignore the safety checks when updating
+      the AuthorizedView.
     updateMask: Optional. The list of fields to update. A mask specifying
       which fields in the AuthorizedView resource should be updated. This mask
       is relative to the AuthorizedView resource, not to the request message.
@@ -3743,7 +4699,8 @@ class UpdateAuthorizedViewRequest(_messages.Message):
   """
 
   authorizedView = _messages.MessageField('AuthorizedView', 1)
-  updateMask = _messages.StringField(2)
+  ignoreWarnings = _messages.BooleanField(2)
+  updateMask = _messages.StringField(3)
 
 
 class UpdateClusterMetadata(_messages.Message):
@@ -3778,6 +4735,53 @@ class UpdateInstanceMetadata(_messages.Message):
   requestTime = _messages.StringField(3)
 
 
+class UpdateLogicalViewMetadata(_messages.Message):
+  r"""The metadata for the Operation returned by UpdateLogicalView.
+
+  Fields:
+    endTime: If set, the time at which this operation finished or was
+      canceled.
+    originalRequest: The request that prompted the initiation of this
+      UpdateLogicalView operation.
+    startTime: The time at which this operation was started.
+  """
+
+  endTime = _messages.StringField(1)
+  originalRequest = _messages.MessageField('UpdateLogicalViewRequest', 2)
+  startTime = _messages.StringField(3)
+
+
+class UpdateLogicalViewRequest(_messages.Message):
+  r"""Request message for BigtableInstanceAdmin.UpdateLogicalView.
+
+  Fields:
+    logicalView: Required. The logical view to update. The logical view's
+      `name` field is used to identify the view to update. Format:
+      `projects/{project}/instances/{instance}/logicalViews/{logical_view}`.
+    updateMask: Optional. The list of fields to update.
+  """
+
+  logicalView = _messages.MessageField('LogicalView', 1)
+  updateMask = _messages.StringField(2)
+
+
+class UpdateSchemaBundleMetadata(_messages.Message):
+  r"""The metadata for the Operation returned by UpdateSchemaBundle.
+
+  Fields:
+    endTime: If set, the time at which this operation finished or was
+      canceled.
+    name: The unique name identifying this schema bundle. Values are of the
+      form `projects/{project}/instances/{instance}/tables/{table}/schemaBundl
+      es/{schema_bundle}`
+    startTime: The time at which this operation started.
+  """
+
+  endTime = _messages.StringField(1)
+  name = _messages.StringField(2)
+  startTime = _messages.StringField(3)
+
+
 class UpdateTableMetadata(_messages.Message):
   r"""Metadata type for the operation returned by UpdateTable.
 
@@ -3791,62 +4795,6 @@ class UpdateTableMetadata(_messages.Message):
   endTime = _messages.StringField(1)
   name = _messages.StringField(2)
   startTime = _messages.StringField(3)
-
-
-class UpdateViewMetadata(_messages.Message):
-  r"""Metadata for the google.longrunning.Operation returned by UpdateView.
-
-  Fields:
-    finishTime: The time at which the operation failed or was completed
-      successfully.
-    originalRequest: The request that prompted the initiation of this
-      UpdateView operation.
-    requestTime: The time at which the original request was received.
-  """
-
-  finishTime = _messages.StringField(1)
-  originalRequest = _messages.MessageField('UpdateViewRequest', 2)
-  requestTime = _messages.StringField(3)
-
-
-class UpdateViewRequest(_messages.Message):
-  r"""The request for UpdateView.
-
-  Fields:
-    updateMask: Optional. The list of fields to update. A mask specifying
-      which fields in the View resource should be updated. This mask is
-      relative to the View resource, not to the request message. A field will
-      be overwritten if it is in the mask. If empty, all fields set in the
-      request will be overwritten. A special value `*` means to overwrite all
-      fields (including fields not set in the request).
-    view: Required. The view to update. The `name` in `view` is used to
-      identify the view. View name must in this format
-      projects//instances//tables//views/
-  """
-
-  updateMask = _messages.StringField(1)
-  view = _messages.MessageField('View', 2)
-
-
-class View(_messages.Message):
-  r"""Placeholder for admin API work while we work out the internals.
-
-  Fields:
-    deletionProtection: Set to true to make the view protected against
-      deletion. The parent Table and containing Instance cannot be deleted if
-      a View has this bit set.
-    etag: The etag for this View. If this is provided on update, it must match
-      the server's etag. The server returns ABORTED error on a mismatched
-      etag.
-    name: The name of the view. Values are of the form
-      `projects/{project}/instances/{instance}/tables/{table}/views/{view}`
-    subsetView: A view permitting access to an explicit subset of a Table.
-  """
-
-  deletionProtection = _messages.BooleanField(1)
-  etag = _messages.StringField(2)
-  name = _messages.StringField(3)
-  subsetView = _messages.MessageField('GoogleBigtableAdminV2ViewSubsetView', 4)
 
 
 encoding.AddCustomJsonFieldMapping(

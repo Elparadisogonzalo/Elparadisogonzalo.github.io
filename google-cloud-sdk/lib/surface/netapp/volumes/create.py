@@ -30,6 +30,7 @@ def _CommonArgs(parser, release_track):
   volumes_flags.AddVolumeCreateArgs(parser, release_track=release_track)
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create a Cloud NetApp Volume."""
@@ -101,16 +102,23 @@ class Create(base.CreateCommand):
     labels = labels_util.ParseCreateArgs(
         args, client.messages.Volume.LabelsValue
     )
-    backup_config = (
-        args.backup_config
-        if self._RELEASE_TRACK == base.ReleaseTrack.BETA
-        else None
-    )
-    source_backup = (
-        args.source_backup
-        if self._RELEASE_TRACK == base.ReleaseTrack.BETA
-        else None
-    )
+    large_capacity = args.large_capacity
+    multiple_endpoints = args.multiple_endpoints
+    if (
+        self._RELEASE_TRACK == base.ReleaseTrack.ALPHA
+        or self._RELEASE_TRACK == base.ReleaseTrack.BETA
+    ):
+      cache_parameters = args.cache_parameters
+    else:
+      cache_parameters = None
+    if (self._RELEASE_TRACK == base.ReleaseTrack.BETA or
+        self._RELEASE_TRACK == base.ReleaseTrack.GA):
+      backup_config = args.backup_config
+      source_backup = args.source_backup
+    else:
+      backup_config = None
+      source_backup = None
+
     volume = client.ParseVolumeConfig(
         name=volume_ref.RelativeName(),
         capacity=capacity_in_gib,
@@ -130,7 +138,13 @@ class Create(base.CreateCommand):
         snapshot=args.source_snapshot,
         backup=source_backup,
         restricted_actions=restricted_actions,
-        backup_config=backup_config)
+        backup_config=backup_config,
+        large_capacity=large_capacity,
+        multiple_endpoints=multiple_endpoints,
+        tiering_policy=args.tiering_policy,
+        hybrid_replication_parameters=args.hybrid_replication_parameters,
+        cache_parameters=cache_parameters,
+    )
     result = client.CreateVolume(volume_ref, args.async_, volume)
     if args.async_:
       command = 'gcloud {} netapp volumes list'.format(
@@ -161,4 +175,3 @@ class CreateAlpha(CreateBeta):
   @staticmethod
   def Args(parser):
     _CommonArgs(parser, CreateAlpha._RELEASE_TRACK)
-

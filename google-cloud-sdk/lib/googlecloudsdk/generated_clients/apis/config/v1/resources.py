@@ -97,6 +97,39 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  PROJECTS_LOCATIONS_PREVIEWS_RESOURCECHANGES = (
+      'projects.locations.previews.resourceChanges',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/previews/'
+              '{previewsId}/resourceChanges/{resourceChangesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_PREVIEWS_RESOURCEDRIFTS = (
+      'projects.locations.previews.resourceDrifts',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/previews/'
+              '{previewsId}/resourceDrifts/{resourceDriftsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_TERRAFORMVERSIONS = (
+      'projects.locations.terraformVersions',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'terraformVersions/{terraformVersionsId}',
+      },
+      ['name'],
+      True
+  )
 
   def __init__(self, collection_name, path, flat_paths, params,
                enable_uri_parsing):

@@ -14,10 +14,11 @@
 # limitations under the License.
 """Utilities for working with volumes."""
 import abc
+import argparse
 
+from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.run import exceptions as serverless_exceptions
-
 
 _supported_volume_types = {}
 
@@ -54,7 +55,8 @@ def add_volume(volume, volumes, messages, release_track):
     raise serverless_exceptions.ConfigurationError(
         'Volume type {} not supported'.format(volume['type'])
     )
-  vol_type.validate_volume_add(volume)
+  vol_type.validate_fields(volume, release_track)
+  vol_type.validate_volume_add(volume, release_track)
   vol_type.fill_volume(volume, new_vol, messages)
 
   volumes[volume['name']] = new_vol
@@ -67,7 +69,7 @@ def volume_help(release_track):
       _supported_volume_types.items(), key=lambda t: t[0]
   ):
     if release_track in volume_type.release_tracks():
-      hlp.append(volume_type.generate_help())
+      hlp.append(volume_type.generate_help(release_track))
 
   return '\n\n'.join(hlp)
 
@@ -109,15 +111,15 @@ class _VolumeType(abc.ABC):
 
   @classmethod
   @abc.abstractmethod
-  def required_fields(cls):
+  def required_fields(cls, release_track):
     """A dict of field_name: help text for all fields that must be present."""
-    pass
+    return {}
 
   @classmethod
   @abc.abstractmethod
-  def optional_fields(cls):
+  def optional_fields(cls, release_track):
     """A dict of field_name: help text for all fields that are optional."""
-    pass
+    return {}
 
   @classmethod
   @abc.abstractmethod
@@ -126,10 +128,16 @@ class _VolumeType(abc.ABC):
     pass
 
   @classmethod
-  def validate_volume_add(cls, volume):
+  @abc.abstractmethod
+  def validate_fields(cls, volume, release_track):
+    """Validate any additional constraints on the volume type."""
+    pass
+
+  @classmethod
+  def validate_volume_add(cls, volume, release_track=base.ReleaseTrack.GA):
     """Validate that the volume dict has all needed parameters for this type."""
-    required_keys = set(cls.required_fields().keys())
-    optional_keys = set(cls.optional_fields().keys())
+    required_keys = set(cls.required_fields(release_track).keys())
+    optional_keys = set(cls.optional_fields(release_track).keys())
     for key in volume:
       if key == 'name':
         continue
@@ -155,26 +163,23 @@ class _VolumeType(abc.ABC):
       )
 
   @classmethod
-  def generate_help(cls):
+  def generate_help(cls, release_track):
     """Generate help text for this volume type."""
     required_fields = '\n'.join(
         '* {}: (required) {}  '.format(name, hlp)
-        for name, hlp in cls.required_fields().items()
+        for name, hlp in cls.required_fields(release_track).items()
     )
     required = f'\n{required_fields}  ' if required_fields.strip() else ''
     optional_fields = '\n'.join(
         '* {}: (optional) {}  '.format(name, hlp)
-        for name, hlp in cls.optional_fields().items()
+        for name, hlp in cls.optional_fields(release_track).items()
     )
     optional = f'\n{optional_fields}  ' if optional_fields.strip() else ''
-    return (
-        '*{name}*: {hlp}\n  Additional'
-        ' keys:  {required}{optional}  '.format(
-            name=cls.name(),
-            hlp=cls.help(),
-            required=required,
-            optional=optional,
-        )
+    return '*{name}*: {hlp}\n  Additional keys:  {required}{optional}  '.format(
+        name=cls.name(),
+        hlp=cls.help(),
+        required=required,
+        optional=optional,
     )
 
 
@@ -195,11 +200,15 @@ class _InMemoryVolume(_VolumeType):
     )
 
   @classmethod
-  def required_fields(cls):
+  def release_tracks(cls):
+    return base.ReleaseTrack.AllValues()
+
+  @classmethod
+  def required_fields(cls, release_track):
     return {}
 
   @classmethod
-  def optional_fields(cls):
+  def optional_fields(cls, release_track):
     return {
         'size-limit': (
             'A quantity representing the maximum amount of memory allocated to'
@@ -226,10 +235,6 @@ class _NfsVolume(_VolumeType):
   """Volume Type representing an NFS volume."""
 
   @classmethod
-  def release_tracks(cls):
-    return [base.ReleaseTrack.ALPHA]
-
-  @classmethod
   def name(cls):
     return 'nfs'
 
@@ -238,13 +243,13 @@ class _NfsVolume(_VolumeType):
     return 'Represents a volume backed by an NFS server.'
 
   @classmethod
-  def required_fields(cls):
+  def required_fields(cls, release_track):
     return {
         'location': 'The location of the NFS Server, in the form SERVER:/PATH'
     }
 
   @classmethod
-  def optional_fields(cls):
+  def optional_fields(cls, release_track):
     return {
         'readonly': (
             'A boolean. If true, this volume will be read-only from all mounts.'
@@ -285,18 +290,56 @@ class _GcsVolume(_VolumeType):
     )
 
   @classmethod
-  def required_fields(cls):
+  def validate_fields(cls, volume, release_track):
+    if release_track == base.ReleaseTrack.ALPHA:
+      try:
+        bool_parser = arg_parsers.ArgBoolean()
+        dynamic_mounting = bool_parser(
+            volume.get('dynamic-mounting', 'false')
+        )
+      except argparse.ArgumentTypeError:
+        raise serverless_exceptions.ConfigurationError(
+            'dynamic-mounting must be set to true or false.'
+        )
+      if (dynamic_mounting and 'bucket' in volume) or (
+          not dynamic_mounting and 'bucket' not in volume
+          ):
+        raise serverless_exceptions.ConfigurationError(
+            'Either set bucket or enable dynamic-mounting, not both.'
+        )
+
+  @classmethod
+  def required_fields(cls, release_track):
+    if release_track == base.ReleaseTrack.ALPHA:
+      return {}
     return {
         'bucket': 'the name of the bucket to use as the source of this volume'
     }
 
   @classmethod
-  def optional_fields(cls):
-    return {
+  def optional_fields(cls, release_track):
+    fields = {
         'readonly': (
             'A boolean. If true, this volume will be read-only from all mounts.'
         )
     }
+    if release_track in [base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA]:
+      fields['mount-options'] = (
+          'A list of flags to pass to GCSFuse. Flags '
+          + 'should be specified without leading dashes and separated by '
+          + 'semicolons.'
+      )
+
+    if release_track == base.ReleaseTrack.ALPHA:
+      fields['bucket'] = (
+          'the name of the bucket to use as the source of this volume.'
+      )
+      fields['dynamic-mounting'] = (
+          'A boolean. If true, the volume will be mounted dynamically. '
+          + 'Note: You will either need to specify a bucket or set '
+          + 'dynamic-mounting to true, but not both.'
+      )
+    return fields
 
   @classmethod
   def fill_volume(cls, volume, new_vol, messages):
@@ -304,11 +347,28 @@ class _GcsVolume(_VolumeType):
         driver='gcsfuse.run.googleapis.com', readOnly=_is_readonly(volume)
     )
     src.volumeAttributes = messages.CSIVolumeSource.VolumeAttributesValue()
-    src.volumeAttributes.additionalProperties.append(
-        messages.CSIVolumeSource.VolumeAttributesValue.AdditionalProperty(
-            key='bucketName', value=volume['bucket']
-        )
-    )
+    if 'bucket' in volume:
+      src.volumeAttributes.additionalProperties.append(
+          messages.CSIVolumeSource.VolumeAttributesValue.AdditionalProperty(
+              key='bucketName', value=volume['bucket']
+          )
+      )
+    if 'mount-options' in volume:
+      src.volumeAttributes.additionalProperties.append(
+          messages.CSIVolumeSource.VolumeAttributesValue.AdditionalProperty(
+              key='mountOptions',
+              value=volume['mount-options'].replace(';', ','),
+          )
+      )
+    if (
+        'dynamic-mounting' in volume
+        and volume['dynamic-mounting']
+    ):
+      src.volumeAttributes.additionalProperties.append(
+          messages.CSIVolumeSource.VolumeAttributesValue.AdditionalProperty(
+              key='bucketName', value='_'
+          )
+      )
     new_vol.csi = src
 
 
@@ -329,7 +389,7 @@ class SecretVolume(_VolumeType):
     return 'Represents a secret stored in Secret Manager as a volume.'
 
   @classmethod
-  def required_fields(cls):
+  def required_fields(cls, release_track):
     return {
         'secret': (
             'The name of the secret in Secret Manager. Must be a secret in the'
@@ -341,7 +401,7 @@ class SecretVolume(_VolumeType):
     }
 
   @classmethod
-  def optional_fields(cls):
+  def optional_fields(cls, release_track):
     return {}
 
   @classmethod
@@ -350,6 +410,63 @@ class SecretVolume(_VolumeType):
     item = messages.KeyToPath(path=volume['path'], key=volume['version'])
     src.items.append(item)
     new_vol.secret = src
+
+
+@_registered_volume_type
+class CloudSqlInstance(_VolumeType):
+  """Represents a Cloud SQL instance as a volume."""
+
+  @classmethod
+  def release_tracks(cls):
+    return [base.ReleaseTrack.ALPHA]
+
+  @classmethod
+  def name(cls):
+    return 'cloudsql'
+
+  @classmethod
+  def help(cls):
+    return 'Represents a Cloud SQL instance as a volume.'
+
+  @classmethod
+  def validate_fields(cls, volume, release_track):
+    if 'instances' not in volume:
+      raise serverless_exceptions.ConfigurationError(
+          'Cloud SQL volumes must have at least one instance specified'
+      )
+    for instance in volume['instances'].split(';'):
+      instance = instance.strip().split(':')
+      if len(instance) != 3:
+        raise serverless_exceptions.ConfigurationError(
+            'Cloud SQL instances must be in the form'
+            ' project_id:region:instance_id'
+        )
+
+  @classmethod
+  def required_fields(cls, release_track):
+    return {
+        'instances': (
+            'The name of the Cloud SQL instances to mount. Must be in the form'
+            ' project_id:region:instance_id and separated by semicolons.'
+        ),
+    }
+
+  @classmethod
+  def optional_fields(cls, release_track):
+    return {}
+
+  @classmethod
+  def fill_volume(cls, volume, new_vol, messages):
+    src = messages.CSIVolumeSource(driver='cloudsql.run.googleapis.com')
+    src.volumeAttributes = messages.CSIVolumeSource.VolumeAttributesValue()
+    if 'instances' in volume:
+      src.volumeAttributes.additionalProperties.append(
+          messages.CSIVolumeSource.VolumeAttributesValue.AdditionalProperty(
+              key='instances',
+              value=volume['instances'].replace(';', ','),
+          )
+      )
+    new_vol.csi = src
 
 
 def _is_readonly(volume):

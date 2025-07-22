@@ -29,6 +29,10 @@ from googlecloudsdk.core import properties
 from googlecloudsdk.core import resources
 
 
+# TODO: b/312466999 - Change @base.DefaultUniverseOnly to
+# @base.UniverseCompatible once b/312466999 is fixed.
+# See go/gcloud-cli-running-tpc-tests.
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create a new AlloyDB cluster within a given project."""
@@ -61,11 +65,21 @@ class Create(base.CreateCommand):
     kms_resource_args.AddKmsKeyResourceArg(
         parser,
         'cluster',
-        permission_info="The 'AlloyDB Service Agent' service account must hold permission 'Cloud KMS CryptoKey Encrypter/Decrypter'"
+        permission_info=(
+            "The 'AlloyDB Service Agent' service account must hold permission"
+            " 'Cloud KMS CryptoKey Encrypter/Decrypter'"
+        ),
     )
-    flags.AddAutomatedBackupFlags(parser, alloydb_messages, update=False)
-    flags.AddContinuousBackupConfigFlags(parser)
-    flags.AddDatabaseVersion(parser, alloydb_messages)
+    flags.AddAutomatedBackupFlags(
+        parser, alloydb_messages, cls.ReleaseTrack(), update=False
+    )
+    flags.AddContinuousBackupConfigFlags(parser, cls.ReleaseTrack())
+    flags.AddDatabaseVersion(parser, alloydb_messages, cls.ReleaseTrack())
+    flags.AddEnablePrivateServiceConnect(parser)
+    flags.AddMaintenanceWindow(parser, alloydb_messages)
+    flags.AddDenyMaintenancePeriod(parser, alloydb_messages)
+    flags.AddSubscriptionType(parser, alloydb_messages)
+    flags.AddTags(parser)
 
   def ConstructCreateRequestFromArgs(self, alloydb_messages, location_ref,
                                      args):
@@ -123,7 +137,6 @@ class CreateAlpha(CreateBeta):
   @classmethod
   def Args(cls, parser):
     super(CreateAlpha, cls).Args(parser)
-    flags.AddEnablePrivateServicesConnect(parser)
 
   def ConstructCreateRequestFromArgs(
       self, alloydb_messages, location_ref, args

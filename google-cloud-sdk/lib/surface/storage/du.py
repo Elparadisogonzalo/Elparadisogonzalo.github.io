@@ -31,6 +31,7 @@ from googlecloudsdk.command_lib.storage import storage_url
 from googlecloudsdk.core.util import files
 
 
+@base.UniverseCompatible
 class Du(base.Command):
   """Displays the amount of space in bytes used by storage resources."""
 
@@ -57,7 +58,7 @@ class Du(base.Command):
 
       To print the total number of bytes in a bucket in human-readable form:
 
-        $ {command} -ch gs://bucketname
+        $ {command} -c gs://bucketname
 
       To see a summary of the total number of bytes in two given buckets:
 
@@ -142,6 +143,7 @@ class Du(base.Command):
     flags.add_additional_headers_flag(parser)
 
   def Run(self, args):
+
     use_gsutil_style = flags.check_if_use_gsutil_style(args)
 
     if args.url:

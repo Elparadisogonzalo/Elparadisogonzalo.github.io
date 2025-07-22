@@ -589,6 +589,62 @@ class Empty(_messages.Message):
 
 
 
+class ExecutionStats(_messages.Message):
+  r"""Execution statistics for the query.
+
+  Messages:
+    DebugStatsValue: Debugging statistics from the execution of the query.
+      Note that the debugging stats are subject to change as Firestore
+      evolves. It could include: { "indexes_entries_scanned": "1000",
+      "documents_scanned": "20", "billing_details" : { "documents_billable":
+      "20", "index_entries_billable": "1000", "min_query_cost": "0" } }
+
+  Fields:
+    debugStats: Debugging statistics from the execution of the query. Note
+      that the debugging stats are subject to change as Firestore evolves. It
+      could include: { "indexes_entries_scanned": "1000", "documents_scanned":
+      "20", "billing_details" : { "documents_billable": "20",
+      "index_entries_billable": "1000", "min_query_cost": "0" } }
+    executionDuration: Total time to execute the query in the backend.
+    readOperations: Total billable read operations.
+    resultsReturned: Total number of results returned, including documents,
+      projections, aggregation results, keys.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class DebugStatsValue(_messages.Message):
+    r"""Debugging statistics from the execution of the query. Note that the
+    debugging stats are subject to change as Firestore evolves. It could
+    include: { "indexes_entries_scanned": "1000", "documents_scanned": "20",
+    "billing_details" : { "documents_billable": "20",
+    "index_entries_billable": "1000", "min_query_cost": "0" } }
+
+    Messages:
+      AdditionalProperty: An additional property for a DebugStatsValue object.
+
+    Fields:
+      additionalProperties: Properties of the object.
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a DebugStatsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A extra_types.JsonValue attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.MessageField('extra_types.JsonValue', 2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  debugStats = _messages.MessageField('DebugStatsValue', 1)
+  executionDuration = _messages.StringField(2)
+  readOperations = _messages.IntegerField(3)
+  resultsReturned = _messages.IntegerField(4)
+
+
 class ExistenceFilter(_messages.Message):
   r"""A digest of all the documents that match a given target.
 
@@ -616,6 +672,33 @@ class ExistenceFilter(_messages.Message):
   count = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   targetId = _messages.IntegerField(2, variant=_messages.Variant.INT32)
   unchangedNames = _messages.MessageField('BloomFilter', 3)
+
+
+class ExplainMetrics(_messages.Message):
+  r"""Explain metrics for the query.
+
+  Fields:
+    executionStats: Aggregated stats from the execution of the query. Only
+      present when ExplainOptions.analyze is set to true.
+    planSummary: Planning phase information for the query.
+  """
+
+  executionStats = _messages.MessageField('ExecutionStats', 1)
+  planSummary = _messages.MessageField('PlanSummary', 2)
+
+
+class ExplainOptions(_messages.Message):
+  r"""Explain options for the query.
+
+  Fields:
+    analyze: Optional. Whether to execute this query. When false (the
+      default), the query will be planned, returning only metrics from the
+      planning stages. When true, the query will be planned and executed,
+      returning the full query results along with both planning and execution
+      stage metrics.
+  """
+
+  analyze = _messages.BooleanField(1)
 
 
 class FieldFilter(_messages.Message):
@@ -781,6 +864,72 @@ class Filter(_messages.Message):
   compositeFilter = _messages.MessageField('CompositeFilter', 1)
   fieldFilter = _messages.MessageField('FieldFilter', 2)
   unaryFilter = _messages.MessageField('UnaryFilter', 3)
+
+
+class FindNearest(_messages.Message):
+  r"""Nearest Neighbors search config. The ordering provided by FindNearest
+  supersedes the order_by stage. If multiple documents have the same vector
+  distance, the returned document order is not guaranteed to be stable between
+  queries.
+
+  Enums:
+    DistanceMeasureValueValuesEnum: Required. The distance measure to use,
+      required.
+
+  Fields:
+    distanceMeasure: Required. The distance measure to use, required.
+    distanceResultField: Optional. Optional name of the field to output the
+      result of the vector distance calculation. Must conform to document
+      field name limitations.
+    distanceThreshold: Optional. Option to specify a threshold for which no
+      less similar documents will be returned. The behavior of the specified
+      `distance_measure` will affect the meaning of the distance threshold.
+      Since DOT_PRODUCT distances increase when the vectors are more similar,
+      the comparison is inverted. * For EUCLIDEAN, COSINE: `WHERE distance <=
+      distance_threshold` * For DOT_PRODUCT: `WHERE distance >=
+      distance_threshold`
+    limit: Required. The number of nearest neighbors to return. Must be a
+      positive integer of no more than 1000.
+    queryVector: Required. The query vector that we are searching on. Must be
+      a vector of no more than 2048 dimensions.
+    vectorField: Required. An indexed vector field to search upon. Only
+      documents which contain vectors whose dimensionality match the
+      query_vector can be returned.
+  """
+
+  class DistanceMeasureValueValuesEnum(_messages.Enum):
+    r"""Required. The distance measure to use, required.
+
+    Values:
+      DISTANCE_MEASURE_UNSPECIFIED: Should not be set.
+      EUCLIDEAN: Measures the EUCLIDEAN distance between the vectors. See
+        [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) to learn
+        more. The resulting distance decreases the more similar two vectors
+        are.
+      COSINE: COSINE distance compares vectors based on the angle between
+        them, which allows you to measure similarity that isn't based on the
+        vectors magnitude. We recommend using DOT_PRODUCT with unit normalized
+        vectors instead of COSINE distance, which is mathematically equivalent
+        with better performance. See [Cosine
+        Similarity](https://en.wikipedia.org/wiki/Cosine_similarity) to learn
+        more about COSINE similarity and COSINE distance. The resulting COSINE
+        distance decreases the more similar two vectors are.
+      DOT_PRODUCT: Similar to cosine but is affected by the magnitude of the
+        vectors. See [Dot Product](https://en.wikipedia.org/wiki/Dot_product)
+        to learn more. The resulting distance increases the more similar two
+        vectors are.
+    """
+    DISTANCE_MEASURE_UNSPECIFIED = 0
+    EUCLIDEAN = 1
+    COSINE = 2
+    DOT_PRODUCT = 3
+
+  distanceMeasure = _messages.EnumField('DistanceMeasureValueValuesEnum', 1)
+  distanceResultField = _messages.StringField(2)
+  distanceThreshold = _messages.FloatField(3)
+  limit = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  queryVector = _messages.MessageField('Value', 5)
+  vectorField = _messages.MessageField('FieldReference', 6)
 
 
 class FirestoreProjectsDatabasesDocumentsBatchGetRequest(_messages.Message):
@@ -1221,12 +1370,136 @@ class FirestoreProjectsDatabasesIndexesListRequest(_messages.Message):
   parent = _messages.StringField(4, required=True)
 
 
+class GoogleFirestoreAdminV1BulkDeleteDocumentsMetadata(_messages.Message):
+  r"""Metadata for google.longrunning.Operation results from
+  FirestoreAdmin.BulkDeleteDocuments.
+
+  Enums:
+    OperationStateValueValuesEnum: The state of the operation.
+
+  Fields:
+    collectionIds: The IDs of the collection groups that are being deleted.
+    endTime: The time this operation completed. Will be unset if operation
+      still in progress.
+    namespaceIds: Which namespace IDs are being deleted.
+    operationState: The state of the operation.
+    progressBytes: The progress, in bytes, of this operation.
+    progressDocuments: The progress, in documents, of this operation.
+    snapshotTime: The timestamp that corresponds to the version of the
+      database that is being read to get the list of documents to delete. This
+      time can also be used as the timestamp of PITR in case of disaster
+      recovery (subject to PITR window limit).
+    startTime: The time this operation started.
+  """
+
+  class OperationStateValueValuesEnum(_messages.Enum):
+    r"""The state of the operation.
+
+    Values:
+      OPERATION_STATE_UNSPECIFIED: Unspecified.
+      INITIALIZING: Request is being prepared for processing.
+      PROCESSING: Request is actively being processed.
+      CANCELLING: Request is in the process of being cancelled after user
+        called google.longrunning.Operations.CancelOperation on the operation.
+      FINALIZING: Request has been processed and is in its finalization stage.
+      SUCCESSFUL: Request has completed successfully.
+      FAILED: Request has finished being processed, but encountered an error.
+      CANCELLED: Request has finished being cancelled after user called
+        google.longrunning.Operations.CancelOperation.
+    """
+    OPERATION_STATE_UNSPECIFIED = 0
+    INITIALIZING = 1
+    PROCESSING = 2
+    CANCELLING = 3
+    FINALIZING = 4
+    SUCCESSFUL = 5
+    FAILED = 6
+    CANCELLED = 7
+
+  collectionIds = _messages.StringField(1, repeated=True)
+  endTime = _messages.StringField(2)
+  namespaceIds = _messages.StringField(3, repeated=True)
+  operationState = _messages.EnumField('OperationStateValueValuesEnum', 4)
+  progressBytes = _messages.MessageField('GoogleFirestoreAdminV1Progress', 5)
+  progressDocuments = _messages.MessageField('GoogleFirestoreAdminV1Progress', 6)
+  snapshotTime = _messages.StringField(7)
+  startTime = _messages.StringField(8)
+
+
+class GoogleFirestoreAdminV1CloneDatabaseMetadata(_messages.Message):
+  r"""Metadata for the long-running operation from the CloneDatabase request.
+
+  Enums:
+    OperationStateValueValuesEnum: The operation state of the clone.
+
+  Fields:
+    database: The name of the database being cloned to.
+    endTime: The time the clone finished, unset for ongoing clones.
+    operationState: The operation state of the clone.
+    pitrSnapshot: The snapshot from which this database was cloned.
+    progressPercentage: How far along the clone is as an estimated percentage
+      of remaining time.
+    startTime: The time the clone was started.
+  """
+
+  class OperationStateValueValuesEnum(_messages.Enum):
+    r"""The operation state of the clone.
+
+    Values:
+      OPERATION_STATE_UNSPECIFIED: Unspecified.
+      INITIALIZING: Request is being prepared for processing.
+      PROCESSING: Request is actively being processed.
+      CANCELLING: Request is in the process of being cancelled after user
+        called google.longrunning.Operations.CancelOperation on the operation.
+      FINALIZING: Request has been processed and is in its finalization stage.
+      SUCCESSFUL: Request has completed successfully.
+      FAILED: Request has finished being processed, but encountered an error.
+      CANCELLED: Request has finished being cancelled after user called
+        google.longrunning.Operations.CancelOperation.
+    """
+    OPERATION_STATE_UNSPECIFIED = 0
+    INITIALIZING = 1
+    PROCESSING = 2
+    CANCELLING = 3
+    FINALIZING = 4
+    SUCCESSFUL = 5
+    FAILED = 6
+    CANCELLED = 7
+
+  database = _messages.StringField(1)
+  endTime = _messages.StringField(2)
+  operationState = _messages.EnumField('OperationStateValueValuesEnum', 3)
+  pitrSnapshot = _messages.MessageField('GoogleFirestoreAdminV1PitrSnapshot', 4)
+  progressPercentage = _messages.MessageField('GoogleFirestoreAdminV1Progress', 5)
+  startTime = _messages.StringField(6)
+
+
 class GoogleFirestoreAdminV1CreateDatabaseMetadata(_messages.Message):
   r"""Metadata related to the create database operation."""
 
 
 class GoogleFirestoreAdminV1DeleteDatabaseMetadata(_messages.Message):
   r"""Metadata related to the delete database operation."""
+
+
+class GoogleFirestoreAdminV1PitrSnapshot(_messages.Message):
+  r"""A consistent snapshot of a database at a specific point in time. A PITR
+  (Point-in-time recovery) snapshot with previous versions of a database's
+  data is available for every minute up to the associated database's data
+  retention period. If the PITR feature is enabled, the retention period is 7
+  days; otherwise, it is one hour.
+
+  Fields:
+    database: Required. The name of the database that this was a snapshot of.
+      Format: `projects/{project}/databases/{database}`.
+    databaseUid: Output only. Public UUID of the database the snapshot was
+      associated with.
+    snapshotTime: Required. Snapshot time of the database.
+  """
+
+  database = _messages.StringField(1)
+  databaseUid = _messages.BytesField(2)
+  snapshotTime = _messages.StringField(3)
 
 
 class GoogleFirestoreAdminV1Progress(_messages.Message):
@@ -1956,6 +2229,46 @@ class PartitionQueryResponse(_messages.Message):
   partitions = _messages.MessageField('Cursor', 2, repeated=True)
 
 
+class PlanSummary(_messages.Message):
+  r"""Planning phase information for the query.
+
+  Messages:
+    IndexesUsedValueListEntry: A IndexesUsedValueListEntry object.
+
+  Fields:
+    indexesUsed: The indexes selected for the query. For example: [
+      {"query_scope": "Collection", "properties": "(foo ASC, __name__ ASC)"},
+      {"query_scope": "Collection", "properties": "(bar ASC, __name__ ASC)"} ]
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class IndexesUsedValueListEntry(_messages.Message):
+    r"""A IndexesUsedValueListEntry object.
+
+    Messages:
+      AdditionalProperty: An additional property for a
+        IndexesUsedValueListEntry object.
+
+    Fields:
+      additionalProperties: Properties of the object.
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a IndexesUsedValueListEntry object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A extra_types.JsonValue attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.MessageField('extra_types.JsonValue', 2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  indexesUsed = _messages.MessageField('IndexesUsedValueListEntry', 1, repeated=True)
+
+
 class Precondition(_messages.Message):
   r"""A precondition on a document, used for conditional operations.
 
@@ -2037,6 +2350,9 @@ class RunAggregationQueryRequest(_messages.Message):
   r"""The request for Firestore.RunAggregationQuery.
 
   Fields:
+    explainOptions: Optional. Explain options for the query. If set,
+      additional query statistics will be returned. If not, only query results
+      will be returned.
     newTransaction: Starts a new transaction as part of the query, defaulting
       to read-only. The new transaction ID will be returned as the first
       response in the stream.
@@ -2049,16 +2365,20 @@ class RunAggregationQueryRequest(_messages.Message):
       value here is the opaque transaction ID to execute the query in.
   """
 
-  newTransaction = _messages.MessageField('TransactionOptions', 1)
-  readTime = _messages.StringField(2)
-  structuredAggregationQuery = _messages.MessageField('StructuredAggregationQuery', 3)
-  transaction = _messages.BytesField(4)
+  explainOptions = _messages.MessageField('ExplainOptions', 1)
+  newTransaction = _messages.MessageField('TransactionOptions', 2)
+  readTime = _messages.StringField(3)
+  structuredAggregationQuery = _messages.MessageField('StructuredAggregationQuery', 4)
+  transaction = _messages.BytesField(5)
 
 
 class RunAggregationQueryResponse(_messages.Message):
   r"""The response for Firestore.RunAggregationQuery.
 
   Fields:
+    explainMetrics: Query explain metrics. This is only present when the
+      RunAggregationQueryRequest.explain_options is provided, and it is sent
+      only once with the last response in the stream.
     readTime: The time at which the aggregate result was computed. This is
       always monotonically increasing; in this case, the previous
       AggregationResult in the result stream are guaranteed not to have
@@ -2072,15 +2392,19 @@ class RunAggregationQueryResponse(_messages.Message):
       new transaction.
   """
 
-  readTime = _messages.StringField(1)
-  result = _messages.MessageField('AggregationResult', 2)
-  transaction = _messages.BytesField(3)
+  explainMetrics = _messages.MessageField('ExplainMetrics', 1)
+  readTime = _messages.StringField(2)
+  result = _messages.MessageField('AggregationResult', 3)
+  transaction = _messages.BytesField(4)
 
 
 class RunQueryRequest(_messages.Message):
   r"""The request for Firestore.RunQuery.
 
   Fields:
+    explainOptions: Optional. Explain options for the query. If set,
+      additional query statistics will be returned. If not, only query results
+      will be returned.
     newTransaction: Starts a new transaction and reads the documents. Defaults
       to a read-only transaction. The new transaction ID will be returned as
       the first response in the stream.
@@ -2093,10 +2417,11 @@ class RunQueryRequest(_messages.Message):
       here is the opaque transaction ID to execute the query in.
   """
 
-  newTransaction = _messages.MessageField('TransactionOptions', 1)
-  readTime = _messages.StringField(2)
-  structuredQuery = _messages.MessageField('StructuredQuery', 3)
-  transaction = _messages.BytesField(4)
+  explainOptions = _messages.MessageField('ExplainOptions', 1)
+  newTransaction = _messages.MessageField('TransactionOptions', 2)
+  readTime = _messages.StringField(3)
+  structuredQuery = _messages.MessageField('StructuredQuery', 4)
+  transaction = _messages.BytesField(5)
 
 
 class RunQueryResponse(_messages.Message):
@@ -2106,6 +2431,9 @@ class RunQueryResponse(_messages.Message):
     document: A query result, not set when reporting partial progress.
     done: If present, Firestore has completely finished the request and no
       more documents will be returned.
+    explainMetrics: Query explain metrics. This is only present when the
+      RunQueryRequest.explain_options is provided, and it is sent only once
+      with the last response in the stream.
     readTime: The time at which the document was read. This may be
       monotonically increasing; in this case, the previous documents in the
       result stream are guaranteed not to have changed between their
@@ -2122,9 +2450,10 @@ class RunQueryResponse(_messages.Message):
 
   document = _messages.MessageField('Document', 1)
   done = _messages.BooleanField(2)
-  readTime = _messages.StringField(3)
-  skippedResults = _messages.IntegerField(4, variant=_messages.Variant.INT32)
-  transaction = _messages.BytesField(5)
+  explainMetrics = _messages.MessageField('ExplainMetrics', 3)
+  readTime = _messages.StringField(4)
+  skippedResults = _messages.IntegerField(5, variant=_messages.Variant.INT32)
+  transaction = _messages.BytesField(6)
 
 
 class StandardQueryParameters(_messages.Message):
@@ -2258,7 +2587,7 @@ class StructuredAggregationQuery(_messages.Message):
 class StructuredQuery(_messages.Message):
   r"""A Firestore query. The query stages are executed in the following order:
   1. from 2. where 3. select 4. order_by + start_at + end_at 5. offset 6.
-  limit
+  limit 7. find_nearest
 
   Fields:
     endAt: A potential prefix of a position in the result set to end the query
@@ -2266,6 +2595,9 @@ class StructuredQuery(_messages.Message):
       position rather than the start position. Requires: * The number of
       values cannot be greater than the number of fields specified in the
       `ORDER BY` clause.
+    findNearest: Optional. A potential nearest neighbors search. Applies after
+      all other filters and ordering. Finds the closest vector embeddings to
+      the given query vector.
     from_: The collections to query.
     limit: The maximum number of results to return. Applies after all other
       constraints. Requires: * The value must be greater than or equal to zero
@@ -2311,13 +2643,14 @@ class StructuredQuery(_messages.Message):
   """
 
   endAt = _messages.MessageField('Cursor', 1)
-  from_ = _messages.MessageField('CollectionSelector', 2, repeated=True)
-  limit = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  offset = _messages.IntegerField(4, variant=_messages.Variant.INT32)
-  orderBy = _messages.MessageField('Order', 5, repeated=True)
-  select = _messages.MessageField('Projection', 6)
-  startAt = _messages.MessageField('Cursor', 7)
-  where = _messages.MessageField('Filter', 8)
+  findNearest = _messages.MessageField('FindNearest', 2)
+  from_ = _messages.MessageField('CollectionSelector', 3, repeated=True)
+  limit = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  offset = _messages.IntegerField(5, variant=_messages.Variant.INT32)
+  orderBy = _messages.MessageField('Order', 6, repeated=True)
+  select = _messages.MessageField('Projection', 7)
+  startAt = _messages.MessageField('Cursor', 8)
+  where = _messages.MessageField('Filter', 9)
 
 
 class Sum(_messages.Message):
@@ -2368,7 +2701,7 @@ class Target(_messages.Message):
       `target_id=0` is added, the server will immediately send a response with
       a `TargetChange::Remove` event. Note that if the client sends multiple
       `AddTarget` requests without an ID, the order of IDs returned in
-      `TargetChage.target_ids` are undefined. Therefore, clients should
+      `TargetChange.target_ids` are undefined. Therefore, clients should
       provide a target ID instead of relying on the server to assign one. If
       `target_id` is non-zero, there must not be an existing active target on
       this stream with the same ID.
@@ -2493,7 +2826,7 @@ class Value(_messages.Message):
 
   Fields:
     arrayValue: An array value. Cannot directly contain another array value,
-      though can contain an map which contains another array.
+      though can contain a map which contains another array.
     booleanValue: A boolean value.
     bytesValue: A bytes value. Must not exceed 1 MiB - 89 bytes. Only the
       first 1,500 bytes are considered by queries.
@@ -2670,3 +3003,23 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsCreateDocumentRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsDeleteRequest, 'currentDocument_exists', 'currentDocument.exists')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsDeleteRequest, 'currentDocument_updateTime', 'currentDocument.updateTime')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsGetRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsListRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsListDocumentsRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsPatchRequest, 'currentDocument_exists', 'currentDocument.exists')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsPatchRequest, 'currentDocument_updateTime', 'currentDocument.updateTime')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsPatchRequest, 'mask_fieldPaths', 'mask.fieldPaths')
+encoding.AddCustomJsonFieldMapping(
+    FirestoreProjectsDatabasesDocumentsPatchRequest, 'updateMask_fieldPaths', 'updateMask.fieldPaths')

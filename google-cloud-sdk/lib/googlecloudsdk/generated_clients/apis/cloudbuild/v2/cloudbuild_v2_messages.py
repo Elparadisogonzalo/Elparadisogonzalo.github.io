@@ -400,11 +400,15 @@ class CloudbuildProjectsLocationsConnectionsListRequest(_messages.Message):
     pageToken: Page start.
     parent: Required. The parent, which owns this collection of Connections.
       Format: `projects/*/locations/*`.
+    returnPartialSuccess: Optional. If set to true, the response will return
+      partial results when some regions are unreachable. If set to false, the
+      response will fail if any region is unreachable.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   pageToken = _messages.StringField(2)
   parent = _messages.StringField(3, required=True)
+  returnPartialSuccess = _messages.BooleanField(4)
 
 
 class CloudbuildProjectsLocationsConnectionsPatchRequest(_messages.Message):
@@ -439,7 +443,7 @@ class CloudbuildProjectsLocationsConnectionsProcessWebhookRequest(_messages.Mess
     httpBody: A HttpBody resource to be passed as the request body.
     parent: Required. Project and location where the webhook will be received.
       Format: `projects/*/locations/*`.
-    webhookKey: Arbitrary additional key to find the maching repository for a
+    webhookKey: Arbitrary additional key to find the matching repository for a
       webhook event if needed.
   """
 
@@ -543,7 +547,7 @@ class CloudbuildProjectsLocationsConnectionsRepositoriesFetchGitRefsRequest(_mes
 
   Fields:
     pageSize: Optional. Number of results to return in the list. Default to
-      100.
+      20.
     pageToken: Optional. Page start.
     refType: Type of refs to fetch
     repository: Required. The resource name of the repository in the format
@@ -591,12 +595,16 @@ class CloudbuildProjectsLocationsConnectionsRepositoriesListRequest(_messages.Me
     pageToken: Page start.
     parent: Required. The parent, which owns this collection of Repositories.
       Format: `projects/*/locations/*/connections/*`.
+    returnPartialSuccess: Optional. If set to true, the response will return
+      partial results when some regions are unreachable. If set to false, the
+      response will fail if any region is unreachable.
   """
 
   filter = _messages.StringField(1)
   pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
   pageToken = _messages.StringField(3)
   parent = _messages.StringField(4, required=True)
+  returnPartialSuccess = _messages.BooleanField(5)
 
 
 class CloudbuildProjectsLocationsConnectionsSetIamPolicyRequest(_messages.Message):
@@ -646,6 +654,8 @@ class CloudbuildProjectsLocationsListRequest(_messages.Message):
   r"""A CloudbuildProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -656,10 +666,11 @@ class CloudbuildProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class CloudbuildProjectsLocationsOperationsCancelRequest(_messages.Message):
@@ -884,6 +895,106 @@ class CloudbuildProjectsLocationsTaskRunsPatchRequest(_messages.Message):
   validateOnly = _messages.BooleanField(5)
 
 
+class CloudbuildProjectsLocationsWorkerPoolSecondGenCreateRequest(_messages.Message):
+  r"""A CloudbuildProjectsLocationsWorkerPoolSecondGenCreateRequest object.
+
+  Fields:
+    parent: Required. The parent resource where this worker pool will be
+      created. Format: `projects/{project}/locations/{location}`.
+    validateOnly: Optional. If set, validate the request and preview the
+      response, but do not actually post it.
+    workerPoolSecondGen: A WorkerPoolSecondGen resource to be passed as the
+      request body.
+    workerPoolSecondGenId: Required. Immutable. The ID to use for the
+      `WorkerPoolSecondGen`, which will become the final component of the
+      resource name. This value should be 1-63 characters, and valid
+      characters are /a-z-/.
+  """
+
+  parent = _messages.StringField(1, required=True)
+  validateOnly = _messages.BooleanField(2)
+  workerPoolSecondGen = _messages.MessageField('WorkerPoolSecondGen', 3)
+  workerPoolSecondGenId = _messages.StringField(4)
+
+
+class CloudbuildProjectsLocationsWorkerPoolSecondGenDeleteRequest(_messages.Message):
+  r"""A CloudbuildProjectsLocationsWorkerPoolSecondGenDeleteRequest object.
+
+  Fields:
+    allowMissing: Optional. If set to true, and the `WorkerPoolSecondGen` is
+      not found, the request will succeed but no action will be taken on the
+      server.
+    etag: Optional. If provided, it must match the server's etag on the
+      WorkerPoolSecondGen for the request to be processed.
+    name: Required. The name of the `WorkerPoolSecondGen` to delete. Format: `
+      projects/{project}/locations/{location}/workerPoolSecondGen/{workerPoolS
+      econdGen}`.
+    validateOnly: Optional. If set, validate the request and preview the
+      response, but do not actually post it.
+  """
+
+  allowMissing = _messages.BooleanField(1)
+  etag = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  validateOnly = _messages.BooleanField(4)
+
+
+class CloudbuildProjectsLocationsWorkerPoolSecondGenGetRequest(_messages.Message):
+  r"""A CloudbuildProjectsLocationsWorkerPoolSecondGenGetRequest object.
+
+  Fields:
+    name: Required. The name of the `WorkerPoolSecondGen` to retrieve. Format:
+      `projects/{project}/locations/{location}/workerPoolSecondGen/{workerPool
+      SecondGen}`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class CloudbuildProjectsLocationsWorkerPoolSecondGenListRequest(_messages.Message):
+  r"""A CloudbuildProjectsLocationsWorkerPoolSecondGenListRequest object.
+
+  Fields:
+    pageSize: Optional. The maximum number of `WorkerPoolSecondGen`s to
+      return. The service may return fewer than this value. If omitted, the
+      server will use a sensible default.
+    pageToken: Optional. A page token, received from a previous
+      `ListWorkerPoolSecondGen` call. Provide this to retrieve the subsequent
+      page.
+    parent: Required. The parent of the collection of `WorkerPoolSecondGen`.
+      Format: `projects/{project}/locations/{location}`.
+  """
+
+  pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+
+
+class CloudbuildProjectsLocationsWorkerPoolSecondGenPatchRequest(_messages.Message):
+  r"""A CloudbuildProjectsLocationsWorkerPoolSecondGenPatchRequest object.
+
+  Fields:
+    allowMissing: Optional. If set to true, and the `WorkerPoolSecondGen` is
+      not found, a new `WorkerPoolSecondGen` will be created. In this
+      situation, `update_mask` is ignored.
+    name: Output only. Identifier. The resource name of the
+      `WorkerPoolSecondGen`, with format `projects/{project}/locations/{locati
+      on}/workerPoolSecondGen/{worker_pool_second_gen}`.
+    updateMask: Optional. A mask specifying which fields in
+      `worker_pool_second_gen` to update.
+    validateOnly: Optional. If set, validate the request and preview the
+      response, but do not actually post it.
+    workerPoolSecondGen: A WorkerPoolSecondGen resource to be passed as the
+      request body.
+  """
+
+  allowMissing = _messages.BooleanField(1)
+  name = _messages.StringField(2, required=True)
+  updateMask = _messages.StringField(3)
+  validateOnly = _messages.BooleanField(4)
+  workerPoolSecondGen = _messages.MessageField('WorkerPoolSecondGen', 5)
+
+
 class CloudbuildProjectsLocationsWorkflowsCreateRequest(_messages.Message):
   r"""A CloudbuildProjectsLocationsWorkflowsCreateRequest object.
 
@@ -997,21 +1108,23 @@ class CloudbuildProjectsLocationsWorkflowsWebhookRequest(_messages.Message):
 
 class Connection(_messages.Message):
   r"""A connection to a SCM like GitHub, GitHub Enterprise, Bitbucket Data
-  Center or GitLab.
+  Center, Bitbucket Cloud or GitLab.
 
   Messages:
-    AnnotationsValue: Allows clients to store small amounts of arbitrary data.
+    AnnotationsValue: Optional. Allows clients to store small amounts of
+      arbitrary data.
 
   Fields:
-    annotations: Allows clients to store small amounts of arbitrary data.
+    annotations: Optional. Allows clients to store small amounts of arbitrary
+      data.
     bitbucketCloudConfig: Configuration for connections to Bitbucket Cloud.
     bitbucketDataCenterConfig: Configuration for connections to Bitbucket Data
       Center.
     createTime: Output only. Server assigned timestamp for when the connection
       was created.
-    disabled: If disabled is set to true, functionality is disabled for this
-      connection. Repository based API methods and webhooks processing for
-      repositories in this connection will be disabled.
+    disabled: Optional. If disabled is set to true, functionality is disabled
+      for this connection. Repository based API methods and webhooks
+      processing for repositories in this connection will be disabled.
     etag: This checksum is computed by the server based on the value of other
       fields, and may be sent on update and delete requests to ensure the
       client has an up-to-date value before proceeding.
@@ -1031,7 +1144,7 @@ class Connection(_messages.Message):
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class AnnotationsValue(_messages.Message):
-    r"""Allows clients to store small amounts of arbitrary data.
+    r"""Optional. Allows clients to store small amounts of arbitrary data.
 
     Messages:
       AdditionalProperty: An additional property for a AnnotationsValue
@@ -1200,15 +1313,24 @@ class EventSource(_messages.Message):
   Fields:
     eventSource: Output only. The fully qualified resource name for the event
       source.
+    gitRepoLink: Resource name of Developer Connect GitRepositoryLink.
+    gitRepositoryLink: Output only. Resource name of Developer Connect
+      GitRepositoryLink.
     id: identification to Resource.
     repository: Output only. Resource name of GCB v2 repo.
-    subscription: Output only. Resource name of PubSub subscription.
+    subscription: Output only. Resource name of Pub/Sub subscription.
+    topic: Resource name of Pub/Sub topic.
+    url: SCM Repo URL.
   """
 
   eventSource = _messages.StringField(1)
-  id = _messages.StringField(2)
-  repository = _messages.StringField(3)
-  subscription = _messages.StringField(4)
+  gitRepoLink = _messages.StringField(2)
+  gitRepositoryLink = _messages.StringField(3)
+  id = _messages.StringField(4)
+  repository = _messages.StringField(5)
+  subscription = _messages.StringField(6)
+  topic = _messages.StringField(7)
+  url = _messages.StringField(8)
 
 
 class ExecAction(_messages.Message):
@@ -1232,6 +1354,7 @@ class ExecutionEnvironment(_messages.Message):
 
   Fields:
     workerPool: Required. The workerpool used to run the PipelineRun.
+      Deprecated; please use workflow_options.worker_pool instead.
   """
 
   workerPool = _messages.StringField(1)
@@ -1337,11 +1460,11 @@ class GitHubConfig(_messages.Message):
   r"""Configuration for connections to github.com.
 
   Fields:
-    appInstallationId: GitHub App installation id.
-    authorizerCredential: OAuth credential of the account that authorized the
-      Cloud Build GitHub App. It is recommended to use a robot account instead
-      of a human user account. The OAuth token must be tied to the Cloud Build
-      GitHub App.
+    appInstallationId: Optional. GitHub App installation id.
+    authorizerCredential: Optional. OAuth credential of the account that
+      authorized the Cloud Build GitHub App. It is recommended to use a robot
+      account instead of a human user account. The OAuth token must be tied to
+      the Cloud Build GitHub App.
   """
 
   appInstallationId = _messages.IntegerField(1)
@@ -1415,33 +1538,34 @@ class GoogleDevtoolsCloudbuildV2GitHubEnterpriseConfig(_messages.Message):
 
   Fields:
     apiKey: Required. API Key used for authentication of webhook events.
-    appId: Id of the GitHub App created from the manifest.
-    appInstallationId: ID of the installation of the GitHub App.
-    appSlug: The URL-friendly name of the GitHub App.
-    authorizerCredential: OAuth credential of the account that authorized the
-      Cloud Build GitHub App. It is recommended to use a robot account instead
-      of a human user account The OAuth token must be tied to the Cloud Build
-      GitHub App.
+    appId: Optional. Id of the GitHub App created from the manifest.
+    appInstallationId: Optional. ID of the installation of the GitHub App.
+    appSlug: Optional. The URL-friendly name of the GitHub App.
+    authorizerCredential: Optional. OAuth credential of the account that
+      authorized the Cloud Build GitHub App. It is recommended to use a robot
+      account instead of a human user account The OAuth token must be tied to
+      the Cloud Build GitHub App.
     hostUri: Required. The URI of the GitHub Enterprise host this connection
       is for.
-    oauthClientIdSecretVersion: SecretManager resource containing the OAuth
-      client_id of the GitHub App, formatted as
+    oauthClientIdSecretVersion: Optional. SecretManager resource containing
+      the OAuth client_id of the GitHub App, formatted as
       `projects/*/secrets/*/versions/*`.
-    oauthSecretSecretVersion: SecretManager resource containing the OAuth
-      secret of the GitHub App, formatted as
+    oauthSecretSecretVersion: Optional. SecretManager resource containing the
+      OAuth secret of the GitHub App, formatted as
       `projects/*/secrets/*/versions/*`.
-    privateKeySecretVersion: SecretManager resource containing the private key
-      of the GitHub App, formatted as `projects/*/secrets/*/versions/*`.
+    privateKeySecretVersion: Optional. SecretManager resource containing the
+      private key of the GitHub App, formatted as
+      `projects/*/secrets/*/versions/*`.
     serverVersion: Output only. GitHub Enterprise version installed at the
       host_uri.
-    serviceDirectoryConfig: Configuration for using Service Directory to
-      privately connect to a GitHub Enterprise server. This should only be set
-      if the GitHub Enterprise server is hosted on-premises and not reachable
-      by public internet. If this field is left empty, calls to the GitHub
-      Enterprise server will be made over the public internet.
-    sslCa: SSL certificate to use for requests to GitHub Enterprise.
-    webhookSecretSecretVersion: SecretManager resource containing the webhook
-      secret of the GitHub App, formatted as
+    serviceDirectoryConfig: Optional. Configuration for using Service
+      Directory to privately connect to a GitHub Enterprise server. This
+      should only be set if the GitHub Enterprise server is hosted on-premises
+      and not reachable by public internet. If this field is left empty, calls
+      to the GitHub Enterprise server will be made over the public internet.
+    sslCa: Optional. SSL certificate to use for requests to GitHub Enterprise.
+    webhookSecretSecretVersion: Optional. SecretManager resource containing
+      the webhook secret of the GitHub App, formatted as
       `projects/*/secrets/*/versions/*`.
   """
 
@@ -1467,18 +1591,18 @@ class GoogleDevtoolsCloudbuildV2GitLabConfig(_messages.Message):
   Fields:
     authorizerCredential: Required. A GitLab personal access token with the
       `api` scope access.
-    hostUri: The URI of the GitLab Enterprise host this connection is for. If
-      not specified, the default value is https://gitlab.com.
+    hostUri: Optional. The URI of the GitLab Enterprise host this connection
+      is for. If not specified, the default value is https://gitlab.com.
     readAuthorizerCredential: Required. A GitLab personal access token with
       the minimum `read_api` scope access.
     serverVersion: Output only. Version of the GitLab Enterprise server
       running on the `host_uri`.
-    serviceDirectoryConfig: Configuration for using Service Directory to
-      privately connect to a GitLab Enterprise server. This should only be set
-      if the GitLab Enterprise server is hosted on-premises and not reachable
-      by public internet. If this field is left empty, calls to the GitLab
-      Enterprise server will be made over the public internet.
-    sslCa: SSL certificate to use for requests to GitLab Enterprise.
+    serviceDirectoryConfig: Optional. Configuration for using Service
+      Directory to privately connect to a GitLab Enterprise server. This
+      should only be set if the GitLab Enterprise server is hosted on-premises
+      and not reachable by public internet. If this field is left empty, calls
+      to the GitLab Enterprise server will be made over the public internet.
+    sslCa: Optional. SSL certificate to use for requests to GitLab Enterprise.
     webhookSecretSecretVersion: Required. Immutable. SecretManager resource
       containing the webhook secret of a GitLab Enterprise project, formatted
       as `projects/*/secrets/*/versions/*`.
@@ -1518,20 +1642,6 @@ class GoogleDevtoolsCloudbuildV2OperationMetadata(_messages.Message):
   statusMessage = _messages.StringField(5)
   target = _messages.StringField(6)
   verb = _messages.StringField(7)
-
-
-class GoogleDevtoolsCloudbuildV2SecretManagerSecret(_messages.Message):
-  r"""Pairs a secret environment variable with a SecretVersion in Secret
-  Manager.
-
-  Fields:
-    env: Environment variable name to associate with the secret.
-    secretVersion: Resource name of the SecretVersion. In format:
-      projects/*/secrets/*/versions/*
-  """
-
-  env = _messages.StringField(1)
-  secretVersion = _messages.StringField(2)
 
 
 class GoogleDevtoolsCloudbuildV2ServiceDirectoryConfig(_messages.Message):
@@ -1669,10 +1779,12 @@ class ListConnectionsResponse(_messages.Message):
     connections: The list of Connections.
     nextPageToken: A token identifying a page of results the server should
       return.
+    unreachable: Locations that could not be reached.
   """
 
   connections = _messages.MessageField('Connection', 1, repeated=True)
   nextPageToken = _messages.StringField(2)
+  unreachable = _messages.StringField(3, repeated=True)
 
 
 class ListLocationsResponse(_messages.Message):
@@ -1721,10 +1833,12 @@ class ListRepositoriesResponse(_messages.Message):
     nextPageToken: A token identifying a page of results the server should
       return.
     repositories: The list of Repositories.
+    unreachable: Locations that could not be reached.
   """
 
   nextPageToken = _messages.StringField(1)
   repositories = _messages.MessageField('Repository', 2, repeated=True)
+  unreachable = _messages.StringField(3, repeated=True)
 
 
 class ListResultsResponse(_messages.Message):
@@ -1751,6 +1865,20 @@ class ListTaskRunsResponse(_messages.Message):
 
   nextPageToken = _messages.StringField(1)
   taskRuns = _messages.MessageField('TaskRun', 2, repeated=True)
+
+
+class ListWorkerPoolSecondGenResponse(_messages.Message):
+  r"""Response containing existing `WorkerPoolSecondGen`.
+
+  Fields:
+    nextPageToken: Continuation token used to page through large result sets.
+      Provide this value in a subsequent ListWorkerPoolSecondGenRequest to
+      return the next page of results.
+    workerPoolSecondGen: `WorkerPoolSecondGen` for the specified project.
+  """
+
+  nextPageToken = _messages.StringField(1)
+  workerPoolSecondGen = _messages.MessageField('WorkerPoolSecondGen', 2, repeated=True)
 
 
 class ListWorkflowsResponse(_messages.Message):
@@ -1846,13 +1974,31 @@ class Location(_messages.Message):
   name = _messages.StringField(5)
 
 
+class NetworkConfig(_messages.Message):
+  r"""Defines the network configuration for the WorkerPoolSecondGen.
+
+  Fields:
+    privateServiceConnect: Connect to peered network through Private Service
+      Connect.
+    publicIpAddressDisabled: Required. Immutable. Disable public IP on the
+      primary network interface. If true, workers are created without any
+      public address, which prevents network egress to public IPs unless a
+      network proxy is configured. If false, workers are created with a public
+      address which allows for public Internet egress. The public address only
+      applies to traffic through the primary network interface.
+  """
+
+  privateServiceConnect = _messages.MessageField('PrivateServiceConnect', 1)
+  publicIpAddressDisabled = _messages.BooleanField(2)
+
+
 class OAuthCredential(_messages.Message):
   r"""Represents an OAuth token of the account that authorized the Connection,
   and associated metadata.
 
   Fields:
-    oauthTokenSecretVersion: A SecretManager resource containing the OAuth
-      token that authorizes the Cloud Build connection. Format:
+    oauthTokenSecretVersion: Optional. A SecretManager resource containing the
+      OAuth token that authorizes the Cloud Build connection. Format:
       `projects/*/secrets/*/versions/*`.
     username: Output only. The username associated to this token.
   """
@@ -1976,8 +2122,8 @@ class OperationMetadata(_messages.Message):
     apiVersion: Output only. API version used to start the operation.
     cancelRequested: Output only. Identifies whether the user has requested
       cancellation of the operation. Operations that have been cancelled
-      successfully have Operation.error value with a google.rpc.Status.code of
-      1, corresponding to `Code.CANCELLED`.
+      successfully have google.longrunning.Operation.error value with a
+      google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
     createTime: Output only. The time the operation was created.
     endTime: Output only. The time the operation finished running.
     statusDetail: Output only. Human-readable status of the operation, if any.
@@ -2029,11 +2175,13 @@ class ParamSpec(_messages.Message):
     Values:
       TYPE_UNSPECIFIED: Default enum type; should not be used.
       STRING: Default
-      ARRAY: Arrary type.
+      ARRAY: Array type.
+      OBJECT: Object type.
     """
     TYPE_UNSPECIFIED = 0
     STRING = 1
     ARRAY = 2
+    OBJECT = 3
 
   default = _messages.MessageField('ParamValue', 1)
   description = _messages.StringField(2)
@@ -2047,8 +2195,12 @@ class ParamValue(_messages.Message):
   Enums:
     TypeValueValuesEnum: Type of parameter.
 
+  Messages:
+    ObjectValValue: Optional. Value of the parameter if type is object.
+
   Fields:
     arrayVal: Value of the parameter if type is array.
+    objectVal: Optional. Value of the parameter if type is object.
     stringVal: Value of the parameter if type is string.
     type: Type of parameter.
   """
@@ -2060,14 +2212,41 @@ class ParamValue(_messages.Message):
       TYPE_UNSPECIFIED: Default enum type; should not be used.
       STRING: Default
       ARRAY: Array type
+      OBJECT: Object type
     """
     TYPE_UNSPECIFIED = 0
     STRING = 1
     ARRAY = 2
+    OBJECT = 3
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class ObjectValValue(_messages.Message):
+    r"""Optional. Value of the parameter if type is object.
+
+    Messages:
+      AdditionalProperty: An additional property for a ObjectValValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type ObjectValValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a ObjectValValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   arrayVal = _messages.StringField(1, repeated=True)
-  stringVal = _messages.StringField(2)
-  type = _messages.EnumField('TypeValueValuesEnum', 3)
+  objectVal = _messages.MessageField('ObjectValValue', 2)
+  stringVal = _messages.StringField(3)
+  type = _messages.EnumField('TypeValueValuesEnum', 4)
 
 
 class PipelineRef(_messages.Message):
@@ -2078,7 +2257,7 @@ class PipelineRef(_messages.Message):
       perform resolution of the referenced Tekton resource.
 
   Fields:
-    name: Name of the Pipeline.
+    name: Optional. Name of the Pipeline.
     params: Params contains the parameters used to identify the referenced
       Tekton resource. Example entries might include "repo" or "path" but the
       set of params ultimately depends on the chosen resolver.
@@ -2097,15 +2276,52 @@ class PipelineRef(_messages.Message):
       GCB_REPO: GCB repo resolver.
       GIT: Simple Git resolver. https://tekton.dev/docs/pipelines/git-
         resolver/
+      DEVELOPER_CONNECT: Developer Connect resolver.
+      DEFAULT: Default resolver.
     """
     RESOLVER_NAME_UNSPECIFIED = 0
     BUNDLES = 1
     GCB_REPO = 2
     GIT = 3
+    DEVELOPER_CONNECT = 4
+    DEFAULT = 5
 
   name = _messages.StringField(1)
   params = _messages.MessageField('Param', 2, repeated=True)
   resolver = _messages.EnumField('ResolverValueValuesEnum', 3)
+
+
+class PipelineResult(_messages.Message):
+  r"""A value produced by a Pipeline.
+
+  Enums:
+    TypeValueValuesEnum: Output only. The type of data that the result holds.
+
+  Fields:
+    description: Output only. Description of the result.
+    name: Output only. Name of the result.
+    type: Output only. The type of data that the result holds.
+    value: Output only. Value of the result.
+  """
+
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""Output only. The type of data that the result holds.
+
+    Values:
+      TYPE_UNSPECIFIED: Default enum type; should not be used.
+      STRING: Default
+      ARRAY: Array type
+      OBJECT: Object type
+    """
+    TYPE_UNSPECIFIED = 0
+    STRING = 1
+    ARRAY = 2
+    OBJECT = 3
+
+  description = _messages.StringField(1)
+  name = _messages.StringField(2)
+  type = _messages.EnumField('TypeValueValuesEnum', 3)
+  value = _messages.MessageField('ResultValue', 4)
 
 
 class PipelineRun(_messages.Message):
@@ -2141,11 +2357,18 @@ class PipelineRun(_messages.Message):
     pipelineRunStatus: Pipelinerun status the user can provide. Used for
       cancellation.
     pipelineSpec: PipelineSpec defines the desired state of Pipeline.
+    pipelineSpecYaml: Output only. Inline pipelineSpec yaml string, used by
+      workflow run requests.
     provenance: Optional. Provenance configuration.
+    record: Output only. The `Record` of this `PipelineRun`. Format: `projects
+      /{project}/locations/{location}/results/{result_id}/records/{record_id}`
     resolvedPipelineSpec: Output only. The exact PipelineSpec used to
       instantiate the run.
+    results: Optional. Output only. List of results written out by the
+      pipeline's containers
     security: Optional. Security configuration.
-    serviceAccount: Service account used in the Pipeline.
+    serviceAccount: Service account used in the Pipeline. Deprecated; please
+      use security.service_account instead.
     skippedTasks: Output only. List of tasks that were skipped due to when
       expressions evaluating to false.
     startTime: Output only. Time the pipeline is actually started.
@@ -2234,19 +2457,34 @@ class PipelineRun(_messages.Message):
   pipelineRef = _messages.MessageField('PipelineRef', 11)
   pipelineRunStatus = _messages.EnumField('PipelineRunStatusValueValuesEnum', 12)
   pipelineSpec = _messages.MessageField('PipelineSpec', 13)
-  provenance = _messages.MessageField('Provenance', 14)
-  resolvedPipelineSpec = _messages.MessageField('PipelineSpec', 15)
-  security = _messages.MessageField('Security', 16)
-  serviceAccount = _messages.StringField(17)
-  skippedTasks = _messages.MessageField('SkippedTask', 18, repeated=True)
-  startTime = _messages.StringField(19)
-  timeouts = _messages.MessageField('TimeoutFields', 20)
-  uid = _messages.StringField(21)
-  updateTime = _messages.StringField(22)
-  worker = _messages.MessageField('Worker', 23)
-  workerPool = _messages.StringField(24)
-  workflow = _messages.StringField(25)
-  workspaces = _messages.MessageField('WorkspaceBinding', 26, repeated=True)
+  pipelineSpecYaml = _messages.StringField(14)
+  provenance = _messages.MessageField('Provenance', 15)
+  record = _messages.StringField(16)
+  resolvedPipelineSpec = _messages.MessageField('PipelineSpec', 17)
+  results = _messages.MessageField('PipelineRunResult', 18, repeated=True)
+  security = _messages.MessageField('Security', 19)
+  serviceAccount = _messages.StringField(20)
+  skippedTasks = _messages.MessageField('SkippedTask', 21, repeated=True)
+  startTime = _messages.StringField(22)
+  timeouts = _messages.MessageField('TimeoutFields', 23)
+  uid = _messages.StringField(24)
+  updateTime = _messages.StringField(25)
+  worker = _messages.MessageField('Worker', 26)
+  workerPool = _messages.StringField(27)
+  workflow = _messages.StringField(28)
+  workspaces = _messages.MessageField('WorkspaceBinding', 29, repeated=True)
+
+
+class PipelineRunResult(_messages.Message):
+  r"""PipelineRunResult used to describe the results of a pipeline
+
+  Fields:
+    name: Output only. Name of the TaskRun
+    value: Output only. Value of the result.
+  """
+
+  name = _messages.StringField(1)
+  value = _messages.MessageField('ResultValue', 2)
 
 
 class PipelineSpec(_messages.Message):
@@ -2260,6 +2498,8 @@ class PipelineSpec(_messages.Message):
       display purpose for workflows using pipeline_spec, used by UI/gcloud cli
       for Workflows.
     params: List of parameters.
+    results: Optional. Output only. List of results written out by the
+      pipeline's containers
     tasks: List of Tasks that execute when this Pipeline is run.
     workspaces: Workspaces declares a set of named workspaces that are
       expected to be provided by a PipelineRun.
@@ -2268,8 +2508,9 @@ class PipelineSpec(_messages.Message):
   finallyTasks = _messages.MessageField('PipelineTask', 1, repeated=True)
   generatedYaml = _messages.StringField(2)
   params = _messages.MessageField('ParamSpec', 3, repeated=True)
-  tasks = _messages.MessageField('PipelineTask', 4, repeated=True)
-  workspaces = _messages.MessageField('PipelineWorkspaceDeclaration', 5, repeated=True)
+  results = _messages.MessageField('PipelineResult', 4, repeated=True)
+  tasks = _messages.MessageField('PipelineTask', 5, repeated=True)
+  workspaces = _messages.MessageField('PipelineWorkspaceDeclaration', 6, repeated=True)
 
 
 class PipelineTask(_messages.Message):
@@ -2399,6 +2640,31 @@ class Policy(_messages.Message):
   version = _messages.IntegerField(4, variant=_messages.Variant.INT32)
 
 
+class PrivateServiceConnect(_messages.Message):
+  r"""Defines the Private Service Connect network configuration for the
+  WorkerPoolSecondGen.
+
+  Fields:
+    networkAttachment: Required. Immutable. The network attachment that the
+      worker is peered to. Must be in the format `projects/{project}/regions/{
+      region}/networkAttachments/{networkAttachment}`. The region of network
+      attachment must be the same as the worker pool. See [Network
+      Attachments](https://cloud.google.com/vpc/docs/about-network-
+      attachments)
+    routeAllTraffic: Immutable. Route all traffic through PSC interface.
+      Enable this if you want full control of traffic in the private pool.
+      Configure Cloud NAT for the subnet of network attachment if you need to
+      access public Internet. If true, all traffic will go through the non-
+      primary network interface, the boolean `public_ip_address_disabled` in
+      Network Config has no effect. If false, Only route private IPs,
+      including 10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16 through PSC
+      interface.
+  """
+
+  networkAttachment = _messages.StringField(1)
+  routeAllTraffic = _messages.BooleanField(2)
+
+
 class Probe(_messages.Message):
   r"""Probe describes a health check to be performed against a container to
   determine whether it is alive or ready to receive traffic.
@@ -2481,7 +2747,6 @@ class Provenance(_messages.Message):
         state would not be impacted by the push failures.
       DISABLED: Disable the provenance push entirely.
     """
-
     ENABLED_UNSPECIFIED = 0
     REQUIRED = 1
     OPTIMISTIC = 2
@@ -2496,7 +2761,6 @@ class Provenance(_messages.Message):
         Analysis when it's regionalized.
       GLOBAL: Push provenance to Artifact Analysis in global region.
     """
-
     REGION_UNSPECIFIED = 0
     GLOBAL = 1
 
@@ -2510,7 +2774,6 @@ class Provenance(_messages.Message):
       ARTIFACT_PROJECT_ONLY: Only push to artifact project.
       BUILD_PROJECT_ONLY: Only push to build project.
     """
-
     STORAGE_UNSPECIFIED = 0
     PREFER_ARTIFACT_PROJECT = 1
     ARTIFACT_PROJECT_ONLY = 2
@@ -2549,6 +2812,16 @@ class PullRequest(_messages.Message):
 
   comment = _messages.StringField(1)
   pusher = _messages.EnumField('PusherValueValuesEnum', 2)
+
+
+class ReadyWorkers(_messages.Message):
+  r"""Defines the configuration for ready workers in the WorkerPoolSecondGen.
+
+  Fields:
+    count: Optional. Amount of ready workers for the WorkerPoolSecondGen.
+  """
+
+  count = _messages.IntegerField(1)
 
 
 class Record(_messages.Message):
@@ -2650,10 +2923,12 @@ class Repository(_messages.Message):
   r"""A repository associated to a parent connection.
 
   Messages:
-    AnnotationsValue: Allows clients to store small amounts of arbitrary data.
+    AnnotationsValue: Optional. Allows clients to store small amounts of
+      arbitrary data.
 
   Fields:
-    annotations: Allows clients to store small amounts of arbitrary data.
+    annotations: Optional. Allows clients to store small amounts of arbitrary
+      data.
     createTime: Output only. Server assigned timestamp for when the connection
       was created.
     etag: This checksum is computed by the server based on the value of other
@@ -2670,7 +2945,7 @@ class Repository(_messages.Message):
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class AnnotationsValue(_messages.Message):
-    r"""Allows clients to store small amounts of arbitrary data.
+    r"""Optional. Allows clients to store small amounts of arbitrary data.
 
     Messages:
       AdditionalProperty: An additional property for a AnnotationsValue
@@ -2706,16 +2981,18 @@ class Resource(_messages.Message):
   r"""Resource referenceable within a workflow.
 
   Fields:
+    gitRepoLink: Developer Connect GitRepositoryLink.
     repo: Resource name of v2 GCB repo.
     secretVersion: Secret manager secret.
     topic: Resource name of PubSub topic.
     url: SCM Repo URL.
   """
 
-  repo = _messages.StringField(1)
-  secretVersion = _messages.StringField(2)
-  topic = _messages.StringField(3)
-  url = _messages.StringField(4)
+  gitRepoLink = _messages.StringField(1)
+  repo = _messages.StringField(2)
+  secretVersion = _messages.StringField(3)
+  topic = _messages.StringField(4)
+  url = _messages.StringField(5)
 
 
 class Result(_messages.Message):
@@ -2743,6 +3020,9 @@ class Result(_messages.Message):
 class ResultValue(_messages.Message):
   r"""ResultValue holds different types of data for a single result.
 
+  Enums:
+    TypeValueValuesEnum: Output only. The type of data that the result holds.
+
   Messages:
     ObjectValValue: Value of the result if type is object.
 
@@ -2750,7 +3030,22 @@ class ResultValue(_messages.Message):
     arrayVal: Value of the result if type is array.
     objectVal: Value of the result if type is object.
     stringVal: Value of the result if type is string.
+    type: Output only. The type of data that the result holds.
   """
+
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""Output only. The type of data that the result holds.
+
+    Values:
+      TYPE_UNSPECIFIED: Default enum type; should not be used.
+      STRING: Default
+      ARRAY: Array type
+      OBJECT: Object type
+    """
+    TYPE_UNSPECIFIED = 0
+    STRING = 1
+    ARRAY = 2
+    OBJECT = 3
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class ObjectValValue(_messages.Message):
@@ -2779,6 +3074,7 @@ class ResultValue(_messages.Message):
   arrayVal = _messages.StringField(1, repeated=True)
   objectVal = _messages.MessageField('ObjectValValue', 2)
   stringVal = _messages.StringField(3)
+  type = _messages.EnumField('TypeValueValuesEnum', 4)
 
 
 class RunWorkflowCustomOperationMetadata(_messages.Message):
@@ -2827,7 +3123,7 @@ class SecretVolumeSource(_messages.Message):
 
   Fields:
     secretName: Name of the secret referenced by the WorkspaceBinding.
-    secretVersion: Output only. Resource name of the SecretVersion. In format:
+    secretVersion: Optional. Resource name of the SecretVersion. In format:
       projects/*/secrets/*/versions/*
   """
 
@@ -2855,7 +3151,6 @@ class Security(_messages.Message):
       PRIVILEGED: Privileged mode.
       UNPRIVILEGED: Unprivileged mode.
     """
-
     PRIVILEGE_MODE_UNSPECIFIED = 0
     PRIVILEGED = 1
     UNPRIVILEGED = 2
@@ -3111,12 +3406,20 @@ class Step(_messages.Message):
   r"""Step embeds the Container type, which allows it to include fields not
   provided by Container.
 
+  Enums:
+    OnErrorValueValuesEnum: Optional. OnError defines the exiting behavior on
+      error can be set to [ continue | stopAndFail ]
+
   Fields:
     args: Arguments to the entrypoint.
     command: Entrypoint array.
     env: List of environment variables to set in the container.
     image: Docker image name.
     name: Name of the container specified as a DNS_LABEL.
+    onError: Optional. OnError defines the exiting behavior on error can be
+      set to [ continue | stopAndFail ]
+    params: Optional. Optional parameters passed to the StepAction.
+    ref: Optional. Optional reference to a remote StepAction.
     script: The contents of an executable file to execute.
     securityContext: Optional. SecurityContext defines the security options
       the Step should be run with. If set, the fields of SecurityContext
@@ -3128,16 +3431,71 @@ class Step(_messages.Message):
     workingDir: Container's working directory.
   """
 
+  class OnErrorValueValuesEnum(_messages.Enum):
+    r"""Optional. OnError defines the exiting behavior on error can be set to
+    [ continue | stopAndFail ]
+
+    Values:
+      ON_ERROR_TYPE_UNSPECIFIED: Default enum type; should not be used.
+      STOP_AND_FAIL: StopAndFail indicates exit if the step/task exits with
+        non-zero exit code
+      CONTINUE: Continue indicates continue executing the rest of the
+        steps/tasks irrespective of the exit code
+    """
+    ON_ERROR_TYPE_UNSPECIFIED = 0
+    STOP_AND_FAIL = 1
+    CONTINUE = 2
+
   args = _messages.StringField(1, repeated=True)
   command = _messages.StringField(2, repeated=True)
   env = _messages.MessageField('EnvVar', 3, repeated=True)
   image = _messages.StringField(4)
   name = _messages.StringField(5)
-  script = _messages.StringField(6)
-  securityContext = _messages.MessageField('SecurityContext', 7)
-  timeout = _messages.StringField(8)
-  volumeMounts = _messages.MessageField('VolumeMount', 9, repeated=True)
-  workingDir = _messages.StringField(10)
+  onError = _messages.EnumField('OnErrorValueValuesEnum', 6)
+  params = _messages.MessageField('Param', 7, repeated=True)
+  ref = _messages.MessageField('StepRef', 8)
+  script = _messages.StringField(9)
+  securityContext = _messages.MessageField('SecurityContext', 10)
+  timeout = _messages.StringField(11)
+  volumeMounts = _messages.MessageField('VolumeMount', 12, repeated=True)
+  workingDir = _messages.StringField(13)
+
+
+class StepRef(_messages.Message):
+  r"""A reference to a remote Step, i.e. a StepAction.
+
+  Enums:
+    ResolverValueValuesEnum: Optional. Type of the resolver.
+
+  Fields:
+    name: Optional. Name of the step.
+    params: Optional. Parameters used to control the resolution.
+    resolver: Optional. Type of the resolver.
+  """
+
+  class ResolverValueValuesEnum(_messages.Enum):
+    r"""Optional. Type of the resolver.
+
+    Values:
+      RESOLVER_NAME_UNSPECIFIED: Default enum type; should not be used.
+      BUNDLES: Bundles resolver. https://tekton.dev/docs/pipelines/bundle-
+        resolver/
+      GCB_REPO: GCB repo resolver.
+      GIT: Simple Git resolver. https://tekton.dev/docs/pipelines/git-
+        resolver/
+      DEVELOPER_CONNECT: Developer Connect resolver.
+      DEFAULT: Default resolver.
+    """
+    RESOLVER_NAME_UNSPECIFIED = 0
+    BUNDLES = 1
+    GCB_REPO = 2
+    GIT = 3
+    DEVELOPER_CONNECT = 4
+    DEFAULT = 5
+
+  name = _messages.StringField(1)
+  params = _messages.MessageField('Param', 2, repeated=True)
+  resolver = _messages.EnumField('ResolverValueValuesEnum', 3)
 
 
 class StepState(_messages.Message):
@@ -3146,16 +3504,20 @@ class StepState(_messages.Message):
   Fields:
     imageId: Image ID of the StepState.
     name: Name of the StepState.
+    results: Output only. Holds optional results produced by a StepAction.
     running: Details about a running container
     terminated: Details about a terminated container
+    terminationReason: Output only. Describes the final status of a Step.
     waiting: Details about a waiting container
   """
 
   imageId = _messages.StringField(1)
   name = _messages.StringField(2)
-  running = _messages.MessageField('ContainerStateRunning', 3)
-  terminated = _messages.MessageField('ContainerStateTerminated', 4)
-  waiting = _messages.MessageField('ContainerStateWaiting', 5)
+  results = _messages.MessageField('TaskRunResult', 3, repeated=True)
+  running = _messages.MessageField('ContainerStateRunning', 4)
+  terminated = _messages.MessageField('ContainerStateTerminated', 5)
+  terminationReason = _messages.StringField(6)
+  waiting = _messages.MessageField('ContainerStateWaiting', 7)
 
 
 class StepTemplate(_messages.Message):
@@ -3182,7 +3544,7 @@ class TaskRef(_messages.Message):
       perform resolution of the referenced Tekton resource.
 
   Fields:
-    name: Name of the task.
+    name: Optional. Name of the task.
     params: Params contains the parameters used to identify the referenced
       Tekton resource. Example entries might include "repo" or "path" but the
       set of params ultimately depends on the chosen resolver.
@@ -3201,11 +3563,15 @@ class TaskRef(_messages.Message):
       GCB_REPO: GCB repo resolver.
       GIT: Simple Git resolver. https://tekton.dev/docs/pipelines/git-
         resolver/
+      DEVELOPER_CONNECT: Developer Connect resolver.
+      DEFAULT: Default resolver.
     """
     RESOLVER_NAME_UNSPECIFIED = 0
     BUNDLES = 1
     GCB_REPO = 2
     GIT = 3
+    DEVELOPER_CONNECT = 4
+    DEFAULT = 5
 
   name = _messages.StringField(1)
   params = _messages.MessageField('Param', 2, repeated=True)
@@ -3228,6 +3594,8 @@ class TaskResult(_messages.Message):
     properties: When type is OBJECT, this map holds the names of fields inside
       that object along with the type of data each field holds.
     type: The type of data that the result holds.
+    value: Optional. Optionally used to initialize a Task's result with a
+      Step's result.
   """
 
   class TypeValueValuesEnum(_messages.Enum):
@@ -3273,6 +3641,7 @@ class TaskResult(_messages.Message):
   name = _messages.StringField(2)
   properties = _messages.MessageField('PropertiesValue', 3)
   type = _messages.EnumField('TypeValueValuesEnum', 4)
+  value = _messages.MessageField('ParamValue', 5)
 
 
 class TaskRun(_messages.Message):
@@ -3302,11 +3671,14 @@ class TaskRun(_messages.Message):
     pipelineRun: Output only. Name of the parent PipelineRun. If it is a
       standalone TaskRun (no parent), this field will not be set.
     provenance: Optional. Provenance configuration.
+    record: Output only. The `Record` of this `TaskRun`. Format: `projects/{pr
+      oject}/locations/{location}/results/{result_id}/records/{record_id}`
     resolvedTaskSpec: Output only. The exact TaskSpec used to instantiate the
       run.
     results: Output only. List of results written out by the task's containers
     security: Optional. Security configuration.
-    serviceAccount: Required. Service account used in the task.
+    serviceAccount: Required. Service account used in the task. Deprecated;
+      please use security.service_account instead.
     sidecars: Output only. State of each Sidecar in the TaskSpec.
     startTime: Output only. Time the task is actually started.
     statusMessage: Optional. Output only. Status message for cancellation.
@@ -3397,23 +3769,24 @@ class TaskRun(_messages.Message):
   params = _messages.MessageField('Param', 8, repeated=True)
   pipelineRun = _messages.StringField(9)
   provenance = _messages.MessageField('Provenance', 10)
-  resolvedTaskSpec = _messages.MessageField('TaskSpec', 11)
-  results = _messages.MessageField('TaskRunResult', 12, repeated=True)
-  security = _messages.MessageField('Security', 13)
-  serviceAccount = _messages.StringField(14)
-  sidecars = _messages.MessageField('SidecarState', 15, repeated=True)
-  startTime = _messages.StringField(16)
-  statusMessage = _messages.StringField(17)
-  steps = _messages.MessageField('StepState', 18, repeated=True)
-  taskRef = _messages.MessageField('TaskRef', 19)
-  taskRunStatus = _messages.EnumField('TaskRunStatusValueValuesEnum', 20)
-  taskSpec = _messages.MessageField('TaskSpec', 21)
-  timeout = _messages.StringField(22)
-  uid = _messages.StringField(23)
-  updateTime = _messages.StringField(24)
-  worker = _messages.MessageField('Worker', 25)
-  workerPool = _messages.StringField(26)
-  workspaces = _messages.MessageField('WorkspaceBinding', 27, repeated=True)
+  record = _messages.StringField(11)
+  resolvedTaskSpec = _messages.MessageField('TaskSpec', 12)
+  results = _messages.MessageField('TaskRunResult', 13, repeated=True)
+  security = _messages.MessageField('Security', 14)
+  serviceAccount = _messages.StringField(15)
+  sidecars = _messages.MessageField('SidecarState', 16, repeated=True)
+  startTime = _messages.StringField(17)
+  statusMessage = _messages.StringField(18)
+  steps = _messages.MessageField('StepState', 19, repeated=True)
+  taskRef = _messages.MessageField('TaskRef', 20)
+  taskRunStatus = _messages.EnumField('TaskRunStatusValueValuesEnum', 21)
+  taskSpec = _messages.MessageField('TaskSpec', 22)
+  timeout = _messages.StringField(23)
+  uid = _messages.StringField(24)
+  updateTime = _messages.StringField(25)
+  worker = _messages.MessageField('Worker', 26)
+  workerPool = _messages.StringField(27)
+  workspaces = _messages.MessageField('WorkspaceBinding', 28, repeated=True)
 
 
 class TaskRunResult(_messages.Message):
@@ -3652,6 +4025,127 @@ class Worker(_messages.Message):
   machineType = _messages.StringField(1)
 
 
+class WorkerConfig(_messages.Message):
+  r"""Defines the configuration to be used for creating workers in the
+  WorkerPoolSecondGen.
+
+  Fields:
+    diskStorage: Optional. Disk space for user workloads, in GB. Specify a
+      value of up to 2000. If `0` is specified, Cloud Build will use a default
+      disk size of 100GB.
+    machineType: Optional. Machine type of a worker in the pool, such as
+      `e2-standard-2`. If left blank, Cloud Build will use a sensible default.
+  """
+
+  diskStorage = _messages.IntegerField(1)
+  machineType = _messages.StringField(2)
+
+
+class WorkerPoolSecondGen(_messages.Message):
+  r"""Configuration for a `WorkerPoolSecondGen`. If your workload needs access
+  to resources on a private network, create and use a `WorkerPoolSecondGen` to
+  run your workloads. `WorkerPoolSecondGen`s give your workloads access to any
+  single VPC network that you administer, including any on-prem resources
+  connected to that VPC network.
+
+  Enums:
+    StateValueValuesEnum: Output only. `WorkerPoolSecondGen` state.
+
+  Messages:
+    AnnotationsValue: Optional. User specified annotations. See
+      https://google.aip.dev/128#annotations for more details such as format
+      and size limitations.
+
+  Fields:
+    annotations: Optional. User specified annotations. See
+      https://google.aip.dev/128#annotations for more details such as format
+      and size limitations.
+    createTime: Output only. Time at which the request to create the
+      `WorkerPoolSecondGen` was received.
+    deleteTime: Output only. Time at which the request to delete the
+      `WorkerPoolSecondGen` was received.
+    displayName: Optional. A user-specified, human-readable name for the
+      `WorkerPoolSecondGen`. If provided, this value must be 1-63 characters.
+    etag: Output only. Checksum computed by the server. May be sent on update
+      and delete requests to ensure that the client has an up-to-date value
+      before proceeding.
+    name: Output only. Identifier. The resource name of the
+      `WorkerPoolSecondGen`, with format `projects/{project}/locations/{locati
+      on}/workerPoolSecondGen/{worker_pool_second_gen}`.
+    network: Optional. Network configuration for the `WorkerPoolSecondGen`.
+    readyWorkers: Optional. Configuration for ready workers in the
+      WorkerPoolSecondGen.
+    reconciling: Output only. If true, this WorkerPoolSecondGen is being
+      updated. If false, this WorkerPoolSecondGen matches the user's intent.
+    state: Output only. `WorkerPoolSecondGen` state.
+    uid: Output only. A unique identifier for the `WorkerPoolSecondGen`.
+    updateTime: Output only. Time at which the request to update the
+      `WorkerPoolSecondGen` was received.
+    worker: Optional. Worker configuration for the `WorkerPoolSecondGen`.
+  """
+
+  class StateValueValuesEnum(_messages.Enum):
+    r"""Output only. `WorkerPoolSecondGen` state.
+
+    Values:
+      STATE_UNSPECIFIED: State of the `WorkerPoolSecondGen` is unknown.
+      CREATING: `WorkerPoolSecondGen` is being created.
+      RUNNING: `WorkerPoolSecondGen` is running.
+      DELETING: `WorkerPoolSecondGen` is being deleted: cancelling runs and
+        draining workers.
+      DELETED: `WorkerPoolSecondGen` is deleted.
+      UPDATING: `WorkerPoolSecondGen` is being updated; new runs cannot be
+        performed.
+    """
+    STATE_UNSPECIFIED = 0
+    CREATING = 1
+    RUNNING = 2
+    DELETING = 3
+    DELETED = 4
+    UPDATING = 5
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class AnnotationsValue(_messages.Message):
+    r"""Optional. User specified annotations. See
+    https://google.aip.dev/128#annotations for more details such as format and
+    size limitations.
+
+    Messages:
+      AdditionalProperty: An additional property for a AnnotationsValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type AnnotationsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a AnnotationsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  annotations = _messages.MessageField('AnnotationsValue', 1)
+  createTime = _messages.StringField(2)
+  deleteTime = _messages.StringField(3)
+  displayName = _messages.StringField(4)
+  etag = _messages.StringField(5)
+  name = _messages.StringField(6)
+  network = _messages.MessageField('NetworkConfig', 7)
+  readyWorkers = _messages.MessageField('ReadyWorkers', 8)
+  reconciling = _messages.BooleanField(9)
+  state = _messages.EnumField('StateValueValuesEnum', 10)
+  uid = _messages.StringField(11)
+  updateTime = _messages.StringField(12)
+  worker = _messages.MessageField('WorkerConfig', 13)
+
+
 class Workflow(_messages.Message):
   r"""Message describing Workflow object.
 
@@ -3671,16 +4165,18 @@ class Workflow(_messages.Message):
       `projects/{project}/locations/{location}/workflows/{workflow}`
     options: Workflow runs can be modified through several Workflow options.
     params: List of parameters.
+    pipelineRef: PipelineRef refer to a specific instance of a Pipeline.
     pipelineSpec: Fields from both the Workflow and the PipelineSpec will be
       used to form the full PipelineRun.
     pipelineSpecYaml: PipelineSpec in yaml format.
-    ref: PipelineRef refer to a specific instance of a Pipeline.
+    ref: PipelineRef refer to a specific instance of a Pipeline. Deprecated;
+      please use pipeline_ref instead.
     resources: Resources referenceable within a workflow.
-    secrets: Pairs a secret environment variable with a SecretVersion in
-      Secret Manager.
+    secrets: Optional. Secrets referenceable within a workflow.
     serviceAccount: If omitted, the default Cloud Build Service Account is
       used instead. Format:
-      `projects/{project}/serviceAccounts/{serviceAccount}`
+      `projects/{project}/serviceAccounts/{serviceAccount}` Deprecated; please
+      use options.security.service_account instead.
     uid: Output only. A unique identifier for the `Workflow`.
     updateTime: Output only. Server assigned timestamp for when the workflow
       was last updated.
@@ -3745,16 +4241,17 @@ class Workflow(_messages.Message):
   name = _messages.StringField(5)
   options = _messages.MessageField('WorkflowOptions', 6)
   params = _messages.MessageField('ParamSpec', 7, repeated=True)
-  pipelineSpec = _messages.MessageField('PipelineSpec', 8)
-  pipelineSpecYaml = _messages.StringField(9)
-  ref = _messages.MessageField('PipelineRef', 10)
-  resources = _messages.MessageField('ResourcesValue', 11)
-  secrets = _messages.MessageField('GoogleDevtoolsCloudbuildV2SecretManagerSecret', 12, repeated=True)
-  serviceAccount = _messages.StringField(13)
-  uid = _messages.StringField(14)
-  updateTime = _messages.StringField(15)
-  workflowTriggers = _messages.MessageField('WorkflowTrigger', 16, repeated=True)
-  workspaces = _messages.MessageField('WorkspaceBinding', 17, repeated=True)
+  pipelineRef = _messages.MessageField('PipelineRef', 8)
+  pipelineSpec = _messages.MessageField('PipelineSpec', 9)
+  pipelineSpecYaml = _messages.StringField(10)
+  ref = _messages.MessageField('PipelineRef', 11)
+  resources = _messages.MessageField('ResourcesValue', 12)
+  secrets = _messages.MessageField('WorkflowSecret', 13, repeated=True)
+  serviceAccount = _messages.StringField(14)
+  uid = _messages.StringField(15)
+  updateTime = _messages.StringField(16)
+  workflowTriggers = _messages.MessageField('WorkflowTrigger', 17, repeated=True)
+  workspaces = _messages.MessageField('WorkspaceBinding', 18, repeated=True)
 
 
 class WorkflowOptions(_messages.Message):
@@ -3769,6 +4266,7 @@ class WorkflowOptions(_messages.Message):
       are accepted in the map pipeline, tasks and finally with
       Timeouts.pipeline >= Timeouts.tasks + Timeouts.finally
     worker: Optional. Worker config.
+    workerPool: Optional. The workerpool used to run the Workflow.
   """
 
   executionEnvironment = _messages.MessageField('ExecutionEnvironment', 1)
@@ -3777,34 +4275,48 @@ class WorkflowOptions(_messages.Message):
   statusUpdateOptions = _messages.MessageField('WorkflowStatusUpdateOptions', 4)
   timeouts = _messages.MessageField('TimeoutFields', 5)
   worker = _messages.MessageField('Worker', 6)
+  workerPool = _messages.StringField(7)
+
+
+class WorkflowSecret(_messages.Message):
+  r"""Secret referenceable within a workflow.
+
+  Fields:
+    name: Immutable. The name of the secret.
+    secretVersion: Required. The version of the secret.
+  """
+
+  name = _messages.StringField(1)
+  secretVersion = _messages.StringField(2)
 
 
 class WorkflowStatusUpdateOptions(_messages.Message):
   r"""Configure how/where status is posted.
 
   Enums:
-    RepositoryStatusValueValuesEnum: Options that specify additional
-      information related to a Repo that should be sent in Pub/Sub
-      Notifications
+    RepositoryStatusValueValuesEnum: Options that specify the level of details
+      related to the PipelineRun that was created by a triggered workflow sent
+      back to the GitHub CheckRun.
 
   Fields:
     pubsubTopic: Controls which Pub/Sub topic is used to send status updates
       as a build progresses and terminates. Default: projects//pub-
       sub/topics/cloud-build
-    repositoryStatus: Options that specify additional information related to a
-      Repo that should be sent in Pub/Sub Notifications
+    repositoryStatus: Options that specify the level of details related to the
+      PipelineRun that was created by a triggered workflow sent back to the
+      GitHub CheckRun.
   """
 
   class RepositoryStatusValueValuesEnum(_messages.Enum):
-    r"""Options that specify additional information related to a Repo that
-    should be sent in Pub/Sub Notifications
+    r"""Options that specify the level of details related to the PipelineRun
+    that was created by a triggered workflow sent back to the GitHub CheckRun.
 
     Values:
-      REPOSITORY_STATUS_UNSPECIFIED: Default value. This value is unused.
-      REPOSITORY_STATUS_NAME: Include the event_source of the WorkflowTrigger
-        that results in the PipelineRun/TaskRun
-      REPOSITORY_STATUS_NAME_LOG: Include the GCL log url of the
-        PipelineRun/TaskRun in addition to the event source
+      REPOSITORY_STATUS_UNSPECIFIED: This value is unused.
+      REPOSITORY_STATUS_NAME: Include the status of the PipelineRun. This is
+        the default value.
+      REPOSITORY_STATUS_NAME_LOG: Include the status of the PipelineRun and
+        the GCL log url of it.
     """
     REPOSITORY_STATUS_UNSPECIFIED = 0
     REPOSITORY_STATUS_NAME = 1
@@ -3837,6 +4349,8 @@ class WorkflowTrigger(_messages.Message):
     updateTime: Output only. Update time of the WorkflowTrigger.
     uuid: Output only. The internal id of the WorkflowTrigger.
     webhookSecret: The webhook secret resource.
+    webhookValidationSecret: Resource name of SecretManagerSecret version
+      validating webhook triggers.
   """
 
   class EventTypeValueValuesEnum(_messages.Enum):
@@ -3880,6 +4394,7 @@ class WorkflowTrigger(_messages.Message):
   updateTime = _messages.StringField(11)
   uuid = _messages.StringField(12)
   webhookSecret = _messages.MessageField('WebhookSecret', 13)
+  webhookValidationSecret = _messages.StringField(14)
 
 
 class WorkspaceBinding(_messages.Message):
@@ -3893,6 +4408,7 @@ class WorkspaceBinding(_messages.Message):
       should be used for this binding (i.e. the volume will be mounted at this
       sub directory). +optional
     volumeClaim: Volume claim that will be created in the same namespace.
+      Deprecated, do not use for workloads that don't use workerpools.
   """
 
   name = _messages.StringField(1)
@@ -3949,3 +4465,5 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    CloudbuildProjectsLocationsConnectionsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

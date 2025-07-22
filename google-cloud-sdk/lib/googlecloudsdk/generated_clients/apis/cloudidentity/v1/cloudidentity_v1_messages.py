@@ -17,8 +17,15 @@ package = 'cloudidentity'
 class AddIdpCredentialOperationMetadata(_messages.Message):
   r"""LRO response metadata for
   InboundSamlSsoProfilesService.AddIdpCredential.
+
+  Fields:
+    state: State of this Operation Will be "awaiting-multi-party-approval"
+      when the operation is deferred due to the target customer having enabled
+      [Multi-party approval for sensitive
+      actions](https://support.google.com/a/answer/13790448).
   """
 
+  state = _messages.StringField(1)
 
 
 class AddIdpCredentialRequest(_messages.Message):
@@ -437,9 +444,9 @@ class CloudidentityDevicesDeviceUsersLookupRequest(_messages.Message):
     rawResourceId: Raw Resource Id used by Google Endpoint Verification. If
       the user is enrolled into Google Endpoint Verification, this id will be
       saved as the 'device_resource_id' field in the following platform
-      dependent files. Mac: ~/.secureConnect/context_aware_config.json
-      Windows:
-      C:\\Users\%USERPROFILE%\.secureConnect\context_aware_config.json Linux:
+      dependent files. * macOS: ~/.secureConnect/context_aware_config.json *
+      Windows: %USERPROFILE%\AppData\Local\Google\Endpoint
+      Verification\accounts.json * Linux:
       ~/.secureConnect/context_aware_config.json
     userId: The user whose DeviceUser's resource name will be fetched. Must be
       set to 'me' to fetch the DeviceUser's resource name for the calling
@@ -535,7 +542,7 @@ class CloudidentityDevicesListRequest(_messages.Message):
       COMPANY_INVENTORY: This view contains all devices imported by the
         company admin. Each device in the response contains all information
         specified by the company admin when importing the device (i.e. asset
-        tags). This includes devices that may be unaassigned or assigned to
+        tags). This includes devices that may be unassigned or assigned to
         users.
       USER_ASSIGNED_DEVICES: This view contains all devices with at least one
         user registered on the device. Each device in the response contains
@@ -888,7 +895,7 @@ class CloudidentityGroupsMembershipsSearchDirectGroupsRequest(_messages.Message)
       order_by="group_key" or order_by="group_key asc". Sort by the descending
       group key: order_by="group_key desc".
     pageSize: The default page size is 200 (max 1000).
-    pageToken: The next_page_token value returned from a previous list
+    pageToken: The `next_page_token` value returned from a previous list
       request, if any
     parent: [Resource
       name](https://cloud.google.com/apis/design/resource_names) of the group
@@ -916,7 +923,7 @@ class CloudidentityGroupsMembershipsSearchTransitiveGroupsRequest(_messages.Mess
 
   Fields:
     pageSize: The default page size is 200 (max 1000).
-    pageToken: The next_page_token value returned from a previous list
+    pageToken: The `next_page_token` value returned from a previous list
       request, if any.
     parent: [Resource
       name](https://cloud.google.com/apis/design/resource_names) of the group
@@ -934,7 +941,7 @@ class CloudidentityGroupsMembershipsSearchTransitiveGroupsRequest(_messages.Mess
       within a particular customer, e.g. `parent ==
       'customers/{customer_id}'`. The `customer_id` must begin with "C" (for
       example, 'C046psxkn'). This filtering is only supported for Admins with
-      groups read permissons on the input customer. Example query:
+      groups read permissions on the input customer. Example query:
       `member_key_id == 'member_key_id_value' && in labels && parent ==
       'customers/C046psxkn'`
   """
@@ -951,7 +958,7 @@ class CloudidentityGroupsMembershipsSearchTransitiveMembershipsRequest(_messages
 
   Fields:
     pageSize: The default page size is 200 (max 1000).
-    pageToken: The next_page_token value returned from a previous list
+    pageToken: The `next_page_token` value returned from a previous list
       request, if any.
     parent: [Resource
       name](https://cloud.google.com/apis/design/resource_names) of the group
@@ -1254,6 +1261,51 @@ class CloudidentityInboundSsoAssignmentsPatchRequest(_messages.Message):
   updateMask = _messages.StringField(3)
 
 
+class CloudidentityPoliciesGetRequest(_messages.Message):
+  r"""A CloudidentityPoliciesGetRequest object.
+
+  Fields:
+    name: Required. The name of the policy to retrieve. Format:
+      "policies/{policy}".
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class CloudidentityPoliciesListRequest(_messages.Message):
+  r"""A CloudidentityPoliciesListRequest object.
+
+  Fields:
+    filter: Optional. A CEL expression for filtering the results. Policies can
+      be filtered by application with this expression:
+      setting.type.matches('^settings/gmail\\..*$') Policies can be filtered
+      by setting type with this expression:
+      setting.type.matches('^.*\\.service_status$') A maximum of one of the
+      above setting.type clauses can be used. Policies can be filtered by
+      customer with this expression: customer == "customers/{customer}" Where
+      `customer` is the `id` from the [Admin SDK `Customer`
+      resource](https://developers.google.com/admin-
+      sdk/directory/reference/rest/v1/customers). You may use
+      `customers/my_customer` to specify your own organization. When no
+      customer is mentioned it will be default to customers/my_customer. A
+      maximum of one customer clause can be used. The above clauses can only
+      be combined together in a single filter expression with the `&&`
+      operator.
+    pageSize: Optional. The maximum number of results to return. The service
+      can return fewer than this number. If omitted or set to 0, the default
+      is 50 results per page. The maximum allowed value is 100. `page_size`
+      values greater than 100 default to 100.
+    pageToken: Optional. The pagination token received from a prior call to
+      PoliciesService.ListPolicies to retrieve the next page of results. When
+      paginating, all other parameters provided to `ListPoliciesRequest` must
+      match the call that provided the page token.
+  """
+
+  filter = _messages.StringField(1)
+  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(3)
+
+
 class CreateGroupMetadata(_messages.Message):
   r"""Metadata for CreateGroup LRO."""
 
@@ -1261,8 +1313,15 @@ class CreateGroupMetadata(_messages.Message):
 class CreateInboundSamlSsoProfileOperationMetadata(_messages.Message):
   r"""LRO response metadata for
   InboundSamlSsoProfilesService.CreateInboundSamlSsoProfile.
+
+  Fields:
+    state: State of this Operation Will be "awaiting-multi-party-approval"
+      when the operation is deferred due to the target customer having enabled
+      [Multi-party approval for sensitive
+      actions](https://support.google.com/a/answer/13790448).
   """
 
+  state = _messages.StringField(1)
 
 
 class CreateInboundSsoAssignmentOperationMetadata(_messages.Message):
@@ -1560,6 +1619,151 @@ class GoogleAppsCloudidentityDevicesV1BlockDeviceUserResponse(_messages.Message)
   deviceUser = _messages.MessageField('GoogleAppsCloudidentityDevicesV1DeviceUser', 1)
 
 
+class GoogleAppsCloudidentityDevicesV1BrowserAttributes(_messages.Message):
+  r"""Contains information about browser profiles reported by the [Endpoint
+  Verification extension](https://chromewebstore.google.com/detail/endpoint-
+  verification/callobklhcbilhphinckomhgkigmfocg?pli=1).
+
+  Fields:
+    chromeBrowserInfo: Represents the current state of the [Chrome browser
+      attributes](https://cloud.google.com/access-context-
+      manager/docs/browser-attributes) sent by the [Endpoint Verification
+      extension](https://chromewebstore.google.com/detail/endpoint-
+      verification/callobklhcbilhphinckomhgkigmfocg?pli=1).
+    chromeProfileId: Chrome profile ID that is exposed by the Chrome API. It
+      is unique for each device.
+    lastProfileSyncTime: Timestamp in milliseconds since the Unix epoch when
+      the profile/gcm id was last synced.
+  """
+
+  chromeBrowserInfo = _messages.MessageField('GoogleAppsCloudidentityDevicesV1BrowserInfo', 1)
+  chromeProfileId = _messages.StringField(2)
+  lastProfileSyncTime = _messages.StringField(3)
+
+
+class GoogleAppsCloudidentityDevicesV1BrowserInfo(_messages.Message):
+  r"""Browser-specific fields reported by the [Endpoint Verification
+  extension](https://chromewebstore.google.com/detail/endpoint-
+  verification/callobklhcbilhphinckomhgkigmfocg?pli=1).
+
+  Enums:
+    BrowserManagementStateValueValuesEnum: Output only. Browser's management
+      state.
+    PasswordProtectionWarningTriggerValueValuesEnum: Current state of
+      [password protection trigger](https://chromeenterprise.google/policies/#
+      PasswordProtectionWarningTrigger).
+    SafeBrowsingProtectionLevelValueValuesEnum: Current state of [Safe
+      Browsing protection level](https://chromeenterprise.google/policies/#Saf
+      eBrowsingProtectionLevel).
+
+  Fields:
+    browserManagementState: Output only. Browser's management state.
+    browserVersion: Version of the request initiating browser. E.g.
+      `91.0.4442.4`.
+    isBuiltInDnsClientEnabled: Current state of [built-in DNS client](https://
+      chromeenterprise.google/policies/#BuiltInDnsClientEnabled).
+    isBulkDataEntryAnalysisEnabled: Current state of [bulk data analysis](http
+      s://chromeenterprise.google/policies/#OnBulkDataEntryEnterpriseConnector
+      ). Set to true if provider list from Chrome is non-empty.
+    isChromeCleanupEnabled: Current state of [Chrome
+      Cleanup](https://chromeenterprise.google/policies/#ChromeCleanupEnabled)
+      .
+    isChromeRemoteDesktopAppBlocked: Current state of [Chrome Remote Desktop
+      app](https://chromeenterprise.google/policies/#URLBlocklist).
+    isFileDownloadAnalysisEnabled: Current state of [file download analysis](h
+      ttps://chromeenterprise.google/policies/#OnFileDownloadedEnterpriseConne
+      ctor). Set to true if provider list from Chrome is non-empty.
+    isFileUploadAnalysisEnabled: Current state of [file upload analysis](https
+      ://chromeenterprise.google/policies/#OnFileAttachedEnterpriseConnector).
+      Set to true if provider list from Chrome is non-empty.
+    isRealtimeUrlCheckEnabled: Current state of [real-time URL check](https://
+      chromeenterprise.google/policies/#EnterpriseRealTimeUrlCheckMode). Set
+      to true if provider list from Chrome is non-empty.
+    isSecurityEventAnalysisEnabled: Current state of [security event analysis]
+      (https://chromeenterprise.google/policies/#OnSecurityEventEnterpriseConn
+      ector). Set to true if provider list from Chrome is non-empty.
+    isSiteIsolationEnabled: Current state of [site isolation](https://chromeen
+      terprise.google/policies/?policy=IsolateOrigins).
+    isThirdPartyBlockingEnabled: Current state of [third-party blocking](https
+      ://chromeenterprise.google/policies/#ThirdPartyBlockingEnabled).
+    passwordProtectionWarningTrigger: Current state of [password protection tr
+      igger](https://chromeenterprise.google/policies/#PasswordProtectionWarni
+      ngTrigger).
+    safeBrowsingProtectionLevel: Current state of [Safe Browsing protection le
+      vel](https://chromeenterprise.google/policies/#SafeBrowsingProtectionLev
+      el).
+  """
+
+  class BrowserManagementStateValueValuesEnum(_messages.Enum):
+    r"""Output only. Browser's management state.
+
+    Values:
+      UNSPECIFIED: Management state is not specified.
+      UNMANAGED: Browser/Profile is not managed by any customer.
+      MANAGED_BY_OTHER_DOMAIN: Browser/Profile is managed, but by some other
+        customer.
+      PROFILE_MANAGED: Profile is managed by customer.
+      BROWSER_MANAGED: Browser is managed by customer.
+    """
+    UNSPECIFIED = 0
+    UNMANAGED = 1
+    MANAGED_BY_OTHER_DOMAIN = 2
+    PROFILE_MANAGED = 3
+    BROWSER_MANAGED = 4
+
+  class PasswordProtectionWarningTriggerValueValuesEnum(_messages.Enum):
+    r"""Current state of [password protection trigger](https://chromeenterpris
+    e.google/policies/#PasswordProtectionWarningTrigger).
+
+    Values:
+      PASSWORD_PROTECTION_TRIGGER_UNSPECIFIED: Password protection is not
+        specified.
+      PROTECTION_OFF: Password reuse is never detected.
+      PASSWORD_REUSE: Warning is shown when the user reuses their protected
+        password on a non-allowed site.
+      PHISHING_REUSE: Warning is shown when the user reuses their protected
+        password on a phishing site.
+    """
+    PASSWORD_PROTECTION_TRIGGER_UNSPECIFIED = 0
+    PROTECTION_OFF = 1
+    PASSWORD_REUSE = 2
+    PHISHING_REUSE = 3
+
+  class SafeBrowsingProtectionLevelValueValuesEnum(_messages.Enum):
+    r"""Current state of [Safe Browsing protection level](https://chromeenterp
+    rise.google/policies/#SafeBrowsingProtectionLevel).
+
+    Values:
+      SAFE_BROWSING_LEVEL_UNSPECIFIED: Browser protection level is not
+        specified.
+      DISABLED: No protection against dangerous websites, downloads, and
+        extensions.
+      STANDARD: Standard protection against websites, downloads, and
+        extensions that are known to be dangerous.
+      ENHANCED: Faster, proactive protection against dangerous websites,
+        downloads, and extensions.
+    """
+    SAFE_BROWSING_LEVEL_UNSPECIFIED = 0
+    DISABLED = 1
+    STANDARD = 2
+    ENHANCED = 3
+
+  browserManagementState = _messages.EnumField('BrowserManagementStateValueValuesEnum', 1)
+  browserVersion = _messages.StringField(2)
+  isBuiltInDnsClientEnabled = _messages.BooleanField(3)
+  isBulkDataEntryAnalysisEnabled = _messages.BooleanField(4)
+  isChromeCleanupEnabled = _messages.BooleanField(5)
+  isChromeRemoteDesktopAppBlocked = _messages.BooleanField(6)
+  isFileDownloadAnalysisEnabled = _messages.BooleanField(7)
+  isFileUploadAnalysisEnabled = _messages.BooleanField(8)
+  isRealtimeUrlCheckEnabled = _messages.BooleanField(9)
+  isSecurityEventAnalysisEnabled = _messages.BooleanField(10)
+  isSiteIsolationEnabled = _messages.BooleanField(11)
+  isThirdPartyBlockingEnabled = _messages.BooleanField(12)
+  passwordProtectionWarningTrigger = _messages.EnumField('PasswordProtectionWarningTriggerValueValuesEnum', 13)
+  safeBrowsingProtectionLevel = _messages.EnumField('SafeBrowsingProtectionLevelValueValuesEnum', 14)
+
+
 class GoogleAppsCloudidentityDevicesV1CancelWipeDeviceMetadata(_messages.Message):
   r"""Metadata for CancelWipeDevice LRO."""
 
@@ -1617,6 +1821,63 @@ class GoogleAppsCloudidentityDevicesV1CancelWipeDeviceUserResponse(_messages.Mes
   """
 
   deviceUser = _messages.MessageField('GoogleAppsCloudidentityDevicesV1DeviceUser', 1)
+
+
+class GoogleAppsCloudidentityDevicesV1CertificateAttributes(_messages.Message):
+  r"""Stores information about a certificate.
+
+  Enums:
+    ValidationStateValueValuesEnum: Output only. Validation state of this
+      certificate.
+
+  Fields:
+    certificateTemplate: The X.509 extension for CertificateTemplate.
+    fingerprint: The encoded certificate fingerprint.
+    issuer: The name of the issuer of this certificate.
+    serialNumber: Serial number of the certificate, Example: "123456789".
+    subject: The subject name of this certificate.
+    thumbprint: The certificate thumbprint.
+    validationState: Output only. Validation state of this certificate.
+    validityExpirationTime: Certificate not valid at or after this timestamp.
+    validityStartTime: Certificate not valid before this timestamp.
+  """
+
+  class ValidationStateValueValuesEnum(_messages.Enum):
+    r"""Output only. Validation state of this certificate.
+
+    Values:
+      CERTIFICATE_VALIDATION_STATE_UNSPECIFIED: Default value.
+      VALIDATION_SUCCESSFUL: Certificate validation was successful.
+      VALIDATION_FAILED: Certificate validation failed.
+    """
+    CERTIFICATE_VALIDATION_STATE_UNSPECIFIED = 0
+    VALIDATION_SUCCESSFUL = 1
+    VALIDATION_FAILED = 2
+
+  certificateTemplate = _messages.MessageField('GoogleAppsCloudidentityDevicesV1CertificateTemplate', 1)
+  fingerprint = _messages.StringField(2)
+  issuer = _messages.StringField(3)
+  serialNumber = _messages.StringField(4)
+  subject = _messages.StringField(5)
+  thumbprint = _messages.StringField(6)
+  validationState = _messages.EnumField('ValidationStateValueValuesEnum', 7)
+  validityExpirationTime = _messages.StringField(8)
+  validityStartTime = _messages.StringField(9)
+
+
+class GoogleAppsCloudidentityDevicesV1CertificateTemplate(_messages.Message):
+  r"""CertificateTemplate (v3 Extension in X.509).
+
+  Fields:
+    id: The template id of the template. Example: "1.3.6.1.4.1.311.21.8.156086
+      21.11768144.5720724.16068415.6889630.81.2472537.7784047".
+    majorVersion: The Major version of the template. Example: 100.
+    minorVersion: The minor version of the template. Example: 12.
+  """
+
+  id = _messages.StringField(1)
+  majorVersion = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  minorVersion = _messages.IntegerField(3, variant=_messages.Variant.INT32)
 
 
 class GoogleAppsCloudidentityDevicesV1ClientState(_messages.Message):
@@ -1843,6 +2104,9 @@ class GoogleAppsCloudidentityDevicesV1Device(_messages.Message):
     enabledUsbDebugging: Output only. Whether USB debugging is enabled on
       device.
     encryptionState: Output only. Device encryption state.
+    endpointVerificationSpecificAttributes: Output only. Attributes specific
+      to [Endpoint Verification](https://cloud.google.com/endpoint-
+      verification/docs/overview) devices.
     hostname: Host name of the device.
     imei: Output only. IMEI number of device if GSM device; empty otherwise.
     kernelVersion: Output only. Kernel version of the device.
@@ -1854,7 +2118,10 @@ class GoogleAppsCloudidentityDevicesV1Device(_messages.Message):
     name: Output only. [Resource
       name](https://cloud.google.com/apis/design/resource_names) of the Device
       in format: `devices/{device}`, where device is the unique id assigned to
-      the Device.
+      the Device. Important: Device API scopes require that you use domain-
+      wide delegation to access the API. For more information, see [Set up the
+      Devices API](https://cloud.google.com/identity/docs/how-to/setup-
+      devices).
     networkOperator: Output only. Mobile or network operator of device, if
       available.
     osVersion: Output only. OS version of the device. Example: Android 8.1.0.
@@ -1868,6 +2135,7 @@ class GoogleAppsCloudidentityDevicesV1Device(_messages.Message):
     releaseVersion: Output only. OS release version. Example: 6.0.
     securityPatchTime: Output only. OS security patch update time on device.
     serialNumber: Serial Number of device. Example: HT82V1A01076.
+    unifiedDeviceId: Output only. Unified device id of the device.
     wifiMacAddresses: WiFi MAC addresses of device.
   """
 
@@ -1969,23 +2237,25 @@ class GoogleAppsCloudidentityDevicesV1Device(_messages.Message):
   enabledDeveloperOptions = _messages.BooleanField(11)
   enabledUsbDebugging = _messages.BooleanField(12)
   encryptionState = _messages.EnumField('EncryptionStateValueValuesEnum', 13)
-  hostname = _messages.StringField(14)
-  imei = _messages.StringField(15)
-  kernelVersion = _messages.StringField(16)
-  lastSyncTime = _messages.StringField(17)
-  managementState = _messages.EnumField('ManagementStateValueValuesEnum', 18)
-  manufacturer = _messages.StringField(19)
-  meid = _messages.StringField(20)
-  model = _messages.StringField(21)
-  name = _messages.StringField(22)
-  networkOperator = _messages.StringField(23)
-  osVersion = _messages.StringField(24)
-  otherAccounts = _messages.StringField(25, repeated=True)
-  ownerType = _messages.EnumField('OwnerTypeValueValuesEnum', 26)
-  releaseVersion = _messages.StringField(27)
-  securityPatchTime = _messages.StringField(28)
-  serialNumber = _messages.StringField(29)
-  wifiMacAddresses = _messages.StringField(30, repeated=True)
+  endpointVerificationSpecificAttributes = _messages.MessageField('GoogleAppsCloudidentityDevicesV1EndpointVerificationSpecificAttributes', 14)
+  hostname = _messages.StringField(15)
+  imei = _messages.StringField(16)
+  kernelVersion = _messages.StringField(17)
+  lastSyncTime = _messages.StringField(18)
+  managementState = _messages.EnumField('ManagementStateValueValuesEnum', 19)
+  manufacturer = _messages.StringField(20)
+  meid = _messages.StringField(21)
+  model = _messages.StringField(22)
+  name = _messages.StringField(23)
+  networkOperator = _messages.StringField(24)
+  osVersion = _messages.StringField(25)
+  otherAccounts = _messages.StringField(26, repeated=True)
+  ownerType = _messages.EnumField('OwnerTypeValueValuesEnum', 27)
+  releaseVersion = _messages.StringField(28)
+  securityPatchTime = _messages.StringField(29)
+  serialNumber = _messages.StringField(30)
+  unifiedDeviceId = _messages.StringField(31)
+  wifiMacAddresses = _messages.StringField(32, repeated=True)
 
 
 class GoogleAppsCloudidentityDevicesV1DeviceUser(_messages.Message):
@@ -2073,6 +2343,73 @@ class GoogleAppsCloudidentityDevicesV1DeviceUser(_messages.Message):
   passwordState = _messages.EnumField('PasswordStateValueValuesEnum', 8)
   userAgent = _messages.StringField(9)
   userEmail = _messages.StringField(10)
+
+
+class GoogleAppsCloudidentityDevicesV1EndpointVerificationSpecificAttributes(_messages.Message):
+  r"""Resource representing the [Endpoint Verification-specific
+  attributes](https://cloud.google.com/endpoint-verification/docs/device-
+  information) of a device.
+
+  Messages:
+    AdditionalSignalsValue: [Additional
+      signals](https://cloud.google.com/endpoint-verification/docs/device-
+      information) reported by Endpoint Verification. It includes the
+      following attributes: * Non-configurable attributes: hotfixes,
+      av_installed, av_enabled, windows_domain_name,
+      is_os_native_firewall_enabled, and is_secure_boot_enabled. *
+      [Configurable attributes](https://cloud.google.com/endpoint-
+      verification/docs/collect-config-attributes): file, folder, and binary
+      attributes; registry entries; and properties in a plist.
+
+  Fields:
+    additionalSignals: [Additional signals](https://cloud.google.com/endpoint-
+      verification/docs/device-information) reported by Endpoint Verification.
+      It includes the following attributes: * Non-configurable attributes:
+      hotfixes, av_installed, av_enabled, windows_domain_name,
+      is_os_native_firewall_enabled, and is_secure_boot_enabled. *
+      [Configurable attributes](https://cloud.google.com/endpoint-
+      verification/docs/collect-config-attributes): file, folder, and binary
+      attributes; registry entries; and properties in a plist.
+    browserAttributes: Details of browser profiles reported by Endpoint
+      Verification.
+    certificateAttributes: Details of certificates.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class AdditionalSignalsValue(_messages.Message):
+    r"""[Additional signals](https://cloud.google.com/endpoint-
+    verification/docs/device-information) reported by Endpoint Verification.
+    It includes the following attributes: * Non-configurable attributes:
+    hotfixes, av_installed, av_enabled, windows_domain_name,
+    is_os_native_firewall_enabled, and is_secure_boot_enabled. * [Configurable
+    attributes](https://cloud.google.com/endpoint-verification/docs/collect-
+    config-attributes): file, folder, and binary attributes; registry entries;
+    and properties in a plist.
+
+    Messages:
+      AdditionalProperty: An additional property for a AdditionalSignalsValue
+        object.
+
+    Fields:
+      additionalProperties: Properties of the object.
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a AdditionalSignalsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A extra_types.JsonValue attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.MessageField('extra_types.JsonValue', 2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  additionalSignals = _messages.MessageField('AdditionalSignalsValue', 1)
+  browserAttributes = _messages.MessageField('GoogleAppsCloudidentityDevicesV1BrowserAttributes', 2, repeated=True)
+  certificateAttributes = _messages.MessageField('GoogleAppsCloudidentityDevicesV1CertificateAttributes', 3, repeated=True)
 
 
 class GoogleAppsCloudidentityDevicesV1ListClientStatesResponse(_messages.Message):
@@ -2224,8 +2561,8 @@ class Group(_messages.Message):
 
   Messages:
     LabelsValue: Required. One or more label entries that apply to the Group.
-      Currently supported labels contain a key with an empty value. Google
-      Groups are the default type of group and have a label with a key of
+      Labels contain a key with an empty value. Google Groups are the default
+      type of group and have a label with a key of
       `cloudidentity.googleapis.com/groups.discussion_forum` and an empty
       value. Existing Google Groups can have an additional label with a key of
       `cloudidentity.googleapis.com/groups.security` and an empty value added
@@ -2233,7 +2570,11 @@ class Group(_messages.Message):
       removed once added.** Dynamic groups have a label with a key of
       `cloudidentity.googleapis.com/groups.dynamic`. Identity-mapped groups
       for Cloud Search have a label with a key of `system/groups/external` and
-      an empty value.
+      an empty value. Google Groups can be
+      [locked](https://support.google.com/a?p=locked-groups). To lock a group,
+      add a label with a key of `cloudidentity.googleapis.com/groups.locked`
+      and an empty value. Doing so locks the group. To unlock the group,
+      remove this label.
 
   Fields:
     additionalGroupKeys: Output only. Additional group keys associated with
@@ -2246,8 +2587,8 @@ class Group(_messages.Message):
       status.
     groupKey: Required. The `EntityKey` of the `Group`.
     labels: Required. One or more label entries that apply to the Group.
-      Currently supported labels contain a key with an empty value. Google
-      Groups are the default type of group and have a label with a key of
+      Labels contain a key with an empty value. Google Groups are the default
+      type of group and have a label with a key of
       `cloudidentity.googleapis.com/groups.discussion_forum` and an empty
       value. Existing Google Groups can have an additional label with a key of
       `cloudidentity.googleapis.com/groups.security` and an empty value added
@@ -2255,7 +2596,11 @@ class Group(_messages.Message):
       removed once added.** Dynamic groups have a label with a key of
       `cloudidentity.googleapis.com/groups.dynamic`. Identity-mapped groups
       for Cloud Search have a label with a key of `system/groups/external` and
-      an empty value.
+      an empty value. Google Groups can be
+      [locked](https://support.google.com/a?p=locked-groups). To lock a group,
+      add a label with a key of `cloudidentity.googleapis.com/groups.locked`
+      and an empty value. Doing so locks the group. To unlock the group,
+      remove this label.
     name: Output only. The [resource
       name](https://cloud.google.com/apis/design/resource_names) of the
       `Group`. Shall be of the form `groups/{group}`.
@@ -2271,9 +2616,9 @@ class Group(_messages.Message):
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class LabelsValue(_messages.Message):
-    r"""Required. One or more label entries that apply to the Group. Currently
-    supported labels contain a key with an empty value. Google Groups are the
-    default type of group and have a label with a key of
+    r"""Required. One or more label entries that apply to the Group. Labels
+    contain a key with an empty value. Google Groups are the default type of
+    group and have a label with a key of
     `cloudidentity.googleapis.com/groups.discussion_forum` and an empty value.
     Existing Google Groups can have an additional label with a key of
     `cloudidentity.googleapis.com/groups.security` and an empty value added to
@@ -2281,7 +2626,11 @@ class Group(_messages.Message):
     removed once added.** Dynamic groups have a label with a key of
     `cloudidentity.googleapis.com/groups.dynamic`. Identity-mapped groups for
     Cloud Search have a label with a key of `system/groups/external` and an
-    empty value.
+    empty value. Google Groups can be
+    [locked](https://support.google.com/a?p=locked-groups). To lock a group,
+    add a label with a key of `cloudidentity.googleapis.com/groups.locked` and
+    an empty value. Doing so locks the group. To unlock the group, remove this
+    label.
 
     Messages:
       AdditionalProperty: An additional property for a LabelsValue object.
@@ -2559,6 +2908,19 @@ class ListMembershipsResponse(_messages.Message):
   nextPageToken = _messages.StringField(2)
 
 
+class ListPoliciesResponse(_messages.Message):
+  r"""The response message for PoliciesService.ListPolicies.
+
+  Fields:
+    nextPageToken: The pagination token to retrieve the next page of results.
+      If this field is empty, there are no subsequent pages.
+    policies: The results
+  """
+
+  nextPageToken = _messages.StringField(1)
+  policies = _messages.MessageField('Policy', 2, repeated=True)
+
+
 class ListUserInvitationsResponse(_messages.Message):
   r"""Response message for UserInvitation listing request.
 
@@ -2713,6 +3075,7 @@ class Membership(_messages.Message):
       SERVICE_ACCOUNT: Represents service account type.
       GROUP: Represents group type.
       SHARED_DRIVE: Represents Shared drive.
+      CBCM_BROWSER: Represents a CBCM-managed Chrome Browser type.
       OTHER: Represents other type.
     """
     TYPE_UNSPECIFIED = 0
@@ -2720,7 +3083,8 @@ class Membership(_messages.Message):
     SERVICE_ACCOUNT = 2
     GROUP = 3
     SHARED_DRIVE = 4
-    OTHER = 5
+    CBCM_BROWSER = 5
+    OTHER = 6
 
   createTime = _messages.StringField(1)
   deliverySetting = _messages.EnumField('DeliverySettingValueValuesEnum', 2)
@@ -2737,8 +3101,8 @@ class MembershipAdjacencyList(_messages.Message):
   Fields:
     edges: Each edge contains information about the member that belongs to
       this group. Note: Fields returned here will help identify the specific
-      Membership resource (e.g name, preferred_member_key and role), but may
-      not be a comprehensive list of all fields.
+      Membership resource (e.g `name`, `preferred_member_key` and `role`), but
+      may not be a comprehensive list of all fields.
     group: Resource name of the group that the members belong to.
   """
 
@@ -2997,6 +3361,81 @@ class Operation(_messages.Message):
   response = _messages.MessageField('ResponseValue', 5)
 
 
+class Policy(_messages.Message):
+  r"""A Policy resource binds an instance of a single Setting with the scope
+  of a PolicyQuery. The Setting instance will be applied to all entities that
+  satisfy the query.
+
+  Enums:
+    TypeValueValuesEnum: Output only. The type of the policy.
+
+  Fields:
+    customer: Immutable. Customer that the Policy belongs to. The value is in
+      the format 'customers/{customerId}'. The `customerId` must begin with
+      "C" To find your customer ID in Admin Console see
+      https://support.google.com/a/answer/10070793.
+    name: Output only. Identifier. The [resource
+      name](https://cloud.google.com/apis/design/resource_names) of the
+      Policy. Format: policies/{policy}.
+    policyQuery: Required. The PolicyQuery the Setting applies to.
+    setting: Required. The Setting configured by this Policy.
+    type: Output only. The type of the policy.
+  """
+
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""Output only. The type of the policy.
+
+    Values:
+      POLICY_TYPE_UNSPECIFIED: Unspecified policy type.
+      SYSTEM: Policy type denoting the system-configured policies.
+      ADMIN: Policy type denoting the admin-configurable policies.
+    """
+    POLICY_TYPE_UNSPECIFIED = 0
+    SYSTEM = 1
+    ADMIN = 2
+
+  customer = _messages.StringField(1)
+  name = _messages.StringField(2)
+  policyQuery = _messages.MessageField('PolicyQuery', 3)
+  setting = _messages.MessageField('Setting', 4)
+  type = _messages.EnumField('TypeValueValuesEnum', 5)
+
+
+class PolicyQuery(_messages.Message):
+  r"""PolicyQuery
+
+  Fields:
+    group: Immutable. The group that the query applies to. This field is only
+      set if there is a single value for group that satisfies all clauses of
+      the query. If no group applies, this will be the empty string.
+    orgUnit: Required. Immutable. Non-empty default. The OrgUnit the query
+      applies to. This field is only set if there is a single value for
+      org_unit that satisfies all clauses of the query.
+    query: Immutable. The CEL query that defines which entities the Policy
+      applies to (ex. a User entity). For details about CEL see
+      https://opensource.google.com/projects/cel. The OrgUnits the Policy
+      applies to are represented by a clause like so:
+      entity.org_units.exists(org_unit, org_unit.org_unit_id ==
+      orgUnitId('{orgUnitId}')) The Group the Policy applies to are
+      represented by a clause like so: entity.groups.exists(group,
+      group.group_id == groupId('{groupId}')) The Licenses the Policy applies
+      to are represented by a clause like so: entity.licenses.exists(license,
+      license in ['/product/{productId}/sku/{skuId}']) The above clauses can
+      be present in any combination, and used in conjunction with the &&, ||
+      and ! operators. The org_unit and group fields below are helper fields
+      that contain the corresponding value(s) as the query to make the query
+      easier to use.
+    sortOrder: Output only. The decimal sort order of this PolicyQuery. The
+      value is relative to all other policies with the same setting type for
+      the customer. (There are no duplicates within this set).
+  """
+
+  group = _messages.StringField(1)
+  orgUnit = _messages.StringField(2)
+  query = _messages.StringField(3)
+  sortOrder = _messages.FloatField(4)
+
+
 class RestrictionEvaluation(_messages.Message):
   r"""The evaluated state of this restriction.
 
@@ -3175,6 +3614,45 @@ class SendUserInvitationRequest(_messages.Message):
 
 
 
+class Setting(_messages.Message):
+  r"""Setting
+
+  Messages:
+    ValueValue: Required. The value of the Setting.
+
+  Fields:
+    type: Required. Immutable. The type of the Setting. .
+    value: Required. The value of the Setting.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class ValueValue(_messages.Message):
+    r"""Required. The value of the Setting.
+
+    Messages:
+      AdditionalProperty: An additional property for a ValueValue object.
+
+    Fields:
+      additionalProperties: Properties of the object.
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a ValueValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A extra_types.JsonValue attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.MessageField('extra_types.JsonValue', 2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  type = _messages.StringField(1)
+  value = _messages.MessageField('ValueValue', 2)
+
+
 class SignInBehavior(_messages.Message):
   r"""Controls sign-in behavior.
 
@@ -3334,8 +3812,15 @@ class UpdateGroupMetadata(_messages.Message):
 class UpdateInboundSamlSsoProfileOperationMetadata(_messages.Message):
   r"""LRO response metadata for
   InboundSamlSsoProfilesService.UpdateInboundSamlSsoProfile.
+
+  Fields:
+    state: State of this Operation Will be "awaiting-multi-party-approval"
+      when the operation is deferred due to the target customer having enabled
+      [Multi-party approval for sensitive
+      actions](https://support.google.com/a/answer/13790448).
   """
 
+  state = _messages.StringField(1)
 
 
 class UpdateInboundSsoAssignmentOperationMetadata(_messages.Message):
@@ -3413,3 +3898,11 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    CloudidentityGroupsLookupRequest, 'groupKey_id', 'groupKey.id')
+encoding.AddCustomJsonFieldMapping(
+    CloudidentityGroupsLookupRequest, 'groupKey_namespace', 'groupKey.namespace')
+encoding.AddCustomJsonFieldMapping(
+    CloudidentityGroupsMembershipsLookupRequest, 'memberKey_id', 'memberKey.id')
+encoding.AddCustomJsonFieldMapping(
+    CloudidentityGroupsMembershipsLookupRequest, 'memberKey_namespace', 'memberKey.namespace')

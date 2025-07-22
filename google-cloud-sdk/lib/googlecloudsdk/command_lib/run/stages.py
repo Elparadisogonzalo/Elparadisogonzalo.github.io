@@ -23,11 +23,13 @@ from googlecloudsdk.core.console import progress_tracker
 
 READY = 'Ready'
 SERVICE_IAM_POLICY_SET = 'IamPolicySet'
+SERVICE_IAP_ENABLE = 'IapEnable'
 SERVICE_ROUTES_READY = 'RoutesReady'
 SERVICE_CONFIGURATIONS_READY = 'ConfigurationsReady'
 BUILD_READY = 'BuildReady'
 UPLOAD_SOURCE = 'UploadSource'
 CREATE_REPO = 'CreateRepo'
+VALIDATE_SERVICE = 'ValidateService'
 
 _RESOURCES_AVAILABLE = 'ResourcesAvailable'
 _STARTED = 'Started'
@@ -36,7 +38,14 @@ _COMPLETED = 'Completed'
 
 def _CreateRepoStage():
   return progress_tracker.Stage(
-      'Creating Container Repository...', key=CREATE_REPO)
+      'Creating Container Repository...', key=CREATE_REPO
+  )
+
+
+def _ValidateServiceStage():
+  return progress_tracker.Stage(
+      'Validating Service...', key=VALIDATE_SERVICE
+  )
 
 
 def _UploadSourceStage():
@@ -51,33 +60,66 @@ def _NewRoutingTrafficStage():
   return progress_tracker.Stage('Routing traffic...', key=SERVICE_ROUTES_READY)
 
 
+# TODO(b/322180968): Once Worker API is ready, replace 'key' to Worker specific
+# condition.
+def _NewSplittingInstanceStage():
+  return progress_tracker.Stage(
+      'Splitting instances...', key=SERVICE_ROUTES_READY
+  )
+
+
 def UpdateTrafficStages():
   return [_NewRoutingTrafficStage()]
+
+
+def UpdateInstanceSplitStages():
+  return [_NewSplittingInstanceStage()]
 
 
 # Because some terminals cannot update multiple lines of output simultaneously,
 # the order of conditions in this dictionary should match the order in which we
 # expect cloud run resources to complete deployment.
-def ServiceStages(include_iam_policy_set=False,
-                  include_route=True,
-                  include_build=False,
-                  include_create_repo=False):
+def ServiceStages(
+    include_iam_policy_set=False,
+    include_route=True,
+    include_validate_service=False,
+    include_upload_source=False,
+    include_build=False,
+    include_create_repo=False,
+    include_create_revision=True,
+    include_iap=False,
+):
   """Return the progress tracker Stages for conditions of a Service."""
   stages = []
   if include_create_repo:
     stages.append(_CreateRepoStage())
-  if include_build:
+  if include_validate_service:
+    stages.append(_ValidateServiceStage())
+  if include_upload_source:
     stages.append(_UploadSourceStage())
+  if include_build:
     stages.append(_BuildContainerStage())
-  stages.append(
-      progress_tracker.Stage(
-          'Creating Revision...', key=SERVICE_CONFIGURATIONS_READY))
+  if include_create_revision:
+    stages.append(
+        progress_tracker.Stage(
+            'Creating Revision...', key=SERVICE_CONFIGURATIONS_READY
+        )
+    )
   if include_route:
     stages.append(_NewRoutingTrafficStage())
   if include_iam_policy_set:
     stages.append(
         progress_tracker.Stage(
-            'Setting IAM Policy...', key=SERVICE_IAM_POLICY_SET))
+            'Setting IAM Policy...', key=SERVICE_IAM_POLICY_SET
+        )
+    )
+  if include_iap:
+    stages.append(
+        progress_tracker.Stage(
+            'Setting IAP service agent...', key=SERVICE_IAP_ENABLE
+        )
+    )
+
   return stages
 
 
@@ -86,10 +128,12 @@ def ServiceDependencies():
   return {SERVICE_ROUTES_READY: {SERVICE_CONFIGURATIONS_READY}}
 
 
-def JobStages(execute_now=False,
-              include_completion=False,
-              include_build=False,
-              include_create_repo=False):
+def JobStages(
+    execute_now=False,
+    include_completion=False,
+    include_build=False,
+    include_create_repo=False,
+):
   """Returns the list of progress tracker Stages for Jobs."""
   stages = []
   if include_create_repo:
@@ -106,7 +150,8 @@ def ExecutionStages(include_completion=False):
   """Returns the list of progress tracker Stages for Executions."""
   stages = [
       progress_tracker.Stage(
-          'Provisioning resources...', key=_RESOURCES_AVAILABLE)
+          'Provisioning resources...', key=_RESOURCES_AVAILABLE
+      )
   ]
   if include_completion:
     stages.append(progress_tracker.Stage('Starting execution...', key=_STARTED))
@@ -115,9 +160,31 @@ def ExecutionStages(include_completion=False):
     # progress tracker. But in this case we want to include it so we can show
     # updates on this stage while the job is running.
     stages.append(
-        progress_tracker.Stage('Running execution...', key=_COMPLETED))
+        progress_tracker.Stage('Running execution...', key=_COMPLETED)
+    )
   return stages
 
 
 def ExecutionDependencies():
   return {_STARTED: {_RESOURCES_AVAILABLE}, _COMPLETED: {_STARTED}}
+
+
+def WorkerPoolStages(
+    include_build=False,
+    include_create_repo=False,
+    include_create_revision=True,
+):
+  """Return the progress tracker Stages for conditions of a Worker Pool."""
+  stages = []
+  if include_create_repo:
+    stages.append(_CreateRepoStage())
+  if include_build:
+    stages.append(_UploadSourceStage())
+    stages.append(_BuildContainerStage())
+  if include_create_revision:
+    stages.append(
+        progress_tracker.Stage(
+            'Creating Revision...', key=READY
+        )
+    )
+  return stages

@@ -14,16 +14,14 @@
 # limitations under the License.
 """Provides common arguments for the Spanner command surface."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from argcomplete.completers import FilesCompleter
 from cloudsdk.google.protobuf import descriptor_pb2
 from googlecloudsdk.api_lib.spanner import databases
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
+from googlecloudsdk.calliope import exceptions as c_exceptions
 from googlecloudsdk.command_lib.spanner import ddl_parser
+from googlecloudsdk.command_lib.spanner import split_file_parser
 from googlecloudsdk.command_lib.util import completers
 from googlecloudsdk.core.util import files
 
@@ -36,6 +34,17 @@ class BackupCompleter(completers.ListCommandCompleter):
         list_command='spanner backups list --uri',
         flags=['instance'],
         **kwargs)
+
+
+class BackupScheduleCompleter(completers.ListCommandCompleter):
+
+  def __init__(self, **kwargs):
+    super(BackupScheduleCompleter, self).__init__(
+        collection='spanner.projects.instances.databases.backupSchedules',
+        list_command='spanner backup-schedules list --uri',
+        flags=['database', 'instance'],
+        **kwargs
+    )
 
 
 class DatabaseCompleter(completers.ListCommandCompleter):
@@ -65,6 +74,16 @@ class InstanceCompleter(completers.ListCommandCompleter):
         collection='spanner.projects.instances',
         list_command='spanner instances list --uri',
         **kwargs)
+
+
+class InstancePartitionCompleter(completers.ListCommandCompleter):
+
+  def __init__(self, **kwargs):
+    super(InstancePartitionCompleter, self).__init__(
+        collection='spanner.projects.instances.instancePartitions',
+        list_command='alpha spanner instance-partitions list --uri',
+        **kwargs
+    )
 
 
 class InstanceConfigCompleter(completers.ListCommandCompleter):
@@ -146,7 +165,6 @@ def ProtoDescriptorsFile(help_text):
       required=False,
       completer=FilesCompleter,
       help=help_text,
-      hidden=True,
   )
 
 
@@ -168,7 +186,6 @@ def IncludeProtoDescriptors(help_text):
       action='store_true',
       help=help_text,
       default=False,
-      hidden=True,
   )
 
 
@@ -205,20 +222,25 @@ def GetProtoDescriptors(args):
   return None
 
 
-def Config(required=True):
+def Config(
+    required=True,
+    text=(
+        'Instance configuration defines the geographic placement and'
+        ' replication of the databases in that instance. Available'
+        ' configurations can be found by running "gcloud spanner'
+        ' instance-configs list"'
+    ),
+):
   return base.Argument(
       '--config',
       completer=InstanceConfigCompleter,
       required=required,
-      help='Instance configuration defines the geographic placement and '
-      'replication of the databases in that instance. Available '
-      'configurations can be found by running '
-      '"gcloud spanner instance-configs list"')
+      help=text,
+  )
 
 
-def Description(required=True):
-  return base.Argument(
-      '--description', required=required, help='Description of the instance.')
+def Description(required=True, text='Description of the instance.'):
+  return base.Argument('--description', required=required, help=text)
 
 
 def Instance(positional=True, text='Cloud Spanner instance ID.'):
@@ -229,20 +251,84 @@ def Instance(positional=True, text='Cloud Spanner instance ID.'):
         '--instance', required=True, completer=InstanceCompleter, help=text)
 
 
-def Nodes(required=False):
+def InstancePartition(
+    positional=True,
+    required=True,
+    hidden=True,
+    text='Cloud Spanner instance partition ID.',
+):
+  """Initialize an instance partition flag.
+
+  Args:
+    positional: bool. If true, then it's a positional flag.
+    required: bool. If true, then this flag is required.
+    hidden: bool. If true, then this flag is hidden.
+    text: helper test.
+
+  Returns:
+  """
+  if positional:
+    return base.Argument(
+        'instance_partition',
+        completer=InstancePartitionCompleter,
+        hidden=hidden,
+        help=text,
+    )
+  else:
+    return base.Argument(
+        '--instance-partition', required=required, hidden=hidden, help=text
+    )
+
+
+def Nodes(required=False, text='Number of nodes for the instance.'):
   return base.Argument(
       '--nodes',
       required=required,
       type=int,
-      help='Number of nodes for the instance.')
+      help=text,
+  )
 
 
-def ProcessingUnits(required=False):
+def AddTags(parser):
+  """Makes the base.Argument for --tags flag."""
+  help_parts = [
+      'List of tags KEY=VALUE pairs to bind.',
+      'Each item must be expressed as either',
+      'ID: `<tag-key-id>=<tag-value-id>` or\n',
+      'Namespaced name: `<tag-key-namespaced-name>=<tag-value-short-name>`.\n',
+      'Example: `tagKeys/123=tagValues/223`\n',
+      'Example: `123/environment=production,123/costCenter=marketing`\n',
+  ]
+  parser.add_argument(
+      '--tags',
+      metavar='KEY=VALUE',
+      type=arg_parsers.ArgDict(),
+      action=arg_parsers.UpdateAction,
+      hidden=True,
+      help='\n'.join(help_parts),
+  )
+
+
+def GetTagsFromArgs(args, tags_message, tags_arg_name='tags'):
+  """Makes the tags message object."""
+  tags = getattr(args, tags_arg_name, None)
+  if not tags:
+    return None
+  # Sorted for test stability
+  return tags_message(
+      additionalProperties=[
+          tags_message.AdditionalProperty(key=key, value=value)
+          for key, value in sorted(tags.items())
+      ]
+  )
+
+
+def ProcessingUnits(
+    required=False, text='Number of processing units for the instance.'
+):
   return base.Argument(
-      '--processing-units',
-      required=required,
-      type=int,
-      help='Number of processing units for the instance.')
+      '--processing-units', required=required, type=int, help=text
+  )
 
 
 def AutoscalingMaxNodes(required=False):
@@ -305,6 +391,42 @@ def AutoscalingStorageTarget(required=False):
   )
 
 
+def AsymmetricAutoscalingOptionFlag():
+  help_text = (
+      'Specify the asymmetric autoscaling option for the instance. '
+  )
+  return base.Argument(
+      '--asymmetric-autoscaling-option',
+      type=arg_parsers.ArgDict(
+          spec={
+              'location': str,
+              'min_nodes': int,
+              'max_nodes': int,
+              'min_processing_units': int,
+              'max_processing_units': int,
+              'high_priority_cpu_target': int,
+          },
+          required_keys=['location'],
+      ),
+      required=False,
+      action='append',
+      help=help_text,
+  )
+
+
+def ClearAsymmetricAutoscalingOptionsFlag():
+  return base.Argument(
+      '--clear-asymmetric-autoscaling-option',
+      type=arg_parsers.ArgList(min_length=1),
+      metavar='LOCATION',
+      required=False,
+      help=(
+          'Specify a comma separated list of locations from which to remove'
+          ' asymmetric autoscaling options'
+      ),
+  )
+
+
 def SsdCache(
     positional=False,
     required=False,
@@ -319,16 +441,91 @@ def SsdCache(
     )
 
 
+def GetEditionHelpText(update=False):
+  """Returns the help text for the edition flag."""
+  if update:
+    return (
+        'Spanner edition. You can upgrade your Standard edition instance to the'
+        ' `ENTERPRISE` edition or `ENTERPRISE_PLUS` edition. You can also'
+        ' upgrade your Enterprise edition instance to the `ENTERPRISE_PLUS`'
+        ' edition. You can downgrade your `ENTERPRISE_PLUS` edition instance to'
+        ' the `ENTERPRISE` or `STANDARD` edition. You can also downgrade your'
+        ' `ENTERPRISE` edition instance to the `STANDARD` edition. You must'
+        ' stop using the higher-tier edition features in order to downgrade.'
+        ' Otherwise, downgrade fails. For more information, see [Spanner'
+        ' editions'
+        ' overview](https://cloud.google.com/spanner/docs/editions-overview).'
+    )
+  return 'Spanner edition.'
+
+
+def Edition(
+    choices=None,
+    update=False,
+    required=False,
+):
+  return base.Argument(
+      '--edition',
+      required=required,
+      help=GetEditionHelpText(update),
+      choices=choices,
+  )
+
+
+def DefaultBackupScheduleType(
+    choices=None,
+    required=False,
+    text='The default backup schedule type that is used in the instance.',
+):
+  return base.Argument(
+      '--default-backup-schedule-type',
+      required=required,
+      help=text,
+      choices=choices,
+  )
+
+
+def SplitsFile(help_text):
+  return base.Argument(
+      '--splits-file',
+      required=True,
+      completer=FilesCompleter,
+      help=help_text,
+  )
+
+
+def SplitExpirationDate(help_text):
+  return base.Argument(
+      '--split-expiration-date',
+      required=False,
+      help=help_text,
+  )
+
+
+def Initiator(help_text):
+  return base.Argument(
+      '--initiator',
+      required=False,
+      help=help_text,
+  )
+
+
 def AddCapacityArgsForInstance(
-    require_all_autoscaling_args, hide_autoscaling_args, parser
+    require_all_autoscaling_args,
+    parser,
+    add_asymmetric_option_flag=False,
+    asymmetric_options_group=False,
 ):
   """Parse the instance capacity arguments, including manual and autoscaling.
 
   Args:
     require_all_autoscaling_args: bool. If True, a complete autoscaling config
       is required.
-    hide_autoscaling_args: bool. If True, the autoscaling args will be hidden.
     parser: the argparse parser for the command.
+    add_asymmetric_option_flag: bool. If True, add the asymmetric autoscaling
+      option flag.
+    asymmetric_options_group: bool. If True, add the asymmetric autoscaling
+      options group.
   """
   capacity_parser = parser.add_argument_group(mutex=True, required=False)
 
@@ -338,7 +535,7 @@ def AddCapacityArgsForInstance(
 
   # Autoscaling.
   autoscaling_config_group_parser = capacity_parser.add_argument_group(
-      help='Autoscaling (Preview)', hidden=hide_autoscaling_args
+      help='Autoscaling'
   )
   AutoscalingHighPriorityCpuTarget(
       required=require_all_autoscaling_args
@@ -346,14 +543,17 @@ def AddCapacityArgsForInstance(
   AutoscalingStorageTarget(required=require_all_autoscaling_args).AddToParser(
       autoscaling_config_group_parser
   )
-  autoscaling_limits_group_parser = (
-      autoscaling_config_group_parser.add_argument_group(
-          mutex=True, required=require_all_autoscaling_args
-      )
+  autoscaling_limits_group_parser = autoscaling_config_group_parser.add_argument_group(
+      mutex=True,
+      required=require_all_autoscaling_args,
+      help=(
+          'Autoscaling limits can be defined in either nodes or processing'
+          ' units.'
+      ),
   )
   autoscaling_node_limits_group_parser = (
       autoscaling_limits_group_parser.add_argument_group(
-          help='Autoscaling limits in nodes'
+          help='Autoscaling limits in nodes:'
       )
   )
   AutoscalingMinNodes(required=require_all_autoscaling_args).AddToParser(
@@ -364,7 +564,7 @@ def AddCapacityArgsForInstance(
   )
   autoscaling_pu_limits_group_parser = (
       autoscaling_limits_group_parser.add_argument_group(
-          help='Autoscaling limits in processing units'
+          help='Autoscaling limits in processing units:'
       )
   )
   AutoscalingMinProcessingUnits(
@@ -373,6 +573,42 @@ def AddCapacityArgsForInstance(
   AutoscalingMaxProcessingUnits(
       required=require_all_autoscaling_args
   ).AddToParser(autoscaling_pu_limits_group_parser)
+  # Asymmetric autoscaling augument structure is different between create and
+  # update commands.
+  if add_asymmetric_option_flag:
+    if asymmetric_options_group:
+      asymmetric_options_group_parser = (
+          autoscaling_config_group_parser.add_argument_group(
+              mutex=True
+          )
+      )
+      AsymmetricAutoscalingOptionFlag().AddToParser(
+          asymmetric_options_group_parser
+      )
+      ClearAsymmetricAutoscalingOptionsFlag().AddToParser(
+          asymmetric_options_group_parser
+      )
+    else:
+      AsymmetricAutoscalingOptionFlag().AddToParser(
+          autoscaling_config_group_parser
+      )
+
+
+def AddCapacityArgsForInstancePartition(parser):
+  """Parse the instance partition capacity arguments.
+
+  Args:
+    parser: the argparse parser for the command.
+  """
+  capacity_parser = parser.add_argument_group(mutex=True, required=False)
+
+  # Manual scaling.
+  Nodes(text='Number of nodes for the instance partition.').AddToParser(
+      capacity_parser
+  )
+  ProcessingUnits(
+      text='Number of processing units for the instance partition.'
+  ).AddToParser(capacity_parser)
 
 
 def TargetConfig(required=True):
@@ -390,6 +626,21 @@ def EnableDropProtection(required=False):
       dest='enable_drop_protection',
       action=arg_parsers.StoreTrueFalseAction,
       help='Enable database deletion protection on this database.',
+  )
+
+
+def EnableUpdateKmsKeys(required=False):
+  return base.Argument(
+      '--kms-keys',
+      required=required,
+      metavar='KMS_KEY',
+      action=arg_parsers.StoreOnceAction,
+      dest='kms_keys',
+      type=arg_parsers.ArgList(min_length=1),
+      help=(
+          'Update KMS key references for this database. Users should always'
+          ' provide the full set of required KMS key references.'
+      ),
   )
 
 
@@ -441,6 +692,27 @@ def _TransformOperationDone(resource):
   return done_cell
 
 
+def _TransformOperationEndTime(resource):
+  """Combines endTime and progressPercent into a single column."""
+  metadata = resource.get('metadata')
+  base_type = 'type.googleapis.com/google.spanner.admin.database.v1.{}'
+  op_type = metadata.get('@type')
+
+  if op_type == base_type.format(
+      'RestoreDatabaseMetadata'
+  ) or op_type == base_type.format('OptimizeRestoredDatabaseMetadata'):
+    progress = metadata.get('progress')
+    if progress is None:
+      return None
+    progress_end_time = progress.get('endTime')
+    progress_percent = progress.get('progressPercent')
+    if progress_end_time is None and progress_percent is not None:
+      return progress_percent + '%'
+    return progress_end_time
+  else:
+    return None
+
+
 def _TransformDatabaseId(resource):
   """Gets database ID depending on operation type."""
   metadata = resource.get('metadata')
@@ -476,39 +748,68 @@ def AddCommonListArgs(parser, additional_choices=None):
       required=False,
       text='For backup operations, the name of the backup '
       'the operations are executing on.').AddToParser(parser)
+  InstancePartition(
+      positional=False,
+      required=False,
+      hidden=False,
+      text=(
+          'For instance partition operations, the name of the instance '
+          'partition the operation is executing on.'
+      ),
+  ).AddToParser(parser)
 
   type_choices = {
-      'INSTANCE':
+      'INSTANCE': (
           'Returns instance operations for the given instance. '
-          'Note, type=INSTANCE does not work with --database or --backup.',
-      'DATABASE':
+          'Note, type=INSTANCE does not work with --database or --backup.'
+      ),
+      'DATABASE': (
           'If only the instance is specified (--instance), returns all '
           'database operations associated with the databases in the '
           'instance. When a database is specified (--database), the command '
-          'would return database operations for the given database.',
-      'BACKUP':
+          'would return database operations for the given database.'
+      ),
+      'BACKUP': (
           'If only the instance is specified (--instance), returns all '
           'backup operations associated with backups in the instance. When '
           'a backup is specified (--backup), only the backup operations for '
-          'the given backup are returned.',
-      'DATABASE_RESTORE':
+          'the given backup are returned.'
+      ),
+      'INSTANCE_PARTITION': (
+          'If only the instance is specified (--instance), returns all '
+          'instance partition operations associated with instance partitions '
+          'in the instance. When an instance partition is specified '
+          '(--instance-partition), only the instance partition operations '
+          'for the given instance partition are returned. '
+      ),
+      'DATABASE_RESTORE': (
           'Database restore operations are returned for all databases in '
           'the given instance (--instance only) or only those associated '
-          'with the given database (--database)',
-      'DATABASE_CREATE':
+          'with the given database (--database)'
+      ),
+      'DATABASE_CHANGE_QUORUM': (
+          'Database change quorum operations are returned for all databases '
+          'in the given instance (--instance only) or only those associated '
+          'with the given database (--database).'
+      ),
+      'DATABASE_CREATE': (
           'Database create operations are returned for all databases in '
           'the given instance (--instance only) or only those associated '
-          'with the given database (--database)',
-      'DATABASE_UPDATE_DDL':
+          'with the given database (--database)'
+      ),
+      'DATABASE_UPDATE_DDL': (
           'Database update DDL operations are returned for all databases in '
           'the given instance (--instance only) or only those associated '
-          'with the given database (--database)',
-      'INSTANCE_CONFIG_CREATE':
+          'with the given database (--database)'
+      ),
+      'INSTANCE_CONFIG_CREATE': (
           'Instance configuration create operations are returned for the '
-          'given instance configuration (--instance-config).',
-      'INSTANCE_CONFIG_UPDATE':
+          'given instance configuration (--instance-config).'
+      ),
+      'INSTANCE_CONFIG_UPDATE': (
           'Instance configuration update operations are returned for the '
           'given instance configuration (--instance-config).'
+      ),
   }
 
   if additional_choices is not None:
@@ -532,6 +833,7 @@ def AddCommonListArgs(parser, additional_choices=None):
   parser.display_info.AddCacheUpdater(None)
   parser.display_info.AddTransforms({'done': _TransformOperationDone})
   parser.display_info.AddTransforms({'database': _TransformDatabaseId})
+  parser.display_info.AddTransforms({'endtime': _TransformOperationEndTime})
 
 
 def AddCommonDescribeArgs(parser):
@@ -553,8 +855,20 @@ def AddCommonDescribeArgs(parser):
   Backup(
       positional=False,
       required=False,
-      text='For a backup operation, the name of the backup '
-      'the operation is executing on.').AddToParser(parser)
+      text=(
+          'For a backup operation, the name of the backup '
+          'the operation is executing on.'
+      ),
+  ).AddToParser(parser)
+  InstancePartition(
+      positional=False,
+      required=False,
+      hidden=False,
+      text=(
+          'For an instance partition operation, the name of the instance '
+          'partition the operation is executing on.'
+      ),
+  ).AddToParser(parser)
   OperationId().AddToParser(parser)
 
 
@@ -579,6 +893,15 @@ def AddCommonCancelArgs(parser):
       required=False,
       text='For a backup operation, the name of the backup '
       'the operation is executing on.').AddToParser(parser)
+  InstancePartition(
+      positional=False,
+      required=False,
+      hidden=False,
+      text=(
+          'For an instance partition operation, the name of the instance '
+          'partition the operation is executing on.'
+      ),
+  ).AddToParser(parser)
   OperationId().AddToParser(parser)
 
 
@@ -587,14 +910,18 @@ def DatabaseRole():
       '--database-role',
       required=False,
       completer=DatabaseRoleCompleter,
-      help='Cloud Spanner database role to assume for this request.')
+      help='Cloud Spanner database role to assume for this request.',
+  )
 
 
 def GetSpannerMigrationSourceFlag():
   return base.Argument(
       '--source',
       required=True,
-      help='Flag for specifying source database (e.g., PostgreSQL, MySQL, DynamoDB).'
+      help=(
+          'Flag for specifying source database (e.g., PostgreSQL, MySQL,'
+          ' DynamoDB).'
+      ),
   )
 
 
@@ -605,43 +932,57 @@ def GetSpannerMigrationPrefixFlag():
 def GetSpannerMigrationSourceProfileFlag():
   return base.Argument(
       '--source-profile',
-      help='Flag for specifying connection profile for source database (e.g.,'
-      ' "file=<path>,format=dump").')
+      help=(
+          'Flag for specifying connection profile for source database (e.g.,'
+          ' "file=<path>,format=dump").'
+      ),
+  )
 
 
 def GetSpannerMigrationTargetFlag():
   return base.Argument(
       '--target',
-      help='Specifies the target database, defaults to Spanner '
-      '(accepted values: Spanner) (default "Spanner").')
+      help=(
+          'Specifies the target database, defaults to Spanner '
+          '(accepted values: Spanner) (default "Spanner").'
+      ),
+  )
 
 
 def GetSpannerMigrationTargetProfileFlag():
   return base.Argument(
       '--target-profile',
       required=True,
-      help='Flag for specifying connection profile for target database '
-      '(e.g., "dialect=postgresql)".')
+      help=(
+          'Flag for specifying connection profile for target database '
+          '(e.g., "dialect=postgresql)".'
+      ),
+  )
 
 
 def GetSpannerMigrationSessionFlag():
   return base.Argument(
       '--session',
       required=True,
-      help='Specifies the file that you restore session state from.')
+      help='Specifies the file that you restore session state from.',
+  )
 
 
 def GetSpannerMigrationSkipForeignKeysFlag():
   return base.Argument(
       '--skip-foreign-keys',
       action='store_true',
-      help='Skip creating foreign keys after data migration is complete.')
+      help='Skip creating foreign keys after data migration is complete.',
+  )
 
 
 def GetSpannerMigrationWriteLimitFlag():
   return base.Argument(
       '--write-limit',
-      help='Number of parallel writers to Cloud Spanner during bulk data migrations (default 40).'
+      help=(
+          'Number of parallel writers to Cloud Spanner during bulk data'
+          ' migrations (default 40).'
+      ),
   )
 
 
@@ -715,4 +1056,217 @@ def GetSpannerMigrationCleanupMonitoringResourceFlag():
       '--monitoring',
       action='store_true',
       help='Cleanup monitoring dashboard(s).',
+  )
+
+
+# Checks that user only specified instance partition, or database, or backup
+# flag for LRO operations given --instance.
+# TODO(b/339032416): Consider using gcloud mutex.
+def CheckExclusiveLROFlagsUnderInstance(args):
+  exlusive_flag_count = 0
+  for flag in ['instance_partition', 'database', 'backup']:
+    if args.IsSpecified(flag):
+      exlusive_flag_count += 1
+  if exlusive_flag_count > 1:
+    raise c_exceptions.InvalidArgumentException(
+        '--database or --backup or --instance-partition',
+        'Must specify only --database or --backup or --instance-partition.',
+    )
+
+
+def GetSpannerMigrationProjectFlag():
+  return base.Argument(
+      '--project',
+      help=(
+          'The project in which the migration job and its resources will be'
+          ' created.'
+      ),
+  )
+
+
+def GetSpannerMigrationDataflowTemplateFlag():
+  return base.Argument(
+      '--dataflow-template',
+      help=(
+          'The google cloud storage path of the minimal downtime migration'
+          ' template to use to run the migration job.'
+      ),
+  )
+
+
+def GetSplitPoints(args):
+  return split_file_parser.ParseSplitPoints(args)
+
+
+def TableName(req, text='Cloud Spanner table name'):
+  return base.Argument(
+      '--table-name', required=req, help=text)
+
+
+def SourceUri(req, text='URI of the file with data to import'):
+  return base.Argument(
+      '--source-uri', required=req, help=text)
+
+
+def SourceFormat(req, text='Format of the file with data to import.'
+                 'Supported formats: csv or myssqldump or pgdump'):
+  return base.Argument(
+      '--source-format', required=req, help=text)
+
+
+def SchemaUri(req, text='URI of the file with schema of the data to import'):
+  return base.Argument(
+      '--schema-uri', required=req, help=text)
+
+
+def CsvFieldDelimiter(req, text='Field delimiter for CSV files.'):
+  return base.Argument(
+      '--csv-field-delimiter', required=req, help=text)
+
+
+def CsvLineDelimiter(req, text='Line delimiter for CSV files.'):
+  return base.Argument(
+      '--csv-line-delimiter', required=req, help=text)
+
+
+# Spanner CLI flags
+def GetSpannerCliHostFlag():
+  return base.Argument(
+      '--host',
+      default='localhost',
+      help='Host on which Spanner server is located.',
+  )
+
+
+def GetSpannerCliPortFlag():
+  return base.Argument(
+      '--port',
+      default=None,
+      type=arg_parsers.BoundedInt(lower_bound=1, upper_bound=65535),
+      help='Port number that gcloud uses to connect to Spanner.',
+  )
+
+
+def GetSpannerCliIdleTransactionTimeoutFlag():
+  return base.Argument(
+      '--idle-transaction-timeout',
+      type=int,
+      default=60,
+      help=(
+          'Set the idle transaction timeout. The default timeout is 60 seconds.'
+      ),
+  )
+
+
+def GetSpannerCliSkipColumnNamesFlag():
+  return base.Argument(
+      '--skip-column-names',
+      action='store_true',
+      help='Do not show column names in output.',
+  )
+
+
+def GetSpannerCliSkipSystemCommandFlag():
+  return base.Argument(
+      '--skip-system-command',
+      action='store_true',
+      help='Do not allow system command.',
+  )
+
+
+def GetSpannerCliPromptFlag():
+  return base.Argument(
+      '--prompt',
+      default='spanner-cli> ',
+      help='Set the prompt to the specified format.',
+  )
+
+
+def GetSpannerCliDelimiterFlag():
+  return base.Argument(
+      '--delimiter',
+      default=';',
+      help='Set the statement delimiter.',
+  )
+
+
+def GetSpannerCliTableFlag():
+  return base.Argument(
+      '--table',
+      action='store_true',
+      help='Show output in table format.',
+  )
+
+
+def GetSpannerCliHtmlFlag():
+  return base.Argument(
+      '--html',
+      action='store_true',
+      help='Show output in HTML format.',
+  )
+
+
+def GetSpannerCliXmlFlag():
+  return base.Argument(
+      '--xml',
+      action='store_true',
+      help='Show output in XML format.',
+  )
+
+
+def GetSpannerCliExecuteFlag():
+  return base.Argument(
+      '--execute',
+      default='',
+      help='Execute the statement and then exits.',
+  )
+
+
+def GetSpannerCliDatabaseRoleFlag():
+  return base.Argument(
+      '--database-role',
+      default='',
+      help='Database role user used to access the database.',
+  )
+
+
+def GetSpannerCliSourceFlag():
+  return base.Argument(
+      '--source',
+      default='',
+      help='Execute the statement from a file and then exits.',
+  )
+
+
+def GetSpannerCliTeeFlag():
+  return base.Argument(
+      '--tee',
+      default='',
+      help='Append a copy of the output to a named file.',
+  )
+
+
+def GetSpannerCliInitCommandFlag():
+  return base.Argument(
+      '--init-command',
+      default='',
+      help='SQL statement to execute after startup.',
+  )
+
+
+def GetSpannerCliInitCommandAddFlag():
+  return base.Argument(
+      '--init-command-add',
+      default='',
+      help='Additional SQL statement to execute after startup.',
+  )
+
+
+def GetSpannerCliSystemCommandFlag():
+  return base.Argument(
+      '--system-command',
+      default='ON',
+      type=lambda x: x.upper(),
+      choices=['ON', 'OFF'],
+      help='Enable or disable system commands. Default: ON',
   )

@@ -1,0 +1,31 @@
+0 verbose cli /apex/com.android.runtime/bin/linker64 /data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@11.4.2
+2 info using node@v24.4.1
+3 silly config load:file:/data/data/com.termux/files/usr/lib/node_modules/npm/npmrc
+4 silly config load:file:/data/data/com.termux/files/home/.npmrc
+5 warn Unknown user config "HEAD". This will stop working in the next major version of npm.
+6 warn Unknown user config "b52c5e01b (Push all project files to main)". This will stop working in the next major version of npm.
+7 silly config load:file:/data/data/com.termux/files/usr/etc/npmrc
+8 verbose title npm exec web3.storage upload dist/
+9 verbose argv "exec" "--" "web3.storage" "upload" "dist/"
+10 verbose logfile logs-max:10 dir:/data/data/com.termux/files/home/.npm/_logs/2025-07-22T01_54_52_740Z-
+11 verbose logfile /data/data/com.termux/files/home/.npm/_logs/2025-07-22T01_54_52_740Z-debug-0.log
+12 silly logfile start cleaning logs, removing 1 files
+13 silly logfile done cleaning log files
+14 silly packumentCache heap:1174405120 maxSize:293601280 maxEntrySize:146800640
+15 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules
+16 http fetch GET 200 https://registry.npmjs.org/web3.storage 927ms (cache miss)
+17 verbose stack Error: could not determine executable to run
+17 verbose stack     at getBinFromManifest (/data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/libnpmexec/lib/get-bin-from-manifest.js:17:23)
+17 verbose stack     at exec (/data/data/com.termux/files/usr/lib/node_modules/npm/node_modules/libnpmexec/lib/index.js:205:15)
+17 verbose stack     at async Npm.exec (/data/data/com.termux/files/usr/lib/node_modules/npm/lib/npm.js:208:9)
+17 verbose stack     at async module.exports (/data/data/com.termux/files/usr/lib/node_modules/npm/lib/cli/entry.js:60:5)
+18 verbose pkgid web3.storage@4.5.5
+19 error could not determine executable to run
+20 verbose cwd /data/data/com.termux/files/home
+21 verbose os Linux 5.10.226-android12-9-00047-g4968e29b7f92-ab12786767
+22 verbose node v24.4.1
+23 verbose npm  v11.4.2
+24 verbose exit 1
+25 verbose code 1
+26 error A complete log of this run can be found in: /data/data/com.termux/files/home/.npm/_logs/2025-07-22T01_54_52_740Z-debug-0.log

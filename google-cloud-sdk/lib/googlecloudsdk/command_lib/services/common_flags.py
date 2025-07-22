@@ -164,6 +164,17 @@ def key_id_flag(parser, suffix='to act on'):
   ).AddToParser(parser)
 
 
+def service_account_flag(parser):
+  base.Argument(
+      '--service-account',
+      help=(
+          'The email of the service account the key is bound to. If this field'
+          ' is specified, the key is a service account bound key and auth'
+          ' enabled.'
+      ),
+  ).AddToParser(parser)
+
+
 def add_key_undelete_args(parser):
   """Adds args for api-keys undelete command."""
   undelete_set_group = parser.add_mutually_exclusive_group(required=True)
@@ -171,6 +182,16 @@ def add_key_undelete_args(parser):
       undelete_set_group, suffix='to undelete', api_version='v2', required=False
   )
   _key_string_flag(undelete_set_group)
+
+
+def validate_only_args(parser, suffix='to act on'):
+  base.Argument(
+      '--validate-only',
+      action='store_true',
+      help=(
+          "Validate the {} action, but don't actually perform it".format(suffix)
+      ),
+  ).AddToParser(parser)
 
 
 def add_resource_args(parser):

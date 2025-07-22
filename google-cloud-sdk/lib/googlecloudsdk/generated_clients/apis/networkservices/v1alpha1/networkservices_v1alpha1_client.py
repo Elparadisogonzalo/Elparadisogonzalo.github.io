@@ -39,26 +39,34 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         default_global_params=default_global_params,
         additional_http_headers=additional_http_headers,
         response_encoding=response_encoding)
+    self.projects_locations_authzExtensions = self.ProjectsLocationsAuthzExtensionsService(self)
     self.projects_locations_edgeCacheKeysets = self.ProjectsLocationsEdgeCacheKeysetsService(self)
     self.projects_locations_edgeCacheOrigins = self.ProjectsLocationsEdgeCacheOriginsService(self)
     self.projects_locations_edgeCacheServices = self.ProjectsLocationsEdgeCacheServicesService(self)
     self.projects_locations_endpointPolicies = self.ProjectsLocationsEndpointPoliciesService(self)
+    self.projects_locations_gateways_routeViews = self.ProjectsLocationsGatewaysRouteViewsService(self)
     self.projects_locations_gateways = self.ProjectsLocationsGatewaysService(self)
-    self.projects_locations_global_serviceObserver = self.ProjectsLocationsGlobalServiceObserverService(self)
     self.projects_locations_global = self.ProjectsLocationsGlobalService(self)
     self.projects_locations_grpcRoutes = self.ProjectsLocationsGrpcRoutesService(self)
     self.projects_locations_httpFilters = self.ProjectsLocationsHttpFiltersService(self)
     self.projects_locations_httpRoutes = self.ProjectsLocationsHttpRoutesService(self)
+    self.projects_locations_lbEdgeExtensions = self.ProjectsLocationsLbEdgeExtensionsService(self)
     self.projects_locations_lbObservabilityExtensions = self.ProjectsLocationsLbObservabilityExtensionsService(self)
     self.projects_locations_lbRouteExtensions = self.ProjectsLocationsLbRouteExtensionsService(self)
     self.projects_locations_lbTrafficExtensions = self.ProjectsLocationsLbTrafficExtensionsService(self)
+    self.projects_locations_meshes_routeViews = self.ProjectsLocationsMeshesRouteViewsService(self)
     self.projects_locations_meshes = self.ProjectsLocationsMeshesService(self)
     self.projects_locations_multicastConsumerAssociations = self.ProjectsLocationsMulticastConsumerAssociationsService(self)
     self.projects_locations_multicastDomainActivations = self.ProjectsLocationsMulticastDomainActivationsService(self)
+    self.projects_locations_multicastDomainGroups = self.ProjectsLocationsMulticastDomainGroupsService(self)
     self.projects_locations_multicastDomains = self.ProjectsLocationsMulticastDomainsService(self)
     self.projects_locations_multicastGroupConsumerActivations = self.ProjectsLocationsMulticastGroupConsumerActivationsService(self)
     self.projects_locations_multicastGroupDefinitions = self.ProjectsLocationsMulticastGroupDefinitionsService(self)
+    self.projects_locations_multicastGroupProducerActivations = self.ProjectsLocationsMulticastGroupProducerActivationsService(self)
+    self.projects_locations_multicastGroupRangeActivations = self.ProjectsLocationsMulticastGroupRangeActivationsService(self)
+    self.projects_locations_multicastGroupRanges = self.ProjectsLocationsMulticastGroupRangesService(self)
     self.projects_locations_multicastGroups = self.ProjectsLocationsMulticastGroupsService(self)
+    self.projects_locations_multicastProducerAssociations = self.ProjectsLocationsMulticastProducerAssociationsService(self)
     self.projects_locations_observabilityPolicies = self.ProjectsLocationsObservabilityPoliciesService(self)
     self.projects_locations_operations = self.ProjectsLocationsOperationsService(self)
     self.projects_locations_serviceBindings = self.ProjectsLocationsServiceBindingsService(self)
@@ -70,6 +78,151 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     self.projects_locations_wasmPlugins = self.ProjectsLocationsWasmPluginsService(self)
     self.projects_locations = self.ProjectsLocationsService(self)
     self.projects = self.ProjectsService(self)
+
+  class ProjectsLocationsAuthzExtensionsService(base_api.BaseApiService):
+    """Service class for the projects_locations_authzExtensions resource."""
+
+    _NAME = 'projects_locations_authzExtensions'
+
+    def __init__(self, client):
+      super(NetworkservicesV1alpha1.ProjectsLocationsAuthzExtensionsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a new `AuthzExtension` resource in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsAuthzExtensionsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/authzExtensions',
+        http_method='POST',
+        method_id='networkservices.projects.locations.authzExtensions.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['authzExtensionId', 'requestId'],
+        relative_path='v1alpha1/{+parent}/authzExtensions',
+        request_field='authzExtension',
+        request_type_name='NetworkservicesProjectsLocationsAuthzExtensionsCreateRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes the specified `AuthzExtension` resource.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsAuthzExtensionsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/authzExtensions/{authzExtensionsId}',
+        http_method='DELETE',
+        method_id='networkservices.projects.locations.authzExtensions.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId'],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsAuthzExtensionsDeleteRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets details of the specified `AuthzExtension` resource.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsAuthzExtensionsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (AuthzExtension) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/authzExtensions/{authzExtensionsId}',
+        http_method='GET',
+        method_id='networkservices.projects.locations.authzExtensions.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsAuthzExtensionsGetRequest',
+        response_type_name='AuthzExtension',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists `AuthzExtension` resources in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsAuthzExtensionsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListAuthzExtensionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/authzExtensions',
+        http_method='GET',
+        method_id='networkservices.projects.locations.authzExtensions.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha1/{+parent}/authzExtensions',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsAuthzExtensionsListRequest',
+        response_type_name='ListAuthzExtensionsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates the parameters of the specified `AuthzExtension` resource.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsAuthzExtensionsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/authzExtensions/{authzExtensionsId}',
+        http_method='PATCH',
+        method_id='networkservices.projects.locations.authzExtensions.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId', 'updateMask'],
+        relative_path='v1alpha1/{+name}',
+        request_field='authzExtension',
+        request_type_name='NetworkservicesProjectsLocationsAuthzExtensionsPatchRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
 
   class ProjectsLocationsEdgeCacheKeysetsService(base_api.BaseApiService):
     """Service class for the projects_locations_edgeCacheKeysets resource."""
@@ -867,33 +1020,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsEndpointPoliciesGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/endpointPolicies/{endpointPoliciesId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.endpointPolicies.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsEndpointPoliciesGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists EndpointPolicies in a given project and location.
 
@@ -913,7 +1039,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         method_id='networkservices.projects.locations.endpointPolicies.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['pageSize', 'pageToken'],
+        query_params=['pageSize', 'pageToken', 'returnPartialSuccess'],
         relative_path='v1alpha1/{+parent}/endpointPolicies',
         request_field='',
         request_type_name='NetworkservicesProjectsLocationsEndpointPoliciesListRequest',
@@ -948,57 +1074,67 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
+  class ProjectsLocationsGatewaysRouteViewsService(base_api.BaseApiService):
+    """Service class for the projects_locations_gateways_routeViews resource."""
+
+    _NAME = 'projects_locations_gateways_routeViews'
+
+    def __init__(self, client):
+      super(NetworkservicesV1alpha1.ProjectsLocationsGatewaysRouteViewsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Get a single RouteView of a Gateway.
 
       Args:
-        request: (NetworkservicesProjectsLocationsEndpointPoliciesSetIamPolicyRequest) input message
+        request: (NetworkservicesProjectsLocationsGatewaysRouteViewsGetRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (Policy) The response message.
+        (GatewayRouteView) The response message.
       """
-      config = self.GetMethodConfig('SetIamPolicy')
+      config = self.GetMethodConfig('Get')
       return self._RunMethod(
           config, request, global_params=global_params)
 
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/endpointPolicies/{endpointPoliciesId}:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.endpointPolicies.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/gateways/{gatewaysId}/routeViews/{routeViewsId}',
+        http_method='GET',
+        method_id='networkservices.projects.locations.gateways.routeViews.get',
+        ordered_params=['name'],
+        path_params=['name'],
         query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsEndpointPoliciesSetIamPolicyRequest',
-        response_type_name='Policy',
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsGatewaysRouteViewsGetRequest',
+        response_type_name='GatewayRouteView',
         supports_download=False,
     )
 
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+    def List(self, request, global_params=None):
+      r"""Lists RouteViews.
 
       Args:
-        request: (NetworkservicesProjectsLocationsEndpointPoliciesTestIamPermissionsRequest) input message
+        request: (NetworkservicesProjectsLocationsGatewaysRouteViewsListRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (TestIamPermissionsResponse) The response message.
+        (ListGatewayRouteViewsResponse) The response message.
       """
-      config = self.GetMethodConfig('TestIamPermissions')
+      config = self.GetMethodConfig('List')
       return self._RunMethod(
           config, request, global_params=global_params)
 
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/endpointPolicies/{endpointPoliciesId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.endpointPolicies.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsEndpointPoliciesTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/gateways/{gatewaysId}/routeViews',
+        http_method='GET',
+        method_id='networkservices.projects.locations.gateways.routeViews.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken'],
+        relative_path='v1alpha1/{+parent}/routeViews',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsGatewaysRouteViewsListRequest',
+        response_type_name='ListGatewayRouteViewsResponse',
         supports_download=False,
     )
 
@@ -1093,33 +1229,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsGatewaysGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/gateways/{gatewaysId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.gateways.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsGatewaysGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists Gateways in a given project and location.
 
@@ -1171,151 +1280,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         request_field='gateway',
         request_type_name='NetworkservicesProjectsLocationsGatewaysPatchRequest',
         response_type_name='Operation',
-        supports_download=False,
-    )
-
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsGatewaysSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/gateways/{gatewaysId}:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.gateways.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsGatewaysSetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsGatewaysTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/gateways/{gatewaysId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.gateways.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsGatewaysTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
-        supports_download=False,
-    )
-
-  class ProjectsLocationsGlobalServiceObserverService(base_api.BaseApiService):
-    """Service class for the projects_locations_global_serviceObserver resource."""
-
-    _NAME = 'projects_locations_global_serviceObserver'
-
-    def __init__(self, client):
-      super(NetworkservicesV1alpha1.ProjectsLocationsGlobalServiceObserverService, self).__init__(client)
-      self._upload_configs = {
-          }
-
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsGlobalServiceObserverGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/global/serviceObserver:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.global.serviceObserver.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsGlobalServiceObserverGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsGlobalServiceObserverSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/global/serviceObserver:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.global.serviceObserver.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsGlobalServiceObserverSetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsGlobalServiceObserverTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/global/serviceObserver:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.global.serviceObserver.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsGlobalServiceObserverTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
         supports_download=False,
     )
 
@@ -1474,33 +1438,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsGrpcRoutesGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/grpcRoutes/{grpcRoutesId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.grpcRoutes.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsGrpcRoutesGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists GrpcRoutes in a given project and location.
 
@@ -1520,7 +1457,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         method_id='networkservices.projects.locations.grpcRoutes.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['pageSize', 'pageToken'],
+        query_params=['pageSize', 'pageToken', 'returnPartialSuccess'],
         relative_path='v1alpha1/{+parent}/grpcRoutes',
         request_field='',
         request_type_name='NetworkservicesProjectsLocationsGrpcRoutesListRequest',
@@ -1552,60 +1489,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         request_field='grpcRoute',
         request_type_name='NetworkservicesProjectsLocationsGrpcRoutesPatchRequest',
         response_type_name='Operation',
-        supports_download=False,
-    )
-
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsGrpcRoutesSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/grpcRoutes/{grpcRoutesId}:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.grpcRoutes.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsGrpcRoutesSetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsGrpcRoutesTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/grpcRoutes/{grpcRoutesId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.grpcRoutes.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsGrpcRoutesTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
         supports_download=False,
     )
 
@@ -1700,33 +1583,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsHttpFiltersGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/httpFilters/{httpFiltersId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.httpFilters.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsHttpFiltersGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists HttpFilters in a given project and location.
 
@@ -1778,60 +1634,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         request_field='httpFilter',
         request_type_name='NetworkservicesProjectsLocationsHttpFiltersPatchRequest',
         response_type_name='Operation',
-        supports_download=False,
-    )
-
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsHttpFiltersSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/httpFilters/{httpFiltersId}:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.httpFilters.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsHttpFiltersSetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsHttpFiltersTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/httpFilters/{httpFiltersId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.httpFilters.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsHttpFiltersTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
         supports_download=False,
     )
 
@@ -1926,33 +1728,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsHttpRoutesGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/httpRoutes/{httpRoutesId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.httpRoutes.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsHttpRoutesGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists HttpRoute in a given project and location.
 
@@ -1972,7 +1747,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         method_id='networkservices.projects.locations.httpRoutes.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['pageSize', 'pageToken'],
+        query_params=['pageSize', 'pageToken', 'returnPartialSuccess'],
         relative_path='v1alpha1/{+parent}/httpRoutes',
         request_field='',
         request_type_name='NetworkservicesProjectsLocationsHttpRoutesListRequest',
@@ -2007,57 +1782,148 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
+  class ProjectsLocationsLbEdgeExtensionsService(base_api.BaseApiService):
+    """Service class for the projects_locations_lbEdgeExtensions resource."""
+
+    _NAME = 'projects_locations_lbEdgeExtensions'
+
+    def __init__(self, client):
+      super(NetworkservicesV1alpha1.ProjectsLocationsLbEdgeExtensionsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a new `LbEdgeExtension` resource in a given project and location.
 
       Args:
-        request: (NetworkservicesProjectsLocationsHttpRoutesSetIamPolicyRequest) input message
+        request: (NetworkservicesProjectsLocationsLbEdgeExtensionsCreateRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (Policy) The response message.
+        (Operation) The response message.
       """
-      config = self.GetMethodConfig('SetIamPolicy')
+      config = self.GetMethodConfig('Create')
       return self._RunMethod(
           config, request, global_params=global_params)
 
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/httpRoutes/{httpRoutesId}:setIamPolicy',
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/lbEdgeExtensions',
         http_method='POST',
-        method_id='networkservices.projects.locations.httpRoutes.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsHttpRoutesSetIamPolicyRequest',
-        response_type_name='Policy',
+        method_id='networkservices.projects.locations.lbEdgeExtensions.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['lbEdgeExtensionId', 'requestId'],
+        relative_path='v1alpha1/{+parent}/lbEdgeExtensions',
+        request_field='lbEdgeExtension',
+        request_type_name='NetworkservicesProjectsLocationsLbEdgeExtensionsCreateRequest',
+        response_type_name='Operation',
         supports_download=False,
     )
 
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+    def Delete(self, request, global_params=None):
+      r"""Deletes the specified `LbEdgeExtension` resource.
 
       Args:
-        request: (NetworkservicesProjectsLocationsHttpRoutesTestIamPermissionsRequest) input message
+        request: (NetworkservicesProjectsLocationsLbEdgeExtensionsDeleteRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (TestIamPermissionsResponse) The response message.
+        (Operation) The response message.
       """
-      config = self.GetMethodConfig('TestIamPermissions')
+      config = self.GetMethodConfig('Delete')
       return self._RunMethod(
           config, request, global_params=global_params)
 
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/httpRoutes/{httpRoutesId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.httpRoutes.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/lbEdgeExtensions/{lbEdgeExtensionsId}',
+        http_method='DELETE',
+        method_id='networkservices.projects.locations.lbEdgeExtensions.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId'],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsLbEdgeExtensionsDeleteRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets details of the specified `LbEdgeExtension` resource.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsLbEdgeExtensionsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LbEdgeExtension) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/lbEdgeExtensions/{lbEdgeExtensionsId}',
+        http_method='GET',
+        method_id='networkservices.projects.locations.lbEdgeExtensions.get',
+        ordered_params=['name'],
+        path_params=['name'],
         query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsHttpRoutesTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsLbEdgeExtensionsGetRequest',
+        response_type_name='LbEdgeExtension',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists `LbEdgeExtension` resources in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsLbEdgeExtensionsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListLbEdgeExtensionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/lbEdgeExtensions',
+        http_method='GET',
+        method_id='networkservices.projects.locations.lbEdgeExtensions.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha1/{+parent}/lbEdgeExtensions',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsLbEdgeExtensionsListRequest',
+        response_type_name='ListLbEdgeExtensionsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates the parameters of the specified `LbEdgeExtension` resource.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsLbEdgeExtensionsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/lbEdgeExtensions/{lbEdgeExtensionsId}',
+        http_method='PATCH',
+        method_id='networkservices.projects.locations.lbEdgeExtensions.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId', 'updateMask'],
+        relative_path='v1alpha1/{+name}',
+        request_field='lbEdgeExtension',
+        request_type_name='NetworkservicesProjectsLocationsLbEdgeExtensionsPatchRequest',
+        response_type_name='Operation',
         supports_download=False,
     )
 
@@ -2496,6 +2362,70 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsMeshesRouteViewsService(base_api.BaseApiService):
+    """Service class for the projects_locations_meshes_routeViews resource."""
+
+    _NAME = 'projects_locations_meshes_routeViews'
+
+    def __init__(self, client):
+      super(NetworkservicesV1alpha1.ProjectsLocationsMeshesRouteViewsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Get a single RouteView of a Mesh.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMeshesRouteViewsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (MeshRouteView) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/meshes/{meshesId}/routeViews/{routeViewsId}',
+        http_method='GET',
+        method_id='networkservices.projects.locations.meshes.routeViews.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMeshesRouteViewsGetRequest',
+        response_type_name='MeshRouteView',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists RouteViews.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMeshesRouteViewsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListMeshRouteViewsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/meshes/{meshesId}/routeViews',
+        http_method='GET',
+        method_id='networkservices.projects.locations.meshes.routeViews.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['pageSize', 'pageToken'],
+        relative_path='v1alpha1/{+parent}/routeViews',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMeshesRouteViewsListRequest',
+        response_type_name='ListMeshRouteViewsResponse',
+        supports_download=False,
+    )
+
   class ProjectsLocationsMeshesService(base_api.BaseApiService):
     """Service class for the projects_locations_meshes resource."""
 
@@ -2587,33 +2517,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsMeshesGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/meshes/{meshesId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.meshes.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsMeshesGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists Meshes in a given project and location.
 
@@ -2633,7 +2536,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         method_id='networkservices.projects.locations.meshes.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['pageSize', 'pageToken'],
+        query_params=['pageSize', 'pageToken', 'returnPartialSuccess'],
         relative_path='v1alpha1/{+parent}/meshes',
         request_field='',
         request_type_name='NetworkservicesProjectsLocationsMeshesListRequest',
@@ -2668,60 +2571,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsMeshesSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/meshes/{meshesId}:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.meshes.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsMeshesSetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsMeshesTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/meshes/{meshesId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.meshes.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsMeshesTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
-        supports_download=False,
-    )
-
   class ProjectsLocationsMulticastConsumerAssociationsService(base_api.BaseApiService):
     """Service class for the projects_locations_multicastConsumerAssociations resource."""
 
@@ -2733,7 +2582,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a new MulticastConsumerAssociation in a given project and location.
+      r"""Creates a new multicast consumer association in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastConsumerAssociationsCreateRequest) input message
@@ -2760,7 +2609,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a single MulticastConsumerAssociation.
+      r"""Deletes a single multicast consumer association.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastConsumerAssociationsDeleteRequest) input message
@@ -2787,7 +2636,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets details of a single MulticastConsumerAssociation.
+      r"""Gets details of a single multicast consumer association.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastConsumerAssociationsGetRequest) input message
@@ -2814,7 +2663,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists MulticastConsumerAssociations in a given project and location.
+      r"""Lists multicast consumer associations in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastConsumerAssociationsListRequest) input message
@@ -2841,7 +2690,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the parameters of a single MulticastConsumerAssociation.
+      r"""Updates the parameters of a single multicast consumer association.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastConsumerAssociationsPatchRequest) input message
@@ -2878,7 +2727,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a new MulticastDomainActivation in a given project and location.
+      r"""Creates a new multicast domain activation in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainActivationsCreateRequest) input message
@@ -2905,7 +2754,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a single MulticastDomainActivation.
+      r"""Deletes a single multicast domain activation.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainActivationsDeleteRequest) input message
@@ -2932,7 +2781,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets details of a single MulticastDomainActivation.
+      r"""Gets details of a single multicast domain activation.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainActivationsGetRequest) input message
@@ -2959,7 +2808,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists MulticastDomainActivations in a given project and location.
+      r"""Lists multicast domain activations in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainActivationsListRequest) input message
@@ -2986,7 +2835,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the parameters of a single MulticastDomainActivation.
+      r"""Updates the parameters of a single multicast domain activation.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainActivationsPatchRequest) input message
@@ -3012,6 +2861,151 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsMulticastDomainGroupsService(base_api.BaseApiService):
+    """Service class for the projects_locations_multicastDomainGroups resource."""
+
+    _NAME = 'projects_locations_multicastDomainGroups'
+
+    def __init__(self, client):
+      super(NetworkservicesV1alpha1.ProjectsLocationsMulticastDomainGroupsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a new multicast domain group in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastDomainGroupsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastDomainGroups',
+        http_method='POST',
+        method_id='networkservices.projects.locations.multicastDomainGroups.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['multicastDomainGroupId', 'requestId'],
+        relative_path='v1alpha1/{+parent}/multicastDomainGroups',
+        request_field='multicastDomainGroup',
+        request_type_name='NetworkservicesProjectsLocationsMulticastDomainGroupsCreateRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a single multicast domain.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastDomainGroupsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastDomainGroups/{multicastDomainGroupsId}',
+        http_method='DELETE',
+        method_id='networkservices.projects.locations.multicastDomainGroups.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId'],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastDomainGroupsDeleteRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets details of a single multicast domain group.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastDomainGroupsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (MulticastDomainGroup) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastDomainGroups/{multicastDomainGroupsId}',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastDomainGroups.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastDomainGroupsGetRequest',
+        response_type_name='MulticastDomainGroup',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists multicast domain groups in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastDomainGroupsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListMulticastDomainGroupsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastDomainGroups',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastDomainGroups.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha1/{+parent}/multicastDomainGroups',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastDomainGroupsListRequest',
+        response_type_name='ListMulticastDomainGroupsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates the parameters of a single multicast domain group.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastDomainGroupsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastDomainGroups/{multicastDomainGroupsId}',
+        http_method='PATCH',
+        method_id='networkservices.projects.locations.multicastDomainGroups.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId', 'updateMask'],
+        relative_path='v1alpha1/{+name}',
+        request_field='multicastDomainGroup',
+        request_type_name='NetworkservicesProjectsLocationsMulticastDomainGroupsPatchRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
   class ProjectsLocationsMulticastDomainsService(base_api.BaseApiService):
     """Service class for the projects_locations_multicastDomains resource."""
 
@@ -3023,7 +3017,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a new MulticastDomain in a given project and location.
+      r"""Creates a new multicast domain in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainsCreateRequest) input message
@@ -3050,7 +3044,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a single MulticastDomain.
+      r"""Deletes a single multicast domain.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainsDeleteRequest) input message
@@ -3077,7 +3071,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets details of a single MulticastDomain.
+      r"""Gets details of a single multicast domain.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainsGetRequest) input message
@@ -3104,7 +3098,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists MulticastDomains in a given project and location.
+      r"""Lists multicast domains in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainsListRequest) input message
@@ -3131,7 +3125,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the parameters of a single MulticastDomain.
+      r"""Updates the parameters of a single multicast domain.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastDomainsPatchRequest) input message
@@ -3168,7 +3162,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a new MulticastGroupConsumerActivation in a given project and location.
+      r"""Creates a new multicast group consumer activation in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupConsumerActivationsCreateRequest) input message
@@ -3195,7 +3189,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a single MulticastGroupConsumerActivation.
+      r"""Deletes a single multicast group consumer activation.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupConsumerActivationsDeleteRequest) input message
@@ -3222,7 +3216,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets details of a single MulticastGroupConsumerActivation.
+      r"""Gets details of a single multicast group consumer activation.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupConsumerActivationsGetRequest) input message
@@ -3249,7 +3243,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists MulticastGroupConsumerActivations in a given project and location.
+      r"""Lists multicast group consumer activations in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupConsumerActivationsListRequest) input message
@@ -3276,7 +3270,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the parameters of a single MulticastGroupConsumerActivation.
+      r"""Updates the parameters of a single multicast group consumer activation.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupConsumerActivationsPatchRequest) input message
@@ -3313,7 +3307,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a new MulticastGroupDefinition in a given project and location.
+      r"""Creates a new multicast group definition in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupDefinitionsCreateRequest) input message
@@ -3340,7 +3334,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a single MulticastGroupDefinition.
+      r"""Deletes a single multicast group definition.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupDefinitionsDeleteRequest) input message
@@ -3367,7 +3361,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets details of a single MulticastGroupDefinition.
+      r"""Gets details of a single multicast group definition.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupDefinitionsGetRequest) input message
@@ -3394,7 +3388,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists MulticastGroupDefinitions in a given project and location.
+      r"""Lists multicast group definitions in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupDefinitionsListRequest) input message
@@ -3421,7 +3415,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the parameters of a single MulticastGroupDefinition.
+      r"""Updates the parameters of a single multicast group definition.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupDefinitionsPatchRequest) input message
@@ -3447,6 +3441,441 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsMulticastGroupProducerActivationsService(base_api.BaseApiService):
+    """Service class for the projects_locations_multicastGroupProducerActivations resource."""
+
+    _NAME = 'projects_locations_multicastGroupProducerActivations'
+
+    def __init__(self, client):
+      super(NetworkservicesV1alpha1.ProjectsLocationsMulticastGroupProducerActivationsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a new multicast group consumer activation in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupProducerActivationsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupProducerActivations',
+        http_method='POST',
+        method_id='networkservices.projects.locations.multicastGroupProducerActivations.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['multicastGroupProducerActivationId', 'requestId'],
+        relative_path='v1alpha1/{+parent}/multicastGroupProducerActivations',
+        request_field='multicastGroupProducerActivation',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupProducerActivationsCreateRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a single multicast group consumer activation.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupProducerActivationsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupProducerActivations/{multicastGroupProducerActivationsId}',
+        http_method='DELETE',
+        method_id='networkservices.projects.locations.multicastGroupProducerActivations.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId'],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupProducerActivationsDeleteRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets details of a single multicast group consumer activation.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupProducerActivationsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (MulticastGroupProducerActivation) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupProducerActivations/{multicastGroupProducerActivationsId}',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastGroupProducerActivations.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupProducerActivationsGetRequest',
+        response_type_name='MulticastGroupProducerActivation',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists multicast group consumer activations in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupProducerActivationsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListMulticastGroupProducerActivationsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupProducerActivations',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastGroupProducerActivations.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha1/{+parent}/multicastGroupProducerActivations',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupProducerActivationsListRequest',
+        response_type_name='ListMulticastGroupProducerActivationsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates the parameters of a single multicast group consumer activation.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupProducerActivationsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupProducerActivations/{multicastGroupProducerActivationsId}',
+        http_method='PATCH',
+        method_id='networkservices.projects.locations.multicastGroupProducerActivations.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId', 'updateMask'],
+        relative_path='v1alpha1/{+name}',
+        request_field='multicastGroupProducerActivation',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupProducerActivationsPatchRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsMulticastGroupRangeActivationsService(base_api.BaseApiService):
+    """Service class for the projects_locations_multicastGroupRangeActivations resource."""
+
+    _NAME = 'projects_locations_multicastGroupRangeActivations'
+
+    def __init__(self, client):
+      super(NetworkservicesV1alpha1.ProjectsLocationsMulticastGroupRangeActivationsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a new multicast group range activation in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangeActivationsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRangeActivations',
+        http_method='POST',
+        method_id='networkservices.projects.locations.multicastGroupRangeActivations.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['multicastGroupRangeActivationId', 'requestId'],
+        relative_path='v1alpha1/{+parent}/multicastGroupRangeActivations',
+        request_field='multicastGroupRangeActivation',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangeActivationsCreateRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a single multicast group range activation.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangeActivationsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRangeActivations/{multicastGroupRangeActivationsId}',
+        http_method='DELETE',
+        method_id='networkservices.projects.locations.multicastGroupRangeActivations.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId'],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangeActivationsDeleteRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets details of a single multicast group range activation.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangeActivationsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (MulticastGroupRangeActivation) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRangeActivations/{multicastGroupRangeActivationsId}',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastGroupRangeActivations.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangeActivationsGetRequest',
+        response_type_name='MulticastGroupRangeActivation',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists multicast group range activationsin a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangeActivationsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListMulticastGroupRangeActivationsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRangeActivations',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastGroupRangeActivations.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha1/{+parent}/multicastGroupRangeActivations',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangeActivationsListRequest',
+        response_type_name='ListMulticastGroupRangeActivationsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates the parameters of a single multicast group range activation.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangeActivationsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRangeActivations/{multicastGroupRangeActivationsId}',
+        http_method='PATCH',
+        method_id='networkservices.projects.locations.multicastGroupRangeActivations.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId', 'updateMask'],
+        relative_path='v1alpha1/{+name}',
+        request_field='multicastGroupRangeActivation',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangeActivationsPatchRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsMulticastGroupRangesService(base_api.BaseApiService):
+    """Service class for the projects_locations_multicastGroupRanges resource."""
+
+    _NAME = 'projects_locations_multicastGroupRanges'
+
+    def __init__(self, client):
+      super(NetworkservicesV1alpha1.ProjectsLocationsMulticastGroupRangesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a new multicast group range in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangesCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRanges',
+        http_method='POST',
+        method_id='networkservices.projects.locations.multicastGroupRanges.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['multicastGroupRangeId', 'requestId'],
+        relative_path='v1alpha1/{+parent}/multicastGroupRanges',
+        request_field='multicastGroupRange',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangesCreateRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a single multicast group range.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRanges/{multicastGroupRangesId}',
+        http_method='DELETE',
+        method_id='networkservices.projects.locations.multicastGroupRanges.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId'],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangesDeleteRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets details of a single multicast group range.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (MulticastGroupRange) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRanges/{multicastGroupRangesId}',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastGroupRanges.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangesGetRequest',
+        response_type_name='MulticastGroupRange',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists multicast group ranges in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListMulticastGroupRangesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRanges',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastGroupRanges.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha1/{+parent}/multicastGroupRanges',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangesListRequest',
+        response_type_name='ListMulticastGroupRangesResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates the parameters of a single multicast group range.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastGroupRangesPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastGroupRanges/{multicastGroupRangesId}',
+        http_method='PATCH',
+        method_id='networkservices.projects.locations.multicastGroupRanges.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId', 'updateMask'],
+        relative_path='v1alpha1/{+name}',
+        request_field='multicastGroupRange',
+        request_type_name='NetworkservicesProjectsLocationsMulticastGroupRangesPatchRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
   class ProjectsLocationsMulticastGroupsService(base_api.BaseApiService):
     """Service class for the projects_locations_multicastGroups resource."""
 
@@ -3458,7 +3887,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a new MulticastGroup in a given project and location.
+      r"""Creates a new multicast group in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupsCreateRequest) input message
@@ -3485,7 +3914,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a single MulticastGroup.
+      r"""Deletes a single multicast group.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupsDeleteRequest) input message
@@ -3512,7 +3941,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets details of a single MulticastGroup.
+      r"""Gets details of a single multicast group.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupsGetRequest) input message
@@ -3539,7 +3968,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists MulticastGroups in a given project and location.
+      r"""Lists multicast groups in a given project and location.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupsListRequest) input message
@@ -3566,7 +3995,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the parameters of a single MulticastGroup.
+      r"""Updates the parameters of a single multicast group.
 
       Args:
         request: (NetworkservicesProjectsLocationsMulticastGroupsPatchRequest) input message
@@ -3588,6 +4017,151 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         relative_path='v1alpha1/{+name}',
         request_field='multicastGroup',
         request_type_name='NetworkservicesProjectsLocationsMulticastGroupsPatchRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsMulticastProducerAssociationsService(base_api.BaseApiService):
+    """Service class for the projects_locations_multicastProducerAssociations resource."""
+
+    _NAME = 'projects_locations_multicastProducerAssociations'
+
+    def __init__(self, client):
+      super(NetworkservicesV1alpha1.ProjectsLocationsMulticastProducerAssociationsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a new multicast producer association in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastProducerAssociationsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastProducerAssociations',
+        http_method='POST',
+        method_id='networkservices.projects.locations.multicastProducerAssociations.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['multicastProducerAssociationId', 'requestId'],
+        relative_path='v1alpha1/{+parent}/multicastProducerAssociations',
+        request_field='multicastProducerAssociation',
+        request_type_name='NetworkservicesProjectsLocationsMulticastProducerAssociationsCreateRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a single multicast consumer association.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastProducerAssociationsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastProducerAssociations/{multicastProducerAssociationsId}',
+        http_method='DELETE',
+        method_id='networkservices.projects.locations.multicastProducerAssociations.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId'],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastProducerAssociationsDeleteRequest',
+        response_type_name='Operation',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets details of a single multicast producer association.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastProducerAssociationsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (MulticastProducerAssociation) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastProducerAssociations/{multicastProducerAssociationsId}',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastProducerAssociations.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha1/{+name}',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastProducerAssociationsGetRequest',
+        response_type_name='MulticastProducerAssociation',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists multicast producer associations in a given project and location.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastProducerAssociationsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListMulticastProducerAssociationsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastProducerAssociations',
+        http_method='GET',
+        method_id='networkservices.projects.locations.multicastProducerAssociations.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha1/{+parent}/multicastProducerAssociations',
+        request_field='',
+        request_type_name='NetworkservicesProjectsLocationsMulticastProducerAssociationsListRequest',
+        response_type_name='ListMulticastProducerAssociationsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates the parameters of a single multicast consumer association.
+
+      Args:
+        request: (NetworkservicesProjectsLocationsMulticastProducerAssociationsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/multicastProducerAssociations/{multicastProducerAssociationsId}',
+        http_method='PATCH',
+        method_id='networkservices.projects.locations.multicastProducerAssociations.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['requestId', 'updateMask'],
+        relative_path='v1alpha1/{+name}',
+        request_field='multicastProducerAssociation',
+        request_type_name='NetworkservicesProjectsLocationsMulticastProducerAssociationsPatchRequest',
         response_type_name='Operation',
         supports_download=False,
     )
@@ -3683,33 +4257,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsObservabilityPoliciesGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/observabilityPolicies/{observabilityPoliciesId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.observabilityPolicies.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsObservabilityPoliciesGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists ObservabilityPolicies in a given project and location.
 
@@ -3764,60 +4311,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsObservabilityPoliciesSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/observabilityPolicies/{observabilityPoliciesId}:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.observabilityPolicies.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsObservabilityPoliciesSetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsObservabilityPoliciesTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/observabilityPolicies/{observabilityPoliciesId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.observabilityPolicies.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsObservabilityPoliciesTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
-        supports_download=False,
-    )
-
   class ProjectsLocationsOperationsService(base_api.BaseApiService):
     """Service class for the projects_locations_operations resource."""
 
@@ -3829,7 +4322,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
           }
 
     def Cancel(self, request, global_params=None):
-      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
+      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
 
       Args:
         request: (NetworkservicesProjectsLocationsOperationsCancelRequest) input message
@@ -4027,33 +4520,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsServiceBindingsGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/serviceBindings/{serviceBindingsId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.serviceBindings.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsServiceBindingsGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists ServiceBinding in a given project and location.
 
@@ -4081,57 +4547,30 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
+    def Patch(self, request, global_params=None):
+      r"""Updates the parameters of a single ServiceBinding.
 
       Args:
-        request: (NetworkservicesProjectsLocationsServiceBindingsSetIamPolicyRequest) input message
+        request: (NetworkservicesProjectsLocationsServiceBindingsPatchRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (Policy) The response message.
+        (Operation) The response message.
       """
-      config = self.GetMethodConfig('SetIamPolicy')
+      config = self.GetMethodConfig('Patch')
       return self._RunMethod(
           config, request, global_params=global_params)
 
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/serviceBindings/{serviceBindingsId}:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.serviceBindings.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsServiceBindingsSetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsServiceBindingsTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/serviceBindings/{serviceBindingsId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.serviceBindings.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsServiceBindingsTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/serviceBindings/{serviceBindingsId}',
+        http_method='PATCH',
+        method_id='networkservices.projects.locations.serviceBindings.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1alpha1/{+name}',
+        request_field='serviceBinding',
+        request_type_name='NetworkservicesProjectsLocationsServiceBindingsPatchRequest',
+        response_type_name='Operation',
         supports_download=False,
     )
 
@@ -4226,33 +4665,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsServiceLbPoliciesGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/serviceLbPolicies/{serviceLbPoliciesId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.serviceLbPolicies.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsServiceLbPoliciesGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists ServiceLbPolicies in a given project and location.
 
@@ -4304,60 +4716,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         request_field='serviceLbPolicy',
         request_type_name='NetworkservicesProjectsLocationsServiceLbPoliciesPatchRequest',
         response_type_name='Operation',
-        supports_download=False,
-    )
-
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsServiceLbPoliciesSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/serviceLbPolicies/{serviceLbPoliciesId}:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.serviceLbPolicies.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsServiceLbPoliciesSetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsServiceLbPoliciesTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/serviceLbPolicies/{serviceLbPoliciesId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.serviceLbPolicies.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsServiceLbPoliciesTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
         supports_download=False,
     )
 
@@ -4452,33 +4810,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         supports_download=False,
     )
 
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsTcpRoutesGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/tcpRoutes/{tcpRoutesId}:getIamPolicy',
-        http_method='GET',
-        method_id='networkservices.projects.locations.tcpRoutes.getIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=['options_requestedPolicyVersion'],
-        relative_path='v1alpha1/{+resource}:getIamPolicy',
-        request_field='',
-        request_type_name='NetworkservicesProjectsLocationsTcpRoutesGetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
     def List(self, request, global_params=None):
       r"""Lists TcpRoute in a given project and location.
 
@@ -4498,7 +4829,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         method_id='networkservices.projects.locations.tcpRoutes.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['pageSize', 'pageToken'],
+        query_params=['pageSize', 'pageToken', 'returnPartialSuccess'],
         relative_path='v1alpha1/{+parent}/tcpRoutes',
         request_field='',
         request_type_name='NetworkservicesProjectsLocationsTcpRoutesListRequest',
@@ -4530,60 +4861,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         request_field='tcpRoute',
         request_type_name='NetworkservicesProjectsLocationsTcpRoutesPatchRequest',
         response_type_name='Operation',
-        supports_download=False,
-    )
-
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsTcpRoutesSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/tcpRoutes/{tcpRoutesId}:setIamPolicy',
-        http_method='POST',
-        method_id='networkservices.projects.locations.tcpRoutes.setIamPolicy',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:setIamPolicy',
-        request_field='setIamPolicyRequest',
-        request_type_name='NetworkservicesProjectsLocationsTcpRoutesSetIamPolicyRequest',
-        response_type_name='Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsTcpRoutesTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/tcpRoutes/{tcpRoutesId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.tcpRoutes.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsTcpRoutesTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
         supports_download=False,
     )
 
@@ -4697,7 +4974,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         method_id='networkservices.projects.locations.tlsRoutes.list',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['pageSize', 'pageToken'],
+        query_params=['pageSize', 'pageToken', 'returnPartialSuccess'],
         relative_path='v1alpha1/{+parent}/tlsRoutes',
         request_field='',
         request_type_name='NetworkservicesProjectsLocationsTlsRoutesListRequest',
@@ -4729,33 +5006,6 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         request_field='tlsRoute',
         request_type_name='NetworkservicesProjectsLocationsTlsRoutesPatchRequest',
         response_type_name='Operation',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
-
-      Args:
-        request: (NetworkservicesProjectsLocationsTlsRoutesTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path='v1alpha1/projects/{projectsId}/locations/{locationsId}/tlsRoutes/{tlsRoutesId}:testIamPermissions',
-        http_method='POST',
-        method_id='networkservices.projects.locations.tlsRoutes.testIamPermissions',
-        ordered_params=['resource'],
-        path_params=['resource'],
-        query_params=[],
-        relative_path='v1alpha1/{+resource}:testIamPermissions',
-        request_field='testIamPermissionsRequest',
-        request_type_name='NetworkservicesProjectsLocationsTlsRoutesTestIamPermissionsRequest',
-        response_type_name='TestIamPermissionsResponse',
         supports_download=False,
     )
 
@@ -5051,7 +5301,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         method_id='networkservices.projects.locations.wasmPlugins.delete',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=['force'],
+        query_params=[],
         relative_path='v1alpha1/{+name}',
         request_field='',
         request_type_name='NetworkservicesProjectsLocationsWasmPluginsDeleteRequest',
@@ -5078,7 +5328,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         method_id='networkservices.projects.locations.wasmPlugins.get',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=[],
+        query_params=['view'],
         relative_path='v1alpha1/{+name}',
         request_field='',
         request_type_name='NetworkservicesProjectsLocationsWasmPluginsGetRequest',
@@ -5196,7 +5446,7 @@ class NetworkservicesV1alpha1(base_api.BaseApiClient):
         method_id='networkservices.projects.locations.list',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=['filter', 'pageSize', 'pageToken'],
+        query_params=['extraLocationTypes', 'filter', 'pageSize', 'pageToken'],
         relative_path='v1alpha1/{+name}/locations',
         request_field='',
         request_type_name='NetworkservicesProjectsLocationsListRequest',

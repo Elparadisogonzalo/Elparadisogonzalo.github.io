@@ -418,7 +418,8 @@ class Container(_messages.Message):
       (0.0.0.0) within the container to be accessible. If omitted, a port
       number will be chosen and passed to the container through the PORT
       environment variable for the container to listen on.
-    readinessProbe: Not supported by Cloud Run.
+    readinessProbe: Readiness probe to be used for health checks. Not
+      supported by Cloud Run.
     resources: Compute Resources required by this container.
     securityContext: Not supported by Cloud Run.
     startupProbe: Startup probe of application within the container. All other
@@ -703,15 +704,43 @@ class ExecutionReference(_messages.Message):
   r"""Reference to an Execution. Use /Executions.GetExecution with the given
   name to get full execution including the latest status.
 
+  Enums:
+    CompletionStatusValueValuesEnum: Optional. Status for the execution
+      completion.
+
   Fields:
+    completionStatus: Optional. Status for the execution completion.
     completionTimestamp: Optional. Completion timestamp of the execution.
     creationTimestamp: Optional. Creation timestamp of the execution.
+    deletionTimestamp: Optional. The read-only soft deletion timestamp of the
+      execution.
     name: Optional. Name of the execution.
   """
 
-  completionTimestamp = _messages.StringField(1)
-  creationTimestamp = _messages.StringField(2)
-  name = _messages.StringField(3)
+  class CompletionStatusValueValuesEnum(_messages.Enum):
+    r"""Optional. Status for the execution completion.
+
+    Values:
+      COMPLETION_STATUS_UNSPECIFIED: The default value. This value is used if
+        the state is omitted.
+      EXECUTION_SUCCEEDED: Job execution has succeeded.
+      EXECUTION_FAILED: Job execution has failed.
+      EXECUTION_RUNNING: Job execution is running normally.
+      EXECUTION_PENDING: Waiting for backing resources to be provisioned.
+      EXECUTION_CANCELLED: Job execution has been cancelled by the user.
+    """
+    COMPLETION_STATUS_UNSPECIFIED = 0
+    EXECUTION_SUCCEEDED = 1
+    EXECUTION_FAILED = 2
+    EXECUTION_RUNNING = 3
+    EXECUTION_PENDING = 4
+    EXECUTION_CANCELLED = 5
+
+  completionStatus = _messages.EnumField('CompletionStatusValueValuesEnum', 1)
+  completionTimestamp = _messages.StringField(2)
+  creationTimestamp = _messages.StringField(3)
+  deletionTimestamp = _messages.StringField(4)
+  name = _messages.StringField(5)
 
 
 class ExecutionSpec(_messages.Message):
@@ -719,12 +748,11 @@ class ExecutionSpec(_messages.Message):
 
   Fields:
     parallelism: Optional. Specifies the maximum desired number of tasks the
-      execution should run at given time. Must be <= task_count. When the job
-      is run, if this field is 0 or unset, the maximum possible value will be
-      used for that execution. The actual number of tasks running in steady
-      state will be less than this number when there are fewer tasks waiting
-      to be completed, i.e. when the work left to do is less than max
-      parallelism.
+      execution should run at given time. When the job is run, if this field
+      is 0 or unset, the maximum possible value will be used for that
+      execution. The actual number of tasks running in steady state will be
+      less than this number when there are fewer tasks waiting to be
+      completed, i.e. when the work left to do is less than max parallelism.
     taskCount: Optional. Specifies the desired number of tasks the execution
       should run. Setting to 1 means that parallelism is limited to 1 and the
       success of that task signals the success of the execution. Defaults to
@@ -887,6 +915,1568 @@ class GoogleCloudRunV1Condition(_messages.Message):
   severity = _messages.StringField(4)
   status = _messages.StringField(5)
   type = _messages.StringField(6)
+
+
+class GoogleDevtoolsCloudbuildV1ApprovalConfig(_messages.Message):
+  r"""ApprovalConfig describes configuration for manual approval of a build.
+
+  Fields:
+    approvalRequired: Whether or not approval is needed. If this is set on a
+      build, it will become pending when created, and will need to be
+      explicitly approved to start.
+  """
+
+  approvalRequired = _messages.BooleanField(1)
+
+
+class GoogleDevtoolsCloudbuildV1ApprovalResult(_messages.Message):
+  r"""ApprovalResult describes the decision and associated metadata of a
+  manual approval of a build.
+
+  Enums:
+    DecisionValueValuesEnum: Required. The decision of this manual approval.
+
+  Fields:
+    approvalTime: Output only. The time when the approval decision was made.
+    approverAccount: Output only. Email of the user that called the
+      ApproveBuild API to approve or reject a build at the time that the API
+      was called.
+    comment: Optional. An optional comment for this manual approval result.
+    decision: Required. The decision of this manual approval.
+    url: Optional. An optional URL tied to this manual approval result. This
+      field is essentially the same as comment, except that it will be
+      rendered by the UI differently. An example use case is a link to an
+      external job that approved this Build.
+  """
+
+  class DecisionValueValuesEnum(_messages.Enum):
+    r"""Required. The decision of this manual approval.
+
+    Values:
+      DECISION_UNSPECIFIED: Default enum type. This should not be used.
+      APPROVED: Build is approved.
+      REJECTED: Build is rejected.
+    """
+    DECISION_UNSPECIFIED = 0
+    APPROVED = 1
+    REJECTED = 2
+
+  approvalTime = _messages.StringField(1)
+  approverAccount = _messages.StringField(2)
+  comment = _messages.StringField(3)
+  decision = _messages.EnumField('DecisionValueValuesEnum', 4)
+  url = _messages.StringField(5)
+
+
+class GoogleDevtoolsCloudbuildV1ArtifactObjects(_messages.Message):
+  r"""Files in the workspace to upload to Cloud Storage upon successful
+  completion of all build steps.
+
+  Fields:
+    location: Cloud Storage bucket and optional object path, in the form
+      "gs://bucket/path/to/somewhere/". (see [Bucket Name
+      Requirements](https://cloud.google.com/storage/docs/bucket-
+      naming#requirements)). Files in the workspace matching any path pattern
+      will be uploaded to Cloud Storage with this location as a prefix.
+    paths: Path globs used to match files in the build's workspace.
+    timing: Output only. Stores timing information for pushing all artifact
+      objects.
+  """
+
+  location = _messages.StringField(1)
+  paths = _messages.StringField(2, repeated=True)
+  timing = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 3)
+
+
+class GoogleDevtoolsCloudbuildV1Artifacts(_messages.Message):
+  r"""Artifacts produced by a build that should be uploaded upon successful
+  completion of all build steps.
+
+  Fields:
+    goModules: Optional. A list of Go modules to be uploaded to Artifact
+      Registry upon successful completion of all build steps. If any objects
+      fail to be pushed, the build is marked FAILURE.
+    images: A list of images to be pushed upon the successful completion of
+      all build steps. The images will be pushed using the builder service
+      account's credentials. The digests of the pushed images will be stored
+      in the Build resource's results field. If any of the images fail to be
+      pushed, the build is marked FAILURE.
+    mavenArtifacts: A list of Maven artifacts to be uploaded to Artifact
+      Registry upon successful completion of all build steps. Artifacts in the
+      workspace matching specified paths globs will be uploaded to the
+      specified Artifact Registry repository using the builder service
+      account's credentials. If any artifacts fail to be pushed, the build is
+      marked FAILURE.
+    npmPackages: A list of npm packages to be uploaded to Artifact Registry
+      upon successful completion of all build steps. Npm packages in the
+      specified paths will be uploaded to the specified Artifact Registry
+      repository using the builder service account's credentials. If any
+      packages fail to be pushed, the build is marked FAILURE.
+    objects: A list of objects to be uploaded to Cloud Storage upon successful
+      completion of all build steps. Files in the workspace matching specified
+      paths globs will be uploaded to the specified Cloud Storage location
+      using the builder service account's credentials. The location and
+      generation of the uploaded objects will be stored in the Build
+      resource's results field. If any objects fail to be pushed, the build is
+      marked FAILURE.
+    pythonPackages: A list of Python packages to be uploaded to Artifact
+      Registry upon successful completion of all build steps. The build
+      service account credentials will be used to perform the upload. If any
+      objects fail to be pushed, the build is marked FAILURE.
+  """
+
+  goModules = _messages.MessageField('GoogleDevtoolsCloudbuildV1GoModule', 1, repeated=True)
+  images = _messages.StringField(2, repeated=True)
+  mavenArtifacts = _messages.MessageField('GoogleDevtoolsCloudbuildV1MavenArtifact', 3, repeated=True)
+  npmPackages = _messages.MessageField('GoogleDevtoolsCloudbuildV1NpmPackage', 4, repeated=True)
+  objects = _messages.MessageField('GoogleDevtoolsCloudbuildV1ArtifactObjects', 5)
+  pythonPackages = _messages.MessageField('GoogleDevtoolsCloudbuildV1PythonPackage', 6, repeated=True)
+
+
+class GoogleDevtoolsCloudbuildV1Build(_messages.Message):
+  r"""A build resource in the Cloud Build API. At a high level, a `Build`
+  describes where to find source code, how to build it (for example, the
+  builder image to run on the source), and where to store the built artifacts.
+  Fields can include the following variables, which will be expanded when the
+  build is created: - $PROJECT_ID: the project ID of the build. -
+  $PROJECT_NUMBER: the project number of the build. - $LOCATION: the
+  location/region of the build. - $BUILD_ID: the autogenerated ID of the
+  build. - $REPO_NAME: the source repository name specified by RepoSource. -
+  $BRANCH_NAME: the branch name specified by RepoSource. - $TAG_NAME: the tag
+  name specified by RepoSource. - $REVISION_ID or $COMMIT_SHA: the commit SHA
+  specified by RepoSource or resolved from the specified branch or tag. -
+  $SHORT_SHA: first 7 characters of $REVISION_ID or $COMMIT_SHA.
+
+  Enums:
+    StatusValueValuesEnum: Output only. Status of the build.
+
+  Messages:
+    SubstitutionsValue: Substitutions data for `Build` resource.
+    TimingValue: Output only. Stores timing information for phases of the
+      build. Valid keys are: * BUILD: time to execute all build steps. * PUSH:
+      time to push all artifacts including docker images and non docker
+      artifacts. * FETCHSOURCE: time to fetch source. * SETUPBUILD: time to
+      set up build. If the build does not specify source or images, these keys
+      will not be included.
+
+  Fields:
+    approval: Output only. Describes this build's approval configuration,
+      status, and result.
+    artifacts: Artifacts produced by the build that should be uploaded upon
+      successful completion of all build steps.
+    availableSecrets: Secrets and secret environment variables.
+    buildTriggerId: Output only. The ID of the `BuildTrigger` that triggered
+      this build, if it was triggered automatically.
+    createTime: Output only. Time at which the request to create the build was
+      received.
+    dependencies: Optional. Dependencies that the Cloud Build worker will
+      fetch before executing user steps.
+    failureInfo: Output only. Contains information about the build when
+      status=FAILURE.
+    finishTime: Output only. Time at which execution of the build was
+      finished. The difference between finish_time and start_time is the
+      duration of the build's execution.
+    gitConfig: Optional. Configuration for git operations.
+    id: Output only. Unique identifier of the build.
+    images: A list of images to be pushed upon the successful completion of
+      all build steps. The images are pushed using the builder service
+      account's credentials. The digests of the pushed images will be stored
+      in the `Build` resource's results field. If any of the images fail to be
+      pushed, the build status is marked `FAILURE`.
+    logUrl: Output only. URL to logs for this build in Google Cloud Console.
+    logsBucket: Cloud Storage bucket where logs should be written (see [Bucket
+      Name Requirements](https://cloud.google.com/storage/docs/bucket-
+      naming#requirements)). Logs file names will be of the format
+      `${logs_bucket}/log-${build_id}.txt`.
+    name: Output only. The 'Build' name with format:
+      `projects/{project}/locations/{location}/builds/{build}`, where {build}
+      is a unique identifier generated by the service.
+    options: Special options for this build.
+    projectId: Output only. ID of the project.
+    queueTtl: TTL in queue for this build. If provided and the build is
+      enqueued longer than this value, the build will expire and the build
+      status will be `EXPIRED`. The TTL starts ticking from create_time.
+    results: Output only. Results of the build.
+    secrets: Secrets to decrypt using Cloud Key Management Service. Note:
+      Secret Manager is the recommended technique for managing sensitive data
+      with Cloud Build. Use `available_secrets` to configure builds to access
+      secrets from Secret Manager. For instructions, see:
+      https://cloud.google.com/cloud-build/docs/securing-builds/use-secrets
+    serviceAccount: IAM service account whose credentials will be used at
+      build runtime. Must be of the format
+      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. ACCOUNT can be email
+      address or uniqueId of the service account.
+    source: Optional. The location of the source files to build.
+    sourceProvenance: Output only. A permanent fixed identifier for source.
+    startTime: Output only. Time at which execution of the build was started.
+    status: Output only. Status of the build.
+    statusDetail: Output only. Customer-readable message about the current
+      status.
+    steps: Required. The operations to be performed on the workspace.
+    substitutions: Substitutions data for `Build` resource.
+    tags: Tags for annotation of a `Build`. These are not docker tags.
+    timeout: Amount of time that this build should be allowed to run, to
+      second granularity. If this amount of time elapses, work on the build
+      will cease and the build status will be `TIMEOUT`. `timeout` starts
+      ticking from `startTime`. Default time is 60 minutes.
+    timing: Output only. Stores timing information for phases of the build.
+      Valid keys are: * BUILD: time to execute all build steps. * PUSH: time
+      to push all artifacts including docker images and non docker artifacts.
+      * FETCHSOURCE: time to fetch source. * SETUPBUILD: time to set up build.
+      If the build does not specify source or images, these keys will not be
+      included.
+    warnings: Output only. Non-fatal problems encountered during the execution
+      of the build.
+  """
+
+  class StatusValueValuesEnum(_messages.Enum):
+    r"""Output only. Status of the build.
+
+    Values:
+      STATUS_UNKNOWN: Status of the build is unknown.
+      PENDING: Build has been created and is pending execution and queuing. It
+        has not been queued.
+      QUEUED: Build or step is queued; work has not yet begun.
+      WORKING: Build or step is being executed.
+      SUCCESS: Build or step finished successfully.
+      FAILURE: Build or step failed to complete successfully.
+      INTERNAL_ERROR: Build or step failed due to an internal cause.
+      TIMEOUT: Build or step took longer than was allowed.
+      CANCELLED: Build or step was canceled by a user.
+      EXPIRED: Build was enqueued for longer than the value of `queue_ttl`.
+    """
+    STATUS_UNKNOWN = 0
+    PENDING = 1
+    QUEUED = 2
+    WORKING = 3
+    SUCCESS = 4
+    FAILURE = 5
+    INTERNAL_ERROR = 6
+    TIMEOUT = 7
+    CANCELLED = 8
+    EXPIRED = 9
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class SubstitutionsValue(_messages.Message):
+    r"""Substitutions data for `Build` resource.
+
+    Messages:
+      AdditionalProperty: An additional property for a SubstitutionsValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type SubstitutionsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a SubstitutionsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class TimingValue(_messages.Message):
+    r"""Output only. Stores timing information for phases of the build. Valid
+    keys are: * BUILD: time to execute all build steps. * PUSH: time to push
+    all artifacts including docker images and non docker artifacts. *
+    FETCHSOURCE: time to fetch source. * SETUPBUILD: time to set up build. If
+    the build does not specify source or images, these keys will not be
+    included.
+
+    Messages:
+      AdditionalProperty: An additional property for a TimingValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type TimingValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a TimingValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A GoogleDevtoolsCloudbuildV1TimeSpan attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  approval = _messages.MessageField('GoogleDevtoolsCloudbuildV1BuildApproval', 1)
+  artifacts = _messages.MessageField('GoogleDevtoolsCloudbuildV1Artifacts', 2)
+  availableSecrets = _messages.MessageField('GoogleDevtoolsCloudbuildV1Secrets', 3)
+  buildTriggerId = _messages.StringField(4)
+  createTime = _messages.StringField(5)
+  dependencies = _messages.MessageField('GoogleDevtoolsCloudbuildV1Dependency', 6, repeated=True)
+  failureInfo = _messages.MessageField('GoogleDevtoolsCloudbuildV1FailureInfo', 7)
+  finishTime = _messages.StringField(8)
+  gitConfig = _messages.MessageField('GoogleDevtoolsCloudbuildV1GitConfig', 9)
+  id = _messages.StringField(10)
+  images = _messages.StringField(11, repeated=True)
+  logUrl = _messages.StringField(12)
+  logsBucket = _messages.StringField(13)
+  name = _messages.StringField(14)
+  options = _messages.MessageField('GoogleDevtoolsCloudbuildV1BuildOptions', 15)
+  projectId = _messages.StringField(16)
+  queueTtl = _messages.StringField(17)
+  results = _messages.MessageField('GoogleDevtoolsCloudbuildV1Results', 18)
+  secrets = _messages.MessageField('GoogleDevtoolsCloudbuildV1Secret', 19, repeated=True)
+  serviceAccount = _messages.StringField(20)
+  source = _messages.MessageField('GoogleDevtoolsCloudbuildV1Source', 21)
+  sourceProvenance = _messages.MessageField('GoogleDevtoolsCloudbuildV1SourceProvenance', 22)
+  startTime = _messages.StringField(23)
+  status = _messages.EnumField('StatusValueValuesEnum', 24)
+  statusDetail = _messages.StringField(25)
+  steps = _messages.MessageField('GoogleDevtoolsCloudbuildV1BuildStep', 26, repeated=True)
+  substitutions = _messages.MessageField('SubstitutionsValue', 27)
+  tags = _messages.StringField(28, repeated=True)
+  timeout = _messages.StringField(29)
+  timing = _messages.MessageField('TimingValue', 30)
+  warnings = _messages.MessageField('GoogleDevtoolsCloudbuildV1Warning', 31, repeated=True)
+
+
+class GoogleDevtoolsCloudbuildV1BuildApproval(_messages.Message):
+  r"""BuildApproval describes a build's approval configuration, state, and
+  result.
+
+  Enums:
+    StateValueValuesEnum: Output only. The state of this build's approval.
+
+  Fields:
+    config: Output only. Configuration for manual approval of this build.
+    result: Output only. Result of manual approval for this Build.
+    state: Output only. The state of this build's approval.
+  """
+
+  class StateValueValuesEnum(_messages.Enum):
+    r"""Output only. The state of this build's approval.
+
+    Values:
+      STATE_UNSPECIFIED: Default enum type. This should not be used.
+      PENDING: Build approval is pending.
+      APPROVED: Build approval has been approved.
+      REJECTED: Build approval has been rejected.
+      CANCELLED: Build was cancelled while it was still pending approval.
+    """
+    STATE_UNSPECIFIED = 0
+    PENDING = 1
+    APPROVED = 2
+    REJECTED = 3
+    CANCELLED = 4
+
+  config = _messages.MessageField('GoogleDevtoolsCloudbuildV1ApprovalConfig', 1)
+  result = _messages.MessageField('GoogleDevtoolsCloudbuildV1ApprovalResult', 2)
+  state = _messages.EnumField('StateValueValuesEnum', 3)
+
+
+class GoogleDevtoolsCloudbuildV1BuildOperationMetadata(_messages.Message):
+  r"""Metadata for build operations.
+
+  Fields:
+    build: The build that the operation is tracking.
+  """
+
+  build = _messages.MessageField('GoogleDevtoolsCloudbuildV1Build', 1)
+
+
+class GoogleDevtoolsCloudbuildV1BuildOptions(_messages.Message):
+  r"""Optional arguments to enable specific features of builds.
+
+  Enums:
+    DefaultLogsBucketBehaviorValueValuesEnum: Optional. Option to specify how
+      default logs buckets are setup.
+    LogStreamingOptionValueValuesEnum: Option to define build log streaming
+      behavior to Cloud Storage.
+    LoggingValueValuesEnum: Option to specify the logging mode, which
+      determines if and where build logs are stored.
+    MachineTypeValueValuesEnum: Compute Engine machine type on which to run
+      the build.
+    RequestedVerifyOptionValueValuesEnum: Requested verifiability options.
+    SourceProvenanceHashValueListEntryValuesEnum:
+    SubstitutionOptionValueValuesEnum: Option to specify behavior when there
+      is an error in the substitution checks. NOTE: this is always set to
+      ALLOW_LOOSE for triggered builds and cannot be overridden in the build
+      configuration file.
+
+  Fields:
+    automapSubstitutions: Option to include built-in and custom substitutions
+      as env variables for all build steps.
+    defaultLogsBucketBehavior: Optional. Option to specify how default logs
+      buckets are setup.
+    diskSizeGb: Requested disk size for the VM that runs the build. Note that
+      this is *NOT* "disk free"; some of the space will be used by the
+      operating system and build utilities. Also note that this is the minimum
+      disk size that will be allocated for the build -- the build may run with
+      a larger disk than requested. At present, the maximum disk size is
+      4000GB; builds that request more than the maximum are rejected with an
+      error.
+    dynamicSubstitutions: Option to specify whether or not to apply bash style
+      string operations to the substitutions. NOTE: this is always enabled for
+      triggered builds and cannot be overridden in the build configuration
+      file.
+    enableStructuredLogging: Optional. Option to specify whether structured
+      logging is enabled. If true, JSON-formatted logs are parsed as
+      structured logs.
+    env: A list of global environment variable definitions that will exist for
+      all build steps in this build. If a variable is defined in both globally
+      and in a build step, the variable will use the build step value. The
+      elements are of the form "KEY=VALUE" for the environment variable "KEY"
+      being given the value "VALUE".
+    logStreamingOption: Option to define build log streaming behavior to Cloud
+      Storage.
+    logging: Option to specify the logging mode, which determines if and where
+      build logs are stored.
+    machineType: Compute Engine machine type on which to run the build.
+    pool: Optional. Specification for execution on a `WorkerPool`. See
+      [running builds in a private
+      pool](https://cloud.google.com/build/docs/private-pools/run-builds-in-
+      private-pool) for more information.
+    pubsubTopic: Optional. Option to specify the Pub/Sub topic to receive
+      build status updates.
+    requestedVerifyOption: Requested verifiability options.
+    secretEnv: A list of global environment variables, which are encrypted
+      using a Cloud Key Management Service crypto key. These values must be
+      specified in the build's `Secret`. These variables will be available to
+      all build steps in this build.
+    sourceProvenanceHash: Requested hash for SourceProvenance.
+    substitutionOption: Option to specify behavior when there is an error in
+      the substitution checks. NOTE: this is always set to ALLOW_LOOSE for
+      triggered builds and cannot be overridden in the build configuration
+      file.
+    volumes: Global list of volumes to mount for ALL build steps Each volume
+      is created as an empty volume prior to starting the build process. Upon
+      completion of the build, volumes and their contents are discarded.
+      Global volume names and paths cannot conflict with the volumes defined a
+      build step. Using a global volume in a build with only one step is not
+      valid as it is indicative of a build request with an incorrect
+      configuration.
+    workerPool: This field deprecated; please use `pool.name` instead.
+  """
+
+  class DefaultLogsBucketBehaviorValueValuesEnum(_messages.Enum):
+    r"""Optional. Option to specify how default logs buckets are setup.
+
+    Values:
+      DEFAULT_LOGS_BUCKET_BEHAVIOR_UNSPECIFIED: Unspecified.
+      REGIONAL_USER_OWNED_BUCKET: Bucket is located in user-owned project in
+        the same region as the build. The builder service account must have
+        access to create and write to Cloud Storage buckets in the build
+        project.
+      LEGACY_BUCKET: Bucket is located in a Google-owned project and is not
+        regionalized.
+    """
+    DEFAULT_LOGS_BUCKET_BEHAVIOR_UNSPECIFIED = 0
+    REGIONAL_USER_OWNED_BUCKET = 1
+    LEGACY_BUCKET = 2
+
+  class LogStreamingOptionValueValuesEnum(_messages.Enum):
+    r"""Option to define build log streaming behavior to Cloud Storage.
+
+    Values:
+      STREAM_DEFAULT: Service may automatically determine build log streaming
+        behavior.
+      STREAM_ON: Build logs should be streamed to Cloud Storage.
+      STREAM_OFF: Build logs should not be streamed to Cloud Storage; they
+        will be written when the build is completed.
+    """
+    STREAM_DEFAULT = 0
+    STREAM_ON = 1
+    STREAM_OFF = 2
+
+  class LoggingValueValuesEnum(_messages.Enum):
+    r"""Option to specify the logging mode, which determines if and where
+    build logs are stored.
+
+    Values:
+      LOGGING_UNSPECIFIED: The service determines the logging mode. The
+        default is `LEGACY`. Do not rely on the default logging behavior as it
+        may change in the future.
+      LEGACY: Build logs are stored in Cloud Logging and Cloud Storage.
+      GCS_ONLY: Build logs are stored in Cloud Storage.
+      STACKDRIVER_ONLY: This option is the same as CLOUD_LOGGING_ONLY.
+      CLOUD_LOGGING_ONLY: Build logs are stored in Cloud Logging. Selecting
+        this option will not allow [logs
+        streaming](https://cloud.google.com/sdk/gcloud/reference/builds/log).
+      NONE: Turn off all logging. No build logs will be captured.
+    """
+    LOGGING_UNSPECIFIED = 0
+    LEGACY = 1
+    GCS_ONLY = 2
+    STACKDRIVER_ONLY = 3
+    CLOUD_LOGGING_ONLY = 4
+    NONE = 5
+
+  class MachineTypeValueValuesEnum(_messages.Enum):
+    r"""Compute Engine machine type on which to run the build.
+
+    Values:
+      UNSPECIFIED: Standard machine type.
+      N1_HIGHCPU_8: Highcpu machine with 8 CPUs.
+      N1_HIGHCPU_32: Highcpu machine with 32 CPUs.
+      E2_HIGHCPU_8: Highcpu e2 machine with 8 CPUs.
+      E2_HIGHCPU_32: Highcpu e2 machine with 32 CPUs.
+      E2_MEDIUM: E2 machine with 1 CPU.
+    """
+    UNSPECIFIED = 0
+    N1_HIGHCPU_8 = 1
+    N1_HIGHCPU_32 = 2
+    E2_HIGHCPU_8 = 3
+    E2_HIGHCPU_32 = 4
+    E2_MEDIUM = 5
+
+  class RequestedVerifyOptionValueValuesEnum(_messages.Enum):
+    r"""Requested verifiability options.
+
+    Values:
+      NOT_VERIFIED: Not a verifiable build (the default).
+      VERIFIED: Build must be verified.
+    """
+    NOT_VERIFIED = 0
+    VERIFIED = 1
+
+  class SourceProvenanceHashValueListEntryValuesEnum(_messages.Enum):
+    r"""SourceProvenanceHashValueListEntryValuesEnum enum type.
+
+    Values:
+      NONE: No hash requested.
+      SHA256: Use a sha256 hash.
+      MD5: Use a md5 hash.
+      GO_MODULE_H1: Dirhash of a Go module's source code which is then hex-
+        encoded.
+      SHA512: Use a sha512 hash.
+    """
+    NONE = 0
+    SHA256 = 1
+    MD5 = 2
+    GO_MODULE_H1 = 3
+    SHA512 = 4
+
+  class SubstitutionOptionValueValuesEnum(_messages.Enum):
+    r"""Option to specify behavior when there is an error in the substitution
+    checks. NOTE: this is always set to ALLOW_LOOSE for triggered builds and
+    cannot be overridden in the build configuration file.
+
+    Values:
+      MUST_MATCH: Fails the build if error in substitutions checks, like
+        missing a substitution in the template or in the map.
+      ALLOW_LOOSE: Do not fail the build if error in substitutions checks.
+    """
+    MUST_MATCH = 0
+    ALLOW_LOOSE = 1
+
+  automapSubstitutions = _messages.BooleanField(1)
+  defaultLogsBucketBehavior = _messages.EnumField('DefaultLogsBucketBehaviorValueValuesEnum', 2)
+  diskSizeGb = _messages.IntegerField(3)
+  dynamicSubstitutions = _messages.BooleanField(4)
+  enableStructuredLogging = _messages.BooleanField(5)
+  env = _messages.StringField(6, repeated=True)
+  logStreamingOption = _messages.EnumField('LogStreamingOptionValueValuesEnum', 7)
+  logging = _messages.EnumField('LoggingValueValuesEnum', 8)
+  machineType = _messages.EnumField('MachineTypeValueValuesEnum', 9)
+  pool = _messages.MessageField('GoogleDevtoolsCloudbuildV1PoolOption', 10)
+  pubsubTopic = _messages.StringField(11)
+  requestedVerifyOption = _messages.EnumField('RequestedVerifyOptionValueValuesEnum', 12)
+  secretEnv = _messages.StringField(13, repeated=True)
+  sourceProvenanceHash = _messages.EnumField('SourceProvenanceHashValueListEntryValuesEnum', 14, repeated=True)
+  substitutionOption = _messages.EnumField('SubstitutionOptionValueValuesEnum', 15)
+  volumes = _messages.MessageField('GoogleDevtoolsCloudbuildV1Volume', 16, repeated=True)
+  workerPool = _messages.StringField(17)
+
+
+class GoogleDevtoolsCloudbuildV1BuildStep(_messages.Message):
+  r"""A step in the build pipeline.
+
+  Enums:
+    StatusValueValuesEnum: Output only. Status of the build step. At this
+      time, build step status is only updated on build completion; step status
+      is not updated in real-time as the build progresses.
+
+  Fields:
+    allowExitCodes: Allow this build step to fail without failing the entire
+      build if and only if the exit code is one of the specified codes. If
+      allow_failure is also specified, this field will take precedence.
+    allowFailure: Allow this build step to fail without failing the entire
+      build. If false, the entire build will fail if this step fails.
+      Otherwise, the build will succeed, but this step will still have a
+      failure status. Error information will be reported in the failure_detail
+      field.
+    args: A list of arguments that will be presented to the step when it is
+      started. If the image used to run the step's container has an
+      entrypoint, the `args` are used as arguments to that entrypoint. If the
+      image does not define an entrypoint, the first element in args is used
+      as the entrypoint, and the remainder will be used as arguments.
+    automapSubstitutions: Option to include built-in and custom substitutions
+      as env variables for this build step. This option will override the
+      global option in BuildOption.
+    dir: Working directory to use when running this step's container. If this
+      value is a relative path, it is relative to the build's working
+      directory. If this value is absolute, it may be outside the build's
+      working directory, in which case the contents of the path may not be
+      persisted across build step executions, unless a `volume` for that path
+      is specified. If the build specifies a `RepoSource` with `dir` and a
+      step with a `dir`, which specifies an absolute path, the `RepoSource`
+      `dir` is ignored for the step's execution.
+    entrypoint: Entrypoint to be used instead of the build step image's
+      default entrypoint. If unset, the image's default entrypoint is used.
+    env: A list of environment variable definitions to be used when running a
+      step. The elements are of the form "KEY=VALUE" for the environment
+      variable "KEY" being given the value "VALUE".
+    exitCode: Output only. Return code from running the step.
+    id: Unique identifier for this build step, used in `wait_for` to reference
+      this build step as a dependency.
+    name: Required. The name of the container image that will run this
+      particular build step. If the image is available in the host's Docker
+      daemon's cache, it will be run directly. If not, the host will attempt
+      to pull the image first, using the builder service account's credentials
+      if necessary. The Docker daemon's cache will already have the latest
+      versions of all of the officially supported build steps
+      ([https://github.com/GoogleCloudPlatform/cloud-
+      builders](https://github.com/GoogleCloudPlatform/cloud-builders)). The
+      Docker daemon will also have cached many of the layers for some popular
+      images, like "ubuntu", "debian", but they will be refreshed at the time
+      you attempt to use them. If you built an image in a previous build step,
+      it will be stored in the host's Docker daemon's cache and is available
+      to use as the name for a later build step.
+    pullTiming: Output only. Stores timing information for pulling this build
+      step's builder image only.
+    script: A shell script to be executed in the step. When script is
+      provided, the user cannot specify the entrypoint or args.
+    secretEnv: A list of environment variables which are encrypted using a
+      Cloud Key Management Service crypto key. These values must be specified
+      in the build's `Secret`.
+    status: Output only. Status of the build step. At this time, build step
+      status is only updated on build completion; step status is not updated
+      in real-time as the build progresses.
+    timeout: Time limit for executing this build step. If not defined, the
+      step has no time limit and will be allowed to continue to run until
+      either it completes or the build itself times out.
+    timing: Output only. Stores timing information for executing this build
+      step.
+    volumes: List of volumes to mount into the build step. Each volume is
+      created as an empty volume prior to execution of the build step. Upon
+      completion of the build, volumes and their contents are discarded. Using
+      a named volume in only one step is not valid as it is indicative of a
+      build request with an incorrect configuration.
+    waitFor: The ID(s) of the step(s) that this build step depends on. This
+      build step will not start until all the build steps in `wait_for` have
+      completed successfully. If `wait_for` is empty, this build step will
+      start when all previous build steps in the `Build.Steps` list have
+      completed successfully.
+  """
+
+  class StatusValueValuesEnum(_messages.Enum):
+    r"""Output only. Status of the build step. At this time, build step status
+    is only updated on build completion; step status is not updated in real-
+    time as the build progresses.
+
+    Values:
+      STATUS_UNKNOWN: Status of the build is unknown.
+      PENDING: Build has been created and is pending execution and queuing. It
+        has not been queued.
+      QUEUED: Build or step is queued; work has not yet begun.
+      WORKING: Build or step is being executed.
+      SUCCESS: Build or step finished successfully.
+      FAILURE: Build or step failed to complete successfully.
+      INTERNAL_ERROR: Build or step failed due to an internal cause.
+      TIMEOUT: Build or step took longer than was allowed.
+      CANCELLED: Build or step was canceled by a user.
+      EXPIRED: Build was enqueued for longer than the value of `queue_ttl`.
+    """
+    STATUS_UNKNOWN = 0
+    PENDING = 1
+    QUEUED = 2
+    WORKING = 3
+    SUCCESS = 4
+    FAILURE = 5
+    INTERNAL_ERROR = 6
+    TIMEOUT = 7
+    CANCELLED = 8
+    EXPIRED = 9
+
+  allowExitCodes = _messages.IntegerField(1, repeated=True, variant=_messages.Variant.INT32)
+  allowFailure = _messages.BooleanField(2)
+  args = _messages.StringField(3, repeated=True)
+  automapSubstitutions = _messages.BooleanField(4)
+  dir = _messages.StringField(5)
+  entrypoint = _messages.StringField(6)
+  env = _messages.StringField(7, repeated=True)
+  exitCode = _messages.IntegerField(8, variant=_messages.Variant.INT32)
+  id = _messages.StringField(9)
+  name = _messages.StringField(10)
+  pullTiming = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 11)
+  script = _messages.StringField(12)
+  secretEnv = _messages.StringField(13, repeated=True)
+  status = _messages.EnumField('StatusValueValuesEnum', 14)
+  timeout = _messages.StringField(15)
+  timing = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 16)
+  volumes = _messages.MessageField('GoogleDevtoolsCloudbuildV1Volume', 17, repeated=True)
+  waitFor = _messages.StringField(18, repeated=True)
+
+
+class GoogleDevtoolsCloudbuildV1BuiltImage(_messages.Message):
+  r"""An image built by the pipeline.
+
+  Fields:
+    digest: Docker Registry 2.0 digest.
+    name: Name used to push the container image to Google Container Registry,
+      as presented to `docker push`.
+    pushTiming: Output only. Stores timing information for pushing the
+      specified image.
+  """
+
+  digest = _messages.StringField(1)
+  name = _messages.StringField(2)
+  pushTiming = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 3)
+
+
+class GoogleDevtoolsCloudbuildV1ConnectedRepository(_messages.Message):
+  r"""Location of the source in a 2nd-gen Google Cloud Build repository
+  resource.
+
+  Fields:
+    dir: Optional. Directory, relative to the source root, in which to run the
+      build.
+    repository: Required. Name of the Google Cloud Build repository, formatted
+      as `projects/*/locations/*/connections/*/repositories/*`.
+    revision: Required. The revision to fetch from the Git repository such as
+      a branch, a tag, a commit SHA, or any Git ref.
+  """
+
+  dir = _messages.StringField(1)
+  repository = _messages.StringField(2)
+  revision = _messages.StringField(3)
+
+
+class GoogleDevtoolsCloudbuildV1Dependency(_messages.Message):
+  r"""A dependency that the Cloud Build worker will fetch before executing
+  user steps.
+
+  Fields:
+    empty: If set to true disable all dependency fetching (ignoring the
+      default source as well).
+    gitSource: Represents a git repository as a build dependency.
+  """
+
+  empty = _messages.BooleanField(1)
+  gitSource = _messages.MessageField('GoogleDevtoolsCloudbuildV1GitSourceDependency', 2)
+
+
+class GoogleDevtoolsCloudbuildV1DeveloperConnectConfig(_messages.Message):
+  r"""This config defines the location of a source through Developer Connect.
+
+  Fields:
+    dir: Required. Directory, relative to the source root, in which to run the
+      build.
+    gitRepositoryLink: Required. The Developer Connect Git repository link,
+      formatted as `projects/*/locations/*/connections/*/gitRepositoryLink/*`.
+    revision: Required. The revision to fetch from the Git repository such as
+      a branch, a tag, a commit SHA, or any Git ref.
+  """
+
+  dir = _messages.StringField(1)
+  gitRepositoryLink = _messages.StringField(2)
+  revision = _messages.StringField(3)
+
+
+class GoogleDevtoolsCloudbuildV1FailureInfo(_messages.Message):
+  r"""A fatal problem encountered during the execution of the build.
+
+  Enums:
+    TypeValueValuesEnum: The name of the failure.
+
+  Fields:
+    detail: Explains the failure issue in more detail using hard-coded text.
+    type: The name of the failure.
+  """
+
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""The name of the failure.
+
+    Values:
+      FAILURE_TYPE_UNSPECIFIED: Type unspecified
+      PUSH_FAILED: Unable to push the image to the repository.
+      PUSH_IMAGE_NOT_FOUND: Final image not found.
+      PUSH_NOT_AUTHORIZED: Unauthorized push of the final image.
+      LOGGING_FAILURE: Backend logging failures. Should retry.
+      USER_BUILD_STEP: A build step has failed.
+      FETCH_SOURCE_FAILED: The source fetching has failed.
+    """
+    FAILURE_TYPE_UNSPECIFIED = 0
+    PUSH_FAILED = 1
+    PUSH_IMAGE_NOT_FOUND = 2
+    PUSH_NOT_AUTHORIZED = 3
+    LOGGING_FAILURE = 4
+    USER_BUILD_STEP = 5
+    FETCH_SOURCE_FAILED = 6
+
+  detail = _messages.StringField(1)
+  type = _messages.EnumField('TypeValueValuesEnum', 2)
+
+
+class GoogleDevtoolsCloudbuildV1FileHashes(_messages.Message):
+  r"""Container message for hashes of byte content of files, used in
+  SourceProvenance messages to verify integrity of source input to the build.
+
+  Fields:
+    fileHash: Collection of file hashes.
+  """
+
+  fileHash = _messages.MessageField('GoogleDevtoolsCloudbuildV1Hash', 1, repeated=True)
+
+
+class GoogleDevtoolsCloudbuildV1GitConfig(_messages.Message):
+  r"""GitConfig is a configuration for git operations.
+
+  Fields:
+    http: Configuration for HTTP related git operations.
+  """
+
+  http = _messages.MessageField('GoogleDevtoolsCloudbuildV1HttpConfig', 1)
+
+
+class GoogleDevtoolsCloudbuildV1GitSource(_messages.Message):
+  r"""Location of the source in any accessible Git repository.
+
+  Fields:
+    dir: Optional. Directory, relative to the source root, in which to run the
+      build. This must be a relative path. If a step's `dir` is specified and
+      is an absolute path, this value is ignored for that step's execution.
+    revision: Optional. The revision to fetch from the Git repository such as
+      a branch, a tag, a commit SHA, or any Git ref. Cloud Build uses `git
+      fetch` to fetch the revision from the Git repository; therefore make
+      sure that the string you provide for `revision` is parsable by the
+      command. For information on string values accepted by `git fetch`, see
+      https://git-scm.com/docs/gitrevisions#_specifying_revisions. For
+      information on `git fetch`, see https://git-scm.com/docs/git-fetch.
+    url: Required. Location of the Git repo to build. This will be used as a
+      `git remote`, see https://git-scm.com/docs/git-remote.
+  """
+
+  dir = _messages.StringField(1)
+  revision = _messages.StringField(2)
+  url = _messages.StringField(3)
+
+
+class GoogleDevtoolsCloudbuildV1GitSourceDependency(_messages.Message):
+  r"""Represents a git repository as a build dependency.
+
+  Fields:
+    depth: Optional. How much history should be fetched for the build (default
+      1, -1 for all history).
+    destPath: Required. Where should the files be placed on the worker.
+    recurseSubmodules: Optional. True if submodules should be fetched too
+      (default false).
+    repository: Required. The kind of repo (url or dev connect).
+    revision: Required. The revision that we will fetch the repo at.
+  """
+
+  depth = _messages.IntegerField(1)
+  destPath = _messages.StringField(2)
+  recurseSubmodules = _messages.BooleanField(3)
+  repository = _messages.MessageField('GoogleDevtoolsCloudbuildV1GitSourceRepository', 4)
+  revision = _messages.StringField(5)
+
+
+class GoogleDevtoolsCloudbuildV1GitSourceRepository(_messages.Message):
+  r"""A repository for a git source.
+
+  Fields:
+    developerConnect: The Developer Connect Git repository link or the url
+      that matches a repository link in the current project, formatted as
+      `projects/*/locations/*/connections/*/gitRepositoryLink/*`
+    url: Location of the Git repository.
+  """
+
+  developerConnect = _messages.StringField(1)
+  url = _messages.StringField(2)
+
+
+class GoogleDevtoolsCloudbuildV1GoModule(_messages.Message):
+  r"""Go module to upload to Artifact Registry upon successful completion of
+  all build steps. A module refers to all dependencies in a go.mod file.
+
+  Fields:
+    modulePath: Optional. The Go module's "module path". e.g.
+      example.com/foo/v2
+    moduleVersion: Optional. The Go module's semantic version in the form
+      vX.Y.Z. e.g. v0.1.1 Pre-release identifiers can also be added by
+      appending a dash and dot separated ASCII alphanumeric characters and
+      hyphens. e.g. v0.2.3-alpha.x.12m.5
+    repositoryLocation: Optional. Location of the Artifact Registry
+      repository. i.e. us-east1 Defaults to the build's location.
+    repositoryName: Optional. Artifact Registry repository name. Specified Go
+      modules will be zipped and uploaded to Artifact Registry with this
+      location as a prefix. e.g. my-go-repo
+    repositoryProjectId: Optional. Project ID of the Artifact Registry
+      repository. Defaults to the build project.
+    sourcePath: Optional. Source path of the go.mod file in the build's
+      workspace. If not specified, this will default to the current directory.
+      e.g. ~/code/go/mypackage
+  """
+
+  modulePath = _messages.StringField(1)
+  moduleVersion = _messages.StringField(2)
+  repositoryLocation = _messages.StringField(3)
+  repositoryName = _messages.StringField(4)
+  repositoryProjectId = _messages.StringField(5)
+  sourcePath = _messages.StringField(6)
+
+
+class GoogleDevtoolsCloudbuildV1Hash(_messages.Message):
+  r"""Container message for hash values.
+
+  Enums:
+    TypeValueValuesEnum: The type of hash that was performed.
+
+  Fields:
+    type: The type of hash that was performed.
+    value: The hash value.
+  """
+
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""The type of hash that was performed.
+
+    Values:
+      NONE: No hash requested.
+      SHA256: Use a sha256 hash.
+      MD5: Use a md5 hash.
+      GO_MODULE_H1: Dirhash of a Go module's source code which is then hex-
+        encoded.
+      SHA512: Use a sha512 hash.
+    """
+    NONE = 0
+    SHA256 = 1
+    MD5 = 2
+    GO_MODULE_H1 = 3
+    SHA512 = 4
+
+  type = _messages.EnumField('TypeValueValuesEnum', 1)
+  value = _messages.BytesField(2)
+
+
+class GoogleDevtoolsCloudbuildV1HttpConfig(_messages.Message):
+  r"""HttpConfig is a configuration for HTTP related git operations.
+
+  Fields:
+    proxySecretVersionName: SecretVersion resource of the HTTP proxy URL. The
+      Service Account used in the build (either the default Service Account or
+      user-specified Service Account) should have
+      `secretmanager.versions.access` permissions on this secret. The proxy
+      URL should be in format `protocol://@]proxyhost[:port]`.
+  """
+
+  proxySecretVersionName = _messages.StringField(1)
+
+
+class GoogleDevtoolsCloudbuildV1InlineSecret(_messages.Message):
+  r"""Pairs a set of secret environment variables mapped to encrypted values
+  with the Cloud KMS key to use to decrypt the value.
+
+  Messages:
+    EnvMapValue: Map of environment variable name to its encrypted value.
+      Secret environment variables must be unique across all of a build's
+      secrets, and must be used by at least one build step. Values can be at
+      most 64 KB in size. There can be at most 100 secret values across all of
+      a build's secrets.
+
+  Fields:
+    envMap: Map of environment variable name to its encrypted value. Secret
+      environment variables must be unique across all of a build's secrets,
+      and must be used by at least one build step. Values can be at most 64 KB
+      in size. There can be at most 100 secret values across all of a build's
+      secrets.
+    kmsKeyName: Resource name of Cloud KMS crypto key to decrypt the encrypted
+      value. In format: projects/*/locations/*/keyRings/*/cryptoKeys/*
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class EnvMapValue(_messages.Message):
+    r"""Map of environment variable name to its encrypted value. Secret
+    environment variables must be unique across all of a build's secrets, and
+    must be used by at least one build step. Values can be at most 64 KB in
+    size. There can be at most 100 secret values across all of a build's
+    secrets.
+
+    Messages:
+      AdditionalProperty: An additional property for a EnvMapValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type EnvMapValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a EnvMapValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A byte attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.BytesField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  envMap = _messages.MessageField('EnvMapValue', 1)
+  kmsKeyName = _messages.StringField(2)
+
+
+class GoogleDevtoolsCloudbuildV1MavenArtifact(_messages.Message):
+  r"""A Maven artifact to upload to Artifact Registry upon successful
+  completion of all build steps.
+
+  Fields:
+    artifactId: Maven `artifactId` value used when uploading the artifact to
+      Artifact Registry.
+    groupId: Maven `groupId` value used when uploading the artifact to
+      Artifact Registry.
+    path: Optional. Path to an artifact in the build's workspace to be
+      uploaded to Artifact Registry. This can be either an absolute path, e.g.
+      /workspace/my-app/target/my-app-1.0.SNAPSHOT.jar or a relative path from
+      /workspace, e.g. my-app/target/my-app-1.0.SNAPSHOT.jar.
+    repository: Artifact Registry repository, in the form "https://$REGION-
+      maven.pkg.dev/$PROJECT/$REPOSITORY" Artifact in the workspace specified
+      by path will be uploaded to Artifact Registry with this location as a
+      prefix.
+    version: Maven `version` value used when uploading the artifact to
+      Artifact Registry.
+  """
+
+  artifactId = _messages.StringField(1)
+  groupId = _messages.StringField(2)
+  path = _messages.StringField(3)
+  repository = _messages.StringField(4)
+  version = _messages.StringField(5)
+
+
+class GoogleDevtoolsCloudbuildV1NpmPackage(_messages.Message):
+  r"""Npm package to upload to Artifact Registry upon successful completion of
+  all build steps.
+
+  Fields:
+    packagePath: Path to the package.json. e.g. workspace/path/to/package
+    repository: Artifact Registry repository, in the form "https://$REGION-
+      npm.pkg.dev/$PROJECT/$REPOSITORY" Npm package in the workspace specified
+      by path will be zipped and uploaded to Artifact Registry with this
+      location as a prefix.
+  """
+
+  packagePath = _messages.StringField(1)
+  repository = _messages.StringField(2)
+
+
+class GoogleDevtoolsCloudbuildV1PoolOption(_messages.Message):
+  r"""Details about how a build should be executed on a `WorkerPool`. See
+  [running builds in a private
+  pool](https://cloud.google.com/build/docs/private-pools/run-builds-in-
+  private-pool) for more information.
+
+  Fields:
+    name: The `WorkerPool` resource to execute the build on. You must have
+      `cloudbuild.workerpools.use` on the project hosting the WorkerPool.
+      Format
+      projects/{project}/locations/{location}/workerPools/{workerPoolId}
+  """
+
+  name = _messages.StringField(1)
+
+
+class GoogleDevtoolsCloudbuildV1PythonPackage(_messages.Message):
+  r"""Python package to upload to Artifact Registry upon successful completion
+  of all build steps. A package can encapsulate multiple objects to be
+  uploaded to a single repository.
+
+  Fields:
+    paths: Path globs used to match files in the build's workspace. For
+      Python/ Twine, this is usually `dist/*`, and sometimes additionally an
+      `.asc` file.
+    repository: Artifact Registry repository, in the form "https://$REGION-
+      python.pkg.dev/$PROJECT/$REPOSITORY" Files in the workspace matching any
+      path pattern will be uploaded to Artifact Registry with this location as
+      a prefix.
+  """
+
+  paths = _messages.StringField(1, repeated=True)
+  repository = _messages.StringField(2)
+
+
+class GoogleDevtoolsCloudbuildV1RepoSource(_messages.Message):
+  r"""Location of the source in a Google Cloud Source Repository.
+
+  Messages:
+    SubstitutionsValue: Optional. Substitutions to use in a triggered build.
+      Should only be used with RunBuildTrigger
+
+  Fields:
+    branchName: Regex matching branches to build. The syntax of the regular
+      expressions accepted is the syntax accepted by RE2 and described at
+      https://github.com/google/re2/wiki/Syntax
+    commitSha: Explicit commit SHA to build.
+    dir: Optional. Directory, relative to the source root, in which to run the
+      build. This must be a relative path. If a step's `dir` is specified and
+      is an absolute path, this value is ignored for that step's execution.
+    invertRegex: Optional. Only trigger a build if the revision regex does NOT
+      match the revision regex.
+    projectId: Optional. ID of the project that owns the Cloud Source
+      Repository. If omitted, the project ID requesting the build is assumed.
+    repoName: Required. Name of the Cloud Source Repository.
+    substitutions: Optional. Substitutions to use in a triggered build. Should
+      only be used with RunBuildTrigger
+    tagName: Regex matching tags to build. The syntax of the regular
+      expressions accepted is the syntax accepted by RE2 and described at
+      https://github.com/google/re2/wiki/Syntax
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class SubstitutionsValue(_messages.Message):
+    r"""Optional. Substitutions to use in a triggered build. Should only be
+    used with RunBuildTrigger
+
+    Messages:
+      AdditionalProperty: An additional property for a SubstitutionsValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type SubstitutionsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a SubstitutionsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  branchName = _messages.StringField(1)
+  commitSha = _messages.StringField(2)
+  dir = _messages.StringField(3)
+  invertRegex = _messages.BooleanField(4)
+  projectId = _messages.StringField(5)
+  repoName = _messages.StringField(6)
+  substitutions = _messages.MessageField('SubstitutionsValue', 7)
+  tagName = _messages.StringField(8)
+
+
+class GoogleDevtoolsCloudbuildV1Results(_messages.Message):
+  r"""Artifacts created by the build pipeline.
+
+  Fields:
+    artifactManifest: Path to the artifact manifest for non-container
+      artifacts uploaded to Cloud Storage. Only populated when artifacts are
+      uploaded to Cloud Storage.
+    artifactTiming: Time to push all non-container artifacts to Cloud Storage.
+    buildStepImages: List of build step digests, in the order corresponding to
+      build step indices.
+    buildStepOutputs: List of build step outputs, produced by builder images,
+      in the order corresponding to build step indices. [Cloud
+      Builders](https://cloud.google.com/cloud-build/docs/cloud-builders) can
+      produce this output by writing to `$BUILDER_OUTPUT/output`. Only the
+      first 50KB of data is stored. Note that the `$BUILDER_OUTPUT` variable
+      is read-only and can't be substituted.
+    goModules: Optional. Go module artifacts uploaded to Artifact Registry at
+      the end of the build.
+    images: Container images that were built as a part of the build.
+    mavenArtifacts: Maven artifacts uploaded to Artifact Registry at the end
+      of the build.
+    npmPackages: Npm packages uploaded to Artifact Registry at the end of the
+      build.
+    numArtifacts: Number of non-container artifacts uploaded to Cloud Storage.
+      Only populated when artifacts are uploaded to Cloud Storage.
+    pythonPackages: Python artifacts uploaded to Artifact Registry at the end
+      of the build.
+  """
+
+  artifactManifest = _messages.StringField(1)
+  artifactTiming = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 2)
+  buildStepImages = _messages.StringField(3, repeated=True)
+  buildStepOutputs = _messages.BytesField(4, repeated=True)
+  goModules = _messages.MessageField('GoogleDevtoolsCloudbuildV1UploadedGoModule', 5, repeated=True)
+  images = _messages.MessageField('GoogleDevtoolsCloudbuildV1BuiltImage', 6, repeated=True)
+  mavenArtifacts = _messages.MessageField('GoogleDevtoolsCloudbuildV1UploadedMavenArtifact', 7, repeated=True)
+  npmPackages = _messages.MessageField('GoogleDevtoolsCloudbuildV1UploadedNpmPackage', 8, repeated=True)
+  numArtifacts = _messages.IntegerField(9)
+  pythonPackages = _messages.MessageField('GoogleDevtoolsCloudbuildV1UploadedPythonPackage', 10, repeated=True)
+
+
+class GoogleDevtoolsCloudbuildV1Secret(_messages.Message):
+  r"""Pairs a set of secret environment variables containing encrypted values
+  with the Cloud KMS key to use to decrypt the value. Note: Use `kmsKeyName`
+  with `available_secrets` instead of using `kmsKeyName` with `secret`. For
+  instructions see: https://cloud.google.com/cloud-build/docs/securing-
+  builds/use-encrypted-credentials.
+
+  Messages:
+    SecretEnvValue: Map of environment variable name to its encrypted value.
+      Secret environment variables must be unique across all of a build's
+      secrets, and must be used by at least one build step. Values can be at
+      most 64 KB in size. There can be at most 100 secret values across all of
+      a build's secrets.
+
+  Fields:
+    kmsKeyName: Cloud KMS key name to use to decrypt these envs.
+    secretEnv: Map of environment variable name to its encrypted value. Secret
+      environment variables must be unique across all of a build's secrets,
+      and must be used by at least one build step. Values can be at most 64 KB
+      in size. There can be at most 100 secret values across all of a build's
+      secrets.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class SecretEnvValue(_messages.Message):
+    r"""Map of environment variable name to its encrypted value. Secret
+    environment variables must be unique across all of a build's secrets, and
+    must be used by at least one build step. Values can be at most 64 KB in
+    size. There can be at most 100 secret values across all of a build's
+    secrets.
+
+    Messages:
+      AdditionalProperty: An additional property for a SecretEnvValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type SecretEnvValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a SecretEnvValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A byte attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.BytesField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  kmsKeyName = _messages.StringField(1)
+  secretEnv = _messages.MessageField('SecretEnvValue', 2)
+
+
+class GoogleDevtoolsCloudbuildV1SecretManagerSecret(_messages.Message):
+  r"""Pairs a secret environment variable with a SecretVersion in Secret
+  Manager.
+
+  Fields:
+    env: Environment variable name to associate with the secret. Secret
+      environment variables must be unique across all of a build's secrets,
+      and must be used by at least one build step.
+    versionName: Resource name of the SecretVersion. In format:
+      projects/*/secrets/*/versions/*
+  """
+
+  env = _messages.StringField(1)
+  versionName = _messages.StringField(2)
+
+
+class GoogleDevtoolsCloudbuildV1Secrets(_messages.Message):
+  r"""Secrets and secret environment variables.
+
+  Fields:
+    inline: Secrets encrypted with KMS key and the associated secret
+      environment variable.
+    secretManager: Secrets in Secret Manager and associated secret environment
+      variable.
+  """
+
+  inline = _messages.MessageField('GoogleDevtoolsCloudbuildV1InlineSecret', 1, repeated=True)
+  secretManager = _messages.MessageField('GoogleDevtoolsCloudbuildV1SecretManagerSecret', 2, repeated=True)
+
+
+class GoogleDevtoolsCloudbuildV1Source(_messages.Message):
+  r"""Location of the source in a supported storage service.
+
+  Fields:
+    connectedRepository: Optional. If provided, get the source from this 2nd-
+      gen Google Cloud Build repository resource.
+    developerConnectConfig: If provided, get the source from this Developer
+      Connect config.
+    gitSource: If provided, get the source from this Git repository.
+    repoSource: If provided, get the source from this location in a Cloud
+      Source Repository.
+    storageSource: If provided, get the source from this location in Cloud
+      Storage.
+    storageSourceManifest: If provided, get the source from this manifest in
+      Cloud Storage. This feature is in Preview; see description
+      [here](https://github.com/GoogleCloudPlatform/cloud-
+      builders/tree/master/gcs-fetcher).
+  """
+
+  connectedRepository = _messages.MessageField('GoogleDevtoolsCloudbuildV1ConnectedRepository', 1)
+  developerConnectConfig = _messages.MessageField('GoogleDevtoolsCloudbuildV1DeveloperConnectConfig', 2)
+  gitSource = _messages.MessageField('GoogleDevtoolsCloudbuildV1GitSource', 3)
+  repoSource = _messages.MessageField('GoogleDevtoolsCloudbuildV1RepoSource', 4)
+  storageSource = _messages.MessageField('GoogleDevtoolsCloudbuildV1StorageSource', 5)
+  storageSourceManifest = _messages.MessageField('GoogleDevtoolsCloudbuildV1StorageSourceManifest', 6)
+
+
+class GoogleDevtoolsCloudbuildV1SourceProvenance(_messages.Message):
+  r"""Provenance of the source. Ways to find the original source, or verify
+  that some source was used for this build.
+
+  Messages:
+    FileHashesValue: Output only. Hash(es) of the build source, which can be
+      used to verify that the original source integrity was maintained in the
+      build. Note that `FileHashes` will only be populated if `BuildOptions`
+      has requested a `SourceProvenanceHash`. The keys to this map are file
+      paths used as build source and the values contain the hash values for
+      those files. If the build source came in a single package such as a
+      gzipped tarfile (`.tar.gz`), the `FileHash` will be for the single path
+      to that file.
+
+  Fields:
+    fileHashes: Output only. Hash(es) of the build source, which can be used
+      to verify that the original source integrity was maintained in the
+      build. Note that `FileHashes` will only be populated if `BuildOptions`
+      has requested a `SourceProvenanceHash`. The keys to this map are file
+      paths used as build source and the values contain the hash values for
+      those files. If the build source came in a single package such as a
+      gzipped tarfile (`.tar.gz`), the `FileHash` will be for the single path
+      to that file.
+    resolvedConnectedRepository: Output only. A copy of the build's
+      `source.connected_repository`, if exists, with any revisions resolved.
+    resolvedGitSource: Output only. A copy of the build's `source.git_source`,
+      if exists, with any revisions resolved.
+    resolvedRepoSource: A copy of the build's `source.repo_source`, if exists,
+      with any revisions resolved.
+    resolvedStorageSource: A copy of the build's `source.storage_source`, if
+      exists, with any generations resolved.
+    resolvedStorageSourceManifest: A copy of the build's
+      `source.storage_source_manifest`, if exists, with any revisions
+      resolved. This feature is in Preview.
+  """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class FileHashesValue(_messages.Message):
+    r"""Output only. Hash(es) of the build source, which can be used to verify
+    that the original source integrity was maintained in the build. Note that
+    `FileHashes` will only be populated if `BuildOptions` has requested a
+    `SourceProvenanceHash`. The keys to this map are file paths used as build
+    source and the values contain the hash values for those files. If the
+    build source came in a single package such as a gzipped tarfile
+    (`.tar.gz`), the `FileHash` will be for the single path to that file.
+
+    Messages:
+      AdditionalProperty: An additional property for a FileHashesValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type FileHashesValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a FileHashesValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A GoogleDevtoolsCloudbuildV1FileHashes attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.MessageField('GoogleDevtoolsCloudbuildV1FileHashes', 2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  fileHashes = _messages.MessageField('FileHashesValue', 1)
+  resolvedConnectedRepository = _messages.MessageField('GoogleDevtoolsCloudbuildV1ConnectedRepository', 2)
+  resolvedGitSource = _messages.MessageField('GoogleDevtoolsCloudbuildV1GitSource', 3)
+  resolvedRepoSource = _messages.MessageField('GoogleDevtoolsCloudbuildV1RepoSource', 4)
+  resolvedStorageSource = _messages.MessageField('GoogleDevtoolsCloudbuildV1StorageSource', 5)
+  resolvedStorageSourceManifest = _messages.MessageField('GoogleDevtoolsCloudbuildV1StorageSourceManifest', 6)
+
+
+class GoogleDevtoolsCloudbuildV1StorageSource(_messages.Message):
+  r"""Location of the source in an archive file in Cloud Storage.
+
+  Enums:
+    SourceFetcherValueValuesEnum: Optional. Option to specify the tool to
+      fetch the source file for the build.
+
+  Fields:
+    bucket: Cloud Storage bucket containing the source (see [Bucket Name
+      Requirements](https://cloud.google.com/storage/docs/bucket-
+      naming#requirements)).
+    generation: Optional. Cloud Storage generation for the object. If the
+      generation is omitted, the latest generation will be used.
+    object: Required. Cloud Storage object containing the source. This object
+      must be a zipped (`.zip`) or gzipped archive file (`.tar.gz`) containing
+      source to build.
+    sourceFetcher: Optional. Option to specify the tool to fetch the source
+      file for the build.
+  """
+
+  class SourceFetcherValueValuesEnum(_messages.Enum):
+    r"""Optional. Option to specify the tool to fetch the source file for the
+    build.
+
+    Values:
+      SOURCE_FETCHER_UNSPECIFIED: Unspecified defaults to GSUTIL.
+      GSUTIL: Use the "gsutil" tool to download the source file.
+      GCS_FETCHER: Use the Cloud Storage Fetcher tool to download the source
+        file.
+    """
+    SOURCE_FETCHER_UNSPECIFIED = 0
+    GSUTIL = 1
+    GCS_FETCHER = 2
+
+  bucket = _messages.StringField(1)
+  generation = _messages.IntegerField(2)
+  object = _messages.StringField(3)
+  sourceFetcher = _messages.EnumField('SourceFetcherValueValuesEnum', 4)
+
+
+class GoogleDevtoolsCloudbuildV1StorageSourceManifest(_messages.Message):
+  r"""Location of the source manifest in Cloud Storage. This feature is in
+  Preview; see description
+  [here](https://github.com/GoogleCloudPlatform/cloud-
+  builders/tree/master/gcs-fetcher).
+
+  Fields:
+    bucket: Required. Cloud Storage bucket containing the source manifest (see
+      [Bucket Name Requirements](https://cloud.google.com/storage/docs/bucket-
+      naming#requirements)).
+    generation: Cloud Storage generation for the object. If the generation is
+      omitted, the latest generation will be used.
+    object: Required. Cloud Storage object containing the source manifest.
+      This object must be a JSON file.
+  """
+
+  bucket = _messages.StringField(1)
+  generation = _messages.IntegerField(2)
+  object = _messages.StringField(3)
+
+
+class GoogleDevtoolsCloudbuildV1TimeSpan(_messages.Message):
+  r"""Start and end times for a build execution phase.
+
+  Fields:
+    endTime: End of time span.
+    startTime: Start of time span.
+  """
+
+  endTime = _messages.StringField(1)
+  startTime = _messages.StringField(2)
+
+
+class GoogleDevtoolsCloudbuildV1UploadedGoModule(_messages.Message):
+  r"""A Go module artifact uploaded to Artifact Registry using the GoModule
+  directive.
+
+  Fields:
+    fileHashes: Hash types and values of the Go Module Artifact.
+    pushTiming: Output only. Stores timing information for pushing the
+      specified artifact.
+    uri: URI of the uploaded artifact.
+  """
+
+  fileHashes = _messages.MessageField('GoogleDevtoolsCloudbuildV1FileHashes', 1)
+  pushTiming = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 2)
+  uri = _messages.StringField(3)
+
+
+class GoogleDevtoolsCloudbuildV1UploadedMavenArtifact(_messages.Message):
+  r"""A Maven artifact uploaded using the MavenArtifact directive.
+
+  Fields:
+    fileHashes: Hash types and values of the Maven Artifact.
+    pushTiming: Output only. Stores timing information for pushing the
+      specified artifact.
+    uri: URI of the uploaded artifact.
+  """
+
+  fileHashes = _messages.MessageField('GoogleDevtoolsCloudbuildV1FileHashes', 1)
+  pushTiming = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 2)
+  uri = _messages.StringField(3)
+
+
+class GoogleDevtoolsCloudbuildV1UploadedNpmPackage(_messages.Message):
+  r"""An npm package uploaded to Artifact Registry using the NpmPackage
+  directive.
+
+  Fields:
+    fileHashes: Hash types and values of the npm package.
+    pushTiming: Output only. Stores timing information for pushing the
+      specified artifact.
+    uri: URI of the uploaded npm package.
+  """
+
+  fileHashes = _messages.MessageField('GoogleDevtoolsCloudbuildV1FileHashes', 1)
+  pushTiming = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 2)
+  uri = _messages.StringField(3)
+
+
+class GoogleDevtoolsCloudbuildV1UploadedPythonPackage(_messages.Message):
+  r"""Artifact uploaded using the PythonPackage directive.
+
+  Fields:
+    fileHashes: Hash types and values of the Python Artifact.
+    pushTiming: Output only. Stores timing information for pushing the
+      specified artifact.
+    uri: URI of the uploaded artifact.
+  """
+
+  fileHashes = _messages.MessageField('GoogleDevtoolsCloudbuildV1FileHashes', 1)
+  pushTiming = _messages.MessageField('GoogleDevtoolsCloudbuildV1TimeSpan', 2)
+  uri = _messages.StringField(3)
+
+
+class GoogleDevtoolsCloudbuildV1Volume(_messages.Message):
+  r"""Volume describes a Docker container volume which is mounted into build
+  steps in order to persist files across build step execution.
+
+  Fields:
+    name: Name of the volume to mount. Volume names must be unique per build
+      step and must be valid names for Docker volumes. Each named volume must
+      be used by at least two build steps.
+    path: Path at which to mount the volume. Paths must be absolute and cannot
+      conflict with other volume paths on the same build step or with certain
+      reserved volume paths.
+  """
+
+  name = _messages.StringField(1)
+  path = _messages.StringField(2)
+
+
+class GoogleDevtoolsCloudbuildV1Warning(_messages.Message):
+  r"""A non-fatal problem encountered during the execution of the build.
+
+  Enums:
+    PriorityValueValuesEnum: The priority for this warning.
+
+  Fields:
+    priority: The priority for this warning.
+    text: Explanation of the warning generated.
+  """
+
+  class PriorityValueValuesEnum(_messages.Enum):
+    r"""The priority for this warning.
+
+    Values:
+      PRIORITY_UNSPECIFIED: Should not be used.
+      INFO: e.g. deprecation warnings and alternative feature highlights.
+      WARNING: e.g. automated detection of possible issues with the build.
+      ALERT: e.g. alerts that a feature used in the build is pending removal
+    """
+    PRIORITY_UNSPECIFIED = 0
+    INFO = 1
+    WARNING = 2
+    ALERT = 3
+
+  priority = _messages.EnumField('PriorityValueValuesEnum', 1)
+  text = _messages.StringField(2)
 
 
 class GoogleLongrunningListOperationsResponse(_messages.Message):
@@ -1106,6 +2696,24 @@ class HTTPHeader(_messages.Message):
   value = _messages.StringField(2)
 
 
+class InstanceSplit(_messages.Message):
+  r"""Holds a single instance split entry for the Worker. Allocations can be
+  done to a specific Revision name, or pointing to the latest Ready Revision.
+
+  Fields:
+    latestRevision: Uses the "status.latestReadyRevisionName" to determine the
+      traffic target. When it changes, traffic will automatically migrate from
+      the prior "latest ready" revision to the new one.
+    percent: Specifies percent of the instance split to this Revision. This
+      defaults to zero if unspecified.
+    revisionName: Revision to which to assign this portion of instances.
+  """
+
+  latestRevision = _messages.BooleanField(1)
+  percent = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  revisionName = _messages.StringField(3)
+
+
 class Job(_messages.Message):
   r"""Job represents the configuration of a single job, which references a
   container image which is run to completion.
@@ -1133,11 +2741,21 @@ class JobSpec(_messages.Message):
   r"""JobSpec describes how the job will look.
 
   Fields:
+    runExecutionToken: A unique string used as a suffix for creating a new
+      execution. The Job will become ready when the execution is successfully
+      completed. The sum of job name and token length must be fewer than 63
+      characters.
+    startExecutionToken: A unique string used as a suffix for creating a new
+      execution. The Job will become ready when the execution is successfully
+      started. The sum of job name and token length must be fewer than 63
+      characters.
     template: Optional. Describes the execution that will be created when
       running a job.
   """
 
-  template = _messages.MessageField('ExecutionTemplateSpec', 1)
+  runExecutionToken = _messages.StringField(1)
+  startExecutionToken = _messages.StringField(2)
+  template = _messages.MessageField('ExecutionTemplateSpec', 3)
 
 
 class JobStatus(_messages.Message):
@@ -1386,6 +3004,27 @@ class ListTasksResponse(_messages.Message):
   unreachable = _messages.StringField(5, repeated=True)
 
 
+class ListWorkerPoolsResponse(_messages.Message):
+  r"""A list of WorkerPool resources.
+
+  Fields:
+    apiVersion: The API version for this call; returns
+      "run.googleapis.com/v1".
+    items: List of WorkerPools.
+    kind: The kind of this resource; returns "WorkerPoolList".
+    metadata: Metadata associated with this WorkerPool list.
+    unreachable: For calls against the global endpoint, returns the list of
+      Cloud locations that could not be reached. For regional calls, this
+      field is not used.
+  """
+
+  apiVersion = _messages.StringField(1)
+  items = _messages.MessageField('WorkerPool', 2, repeated=True)
+  kind = _messages.StringField(3)
+  metadata = _messages.MessageField('ListMeta', 4)
+  unreachable = _messages.StringField(5, repeated=True)
+
+
 class LocalObjectReference(_messages.Message):
   r"""Not supported by Cloud Run. LocalObjectReference contains enough
   information to let you locate the referenced object inside the same
@@ -1480,8 +3119,8 @@ class Location(_messages.Message):
 
 class NFSVolumeSource(_messages.Message):
   r"""Represents a persistent volume that will be mounted using NFS. This
-  volume will be shared between all instances of the Service and data will not
-  be deleted when the instance is shut down.
+  volume will be shared between all instances of the resource and data will
+  not be deleted when the instance is shut down.
 
   Fields:
     path: Path that is exported by the NFS server.
@@ -1492,44 +3131,6 @@ class NFSVolumeSource(_messages.Message):
   path = _messages.StringField(1)
   readOnly = _messages.BooleanField(2)
   server = _messages.StringField(3)
-
-
-class Namespace(_messages.Message):
-  r"""Not supported by Cloud Run. Namespace provides a scope for Names. Use of
-  multiple namespaces is optional.
-
-  Fields:
-    metadata: Standard object's metadata.
-    spec: Spec defines the behavior of the Namespace.
-    status: Status describes the current status of a Namespace.
-  """
-
-  metadata = _messages.MessageField('ObjectMeta', 1)
-  spec = _messages.MessageField('NamespaceSpec', 2)
-  status = _messages.MessageField('NamespaceStatus', 3)
-
-
-class NamespaceSpec(_messages.Message):
-  r"""Not supported by Cloud Run. NamespaceSpec describes the attributes on a
-  Namespace.
-
-  Fields:
-    finalizers: Finalizers is an opaque list of values that must be empty to
-      permanently remove object from storage.
-  """
-
-  finalizers = _messages.StringField(1, repeated=True)
-
-
-class NamespaceStatus(_messages.Message):
-  r"""Not supported by Cloud Run. NamespaceStatus is information about the
-  current status of a Namespace.
-
-  Fields:
-    phase: Phase is the current lifecycle phase of the namespace.
-  """
-
-  phase = _messages.StringField(1)
 
 
 class ObjectMeta(_messages.Message):
@@ -1545,8 +3146,18 @@ class ObjectMeta(_messages.Message):
       will be different depending on the resource type. *
       `autoscaling.knative.dev/maxScale`: Revision. *
       `autoscaling.knative.dev/minScale`: Revision. *
+      `run.googleapis.com/base-images`: Service, Revision. *
       `run.googleapis.com/binary-authorization-breakglass`: Service, Job, *
       `run.googleapis.com/binary-authorization`: Service, Job, Execution. *
+      `run.googleapis.com/build-base-image`: Service. *
+      `run.googleapis.com/build-enable-automatic-updates`: Service. *
+      `run.googleapis.com/build-environment-variables`: Service. *
+      `run.googleapis.com/build-function-target`: Service. *
+      `run.googleapis.com/build-id`: Service. * `run.googleapis.com/build-
+      image-uri`: Service. * `run.googleapis.com/build-name`: Service. *
+      `run.googleapis.com/build-service-account`: Service. *
+      `run.googleapis.com/build-source-location`: Service. *
+      `run.googleapis.com/build-worker-pool`: Service. *
       `run.googleapis.com/client-name`: All resources. *
       `run.googleapis.com/cloudsql-instances`: Revision, Execution. *
       `run.googleapis.com/container-dependencies`: Revision . *
@@ -1558,8 +3169,10 @@ class ObjectMeta(_messages.Message):
       `run.googleapis.com/encryption-key`: Revision, Execution. *
       `run.googleapis.com/execution-environment`: Revision, Execution. *
       `run.googleapis.com/gc-traffic-tags`: Service. *
+      `run.googleapis.com/gpu-zonal-redundancy-disabled`: Revision. *
+      `run.googleapis.com/health-check-disabled`: Revision. *
       `run.googleapis.com/ingress`: Service. * `run.googleapis.com/launch-
-      stage`: Service, Job. * `run.googleapis.com/minScale`: Service (ALPHA) *
+      stage`: Service, Job. * `run.googleapis.com/minScale`: Service *
       `run.googleapis.com/network-interfaces`: Revision, Execution. *
       `run.googleapis.com/post-key-revocation-action-type`: Revision. *
       `run.googleapis.com/secrets`: Revision, Execution. *
@@ -1581,8 +3194,18 @@ class ObjectMeta(_messages.Message):
       will be different depending on the resource type. *
       `autoscaling.knative.dev/maxScale`: Revision. *
       `autoscaling.knative.dev/minScale`: Revision. *
+      `run.googleapis.com/base-images`: Service, Revision. *
       `run.googleapis.com/binary-authorization-breakglass`: Service, Job, *
       `run.googleapis.com/binary-authorization`: Service, Job, Execution. *
+      `run.googleapis.com/build-base-image`: Service. *
+      `run.googleapis.com/build-enable-automatic-updates`: Service. *
+      `run.googleapis.com/build-environment-variables`: Service. *
+      `run.googleapis.com/build-function-target`: Service. *
+      `run.googleapis.com/build-id`: Service. * `run.googleapis.com/build-
+      image-uri`: Service. * `run.googleapis.com/build-name`: Service. *
+      `run.googleapis.com/build-service-account`: Service. *
+      `run.googleapis.com/build-source-location`: Service. *
+      `run.googleapis.com/build-worker-pool`: Service. *
       `run.googleapis.com/client-name`: All resources. *
       `run.googleapis.com/cloudsql-instances`: Revision, Execution. *
       `run.googleapis.com/container-dependencies`: Revision . *
@@ -1594,8 +3217,10 @@ class ObjectMeta(_messages.Message):
       `run.googleapis.com/encryption-key`: Revision, Execution. *
       `run.googleapis.com/execution-environment`: Revision, Execution. *
       `run.googleapis.com/gc-traffic-tags`: Service. *
+      `run.googleapis.com/gpu-zonal-redundancy-disabled`: Revision. *
+      `run.googleapis.com/health-check-disabled`: Revision. *
       `run.googleapis.com/ingress`: Service. * `run.googleapis.com/launch-
-      stage`: Service, Job. * `run.googleapis.com/minScale`: Service (ALPHA) *
+      stage`: Service, Job. * `run.googleapis.com/minScale`: Service *
       `run.googleapis.com/network-interfaces`: Revision, Execution. *
       `run.googleapis.com/post-key-revocation-action-type`: Revision. *
       `run.googleapis.com/secrets`: Revision, Execution. *
@@ -1644,9 +3269,18 @@ class ObjectMeta(_messages.Message):
     annotations with 'run.googleapis.com/' and 'autoscaling.knative.dev' are
     restricted, and the accepted annotations will be different depending on
     the resource type. * `autoscaling.knative.dev/maxScale`: Revision. *
-    `autoscaling.knative.dev/minScale`: Revision. *
-    `run.googleapis.com/binary-authorization-breakglass`: Service, Job, *
-    `run.googleapis.com/binary-authorization`: Service, Job, Execution. *
+    `autoscaling.knative.dev/minScale`: Revision. * `run.googleapis.com/base-
+    images`: Service, Revision. * `run.googleapis.com/binary-authorization-
+    breakglass`: Service, Job, * `run.googleapis.com/binary-authorization`:
+    Service, Job, Execution. * `run.googleapis.com/build-base-image`: Service.
+    * `run.googleapis.com/build-enable-automatic-updates`: Service. *
+    `run.googleapis.com/build-environment-variables`: Service. *
+    `run.googleapis.com/build-function-target`: Service. *
+    `run.googleapis.com/build-id`: Service. * `run.googleapis.com/build-image-
+    uri`: Service. * `run.googleapis.com/build-name`: Service. *
+    `run.googleapis.com/build-service-account`: Service. *
+    `run.googleapis.com/build-source-location`: Service. *
+    `run.googleapis.com/build-worker-pool`: Service. *
     `run.googleapis.com/client-name`: All resources. *
     `run.googleapis.com/cloudsql-instances`: Revision, Execution. *
     `run.googleapis.com/container-dependencies`: Revision . *
@@ -1657,14 +3291,15 @@ class ObjectMeta(_messages.Message):
     `run.googleapis.com/encryption-key-shutdown-hours`: Revision *
     `run.googleapis.com/encryption-key`: Revision, Execution. *
     `run.googleapis.com/execution-environment`: Revision, Execution. *
-    `run.googleapis.com/gc-traffic-tags`: Service. *
-    `run.googleapis.com/ingress`: Service. * `run.googleapis.com/launch-
-    stage`: Service, Job. * `run.googleapis.com/minScale`: Service (ALPHA) *
-    `run.googleapis.com/network-interfaces`: Revision, Execution. *
-    `run.googleapis.com/post-key-revocation-action-type`: Revision. *
-    `run.googleapis.com/secrets`: Revision, Execution. *
-    `run.googleapis.com/secure-session-agent`: Revision. *
-    `run.googleapis.com/sessionAffinity`: Revision. *
+    `run.googleapis.com/gc-traffic-tags`: Service. * `run.googleapis.com/gpu-
+    zonal-redundancy-disabled`: Revision. * `run.googleapis.com/health-check-
+    disabled`: Revision. * `run.googleapis.com/ingress`: Service. *
+    `run.googleapis.com/launch-stage`: Service, Job. *
+    `run.googleapis.com/minScale`: Service * `run.googleapis.com/network-
+    interfaces`: Revision, Execution. * `run.googleapis.com/post-key-
+    revocation-action-type`: Revision. * `run.googleapis.com/secrets`:
+    Revision, Execution. * `run.googleapis.com/secure-session-agent`:
+    Revision. * `run.googleapis.com/sessionAffinity`: Revision. *
     `run.googleapis.com/startup-cpu-boost`: Revision. *
     `run.googleapis.com/vpc-access-connector`: Revision, Execution. *
     `run.googleapis.com/vpc-access-egress`: Revision, Execution.
@@ -2043,37 +3678,37 @@ class RevisionSpec(_messages.Message):
   r"""RevisionSpec holds the desired state of the Revision (from the client).
 
   Messages:
-    NodeSelectorValue: The Node Selector configuration. Map of selector key to
-      a value which matches a node.
+    NodeSelectorValue: Optional. The Node Selector configuration. Map of
+      selector key to a value which matches a node.
 
   Fields:
     containerConcurrency: ContainerConcurrency specifies the maximum allowed
       in-flight (concurrent) requests per container instance of the Revision.
-      If not specified, defaults to 80.
-    containers: Required. Containers holds the single container that defines
-      the unit of execution for this Revision. In the context of a Revision,
-      we disallow a number of fields on this Container, including: name and
-      lifecycle. In Cloud Run, only a single container may be provided.
+      If not specified or 0, defaults to 80 when requested CPU >= 1 and
+      defaults to 1 when requested CPU < 1.
+    containers: Required. Containers holds the list which define the units of
+      execution for this Revision. In the context of a Revision, we disallow a
+      number of fields on this Container, including: name and lifecycle.
     enableServiceLinks: Not supported by Cloud Run.
     imagePullSecrets: Not supported by Cloud Run.
-    nodeSelector: The Node Selector configuration. Map of selector key to a
-      value which matches a node.
+    nodeSelector: Optional. The Node Selector configuration. Map of selector
+      key to a value which matches a node.
     runtimeClassName: Runtime. Leave unset for default.
     serviceAccountName: Email address of the IAM service account associated
       with the revision of the service. The service account represents the
       identity of the running revision, and determines what permissions the
       revision has. If not provided, the revision will use the project's
       default service account.
-    timeoutSeconds: TimeoutSeconds holds the max duration the instance is
-      allowed for responding to a request. Cloud Run: defaults to 300 seconds
-      (5 minutes). Maximum allowed value is 3600 seconds (1 hour).
+    timeoutSeconds: Optional. TimeoutSeconds holds the max duration the
+      instance is allowed for responding to a request. Cloud Run: defaults to
+      300 seconds (5 minutes). Maximum allowed value is 3600 seconds (1 hour).
     volumes: A Volume attribute.
   """
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class NodeSelectorValue(_messages.Message):
-    r"""The Node Selector configuration. Map of selector key to a value which
-    matches a node.
+    r"""Optional. The Node Selector configuration. Map of selector key to a
+    value which matches a node.
 
     Messages:
       AdditionalProperty: An additional property for a NodeSelectorValue
@@ -2158,12 +3793,13 @@ class RevisionTemplate(_messages.Message):
       * `autoscaling.knative.dev/maxScale` sets the maximum number of
       instances. * `run.googleapis.com/cloudsql-instances` sets Cloud SQL
       connections. Multiple values should be comma separated. *
-      `run.googleapis.com/vpc-access-connector` sets a Serverless VPC Access
-      connector. * `run.googleapis.com/vpc-access-egress` sets VPC egress.
-      Supported values are `all-traffic`, `all` (deprecated), and `private-
-      ranges-only`. `all-traffic` and `all` provide the same functionality.
-      `all` is deprecated but will continue to be supported. Prefer `all-
-      traffic`.
+      `run.googleapis.com/health-check-disabled`: if true, deploy-time startup
+      probes will not run for this revision. * `run.googleapis.com/vpc-access-
+      connector` sets a Serverless VPC Access connector. *
+      `run.googleapis.com/vpc-access-egress` sets VPC egress. Supported values
+      are `all-traffic`, `all` (deprecated), and `private-ranges-only`. `all-
+      traffic` and `all` provide the same functionality. `all` is deprecated
+      but will continue to be supported. Prefer `all-traffic`.
     spec: RevisionSpec holds the desired state of the Revision (from the
       client).
   """
@@ -2244,72 +3880,6 @@ class RouteStatus(_messages.Message):
   observedGeneration = _messages.IntegerField(3, variant=_messages.Variant.INT32)
   traffic = _messages.MessageField('TrafficTarget', 4, repeated=True)
   url = _messages.StringField(5)
-
-
-class RunApiV1NamespacesGetRequest(_messages.Message):
-  r"""A RunApiV1NamespacesGetRequest object.
-
-  Fields:
-    name: Required. The name of the namespace being retrieved. If needed,
-      replace {namespace_id} with the project ID.
-  """
-
-  name = _messages.StringField(1, required=True)
-
-
-class RunApiV1NamespacesPatchRequest(_messages.Message):
-  r"""A RunApiV1NamespacesPatchRequest object.
-
-  Fields:
-    name: Required. The name of the namespace being retrieved. If needed,
-      replace {namespace_id} with the project ID.
-    namespace: A Namespace resource to be passed as the request body.
-    updateMask: Required. Indicates which fields in the provided namespace to
-      update. This field is currently unused.
-  """
-
-  name = _messages.StringField(1, required=True)
-  namespace = _messages.MessageField('Namespace', 2)
-  updateMask = _messages.StringField(3)
-
-
-class RunApiV1NamespacesSecretsCreateRequest(_messages.Message):
-  r"""A RunApiV1NamespacesSecretsCreateRequest object.
-
-  Fields:
-    parent: Required. The project ID or project number in which this secret
-      should be created.
-    secret: A Secret resource to be passed as the request body.
-  """
-
-  parent = _messages.StringField(1, required=True)
-  secret = _messages.MessageField('Secret', 2)
-
-
-class RunApiV1NamespacesSecretsGetRequest(_messages.Message):
-  r"""A RunApiV1NamespacesSecretsGetRequest object.
-
-  Fields:
-    name: Required. The name of the secret being retrieved. If needed, replace
-      {namespace} with the project ID or number. It takes the form
-      namespaces/{namespace}. For example: namespaces/PROJECT_ID
-  """
-
-  name = _messages.StringField(1, required=True)
-
-
-class RunApiV1NamespacesSecretsReplaceSecretRequest(_messages.Message):
-  r"""A RunApiV1NamespacesSecretsReplaceSecretRequest object.
-
-  Fields:
-    name: Required. The name of the secret being retrieved. If needed, replace
-      {namespace} with the project ID or number. It takes the form
-      namespaces/{namespace}. For example: namespaces/PROJECT_ID
-    secret: A Secret resource to be passed as the request body.
-  """
-
-  name = _messages.StringField(1, required=True)
-  secret = _messages.MessageField('Secret', 2)
 
 
 class RunJobRequest(_messages.Message):
@@ -2915,6 +4485,100 @@ class RunNamespacesTasksListRequest(_messages.Message):
   watch = _messages.BooleanField(8)
 
 
+class RunNamespacesWorkerpoolsCreateRequest(_messages.Message):
+  r"""A RunNamespacesWorkerpoolsCreateRequest object.
+
+  Fields:
+    dryRun: Indicates that the server should validate the request and populate
+      default values without persisting the request. Supported values: `all`
+    parent: Required. The resource's parent. In Cloud Run, it may be one of
+      the following: * `{project_id_or_number}` *
+      `namespaces/{project_id_or_number}` *
+      `namespaces/{project_id_or_number}/workerpools` *
+      `projects/{project_id_or_number}/locations/{region}` *
+      `projects/{project_id_or_number}/regions/{region}`
+    workerPool: A WorkerPool resource to be passed as the request body.
+  """
+
+  dryRun = _messages.StringField(1)
+  parent = _messages.StringField(2, required=True)
+  workerPool = _messages.MessageField('WorkerPool', 3)
+
+
+class RunNamespacesWorkerpoolsDeleteRequest(_messages.Message):
+  r"""A RunNamespacesWorkerpoolsDeleteRequest object.
+
+  Fields:
+    dryRun: Indicates that the server should validate the request and populate
+      default values without persisting the request. Supported values: `all`
+    name: Required. The fully qualified name of the worker pool to delete. It
+      can be any of the following forms: *
+      `namespaces/{project_id_or_number}/workerpools/{worker_pool_name}` (only
+      when the `endpoint` is regional) * `projects/{project_id_or_number}/loca
+      tions/{region}/workerpools/{worker_pool_name}` * `projects/{project_id_o
+      r_number}/regions/{region}/workerpools/{worker_pool_name}`
+  """
+
+  dryRun = _messages.StringField(1)
+  name = _messages.StringField(2, required=True)
+
+
+class RunNamespacesWorkerpoolsGetRequest(_messages.Message):
+  r"""A RunNamespacesWorkerpoolsGetRequest object.
+
+  Fields:
+    name: Required. The fully qualified name of the worker pool to retrieve.
+      It can be any of the following forms: *
+      `namespaces/{project_id_or_number}/workerpools/{worker_pool_name}` (only
+      when the `endpoint` is regional) * `projects/{project_id_or_number}/loca
+      tions/{region}/workerpools/{worker_pool_name}` * `projects/{project_id_o
+      r_number}/regions/{region}/workerpools/{worker_pool_name}`
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class RunNamespacesWorkerpoolsListRequest(_messages.Message):
+  r"""A RunNamespacesWorkerpoolsListRequest object.
+
+  Fields:
+    continue_: Encoded string to continue paging.
+    labelSelector: =, !=, exists, in, and notIn.
+    limit: The maximum number of records that should be returned.
+    parent: Required. The parent from where the resources should be listed. In
+      Cloud Run, it may be one of the following: * `{project_id_or_number}` *
+      `namespaces/{project_id_or_number}` *
+      `namespaces/{project_id_or_number}/workerpools` *
+      `projects/{project_id_or_number}/locations/{region}` *
+      `projects/{project_id_or_number}/regions/{region}`
+  """
+
+  continue_ = _messages.StringField(1)
+  labelSelector = _messages.StringField(2)
+  limit = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  parent = _messages.StringField(4, required=True)
+
+
+class RunNamespacesWorkerpoolsReplaceWorkerPoolRequest(_messages.Message):
+  r"""A RunNamespacesWorkerpoolsReplaceWorkerPoolRequest object.
+
+  Fields:
+    dryRun: Indicates that the server should validate the request and populate
+      default values without persisting the request. Supported values: `all`
+    name: Required. The fully qualified name of the worker pool to replace. It
+      can be any of the following forms: *
+      `namespaces/{project_id_or_number}/workerpools/{worker_pool_name}` (only
+      when the `endpoint` is regional) * `projects/{project_id_or_number}/loca
+      tions/{region}/workerpools/{worker_pool_name}` * `projects/{project_id_o
+      r_number}/regions/{region}/workerpools/{worker_pool_name}`
+    workerPool: A WorkerPool resource to be passed as the request body.
+  """
+
+  dryRun = _messages.StringField(1)
+  name = _messages.StringField(2, required=True)
+  workerPool = _messages.MessageField('WorkerPool', 3)
+
+
 class RunProjectsAuthorizeddomainsListRequest(_messages.Message):
   r"""A RunProjectsAuthorizeddomainsListRequest object.
 
@@ -3133,6 +4797,8 @@ class RunProjectsLocationsListRequest(_messages.Message):
   r"""A RunProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -3143,37 +4809,11 @@ class RunProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
-
-
-class RunProjectsLocationsNamespacesGetRequest(_messages.Message):
-  r"""A RunProjectsLocationsNamespacesGetRequest object.
-
-  Fields:
-    name: Required. The name of the namespace being retrieved. If needed,
-      replace {namespace_id} with the project ID.
-  """
-
-  name = _messages.StringField(1, required=True)
-
-
-class RunProjectsLocationsNamespacesPatchRequest(_messages.Message):
-  r"""A RunProjectsLocationsNamespacesPatchRequest object.
-
-  Fields:
-    name: Required. The name of the namespace being retrieved. If needed,
-      replace {namespace_id} with the project ID.
-    namespace: A Namespace resource to be passed as the request body.
-    updateMask: Required. Indicates which fields in the provided namespace to
-      update. This field is currently unused.
-  """
-
-  name = _messages.StringField(1, required=True)
-  namespace = _messages.MessageField('Namespace', 2)
-  updateMask = _messages.StringField(3)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class RunProjectsLocationsOperationsDeleteRequest(_messages.Message):
@@ -3343,45 +4983,6 @@ class RunProjectsLocationsRoutesListRequest(_messages.Message):
   watch = _messages.BooleanField(8)
 
 
-class RunProjectsLocationsSecretsCreateRequest(_messages.Message):
-  r"""A RunProjectsLocationsSecretsCreateRequest object.
-
-  Fields:
-    parent: Required. The project ID or project number in which this secret
-      should be created.
-    secret: A Secret resource to be passed as the request body.
-  """
-
-  parent = _messages.StringField(1, required=True)
-  secret = _messages.MessageField('Secret', 2)
-
-
-class RunProjectsLocationsSecretsGetRequest(_messages.Message):
-  r"""A RunProjectsLocationsSecretsGetRequest object.
-
-  Fields:
-    name: Required. The name of the secret being retrieved. If needed, replace
-      {namespace} with the project ID or number. It takes the form
-      namespaces/{namespace}. For example: namespaces/PROJECT_ID
-  """
-
-  name = _messages.StringField(1, required=True)
-
-
-class RunProjectsLocationsSecretsReplaceSecretRequest(_messages.Message):
-  r"""A RunProjectsLocationsSecretsReplaceSecretRequest object.
-
-  Fields:
-    name: Required. The name of the secret being retrieved. If needed, replace
-      {namespace} with the project ID or number. It takes the form
-      namespaces/{namespace}. For example: namespaces/PROJECT_ID
-    secret: A Secret resource to be passed as the request body.
-  """
-
-  name = _messages.StringField(1, required=True)
-  secret = _messages.MessageField('Secret', 2)
-
-
 class RunProjectsLocationsServicesCreateRequest(_messages.Message):
   r"""A RunProjectsLocationsServicesCreateRequest object.
 
@@ -3549,97 +5150,62 @@ class RunProjectsLocationsServicesTestIamPermissionsRequest(_messages.Message):
   testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
 
 
-class Secret(_messages.Message):
-  r"""Not supported by Cloud Run. Cloud Run on GKE: supported Secret holds
-  secret data of a certain type. The total bytes of the values in the Data
-  field must be less than MaxSecretSize bytes.
-
-  Messages:
-    DataValue: Data contains the secret data. Each key must consist of
-      alphanumeric characters, '-', '_' or '.'. The serialized form of the
-      secret data is a base64 encoded string, representing the arbitrary
-      (possibly non-string) data value here. Described in
-      https://tools.ietf.org/html/rfc4648#section-4
-    StringDataValue: stringData allows specifying non-binary secret data in
-      string form. It is provided as a write-only convenience method. All keys
-      and values are merged into the data field on write, overwriting any
-      existing values. It is never output when reading from the API.
-      +k8s:conversion-gen=false
+class RunProjectsLocationsWorkerpoolsGetIamPolicyRequest(_messages.Message):
+  r"""A RunProjectsLocationsWorkerpoolsGetIamPolicyRequest object.
 
   Fields:
-    data: Data contains the secret data. Each key must consist of alphanumeric
-      characters, '-', '_' or '.'. The serialized form of the secret data is a
-      base64 encoded string, representing the arbitrary (possibly non-string)
-      data value here. Described in
-      https://tools.ietf.org/html/rfc4648#section-4
-    metadata: Standard object's metadata.
-    stringData: stringData allows specifying non-binary secret data in string
-      form. It is provided as a write-only convenience method. All keys and
-      values are merged into the data field on write, overwriting any existing
-      values. It is never output when reading from the API. +k8s:conversion-
-      gen=false
-    type: Used to facilitate programmatic handling of secret data.
+    options_requestedPolicyVersion: Optional. The maximum policy version that
+      will be used to format the policy. Valid values are 0, 1, and 3.
+      Requests specifying an invalid value will be rejected. Requests for
+      policies with any conditional role bindings must specify version 3.
+      Policies with no conditional role bindings may specify any valid value
+      or leave the field unset. The policy in the response might use the
+      policy version that you specified, or it might use a lower policy
+      version. For example, if you specify version 3, but the policy has no
+      conditional role bindings, the response uses version 1. To learn which
+      resources support conditions in their IAM policies, see the [IAM
+      documentation](https://cloud.google.com/iam/help/conditions/resource-
+      policies).
+    resource: REQUIRED: The resource for which the policy is being requested.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
   """
 
-  @encoding.MapUnrecognizedFields('additionalProperties')
-  class DataValue(_messages.Message):
-    r"""Data contains the secret data. Each key must consist of alphanumeric
-    characters, '-', '_' or '.'. The serialized form of the secret data is a
-    base64 encoded string, representing the arbitrary (possibly non-string)
-    data value here. Described in
-    https://tools.ietf.org/html/rfc4648#section-4
+  options_requestedPolicyVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  resource = _messages.StringField(2, required=True)
 
-    Messages:
-      AdditionalProperty: An additional property for a DataValue object.
 
-    Fields:
-      additionalProperties: Additional properties of type DataValue
-    """
+class RunProjectsLocationsWorkerpoolsSetIamPolicyRequest(_messages.Message):
+  r"""A RunProjectsLocationsWorkerpoolsSetIamPolicyRequest object.
 
-    class AdditionalProperty(_messages.Message):
-      r"""An additional property for a DataValue object.
+  Fields:
+    resource: REQUIRED: The resource for which the policy is being specified.
+      See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    setIamPolicyRequest: A SetIamPolicyRequest resource to be passed as the
+      request body.
+  """
 
-      Fields:
-        key: Name of the additional property.
-        value: A byte attribute.
-      """
+  resource = _messages.StringField(1, required=True)
+  setIamPolicyRequest = _messages.MessageField('SetIamPolicyRequest', 2)
 
-      key = _messages.StringField(1)
-      value = _messages.BytesField(2)
 
-    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+class RunProjectsLocationsWorkerpoolsTestIamPermissionsRequest(_messages.Message):
+  r"""A RunProjectsLocationsWorkerpoolsTestIamPermissionsRequest object.
 
-  @encoding.MapUnrecognizedFields('additionalProperties')
-  class StringDataValue(_messages.Message):
-    r"""stringData allows specifying non-binary secret data in string form. It
-    is provided as a write-only convenience method. All keys and values are
-    merged into the data field on write, overwriting any existing values. It
-    is never output when reading from the API. +k8s:conversion-gen=false
+  Fields:
+    resource: REQUIRED: The resource for which the policy detail is being
+      requested. See [Resource
+      names](https://cloud.google.com/apis/design/resource_names) for the
+      appropriate value for this field.
+    testIamPermissionsRequest: A TestIamPermissionsRequest resource to be
+      passed as the request body.
+  """
 
-    Messages:
-      AdditionalProperty: An additional property for a StringDataValue object.
-
-    Fields:
-      additionalProperties: Additional properties of type StringDataValue
-    """
-
-    class AdditionalProperty(_messages.Message):
-      r"""An additional property for a StringDataValue object.
-
-      Fields:
-        key: Name of the additional property.
-        value: A string attribute.
-      """
-
-      key = _messages.StringField(1)
-      value = _messages.StringField(2)
-
-    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
-
-  data = _messages.MessageField('DataValue', 1)
-  metadata = _messages.MessageField('ObjectMeta', 2)
-  stringData = _messages.MessageField('StringDataValue', 3)
-  type = _messages.StringField(4)
+  resource = _messages.StringField(1, required=True)
+  testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
 
 
 class SecretEnvSource(_messages.Message):
@@ -3770,7 +5336,7 @@ class Service(_messages.Message):
       Service.metadata.annotations. * `run.googleapis.com/binary-
       authorization-breakglass` * `run.googleapis.com/binary-authorization` *
       `run.googleapis.com/client-name` * `run.googleapis.com/custom-audiences`
-      * `run.googleapis.com/default-url-disabled`: Service. *
+      * `run.googleapis.com/default-url-disabled` *
       `run.googleapis.com/description` * `run.googleapis.com/gc-traffic-tags`
       * `run.googleapis.com/ingress` * `run.googleapis.com/ingress` sets the
       ingress settings for the Service. See [the ingress settings
@@ -4062,11 +5628,17 @@ class TaskAttemptResult(_messages.Message):
 class TaskSpec(_messages.Message):
   r"""TaskSpec is a description of a task.
 
+  Messages:
+    NodeSelectorValue: Optional. The Node Selector configuration. Map of
+      selector key to a value which matches a node.
+
   Fields:
     containers: Optional. List of containers belonging to the task. We
       disallow a number of fields on this Container.
     maxRetries: Optional. Number of retries allowed per task, before marking
       this job failed. Defaults to 3.
+    nodeSelector: Optional. The Node Selector configuration. Map of selector
+      key to a value which matches a node.
     serviceAccountName: Optional. Email address of the IAM service account
       associated with the task of a job execution. The service account
       represents the identity of the running task, and determines what
@@ -4080,11 +5652,38 @@ class TaskSpec(_messages.Message):
       belonging to the task.
   """
 
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class NodeSelectorValue(_messages.Message):
+    r"""Optional. The Node Selector configuration. Map of selector key to a
+    value which matches a node.
+
+    Messages:
+      AdditionalProperty: An additional property for a NodeSelectorValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type NodeSelectorValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a NodeSelectorValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
   containers = _messages.MessageField('Container', 1, repeated=True)
   maxRetries = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  serviceAccountName = _messages.StringField(3)
-  timeoutSeconds = _messages.IntegerField(4)
-  volumes = _messages.MessageField('Volume', 5, repeated=True)
+  nodeSelector = _messages.MessageField('NodeSelectorValue', 3)
+  serviceAccountName = _messages.StringField(4)
+  timeoutSeconds = _messages.IntegerField(5)
+  volumes = _messages.MessageField('Volume', 6, repeated=True)
 
 
 class TaskStatus(_messages.Message):
@@ -4234,6 +5833,78 @@ class VolumeMount(_messages.Message):
   subPath = _messages.StringField(4)
 
 
+class WorkerPool(_messages.Message):
+  r"""WorkerPool acts as a top-level container that manages a set instance
+  splits among a set of Revisions and a template for creating new Revisions.
+
+  Fields:
+    apiVersion: The API version for this call. It must be
+      "run.googleapis.com/v1".
+    kind: The kind of resource. It must be "WorkerPool".
+    metadata: Metadata associated with this WorkerPool, including name,
+      namespace, labels, and annotations. In Cloud Run, annotations with
+      'run.googleapis.com/' and 'autoscaling.knative.dev' are restricted, and
+      the accepted annotations will be different depending on the resource
+      type. The following Cloud Run-specific annotations are accepted in
+      WorkerPool.metadata.annotations. * `run.googleapis.com/binary-
+      authorization-breakglass` * `run.googleapis.com/binary-authorization` *
+      `run.googleapis.com/client-name` * `run.googleapis.com/description`
+    spec: Holds the desired state of the WorkerPool (from the client).
+    status: Communicates the system-controlled state of the WorkerPool.
+  """
+
+  apiVersion = _messages.StringField(1)
+  kind = _messages.StringField(2)
+  metadata = _messages.MessageField('ObjectMeta', 3)
+  spec = _messages.MessageField('WorkerPoolSpec', 4)
+  status = _messages.MessageField('WorkerPoolStatus', 5)
+
+
+class WorkerPoolSpec(_messages.Message):
+  r"""WorkerPoolSpec holds the desired state of the WorkerPool's template and
+  instance splits.
+
+  Fields:
+    instanceSplits: Specifies how to distribute instances over a collection of
+      Revisions.
+    template: Holds the latest specification for the Revision to be stamped
+      out.
+  """
+
+  instanceSplits = _messages.MessageField('InstanceSplit', 1, repeated=True)
+  template = _messages.MessageField('RevisionTemplate', 2)
+
+
+class WorkerPoolStatus(_messages.Message):
+  r"""The current state of the WorkerPool. Output only.
+
+  Fields:
+    conditions: Conditions communicate information about ongoing/complete
+      reconciliation processes that bring the `spec` inline with the observed
+      state of the world. * `Ready`: `True` when all underlying resources are
+      ready.
+    instanceSplits: Holds the configured traffic distribution. These entries
+      will always contain RevisionName references. When ConfigurationName
+      appears in the spec, this will hold the LatestReadyRevisionName that we
+      last observed.
+    latestCreatedRevisionName: Name of the last revision that was created from
+      this WorkerPool's template. It might not be ready yet, for that use
+      LatestReadyRevisionName.
+    latestReadyRevisionName: Name of the latest Revision from this
+      WorkerPool's template that has had its `Ready` condition become `True`.
+    observedGeneration: Returns the generation last seen by the system.
+      Clients polling for completed reconciliation should poll until
+      observedGeneration = metadata.generation and the Ready condition's
+      status is True or False.
+  """
+
+  conditions = _messages.MessageField('GoogleCloudRunV1Condition', 1, repeated=True)
+  instanceSplits = _messages.MessageField('InstanceSplit', 2, repeated=True)
+  latestCreatedRevisionName = _messages.StringField(3)
+  latestReadyRevisionName = _messages.StringField(4)
+  observedGeneration = _messages.IntegerField(5, variant=_messages.Variant.INT32)
+
+
 encoding.AddCustomJsonFieldMapping(
     ListMeta, 'continue_', 'continue')
 encoding.AddCustomJsonFieldMapping(
@@ -4244,3 +5915,37 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesConfigurationsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesDomainmappingsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesExecutionsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesJobsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesRevisionsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesRoutesListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesServicesListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesTasksListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunNamespacesWorkerpoolsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunProjectsLocationsConfigurationsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunProjectsLocationsDomainmappingsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunProjectsLocationsJobsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    RunProjectsLocationsRevisionsListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunProjectsLocationsRoutesListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunProjectsLocationsServicesGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    RunProjectsLocationsServicesListRequest, 'continue_', 'continue')
+encoding.AddCustomJsonFieldMapping(
+    RunProjectsLocationsWorkerpoolsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

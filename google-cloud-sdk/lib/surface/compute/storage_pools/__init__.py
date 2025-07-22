@@ -21,10 +21,12 @@ from __future__ import unicode_literals
 from googlecloudsdk.calliope import base
 
 
-@base.Hidden
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+@base.ReleaseTracks(
+    base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA, base.ReleaseTrack.GA
+)
 class StoragePools(base.Group):
   """Read and manipulate storage pools."""
+
 
 StoragePools.category = base.INSTANCES_CATEGORY
 

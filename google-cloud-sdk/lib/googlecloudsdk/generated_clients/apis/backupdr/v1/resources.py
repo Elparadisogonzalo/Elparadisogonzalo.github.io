@@ -41,6 +41,84 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  PROJECTS_LOCATIONS_BACKUPPLANASSOCIATIONS = (
+      'projects.locations.backupPlanAssociations',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'backupPlanAssociations/{backupPlanAssociationsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_BACKUPPLANS = (
+      'projects.locations.backupPlans',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/backupPlans/'
+              '{backupPlansId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_BACKUPPLANS_REVISIONS = (
+      'projects.locations.backupPlans.revisions',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/backupPlans/'
+              '{backupPlansId}/revisions/{revisionsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_BACKUPVAULTS = (
+      'projects.locations.backupVaults',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/backupVaults/'
+              '{backupVaultsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_BACKUPVAULTS_DATASOURCES = (
+      'projects.locations.backupVaults.dataSources',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/backupVaults/'
+              '{backupVaultsId}/dataSources/{dataSourcesId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_BACKUPVAULTS_DATASOURCES_BACKUPS = (
+      'projects.locations.backupVaults.dataSources.backups',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/backupVaults/'
+              '{backupVaultsId}/dataSources/{dataSourcesId}/backups/'
+              '{backupsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_DATASOURCEREFERENCES = (
+      'projects.locations.dataSourceReferences',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'dataSourceReferences/{dataSourceReferencesId}',
+      },
+      ['name'],
+      True
+  )
   PROJECTS_LOCATIONS_MANAGEMENTSERVERS = (
       'projects.locations.managementServers',
       '{+name}',

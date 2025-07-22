@@ -41,6 +41,7 @@ CLIENT_GROUP = 'client.knative.dev'
 
 GOOGLE_GROUP = 'cloud.googleapis.com'
 RUN_GROUP = 'run.googleapis.com'
+RUNAPPS_GROUP = 'runapps.googleapis.com'
 
 INTERNAL_GROUPS = (
     CLIENT_GROUP,
@@ -72,6 +73,12 @@ NETWORK_INTERFACES_ANNOTATION = RUN_GROUP + '/network-interfaces'
 CONTAINER_DEPENDENCIES_ANNOTATION = RUN_GROUP + '/container-dependencies'
 
 GPU_TYPE_NODE_SELECTOR = RUN_GROUP + '/accelerator'
+
+MULTI_REGION_REGIONS_ANNOTATION = RUN_GROUP + '/regions'
+MULTI_REGION_ID_LABEL = RUN_GROUP + '/multi-region-id'
+GCLB_DOMAIN_NAME_ANNOTATION = RUNAPPS_GROUP + '/gclb-domain-name'
+
+THREAT_DETECTION_ANNOTATION = RUN_GROUP + '/threat-detection'
 
 
 def Meta(m):
@@ -582,18 +589,26 @@ class ListAsDictionaryWrapper(collections_abc.MutableMapping):
     )
 
   def items(self):
-    return ListItemsView(self)
+    return ListItemsView(self, none_key='')
 
   def values(self):
     return ListValuesView(self)
 
 
 class ListItemsView(collections_abc.ItemsView):
+  """Item iterator for ListAsDictionaryWrapper."""
+
+  def __init__(self, *args, none_key=None, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._none_key = none_key
 
   def __iter__(self):
     for item in self._mapping._m:
       if self._mapping._filter(item):
-        yield (getattr(item, self._mapping._key_field), item)
+        key = getattr(item, self._mapping._key_field)
+        if key is None:
+          key = self._none_key
+        yield (key, item)
 
 
 class ListValuesView(collections_abc.ValuesView):

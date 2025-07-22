@@ -35,6 +35,7 @@ from googlecloudsdk.core.util import times
 @base.ReleaseTracks(
     base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA
 )
+@base.DefaultUniverseOnly
 class List(base.ListCommand):
   """List an organization or source's findings."""
 
@@ -44,48 +45,56 @@ class List(base.ListCommand):
           sources provide a '-' as the source id.""",
       "EXAMPLES": (
           f"""
-          List all ACTIVE findings under organization 123456 across all sources:
+          List all ACTIVE findings under organization `123456` across all
+          sources:
 
             $ {{command}} 123456 --filter="state=\\"ACTIVE\\""
 
-          List all ACTIVE findings under project abc across all sources:
+          List all ACTIVE findings under project `abc` across all sources:
 
             $ {{command}} projects/abc --filter="state=\\"ACTIVE\\""
 
-          List all ACTIVE findings under folder 456 across all sources:
+          List all ACTIVE findings under folder `456` across all sources:
 
             $ {{command}} folders/456 --filter="state=\\"ACTIVE\\""
 
-          List all ACTIVE findings under organization 123456 and source 5678:
+          List all ACTIVE findings under organization `123456` and source
+          `5678`:
 
             $ {{command}} 123456 --source=5678 --filter="state=\\"ACTIVE\\""
 
           Only list category and resource_name of all ACTIVE findings under
-          organization 123456 and source 5678:
+          organization `123456` and source `5678`:
 
-            $ {{command}} 123456 --source=5678  --filter="state=\\"ACTIVE\\"" --field-mask="finding.category,finding.resource_name"
+            $ {{command}} 123456 --source=5678  --filter="state=\\"ACTIVE\\""
+              --field-mask="finding.category,finding.resource_name"
 
-          List all ACTIVE findings of XSS category/type, under organization 123456 and source 5678:
+          List all ACTIVE findings of XSS category/type, under organization
+          `123456` and source `5678`:
 
-            $ {{command}} 123456 --source=5678 --filter="state=\\"ACTIVE\\" AND category=\\"XSS\\""
+            $ {{command}} 123456 --source=5678
+              --filter="state=\\"ACTIVE\\" AND category=\\"XSS\\""
 
-          List all findings attached to a particular resource under organization 123456:
-
-            $ {{command}} 123456
-            --filter="resource_name=\\"//container.{properties.VALUES.core.universe_domain.Get()}/projects/pid/zones/zone-id/clusters/cluster-id\\""
-
-          List all ACTIVE findings that took place on 2019-01-01T01:00:00 GMT time, under organization 123456:
-
-            $ {{command}} 123456 --filter="state=\\"ACTIVE\\" AND event_time > 1546304400000"
-
-          List all findings that were ACTIVE as of 2019-01-01T01:00:00 GMT time, under organization 123456:
+          List all findings attached to a particular resource under organization
+          `123456`:
 
             $ {{command}} 123456
-            --filter="state=\\"ACTIVE\\"" --read-time="2019-01-01T01:00:00Z" """
+              --filter="resource_name=\\"//container.{properties.VALUES.core.universe_domain.Get()}/projects/pid/zones/zone-id/clusters/cluster-id\\""
+
+          List all ACTIVE findings that took place on `2019-01-01T01:00:00 GMT`
+          time, under organization `123456`:
+
+            $ {{command}} 123456
+              --filter="state=\\"ACTIVE\\" AND event_time > 1546304400000""
+
+          List all findings under organization `123456` across all sources and
+          `location=eu`:
+
+            $ {{command}} 123456 --location=eu"""
       ),
       "API REFERENCE": """
-          This command uses the securitycenter/v1 API. The full documentation for
-          this API can be found at: https://cloud.google.com/security-command-center""",
+      This command uses the Security Command Center API. For more information,
+      see [Security Command Center API.](https://cloud.google.com/security-command-center/docs/reference/rest)""",
   }
 
   @staticmethod
@@ -95,6 +104,7 @@ class List(base.ListCommand):
 
     # Add shared flags and parent positional argument.
     scc_flags.AppendParentArg()[0].AddToParser(parser)
+    flags.AddParentGroup(parser)
     scc_flags.PAGE_TOKEN_FLAG.AddToParser(parser)
     scc_flags.READ_TIME_FLAG.AddToParser(parser)
     flags.COMPARE_DURATION_FLAG.AddToParser(parser)

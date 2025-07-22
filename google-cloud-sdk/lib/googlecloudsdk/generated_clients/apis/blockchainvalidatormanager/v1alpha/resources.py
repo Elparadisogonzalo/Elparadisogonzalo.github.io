@@ -18,7 +18,7 @@ import enum
 
 
 BASE_URL = 'https://blockchainvalidatormanager.googleapis.com/v1alpha/'
-DOCS_URL = 'http://go/cloud-web3:validator-manager'
+DOCS_URL = 'https://cloud.google.com/blockchain-node-engine/docs/create-node-ethereum#validator_configuration'
 
 
 class Collections(enum.Enum):
@@ -41,6 +41,14 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
+  PROJECTS_LOCATIONS_BLOCKCHAINNODES = (
+      'projects.locations.blockchainNodes',
+      'projects/{projectsId}/locations/{locationsId}/blockchainNodes/'
+      '{blockchainNodeId}',
+      {},
+      ['projectsId', 'locationsId', 'blockchainNodeId'],
+      True
+  )
   PROJECTS_LOCATIONS_BLOCKCHAINVALIDATORCONFIGS = (
       'projects.locations.blockchainValidatorConfigs',
       '{+name}',
@@ -48,6 +56,17 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/'
               'blockchainValidatorConfigs/{blockchainValidatorConfigsId}',
+      },
+      ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_BLOCKCHAINVALIDATORTEMPLATES = (
+      'projects.locations.blockchainValidatorTemplates',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/'
+              'blockchainValidatorTemplates/{blockchainValidatorTemplatesId}',
       },
       ['name'],
       True
@@ -61,6 +80,20 @@ class Collections(enum.Enum):
               '{operationsId}',
       },
       ['name'],
+      True
+  )
+  PROJECTS_LOCATIONS_SECRETS = (
+      'projects.locations.secrets',
+      'projects/{projectsId}/locations/{locationsId}/secrets/{secretsId}',
+      {},
+      ['projectsId', 'locationsId', 'secretsId'],
+      True
+  )
+  PROJECTS_SECRETS = (
+      'projects.secrets',
+      'projects/{projectsId}/secrets/{secretsId}',
+      {},
+      ['projectsId', 'secretsId'],
       True
   )
 

@@ -487,10 +487,25 @@ class FaultinjectiontestingProjectsLocationsJobsListRequest(_messages.Message):
   parent = _messages.StringField(5, required=True)
 
 
+class FaultinjectiontestingProjectsLocationsJobsStopRequest(_messages.Message):
+  r"""A FaultinjectiontestingProjectsLocationsJobsStopRequest object.
+
+  Fields:
+    name: Required. Name of the resource
+    stopJobRequest: A StopJobRequest resource to be passed as the request
+      body.
+  """
+
+  name = _messages.StringField(1, required=True)
+  stopJobRequest = _messages.MessageField('StopJobRequest', 2)
+
+
 class FaultinjectiontestingProjectsLocationsListRequest(_messages.Message):
   r"""A FaultinjectiontestingProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -501,10 +516,11 @@ class FaultinjectiontestingProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class FaultinjectiontestingProjectsLocationsOperationsCancelRequest(_messages.Message):
@@ -601,12 +617,16 @@ class Job(_messages.Message):
       IN_PROGRESS: job is in progress
       COMPLETED: job is completed
       ERRORED: job is errored
+      STOP_IN_PROGRESS: Job stop in progress
+      STOPPED: Job stopped
     """
     STATE_UNSPECIFIED = 0
     QUEUED = 1
     IN_PROGRESS = 2
     COMPLETED = 3
     ERRORED = 4
+    STOP_IN_PROGRESS = 5
+    STOPPED = 6
 
   createTime = _messages.StringField(1)
   deleteTime = _messages.StringField(2)
@@ -1028,6 +1048,28 @@ class Status(_messages.Message):
   code = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   details = _messages.MessageField('DetailsValueListEntry', 2, repeated=True)
   message = _messages.StringField(3)
+
+
+class StopJobRequest(_messages.Message):
+  r"""Message for deleting a Job
+
+  Fields:
+    etag: Optional. Etag value for the job to be deleted
+    requestId: Optional. An optional request ID to identify requests. Specify
+      a unique request ID so that if you must retry your request, the server
+      will know to ignore the request if it has already been completed. The
+      server will guarantee that for at least 60 minutes after the first
+      request. For example, consider a situation where you make an initial
+      request and t he request times out. If you make the request again with
+      the same request ID, the server can check if original operation with the
+      same request ID was received, and if so, will ignore the second request.
+      This prevents clients from accidentally creating duplicate commitments.
+      The request ID must be a valid UUID with the exception that zero UUID is
+      not supported (00000000-0000-0000-0000-000000000000).
+  """
+
+  etag = _messages.StringField(1)
+  requestId = _messages.StringField(2)
 
 
 class Target(_messages.Message):

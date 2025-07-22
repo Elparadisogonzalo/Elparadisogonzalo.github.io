@@ -33,14 +33,20 @@ class DeploymentResourcePoolsClient(object):
         constants.AI_PLATFORM_API_VERSION[version])
     self.messages = messages or self.client.MESSAGES_MODULE
 
-  def CreateBeta(self,
-                 location_ref,
-                 deployment_resource_pool_id,
-                 autoscaling_metric_specs=None,
-                 accelerator_dict=None,
-                 min_replica_count=None,
-                 max_replica_count=None,
-                 machine_type=None):
+  def CreateBeta(
+      self,
+      location_ref,
+      deployment_resource_pool_id,
+      autoscaling_metric_specs=None,
+      accelerator_dict=None,
+      min_replica_count=None,
+      max_replica_count=None,
+      machine_type=None,
+      tpu_topology=None,
+      multihost_gpu_node_count=None,
+      reservation_affinity=None,
+      spot=False,
+  ):
     """Creates a new deployment resource pool using v1beta1 API.
 
     Args:
@@ -61,6 +67,13 @@ class DeploymentResourcePoolsClient(object):
         deployment resource pool may be deployed on when the traffic against it
         increases.
       machine_type: str or None, Immutable. The type of the machine.
+      tpu_topology: str or None, the topology of the TPU to serve the model.
+      multihost_gpu_node_count: int or None, the number of nodes per replica for
+        multihost GPU deployments.
+      reservation_affinity: dict or None, the reservation affinity of the
+        deployed model which specifies which reservations the deployed model can
+        use.
+      spot: bool, whether or not deploy the model on spot resources.
 
     Returns:
       A long-running operation for Create.
@@ -69,14 +82,23 @@ class DeploymentResourcePoolsClient(object):
     machine_spec = self.messages.GoogleCloudAiplatformV1beta1MachineSpec()
     if machine_type is not None:
       machine_spec.machineType = machine_type
+    if tpu_topology is not None:
+      machine_spec.tpuTopology = tpu_topology
+    if multihost_gpu_node_count is not None:
+      machine_spec.multihostGpuNodeCount = multihost_gpu_node_count
     accelerator = flags.ParseAcceleratorFlag(accelerator_dict,
                                              constants.BETA_VERSION)
     if accelerator is not None:
       machine_spec.acceleratorType = accelerator.acceleratorType
       machine_spec.acceleratorCount = accelerator.acceleratorCount
 
+    if reservation_affinity is not None:
+      machine_spec.reservationAffinity = flags.ParseReservationAffinityFlag(
+          reservation_affinity, constants.BETA_VERSION
+      )
+
     dedicated = self.messages.GoogleCloudAiplatformV1beta1DedicatedResources(
-        machineSpec=machine_spec)
+        machineSpec=machine_spec, spot=spot)
 
     dedicated.minReplicaCount = min_replica_count or 1
     if max_replica_count is not None:

@@ -33,8 +33,10 @@ from googlecloudsdk.command_lib.infra_manager import deterministic_snapshot
 from googlecloudsdk.command_lib.infra_manager import errors
 from googlecloudsdk.command_lib.infra_manager import staging_bucket_util
 from googlecloudsdk.core import log
+from googlecloudsdk.core import requests
 from googlecloudsdk.core import resources
 from googlecloudsdk.core.resource import resource_transform
+from googlecloudsdk.core.util import files
 from googlecloudsdk.core.util import times
 import six
 
@@ -276,6 +278,7 @@ def Apply(
     async_,
     deployment_full_name,
     service_account,
+    tf_version_constraint=None,
     local_source=None,
     stage_bucket=None,
     ignore_file=None,
@@ -289,6 +292,8 @@ def Apply(
     input_values=None,
     inputs_file=None,
     labels=None,
+    quota_validation=None,
+    annotations=None,
 ):
   """Updates the deployment if one exists, otherwise creates a deployment.
 
@@ -303,6 +308,8 @@ def Apply(
       credential to manage resources. e.g.
       `projects/{projectID}/serviceAccounts/{serviceAccount}` The default Cloud
       Build SA will be used initially if this field is not set.
+    tf_version_constraint: User-specified Terraform version constraint, for
+      example, "=1.3.10".
     local_source: Local storage path where config files are stored.
     stage_bucket: optional string. Destination for storing local config files
       specified by local source flag. e.g. "gs://bucket-name/".
@@ -312,8 +319,8 @@ def Apply(
       during actuation. If this flag is set to true, Infrastructure Manager will
       instead attempt to automatically import the resource into the Terraform
       state (for supported resource types) and continue actuation.
-    artifacts_gcs_bucket: User-defined location of Cloud Build logs, artifacts,
-      and Terraform state files in Google Cloud Storage. e.g.
+    artifacts_gcs_bucket: User-defined location of Cloud Build logs and
+       artifacts in Google Cloud Storage. e.g.
       `gs://{bucket}/{folder}` A default bucket will be bootstrapped if the
       field is not set or empty
     worker_pool: The User-specified Worker Pool resource in which the Cloud
@@ -329,6 +336,9 @@ def Apply(
       accepts (key, value) pairs where value is a scalar value.
     inputs_file: Accepts .tfvars file.
     labels: User-defined metadata for the deployment.
+    quota_validation: Input to control quota checks for resources in terraform'
+      configuration files.
+    annotations: User-defined annotations for the deployment.
 
   Returns:
     The resulting Deployment resource or, in the case that async_ is True, a
@@ -339,18 +349,9 @@ def Apply(
       trying to run with --target-git-subdir but without --target-git).
   """
 
-  labels_message = {}
-  # Whichever labels the user provides will become the full set of labels in the
-  # resulting deployment.
-  if labels is not None:
-    labels_message = messages.Deployment.LabelsValue(
-        additionalProperties=[
-            messages.Deployment.LabelsValue.AdditionalProperty(
-                key=key, value=value
-            )
-            for key, value in six.iteritems(labels)
-        ]
-    )
+  labels_message, annotations_message = _GeneratesLabelsAnnotations(
+      messages.Deployment(), labels, annotations
+  )
 
   additional_properties = []
   if input_values is not None:
@@ -431,6 +432,9 @@ def Apply(
       workerPool=worker_pool,
       terraformBlueprint=tf_blueprint,
       labels=labels_message,
+      annotations=annotations_message,
+      tfVersionConstraint=tf_version_constraint,
+      quotaValidation=quota_validation,
   )
 
   if artifacts_gcs_bucket is not None:
@@ -540,7 +544,7 @@ def _UpdateDeploymentOp(
   return configmanager_util.UpdateDeployment(deployment, deployment_full_name)
 
 
-def ImportStateFile(messages, deployment_full_name, lock_id):
+def ImportStateFile(messages, deployment_full_name, lock_id, file=None):
   """Creates a signed uri to upload the state file.
 
   Args:
@@ -549,6 +553,7 @@ def ImportStateFile(messages, deployment_full_name, lock_id):
     deployment_full_name: string, the fully qualified name of the deployment,
       e.g. "projects/p/locations/l/deployments/d".
     lock_id: Lock ID of the lock file to verify person importing owns lock.
+    file: file path of the statefile to be uploaded.
 
   Returns:
     A messages.StateFile which contains signed uri to be used to upload a state
@@ -564,11 +569,19 @@ def ImportStateFile(messages, deployment_full_name, lock_id):
   state_file = configmanager_util.ImportStateFile(
       import_state_file_request, deployment_full_name
   )
+  if file is None:
+    return state_file
+  state_file_url = state_file.signedUri
+  with files.BinaryFileReader(os.path.abspath(file)) as state_file_obj:
+    requests.GetSession().put(state_file_url, data=state_file_obj)
 
-  return state_file
+  log.status.Print(f'Statefile {file} uploaded successfully.')
+  return
 
 
-def ExportDeploymentStateFile(messages, deployment_full_name, draft=False):
+def ExportDeploymentStateFile(
+    messages, deployment_full_name, draft=False, file=None
+    ):
   """Creates a signed uri to download the state file.
 
   Args:
@@ -577,10 +590,11 @@ def ExportDeploymentStateFile(messages, deployment_full_name, draft=False):
     deployment_full_name: string, the fully qualified name of the deployment,
       e.g. "projects/p/locations/l/deployments/d".
     draft: Lock ID of the lock file to verify person importing owns lock.
+    file: string, the file name to download statefile to.
 
   Returns:
-    A messages.StateFile which contains signed uri to be used to upload a state
-    file.
+    A messages.StateFile which contains signed uri to be used to download a
+    state file.
   """
 
   export_deployment_state_file_request = (
@@ -594,8 +608,18 @@ def ExportDeploymentStateFile(messages, deployment_full_name, draft=False):
   state_file = configmanager_util.ExportDeploymentStateFile(
       export_deployment_state_file_request, deployment_full_name
   )
-
-  return state_file
+  if file is None:
+    return state_file
+  state_file_data = requests.GetSession().get(
+      state_file.signedUri
+      )
+  if file.endswith(os.sep):
+    file += 'statefile'
+  files.WriteBinaryFileContents(file +'.tfstate', state_file_data.content)
+  log.status.Print(
+      f'Exported statefile {file}.tfstate'
+      )
+  return
 
 
 def ExportRevisionStateFile(messages, deployment_full_name):
@@ -838,7 +862,7 @@ def GetRevisionNumber(revision_full_name):
   return int(revision_short_name[2:])
 
 
-def ExportPreviewResult(messages, preview_full_name):
+def ExportPreviewResult(messages, preview_full_name, file=None):
   """Creates a signed uri to download the preview results.
 
   Args:
@@ -846,6 +870,7 @@ def ExportPreviewResult(messages, preview_full_name):
       API messages based on our protos.
     preview_full_name: string, the fully qualified name of the preview,
       e.g. "projects/p/locations/l/previews/p".]
+    file: string, the file name to download results to.
   Returns:
     A messages.ExportPreviewResultResponse which contains signed uri to
     download binary and json plan files.
@@ -860,8 +885,22 @@ def ExportPreviewResult(messages, preview_full_name):
   preview_result_resp = configmanager_util.ExportPreviewResult(
       export_preview_result_request, preview_full_name
   )
-
-  return preview_result_resp
+  if file is None:
+    return preview_result_resp
+  binary_data = requests.GetSession().get(
+      preview_result_resp.result.binarySignedUri
+      )
+  json_data = requests.GetSession().get(
+      preview_result_resp.result.jsonSignedUri
+      )
+  if file.endswith(os.sep):
+    file += 'preview'
+  files.WriteBinaryFileContents(file +'.tfplan', binary_data.content)
+  files.WriteBinaryFileContents(file + '.json', json_data.content)
+  log.status.Print(
+      f'Exported preview artifacts {file}.tfplan and {file}.json'
+      )
+  return
 
 
 def Create(
@@ -884,6 +923,7 @@ def Create(
     input_values=None,
     inputs_file=None,
     labels=None,
+    annotations=None,
 ):
   """Creates a preview.
 
@@ -906,8 +946,8 @@ def Create(
     stage_bucket: optional string. Destination for storing local config files
       specified by local source flag. e.g. "gs://bucket-name/".
     ignore_file: optional string, a path to a gcloudignore file.
-    artifacts_gcs_bucket: User-defined location of Cloud Build logs, artifacts,
-      and Terraform state files in Google Cloud Storage. e.g.
+    artifacts_gcs_bucket: User-defined location of Cloud Build logs and
+      artifacts in Google Cloud Storage. e.g.
       `gs://{bucket}/{folder}` A default bucket will be bootstrapped if the
       field is not set or empty
     worker_pool: The User-specified Worker Pool resource in which the Cloud
@@ -923,9 +963,10 @@ def Create(
       accepts (key, value) pairs where value is a scalar value.
     inputs_file: Accepts .tfvars file.
     labels: User-defined metadata for the preview.
+    annotations: User-defined annotations for the preview.
 
   Returns:
-    The resulting Deployment resource or, in the case that async_ is True, a
+    The resulting Preview resource or, in the case that async_ is True, a
       long-running operation.
 
   Raises:
@@ -935,7 +976,9 @@ def Create(
 
   additional_properties = _ParseInputValuesAndFile(
       input_values, inputs_file, messages)
-  labels_message = _GenerateLabels(labels, messages, 'preview')
+  labels_message, annotations_message = _GeneratesLabelsAnnotations(
+      messages.Preview(), labels, annotations
+  )
 
   tf_input_values = messages.TerraformBlueprint.InputValuesValue(
       additionalProperties=additional_properties
@@ -974,9 +1017,13 @@ def Create(
   preview = messages.Preview(
       serviceAccount=service_account,
       workerPool=worker_pool,
-      terraformBlueprint=tf_blueprint,
       labels=labels_message,
+      annotations=annotations_message,
   )
+
+  # set tf_blueprint only when one of the three sources is specified.
+  if any(_ is not None for _ in (gcs_source, local_source, git_source_repo)):
+    preview.terraformBlueprint = tf_blueprint
 
   if preview_full_name is not None:
     preview.name = preview_full_name
@@ -1026,7 +1073,7 @@ def Create(
       applied_preview.state
       == messages.Preview.StateValueValuesEnum.FAILED
   ):
-    raise errors.OperationFailedError(applied_preview.state)
+    raise errors.OperationFailedError(applied_preview.errorStatus.message)
 
   log.status.Print('Created preview: {}'.format(applied_preview.name))
   return applied_preview
@@ -1099,38 +1146,34 @@ def _ParseInputValuesAndFile(input_values, inputs_file, messages):
   return additional_properties
 
 
-def _GenerateLabels(labels, messages, resource):
-  """Parses input file or values and returns a list of additional properties.
+def _GeneratesLabelsAnnotations(resource, labels=None, annotations=None):
+  """Generates labels and annotations messages.
 
   Args:
-    labels: User-defined metadata for the deployment.
-    messages: ModuleType, the messages module that lets us form blueprints API
-      messages based on our protos.
     resource: Resource type, can be deployment or preview.
+    labels: dict[str,str], labels to be associated with the resource.
+    annotations: dict[str,str], annotations to be associated with the resource.
 
   Returns:
-    The additional_properties list.
+    Label and annotation messages.
   """
   labels_message = {}
+  annotations_message = {}
   # Whichever labels the user provides will become the full set of labels in the
   # resulting deployment or preview.
   if labels is not None:
-    if resource == 'deployment':
-      labels_message = messages.Deployment.LabelsValue(
-          additionalProperties=[
-              messages.Deployment.LabelsValue.AdditionalProperty(
-                  key=key, value=value
-              )
-              for key, value in six.iteritems(labels)
-          ]
-      )
-    elif resource == 'preview':
-      labels_message = messages.Preview.LabelsValue(
-          additionalProperties=[
-              messages.Preview.LabelsValue.AdditionalProperty(
-                  key=key, value=value
-              )
-              for key, value in six.iteritems(labels)
-          ]
-      )
-    return labels_message
+    labels_message = resource.LabelsValue(
+        additionalProperties=[
+            resource.LabelsValue.AdditionalProperty(key=key, value=value)
+            for key, value in six.iteritems(labels)
+        ]
+    )
+
+  if annotations is not None:
+    annotations_message = resource.AnnotationsValue(
+        additionalProperties=[
+            resource.AnnotationsValue.AdditionalProperty(key=key, value=value)
+            for key, value in six.iteritems(annotations)
+        ]
+    )
+  return labels_message, annotations_message

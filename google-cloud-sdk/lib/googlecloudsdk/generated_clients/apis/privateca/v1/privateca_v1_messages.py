@@ -73,6 +73,48 @@ class AllowedKeyType(_messages.Message):
   rsa = _messages.MessageField('RsaKeyType', 2)
 
 
+class AttributeTypeAndValue(_messages.Message):
+  r"""AttributeTypeAndValue specifies an attribute type and value. It can use
+  either a OID or enum value to specify the attribute type.
+
+  Enums:
+    TypeValueValuesEnum: The attribute type of the attribute and value pair.
+
+  Fields:
+    objectId: Object ID for an attribute type of an attribute and value pair.
+    type: The attribute type of the attribute and value pair.
+    value: The value for the attribute type.
+  """
+
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""The attribute type of the attribute and value pair.
+
+    Values:
+      ATTRIBUTE_TYPE_UNSPECIFIED: Attribute type is unspecified.
+      COMMON_NAME: The "common name" of the subject.
+      COUNTRY_CODE: The country code of the subject.
+      ORGANIZATION: The organization of the subject.
+      ORGANIZATIONAL_UNIT: The organizational unit of the subject.
+      LOCALITY: The locality or city of the subject.
+      PROVINCE: The province, territory, or regional state of the subject.
+      STREET_ADDRESS: The street address of the subject.
+      POSTAL_CODE: The postal code of the subject.
+    """
+    ATTRIBUTE_TYPE_UNSPECIFIED = 0
+    COMMON_NAME = 1
+    COUNTRY_CODE = 2
+    ORGANIZATION = 3
+    ORGANIZATIONAL_UNIT = 4
+    LOCALITY = 5
+    PROVINCE = 6
+    STREET_ADDRESS = 7
+    POSTAL_CODE = 8
+
+  objectId = _messages.MessageField('ObjectId', 1)
+  type = _messages.EnumField('TypeValueValuesEnum', 2)
+  value = _messages.StringField(3)
+
+
 class AuditConfig(_messages.Message):
   r"""Specifies the audit configuration for a service. The configuration
   determines which permission types are logged, and what identities, if any,
@@ -224,17 +266,18 @@ class Binding(_messages.Message):
 
 
 class CaOptions(_messages.Message):
-  r"""Describes values that are relevant in a CA certificate.
+  r"""Describes the X.509 basic constraints extension, per [RFC 5280 section
+  4.2.1.9](https://tools.ietf.org/html/rfc5280#section-4.2.1.9)
 
   Fields:
-    isCa: Optional. Refers to the "CA" X.509 extension, which is a boolean
-      value. When this value is missing, the extension will be omitted from
-      the CA certificate.
-    maxIssuerPathLength: Optional. Refers to the path length restriction X.509
-      extension. For a CA certificate, this value describes the depth of
-      subordinate CA certificates that are allowed. If this value is less than
-      0, the request will fail. If this value is missing, the max path length
-      will be omitted from the CA certificate.
+    isCa: Optional. Refers to the "CA" boolean field in the X.509 extension.
+      When this value is missing, the basic constraints extension will be
+      omitted from the certificate.
+    maxIssuerPathLength: Optional. Refers to the path length constraint field
+      in the X.509 extension. For a CA certificate, this value describes the
+      depth of subordinate CA certificates that are allowed. If this value is
+      less than 0, the request will fail. If this value is missing, the max
+      path length will be omitted from the certificate.
   """
 
   isCa = _messages.BooleanField(1)
@@ -257,7 +300,7 @@ class CaPool(_messages.Message):
     issuancePolicy: Optional. The IssuancePolicy to control how Certificates
       will be issued from this CaPool.
     labels: Optional. Labels with user-defined metadata.
-    name: Output only. The resource name for this CaPool in the format
+    name: Identifier. The resource name for this CaPool in the format
       `projects/*/locations/*/caPools/*`.
     publishingOptions: Optional. The PublishingOptions to follow when issuing
       Certificates from any CertificateAuthority in this CaPool.
@@ -354,7 +397,7 @@ class Certificate(_messages.Message):
       to create the "not_before_time" and "not_after_time" fields inside an
       X.509 certificate. Note that the lifetime may be truncated if it would
       extend past the life of any certificate authority in the issuing chain.
-    name: Output only. The resource name for this Certificate in the format
+    name: Identifier. The resource name for this Certificate in the format
       `projects/*/locations/*/caPools/*/certificates/*`.
     pemCertificate: Output only. The pem-encoded, signed X.509 certificate.
     pemCertificateChain: Output only. The chain that may be used to verify the
@@ -380,6 +423,13 @@ class Certificate(_messages.Message):
         certificate's Subject and/or SubjectAltNames are specified in the
         certificate request. This mode requires the caller to have the
         `privateca.certificates.create` permission.
+      RDN_SEQUENCE: A mode used to get an accurate representation of the
+        Subject field's distinguished name. Indicates that the certificate's
+        Subject and/or SubjectAltNames are specified in the certificate
+        request. When parsing a PEM CSR this mode will maintain the sequence
+        of RDNs found in the CSR's subject field in the issued Certificate.
+        This mode requires the caller to have the
+        `privateca.certificates.create` permission.
       REFLECTED_SPIFFE: A mode reserved for special cases. Indicates that the
         certificate should have one SPIFFE SubjectAltNames set by the service
         based on the caller's identity. This mode will ignore any explicitly
@@ -389,7 +439,8 @@ class Certificate(_messages.Message):
     """
     SUBJECT_REQUEST_MODE_UNSPECIFIED = 0
     DEFAULT = 1
-    REFLECTED_SPIFFE = 2
+    RDN_SEQUENCE = 2
+    REFLECTED_SPIFFE = 3
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class LabelsValue(_messages.Message):
@@ -474,13 +525,15 @@ class CertificateAuthority(_messages.Message):
     lifetime: Required. Immutable. The desired lifetime of the CA certificate.
       Used to create the "not_before_time" and "not_after_time" fields inside
       an X.509 certificate.
-    name: Output only. The resource name for this CertificateAuthority in the
+    name: Identifier. The resource name for this CertificateAuthority in the
       format `projects/*/locations/*/caPools/*/certificateAuthorities/*`.
     pemCaCertificates: Output only. This CertificateAuthority's certificate
       chain, including the current CertificateAuthority's certificate. Ordered
       such that the root issuer is the final element (consistent with RFC
       5246). For a self-signed CA, this will only list the current
       CertificateAuthority's certificate.
+    satisfiesPzi: Output only. Reserved for future use.
+    satisfiesPzs: Output only. Reserved for future use.
     state: Output only. The State for this CertificateAuthority.
     subordinateConfig: Optional. If this is a subordinate
       CertificateAuthority, this field will be set with the subordinate
@@ -491,6 +544,9 @@ class CertificateAuthority(_messages.Message):
     type: Required. Immutable. The Type of this CertificateAuthority.
     updateTime: Output only. The time at which this CertificateAuthority was
       last updated.
+    userDefinedAccessUrls: Optional. User-defined URLs for CA certificate and
+      CRLs. The service does not publish content to these URLs. It is up to
+      the user to mirror content to these URLs.
   """
 
   class StateValueValuesEnum(_messages.Enum):
@@ -586,11 +642,14 @@ class CertificateAuthority(_messages.Message):
   lifetime = _messages.StringField(10)
   name = _messages.StringField(11)
   pemCaCertificates = _messages.StringField(12, repeated=True)
-  state = _messages.EnumField('StateValueValuesEnum', 13)
-  subordinateConfig = _messages.MessageField('SubordinateConfig', 14)
-  tier = _messages.EnumField('TierValueValuesEnum', 15)
-  type = _messages.EnumField('TypeValueValuesEnum', 16)
-  updateTime = _messages.StringField(17)
+  satisfiesPzi = _messages.BooleanField(13)
+  satisfiesPzs = _messages.BooleanField(14)
+  state = _messages.EnumField('StateValueValuesEnum', 15)
+  subordinateConfig = _messages.MessageField('SubordinateConfig', 16)
+  tier = _messages.EnumField('TierValueValuesEnum', 17)
+  type = _messages.EnumField('TypeValueValuesEnum', 18)
+  updateTime = _messages.StringField(19)
+  userDefinedAccessUrls = _messages.MessageField('UserDefinedAccessUrls', 20)
 
 
 class CertificateConfig(_messages.Message):
@@ -605,8 +664,8 @@ class CertificateConfig(_messages.Message):
       that are related to the subject.
     subjectKeyId: Optional. When specified this provides a custom SKI to be
       used in the certificate. This should only be used to maintain a SKI of
-      an existing CA originally created outside CAS, which was not generated
-      using method (1) described in RFC 5280 section 4.2.1.2.
+      an existing CA originally created outside CA service, which was not
+      generated using method (1) described in RFC 5280 section 4.2.1.2.
     x509Config: Required. Describes how some of the technical X.509 fields in
       a certificate should be populated.
   """
@@ -622,7 +681,7 @@ class CertificateConfigKeyId(_messages.Message):
   key.
 
   Fields:
-    keyId: Optional. The value of this KeyId encoded in lowercase hexadecimal.
+    keyId: Required. The value of this KeyId encoded in lowercase hexadecimal.
       This is most likely the 160 bit SHA-1 hash of the public key.
   """
 
@@ -649,6 +708,10 @@ class CertificateDescription(_messages.Message):
     subjectKeyId: Provides a means of identifiying certificates that contain a
       particular public key, per
       https://tools.ietf.org/html/rfc5280#section-4.2.1.2.
+    tbsCertificateDigest: The hash of the pre-signed certificate, which will
+      be signed by the CA. Corresponds to the TBS Certificate in
+      https://tools.ietf.org/html/rfc5280#section-4.1.2. The field will always
+      be populated.
     x509Description: Describes some of the technical X.509 fields in a
       certificate.
   """
@@ -660,7 +723,8 @@ class CertificateDescription(_messages.Message):
   publicKey = _messages.MessageField('PublicKey', 5)
   subjectDescription = _messages.MessageField('SubjectDescription', 6)
   subjectKeyId = _messages.MessageField('KeyId', 7)
-  x509Description = _messages.MessageField('X509Parameters', 8)
+  tbsCertificateDigest = _messages.StringField(8)
+  x509Description = _messages.MessageField('X509Parameters', 9)
 
 
 class CertificateExtensionConstraints(_messages.Message):
@@ -771,7 +835,7 @@ class CertificateRevocationList(_messages.Message):
     createTime: Output only. The time at which this CertificateRevocationList
       was created.
     labels: Optional. Labels with user-defined metadata.
-    name: Output only. The resource name for this CertificateRevocationList in
+    name: Identifier. The resource name for this CertificateRevocationList in
       the format `projects/*/locations/*/caPools/*certificateAuthorities/*/
       certificateRevocationLists/*`.
     pemCrl: Output only. The PEM-encoded X.509 CRL.
@@ -853,13 +917,13 @@ class CertificateTemplate(_messages.Message):
       identity.
     labels: Optional. Labels with user-defined metadata.
     maximumLifetime: Optional. The maximum lifetime allowed for issued
-      Certificates that use this template. If the issuing CaPool's
+      Certificates that use this template. If the issuing CaPool resource's
       IssuancePolicy specifies a maximum_lifetime the minimum of the two
       durations will be the maximum lifetime for issued Certificates. Note
       that if the issuing CertificateAuthority expires before a Certificate's
       requested maximum_lifetime, the effective lifetime will be explicitly
       truncated to match it.
-    name: Output only. The resource name for this CertificateTemplate in the
+    name: Identifier. The resource name for this CertificateTemplate in the
       format `projects/*/locations/*/certificateTemplates/*`.
     passthroughExtensions: Optional. Describes the set of X.509 extensions
       that may appear in a Certificate issued using this CertificateTemplate.
@@ -923,7 +987,7 @@ class DisableCertificateAuthorityRequest(_messages.Message):
     ignoreDependentResources: Optional. This field allows this CA to be
       disabled even if it's being depended on by another resource. However,
       doing so may result in unintended and unrecoverable effects on any
-      dependent resource(s) since the CA will no longer be able to issue
+      dependent resources since the CA will no longer be able to issue
       certificates.
     requestId: Optional. An ID to identify requests. Specify a unique request
       ID so that if you must retry your request, the server will know to
@@ -1095,8 +1159,8 @@ class FetchCaCertsResponse(_messages.Message):
   r"""Response message for CertificateAuthorityService.FetchCaCerts.
 
   Fields:
-    caCerts: The PEM encoded CA certificate chains of all Certificate
-      Authorities in this CaPool in the ENABLED, DISABLED, or STAGED states.
+    caCerts: The PEM encoded CA certificate chains of all certificate
+      authorities in this CaPool in the ENABLED, DISABLED, or STAGED states.
   """
 
   caCerts = _messages.MessageField('CertChain', 1, repeated=True)
@@ -1138,6 +1202,13 @@ class IssuancePolicy(_messages.Message):
     allowedKeyTypes: Optional. If any AllowedKeyType is specified, then the
       certificate request's public key must match one of the key types listed
       here. Otherwise, any key may be used.
+    backdateDuration: Optional. The duration to backdate all certificates
+      issued from this CaPool. If not set, the certificates will be issued
+      with a not_before_time of the issuance time (i.e. the current time). If
+      set, the certificates will be issued with a not_before_time of the
+      issuance time minus the backdate_duration. The not_after_time will be
+      adjusted to preserve the requested lifetime. The backdate_duration must
+      be less than or equal to 48 hours.
     baselineValues: Optional. A set of X.509 values that will be applied to
       all certificates issued through this CaPool. If a certificate request
       includes conflicting values for the same properties, they will be
@@ -1150,8 +1221,8 @@ class IssuancePolicy(_messages.Message):
       identity.
     maximumLifetime: Optional. The maximum lifetime allowed for issued
       Certificates. Note that if the issuing CertificateAuthority expires
-      before a Certificate's requested maximum_lifetime, the effective
-      lifetime will be explicitly truncated to match it.
+      before a Certificate resource's requested maximum_lifetime, the
+      effective lifetime will be explicitly truncated to match it.
     passthroughExtensions: Optional. Describes the set of X.509 extensions
       that may appear in a Certificate issued through this CaPool. If a
       certificate request sets extensions that don't appear in the
@@ -1165,10 +1236,11 @@ class IssuancePolicy(_messages.Message):
 
   allowedIssuanceModes = _messages.MessageField('IssuanceModes', 1)
   allowedKeyTypes = _messages.MessageField('AllowedKeyType', 2, repeated=True)
-  baselineValues = _messages.MessageField('X509Parameters', 3)
-  identityConstraints = _messages.MessageField('CertificateIdentityConstraints', 4)
-  maximumLifetime = _messages.StringField(5)
-  passthroughExtensions = _messages.MessageField('CertificateExtensionConstraints', 6)
+  backdateDuration = _messages.StringField(3)
+  baselineValues = _messages.MessageField('X509Parameters', 4)
+  identityConstraints = _messages.MessageField('CertificateIdentityConstraints', 5)
+  maximumLifetime = _messages.StringField(6)
+  passthroughExtensions = _messages.MessageField('CertificateExtensionConstraints', 7)
 
 
 class KeyId(_messages.Message):
@@ -1288,8 +1360,8 @@ class ListCaPoolsResponse(_messages.Message):
   Fields:
     caPools: The list of CaPools.
     nextPageToken: A token to retrieve next page of results. Pass this value
-      in ListCertificateAuthoritiesRequest.next_page_token to retrieve the
-      next page of results.
+      in ListCertificateAuthoritiesRequest.page_token to retrieve the next
+      page of results.
     unreachable: A list of locations (e.g. "us-west1") that could not be
       reached.
   """
@@ -1306,8 +1378,8 @@ class ListCertificateAuthoritiesResponse(_messages.Message):
   Fields:
     certificateAuthorities: The list of CertificateAuthorities.
     nextPageToken: A token to retrieve next page of results. Pass this value
-      in ListCertificateAuthoritiesRequest.next_page_token to retrieve the
-      next page of results.
+      in ListCertificateAuthoritiesRequest.page_token to retrieve the next
+      page of results.
     unreachable: A list of locations (e.g. "us-west1") that could not be
       reached.
   """
@@ -1324,8 +1396,8 @@ class ListCertificateRevocationListsResponse(_messages.Message):
   Fields:
     certificateRevocationLists: The list of CertificateRevocationLists.
     nextPageToken: A token to retrieve next page of results. Pass this value
-      in ListCertificateRevocationListsRequest.next_page_token to retrieve the
-      next page of results.
+      in ListCertificateRevocationListsRequest.page_token to retrieve the next
+      page of results.
     unreachable: A list of locations (e.g. "us-west1") that could not be
       reached.
   """
@@ -1342,8 +1414,8 @@ class ListCertificateTemplatesResponse(_messages.Message):
   Fields:
     certificateTemplates: The list of CertificateTemplates.
     nextPageToken: A token to retrieve next page of results. Pass this value
-      in ListCertificateTemplatesRequest.next_page_token to retrieve the next
-      page of results.
+      in ListCertificateTemplatesRequest.page_token to retrieve the next page
+      of results.
     unreachable: A list of locations (e.g. "us-west1") that could not be
       reached.
   """
@@ -1359,7 +1431,7 @@ class ListCertificatesResponse(_messages.Message):
   Fields:
     certificates: The list of Certificates.
     nextPageToken: A token to retrieve next page of results. Pass this value
-      in ListCertificatesRequest.next_page_token to retrieve the next page of
+      in ListCertificatesRequest.page_token to retrieve the next page of
       results.
     unreachable: A list of locations (e.g. "us-west1") that could not be
       reached.
@@ -1657,8 +1729,9 @@ class OperationMetadata(_messages.Message):
     endTime: Output only. The time the operation finished running.
     requestedCancellation: Output only. Identifies whether the user has
       requested cancellation of the operation. Operations that have
-      successfully been cancelled have Operation.error value with a
-      google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
+      successfully been cancelled have google.longrunning.Operation.error
+      value with a google.rpc.Status.code of 1, corresponding to
+      `Code.CANCELLED`.
     statusMessage: Output only. Human-readable status of the operation, if
       any.
     target: Output only. Server-defined resource path for the target of the
@@ -1840,7 +1913,7 @@ class PrivatecaProjectsLocationsCaPoolsCertificateAuthoritiesCertificateRevocati
   Fields:
     certificateRevocationList: A CertificateRevocationList resource to be
       passed as the request body.
-    name: Output only. The resource name for this CertificateRevocationList in
+    name: Identifier. The resource name for this CertificateRevocationList in
       the format `projects/*/locations/*/caPools/*certificateAuthorities/*/
       certificateRevocationLists/*`.
     requestId: Optional. An ID to identify requests. Specify a unique request
@@ -1936,10 +2009,10 @@ class PrivatecaProjectsLocationsCaPoolsCertificateAuthoritiesDeleteRequest(_mess
     ignoreActiveCertificates: Optional. This field allows the CA to be deleted
       even if the CA has active certs. Active certs include both unrevoked and
       unexpired certs.
-    ignoreDependentResources: Optional. This field allows this ca to be
+    ignoreDependentResources: Optional. This field allows this CA to be
       deleted even if it's being depended on by another resource. However,
       doing so may result in unintended and unrecoverable effects on any
-      dependent resource(s) since the CA will no longer be able to issue
+      dependent resources since the CA will no longer be able to issue
       certificates.
     name: Required. The resource name for this CertificateAuthority in the
       format `projects/*/locations/*/caPools/*/certificateAuthorities/*`.
@@ -2054,7 +2127,7 @@ class PrivatecaProjectsLocationsCaPoolsCertificateAuthoritiesPatchRequest(_messa
   Fields:
     certificateAuthority: A CertificateAuthority resource to be passed as the
       request body.
-    name: Output only. The resource name for this CertificateAuthority in the
+    name: Identifier. The resource name for this CertificateAuthority in the
       format `projects/*/locations/*/caPools/*/certificateAuthorities/*`.
     requestId: Optional. An ID to identify requests. Specify a unique request
       ID so that if you must retry your request, the server will know to
@@ -2099,7 +2172,7 @@ class PrivatecaProjectsLocationsCaPoolsCertificatesCreateRequest(_messages.Messa
     certificateId: Optional. It must be unique within a location and match the
       regular expression `[a-zA-Z0-9_-]{1,63}`. This field is required when
       using a CertificateAuthority in the Enterprise
-      CertificateAuthority.Tier, but is optional and its value is ignored
+      CertificateAuthority.tier, but is optional and its value is ignored
       otherwise.
     issuingCertificateAuthorityId: Optional. The resource ID of the
       CertificateAuthority that should issue the certificate. This optional
@@ -2182,7 +2255,7 @@ class PrivatecaProjectsLocationsCaPoolsCertificatesPatchRequest(_messages.Messag
 
   Fields:
     certificate: A Certificate resource to be passed as the request body.
-    name: Output only. The resource name for this Certificate in the format
+    name: Identifier. The resource name for this Certificate in the format
       `projects/*/locations/*/caPools/*/certificates/*`.
     requestId: Optional. An ID to identify requests. Specify a unique request
       ID so that if you must retry your request, the server will know to
@@ -2253,7 +2326,7 @@ class PrivatecaProjectsLocationsCaPoolsDeleteRequest(_messages.Message):
     ignoreDependentResources: Optional. This field allows this pool to be
       deleted even if it's being depended on by another resource. However,
       doing so may result in unintended and unrecoverable effects on any
-      dependent resource(s) since the pool will no longer be able to issue
+      dependent resources since the pool will no longer be able to issue
       certificates.
     name: Required. The resource name for this CaPool in the format
       `projects/*/locations/*/caPools/*`.
@@ -2354,7 +2427,7 @@ class PrivatecaProjectsLocationsCaPoolsPatchRequest(_messages.Message):
 
   Fields:
     caPool: A CaPool resource to be passed as the request body.
-    name: Output only. The resource name for this CaPool in the format
+    name: Identifier. The resource name for this CaPool in the format
       `projects/*/locations/*/caPools/*`.
     requestId: Optional. An ID to identify requests. Specify a unique request
       ID so that if you must retry your request, the server will know to
@@ -2528,7 +2601,7 @@ class PrivatecaProjectsLocationsCertificateTemplatesPatchRequest(_messages.Messa
   Fields:
     certificateTemplate: A CertificateTemplate resource to be passed as the
       request body.
-    name: Output only. The resource name for this CertificateTemplate in the
+    name: Identifier. The resource name for this CertificateTemplate in the
       format `projects/*/locations/*/certificateTemplates/*`.
     requestId: Optional. An ID to identify requests. Specify a unique request
       ID so that if you must retry your request, the server will know to
@@ -2599,6 +2672,8 @@ class PrivatecaProjectsLocationsListRequest(_messages.Message):
   r"""A PrivatecaProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -2609,10 +2684,11 @@ class PrivatecaProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class PrivatecaProjectsLocationsOperationsCancelRequest(_messages.Message):
@@ -2709,13 +2785,13 @@ class PublishingOptions(_messages.Message):
 
   Enums:
     EncodingFormatValueValuesEnum: Optional. Specifies the encoding format of
-      each CertificateAuthority's CA certificate and CRLs. If this is omitted,
-      CA certificates and CRLs will be published in PEM.
+      each CertificateAuthority resource's CA certificate and CRLs. If this is
+      omitted, CA certificates and CRLs will be published in PEM.
 
   Fields:
     encodingFormat: Optional. Specifies the encoding format of each
-      CertificateAuthority's CA certificate and CRLs. If this is omitted, CA
-      certificates and CRLs will be published in PEM.
+      CertificateAuthority resource's CA certificate and CRLs. If this is
+      omitted, CA certificates and CRLs will be published in PEM.
     publishCaCert: Optional. When true, publishes each CertificateAuthority's
       CA certificate and includes its URL in the "Authority Information
       Access" X.509 extension in all issued Certificates. If this is false,
@@ -2731,9 +2807,9 @@ class PublishingOptions(_messages.Message):
   """
 
   class EncodingFormatValueValuesEnum(_messages.Enum):
-    r"""Optional. Specifies the encoding format of each CertificateAuthority's
-    CA certificate and CRLs. If this is omitted, CA certificates and CRLs will
-    be published in PEM.
+    r"""Optional. Specifies the encoding format of each CertificateAuthority
+    resource's CA certificate and CRLs. If this is omitted, CA certificates
+    and CRLs will be published in PEM.
 
     Values:
       ENCODING_FORMAT_UNSPECIFIED: Not specified. By default, PEM format will
@@ -2783,6 +2859,18 @@ class ReconciliationOperationMetadata(_messages.Message):
 
   deleteResource = _messages.BooleanField(1)
   exclusiveAction = _messages.EnumField('ExclusiveActionValueValuesEnum', 2)
+
+
+class RelativeDistinguishedName(_messages.Message):
+  r"""RelativeDistinguishedName specifies a relative distinguished name which
+  will be used to build a distinguished name.
+
+  Fields:
+    attributes: Attributes describes the attribute value assertions in the
+      RDN.
+  """
+
+  attributes = _messages.MessageField('AttributeTypeAndValue', 1, repeated=True)
 
 
 class RevocationDetails(_messages.Message):
@@ -3100,6 +3188,7 @@ class Subject(_messages.Message):
     organizationalUnit: The organizational_unit of the subject.
     postalCode: The postal code of the subject.
     province: The province, territory, or regional state of the subject.
+    rdnSequence: This field can be used in place of the named subject fields.
     streetAddress: The street address of the subject.
   """
 
@@ -3110,7 +3199,8 @@ class Subject(_messages.Message):
   organizationalUnit = _messages.StringField(5)
   postalCode = _messages.StringField(6)
   province = _messages.StringField(7)
-  streetAddress = _messages.StringField(8)
+  rdnSequence = _messages.MessageField('RelativeDistinguishedName', 8, repeated=True)
+  streetAddress = _messages.StringField(9)
 
 
 class SubjectAltNames(_messages.Message):
@@ -3250,6 +3340,25 @@ class UndeleteCertificateAuthorityRequest(_messages.Message):
   requestId = _messages.StringField(1)
 
 
+class UserDefinedAccessUrls(_messages.Message):
+  r"""User-defined URLs for accessing content published by this
+  CertificateAuthority.
+
+  Fields:
+    aiaIssuingCertificateUrls: Optional. A list of URLs where the issuer CA
+      certificate may be downloaded, which appears in the "Authority
+      Information Access" extension in the certificate. If specified, the
+      default Cloud Storage URLs will be omitted.
+    crlAccessUrls: Optional. A list of URLs where to obtain CRL information,
+      i.e. the DistributionPoint.fullName described by
+      https://tools.ietf.org/html/rfc5280#section-4.2.1.13. If specified, the
+      default Cloud Storage URLs will be omitted.
+  """
+
+  aiaIssuingCertificateUrls = _messages.StringField(1, repeated=True)
+  crlAccessUrls = _messages.StringField(2, repeated=True)
+
+
 class X509Extension(_messages.Message):
   r"""An X509Extension specifies an X.509 extension, which may be used in
   different parts of X.509 objects like certificates, CSRs, and CRLs.
@@ -3278,7 +3387,9 @@ class X509Parameters(_messages.Message):
       (OCSP) endpoint addresses that appear in the "Authority Information
       Access" extension in the certificate.
     caOptions: Optional. Describes options in this X509Parameters that are
-      relevant in a CA certificate.
+      relevant in a CA certificate. If not specified, a default basic
+      constraints extension with `is_ca=false` will be added for leaf
+      certificates.
     keyUsage: Optional. Indicates the intended use for keys that correspond to
       a certificate.
     nameConstraints: Optional. Describes the X.509 name constraints extension.
@@ -3300,3 +3411,9 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    PrivatecaProjectsLocationsCaPoolsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    PrivatecaProjectsLocationsCaPoolsCertificateAuthoritiesCertificateRevocationListsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    PrivatecaProjectsLocationsCertificateTemplatesGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

@@ -35,22 +35,22 @@ _API_VERSION_FOR_TRACK = {
 _API_NAME = 'networksecurity'
 
 
-def GetMessagesModule(release_track=base.ReleaseTrack.ALPHA):
+def GetMessagesModule(release_track=base.ReleaseTrack.GA):
   api_version = _API_VERSION_FOR_TRACK.get(release_track)
   return apis.GetMessagesModule(_API_NAME, api_version)
 
 
-def GetClientInstance(release_track=base.ReleaseTrack.ALPHA):
+def GetClientInstance(release_track=base.ReleaseTrack.GA):
   api_version = _API_VERSION_FOR_TRACK.get(release_track)
   return apis.GetClientInstance(_API_NAME, api_version)
 
 
-def GetEffectiveApiEndpoint(release_track=base.ReleaseTrack.ALPHA):
+def GetEffectiveApiEndpoint(release_track=base.ReleaseTrack.GA):
   api_version = _API_VERSION_FOR_TRACK.get(release_track)
   return apis.GetEffectiveApiEndpoint(_API_NAME, api_version)
 
 
-def GetApiBaseUrl(release_track=base.ReleaseTrack.ALPHA):
+def GetApiBaseUrl(release_track=base.ReleaseTrack.GA):
   api_version = _API_VERSION_FOR_TRACK.get(release_track)
   return resources.GetApiBaseUrlOrThrow(_API_NAME, api_version)
 
@@ -120,33 +120,25 @@ class Client:
       name,
       update_fields,
   ):
-    """Calls the UpdateAssociation API to update labels or TLS inspection policy.
+    """Calls the UpdateAssociation API to modify an existing association.
 
     Args:
       name: The resource name of the association.
       update_fields: A dictionary mapping from field names to update, to their
-        new values. Only 'labels' and 'tls_inspection_policy' fields are
-        supported.
+        new values. Supported values: 'labels', 'tls_inspection_policy',
+        'disabled'.
 
     Returns:
       NetworksecurityProjectsLocationsFirewallEndpointAssociationsPatchResponse
     """
-    # TLS inspection policy is part of the FirewallEndpointAssociation message
-    # in ALPHA but not BETA version. Therefore, we need to separate the two
-    # cases to avoid runtime errors.
-    #
     # Only keys that exist in the dictionary are updated. This is done via the
     # updateMask request parameter. Values for keys that do not exist in the
     # dictionary can be anything and will not be updated.
-    if 'tls_inspection_policy' in update_fields:
-      association = self.messages.FirewallEndpointAssociation(
-          labels=update_fields.get('labels', None),
-          tlsInspectionPolicy=update_fields['tls_inspection_policy'],
-      )
-    else:
-      association = self.messages.FirewallEndpointAssociation(
-          labels=update_fields.get('labels', None),
-      )
+    association = self.messages.FirewallEndpointAssociation(
+        disabled=update_fields.get('disabled', None),
+        labels=update_fields.get('labels', None),
+        tlsInspectionPolicy=update_fields.get('tls_inspection_policy', None),
+    )
 
     update_request = self.messages.NetworksecurityProjectsLocationsFirewallEndpointAssociationsPatchRequest(
         name=name,

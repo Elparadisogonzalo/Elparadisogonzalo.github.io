@@ -81,9 +81,16 @@ def _Args(parser):
   parser.add_argument(
       '--num-nodes',
       type=int,
-      help='The number of nodes in the node pool in each of the '
-      'cluster\'s zones.',
-      default=3)
+      help="""\
+The number of nodes in the node pool in each of the cluster's zones. Defaults to
+3.
+
+Exception: when `--tpu-topology` is specified for multi-host TPU machine types
+the number of nodes will be defaulted to `(product of topology)/(# of chips per
+VM)`.
+""",
+      default=None,
+  )
   flags.AddMachineTypeFlag(parser)
   parser.add_argument(
       '--disk-size',
@@ -110,14 +117,18 @@ for examples.
   parser.display_info.AddFormat(util.NODEPOOLS_FORMAT)
   flags.AddNodeVersionFlag(parser)
   flags.AddDiskTypeFlag(parser)
+  flags.AddBootDiskProvisionedThroughputFlag(parser)
+  flags.AddBootDiskProvisionedIopsFlag(parser)
   flags.AddMetadataFlags(parser)
   flags.AddShieldedInstanceFlags(parser)
   flags.AddNetworkConfigFlags(parser)
   flags.AddThreadsPerCore(parser)
+  flags.AddPerformanceMonitoringUnit(parser)
   flags.AddAdditionalNodeNetworkFlag(parser)
   flags.AddAdditionalPodNetworkFlag(parser)
   flags.AddAsyncFlag(parser)
   flags.AddSoleTenantNodeAffinityFileFlag(parser)
+  flags.AddSoleTenantMinNodeCpusFlag(parser)
   flags.AddContainerdConfigFlag(parser)
   flags.AddEnableKubeletReadonlyPortFlag(parser)
 
@@ -196,6 +207,9 @@ def ParseCreateNodePoolOptionsBase(args):
       enable_image_streaming=args.enable_image_streaming,
       spot=args.spot,
       enable_confidential_nodes=args.enable_confidential_nodes,
+      confidential_node_type=args.confidential_node_type,
+      enable_confidential_storage=args.enable_confidential_storage,
+      data_cache_count=args.data_cache_count,
       enable_blue_green_upgrade=args.enable_blue_green_upgrade,
       enable_surge_upgrade=args.enable_surge_upgrade,
       node_pool_soak_duration=args.node_pool_soak_duration,
@@ -207,12 +221,17 @@ def ParseCreateNodePoolOptionsBase(args):
       additional_node_network=args.additional_node_network,
       additional_pod_network=args.additional_pod_network,
       sole_tenant_node_affinity_file=args.sole_tenant_node_affinity_file,
+      sole_tenant_min_node_cpus=args.sole_tenant_min_node_cpus,
       containerd_config_from_file=args.containerd_config_from_file,
       resource_manager_tags=args.resource_manager_tags,
       enable_insecure_kubelet_readonly_port=args.enable_insecure_kubelet_readonly_port,
+      enable_nested_virtualization=args.enable_nested_virtualization,
+      boot_disk_provisioned_iops=args.boot_disk_provisioned_iops,
+      boot_disk_provisioned_throughput=args.boot_disk_provisioned_throughput,
   )
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create a node pool in a running cluster."""
@@ -231,6 +250,7 @@ class Create(base.CreateCommand):
     flags.AddLocalSSDsGAFlags(parser, for_node_pool=True)
     flags.AddPreemptibleFlag(parser, for_node_pool=True)
     flags.AddEnableAutoRepairFlag(parser, for_node_pool=True, for_create=True)
+    flags.AddOpportunisticMaintenanceFlag(parser)
     flags.AddMinCpuPlatformFlag(parser, for_node_pool=True)
     flags.AddWorkloadMetadataFlag(parser)
     flags.AddNodeTaintsFlag(parser, for_node_pool=True)
@@ -250,21 +270,32 @@ class Create(base.CreateCommand):
     flags.AddEnableImageStreamingFlag(parser, for_node_pool=True)
     flags.AddSpotFlag(parser, for_node_pool=True)
     flags.AddEnableConfidentialNodesFlag(parser, for_node_pool=True)
+    flags.AddConfidentialNodeTypeFlag(parser, for_node_pool=True)
     flags.AddDisablePodCIDROverprovisionFlag(parser, hidden=True)
     flags.AddNetworkPerformanceConfigFlags(parser, hidden=False)
     flags.AddEnableSurgeUpgradeFlag(parser)
     flags.AddEnableBlueGreenUpgradeFlag(parser)
     flags.AddStandardRolloutPolicyFlag(parser)
+    flags.AddStoragePoolsFlag(
+        parser, for_node_pool=True, for_create=True)
     flags.AddNodePoolSoakDurationFlag(parser)
     flags.AddNodePoolEnablePrivateNodes(parser)
     flags.AddEnableFastSocketFlag(parser)
     flags.AddLoggingVariantFlag(parser, for_node_pool=True)
     flags.AddWindowsOsVersionFlag(parser)
     flags.AddPlacementTypeFlag(parser, for_node_pool=True, hidden=False)
+    flags.AddQueuedProvisioningFlag(parser)
+    flags.AddMaxRunDurationFlag(parser)
+    flags.AddFlexStartFlag(parser)
     flags.AddBestEffortProvisionFlags(parser)
     flags.AddPlacementPolicyFlag(parser)
     flags.AddTPUTopologyFlag(parser)
     flags.AddResourceManagerTagsCreate(parser, for_node_pool=True)
+    flags.AddEnableNestedVirtualizationFlag(
+        parser, for_node_pool=True, hidden=False)
+    flags.AddSecondaryBootDisksArgs(parser)
+    flags.AddEnableConfidentialStorageFlag(parser, for_node_pool=True)
+    flags.AddDataCacheCountFlag(parser, for_node_pool=True)
 
   def ParseCreateNodePoolOptions(self, args):
     ops = ParseCreateNodePoolOptionsBase(args)
@@ -274,8 +305,15 @@ class Create(base.CreateCommand):
     ops.placement_type = args.placement_type
     ops.enable_best_effort_provision = args.enable_best_effort_provision
     ops.min_provision_nodes = args.min_provision_nodes
+    ops.performance_monitoring_unit = args.performance_monitoring_unit
     ops.placement_policy = args.placement_policy
+    ops.enable_queued_provisioning = args.enable_queued_provisioning
+    ops.max_run_duration = args.max_run_duration
+    ops.flex_start = args.flex_start
     ops.tpu_topology = args.tpu_topology
+    ops.secondary_boot_disks = args.secondary_boot_disk
+    ops.storage_pools = args.storage_pools
+
     return ops
 
   def Run(self, args):
@@ -301,6 +339,16 @@ class Create(base.CreateCommand):
 
       if options.accelerators is not None:
         log.status.Print('Note: ' + constants.KUBERNETES_GPU_LIMITATION_MSG)
+        log.status.Print('Note: ' +
+                         constants.KUBERNETES_GPU_DRIVER_AUTO_INSTALL_MSG)
+        gpu_driver_version = options.accelerators.get(
+            'gpu-driver-version', None
+        )
+        if gpu_driver_version == 'disabled':
+          log.status.Print(
+              'Note: '
+              + constants.KUBERNETES_GPU_DRIVER_DISABLED_NEEDS_MANUAL_INSTALL_MSG
+          )
 
       elif options.image_type and options.image_type.upper().startswith(
           'WINDOWS_SAC'):
@@ -324,6 +372,7 @@ class Create(base.CreateCommand):
           'Creating node pool {0}'.format(pool_ref.nodePoolId),
           timeout_s=args.timeout)
       pool = adapter.GetNodePool(pool_ref)
+      util.CheckForCgroupModeV1(pool)
     except apitools_exceptions.HttpError as error:
       raise exceptions.HttpException(error, util.HTTP_ERROR_FORMAT)
 
@@ -379,20 +428,29 @@ class CreateBeta(Create):
     flags.AddMaintenanceIntervalFlag(parser, for_node_pool=True, hidden=True)
     flags.AddNetworkPerformanceConfigFlags(parser, hidden=False)
     flags.AddEnableConfidentialNodesFlag(parser, for_node_pool=True)
+    flags.AddConfidentialNodeTypeFlag(parser, for_node_pool=True)
     flags.AddEnableConfidentialStorageFlag(parser, for_node_pool=True)
+    flags.AddStoragePoolsFlag(
+        parser, for_node_pool=True, for_create=True)
+    flags.AddLocalSsdEncryptionModeFlag(
+        parser, for_node_pool=True)
+    flags.AddDataCacheCountFlag(parser, for_node_pool=True)
     flags.AddDisablePodCIDROverprovisionFlag(parser)
     flags.AddEnableFastSocketFlag(parser)
     flags.AddLoggingVariantFlag(parser, for_node_pool=True)
     flags.AddWindowsOsVersionFlag(parser)
     flags.AddBestEffortProvisionFlags(parser, hidden=False)
     flags.AddQueuedProvisioningFlag(parser)
+    flags.AddMaxRunDurationFlag(parser)
+    flags.AddFlexStartFlag(parser)
     flags.AddTPUTopologyFlag(parser)
     flags.AddEnableNestedVirtualizationFlag(
-        parser, for_node_pool=True, hidden=True)
+        parser, for_node_pool=True, hidden=False)
     flags.AddHostMaintenanceIntervalFlag(
         parser, for_node_pool=True, hidden=True)
+    flags.AddOpportunisticMaintenanceFlag(parser)
     flags.AddResourceManagerTagsCreate(parser, for_node_pool=True)
-    flags.AddSecondaryBootDisksArgs(parser, hidden=True)
+    flags.AddSecondaryBootDisksArgs(parser)
 
   def ParseCreateNodePoolOptions(self, args):
     ops = ParseCreateNodePoolOptionsBase(args)
@@ -424,16 +482,23 @@ class CreateBeta(Create):
     ops.maintenance_interval = args.maintenance_interval
     ops.network_performance_config = args.network_performance_configs
     ops.enable_confidential_nodes = args.enable_confidential_nodes
+    ops.confidential_node_type = args.confidential_node_type
     ops.disable_pod_cidr_overprovision = args.disable_pod_cidr_overprovision
     ops.enable_fast_socket = args.enable_fast_socket
     ops.enable_queued_provisioning = args.enable_queued_provisioning
+    ops.max_run_duration = args.max_run_duration
+    ops.flex_start = args.flex_start
     ops.tpu_topology = args.tpu_topology
     ops.enable_nested_virtualization = args.enable_nested_virtualization
     ops.enable_best_effort_provision = args.enable_best_effort_provision
     ops.min_provision_nodes = args.min_provision_nodes
     ops.host_maintenance_interval = args.host_maintenance_interval
+    ops.opportunistic_maintenance = args.opportunistic_maintenance
+    ops.performance_monitoring_unit = args.performance_monitoring_unit
     ops.secondary_boot_disks = args.secondary_boot_disk
-    ops.enable_confidential_storage = args.enable_confidential_storage
+    ops.storage_pools = args.storage_pools
+    ops.local_ssd_encryption_mode = args.local_ssd_encryption_mode
+    ops.data_cache_count = args.data_cache_count
     return ops
 
 
@@ -471,19 +536,25 @@ class CreateAlpha(Create):
     ops.maintenance_interval = args.maintenance_interval
     ops.network_performance_config = args.network_performance_configs
     ops.enable_confidential_nodes = args.enable_confidential_nodes
+    ops.confidential_node_type = args.confidential_node_type
     ops.disable_pod_cidr_overprovision = args.disable_pod_cidr_overprovision
     ops.enable_fast_socket = args.enable_fast_socket
     ops.enable_queued_provisioning = args.enable_queued_provisioning
+    ops.max_run_duration = args.max_run_duration
+    ops.flex_start = args.flex_start
     ops.tpu_topology = args.tpu_topology
     ops.enable_nested_virtualization = args.enable_nested_virtualization
     ops.enable_best_effort_provision = args.enable_best_effort_provision
     ops.min_provision_nodes = args.min_provision_nodes
     ops.host_maintenance_interval = args.host_maintenance_interval
+    ops.opportunistic_maintenance = args.opportunistic_maintenance
     ops.performance_monitoring_unit = args.performance_monitoring_unit
     ops.autoscaled_rollout_policy = args.autoscaled_rollout_policy
     ops.ephemeral_storage = ephemeral_storage
     ops.secondary_boot_disks = args.secondary_boot_disk
-    ops.enable_confidential_storage = args.enable_confidential_storage
+    ops.storage_pools = args.storage_pools
+    ops.local_ssd_encryption_mode = args.local_ssd_encryption_mode
+    ops.data_cache_count = args.data_cache_count
     return ops
 
   @staticmethod
@@ -530,20 +601,29 @@ class CreateAlpha(Create):
     flags.AddMaintenanceIntervalFlag(parser, for_node_pool=True, hidden=True)
     flags.AddNetworkPerformanceConfigFlags(parser, hidden=False)
     flags.AddEnableConfidentialNodesFlag(parser, for_node_pool=True)
+    flags.AddConfidentialNodeTypeFlag(parser, for_node_pool=True)
     flags.AddEnableConfidentialStorageFlag(parser, for_node_pool=True)
+    flags.AddStoragePoolsFlag(
+        parser, for_node_pool=True, for_create=True)
+    flags.AddLocalSsdEncryptionModeFlag(
+        parser, for_node_pool=True)
+    flags.AddDataCacheCountFlag(parser, for_node_pool=True)
     flags.AddDisablePodCIDROverprovisionFlag(parser)
     flags.AddEnableFastSocketFlag(parser)
     flags.AddLoggingVariantFlag(parser, for_node_pool=True)
     flags.AddWindowsOsVersionFlag(parser)
     flags.AddBestEffortProvisionFlags(parser, hidden=False)
     flags.AddQueuedProvisioningFlag(parser)
+    flags.AddMaxRunDurationFlag(parser)
+    flags.AddFlexStartFlag(parser)
     flags.AddTPUTopologyFlag(parser)
-    flags.AddEnableNestedVirtualizationFlag(parser, hidden=True)
+    flags.AddEnableNestedVirtualizationFlag(
+        parser, for_node_pool=True, hidden=False)
     flags.AddHostMaintenanceIntervalFlag(
         parser, for_node_pool=True, hidden=True)
-    flags.AddPerformanceMonitoringUnit(parser, hidden=True)
+    flags.AddOpportunisticMaintenanceFlag(parser)
     flags.AddAutoscaleRolloutPolicyFlag(parser)
     flags.AddResourceManagerTagsCreate(parser, for_node_pool=True)
-    flags.AddSecondaryBootDisksArgs(parser, hidden=True)
+    flags.AddSecondaryBootDisksArgs(parser)
 
 Create.detailed_help = DETAILED_HELP

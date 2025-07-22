@@ -26,22 +26,21 @@ _MYSQL_EXCLUDED_OBJECTS_HELP_TEXT = """\
 
   ```
     {
-        "mysqlDatabases": [
+      "mysqlDatabases": [
+        {
+          "database":"sample_database",
+          "mysqlTables": [
             {
-              "database":"sample_database",
-              "mysqlTables": [
+              "table": "sample_table",
+              "mysqlColumns": [
                 {
-                  "table": "sample_table",
-                  "mysqlColumns": [
-                    {
-                      "column": "sample_column",
-                    }
-                   ]
+                  "column": "sample_column",
                 }
-              ]
+                ]
             }
           ]
         }
+      ]
     }
   ```
 """
@@ -53,25 +52,25 @@ _ORACLE_EXCLUDED_OBJECTS_HELP_TEXT = """\
 
   ```
     {
-        "oracleSchemas": [
-          {
-            "schema": "SAMPLE",
-            "oracleTables": [
-              {
-                "table": "SAMPLE_TABLE",
-                "oracleColumns": [
-                  {
-                    "column": "COL",
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+      "oracleSchemas": [
+        {
+          "schema": "SAMPLE",
+          "oracleTables": [
+            {
+              "table": "SAMPLE_TABLE",
+              "oracleColumns": [
+                {
+                  "column": "COL",
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ```
 """
+
 _POSTGRESQL_EXCLUDED_OBJECTS_HELP_TEXT = """\
   Path to a YAML (or JSON) file containing the PostgreSQL data sources to avoid backfilling.
 
@@ -79,22 +78,92 @@ _POSTGRESQL_EXCLUDED_OBJECTS_HELP_TEXT = """\
 
   ```
     {
-        "postgresqlSchemas": [
-          {
-            "schema": "SAMPLE",
-            "postgresqlTables": [
-              {
-                "table": "SAMPLE_TABLE",
-                "postgresqlColumns": [
-                  {
-                    "column": "COL",
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+      "postgresqlSchemas": [
+        {
+          "schema": "SAMPLE",
+          "postgresqlTables": [
+            {
+              "table": "SAMPLE_TABLE",
+              "postgresqlColumns": [
+                {
+                  "column": "COL",
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ```
+"""
+
+_SQLSERVER_EXCLUDED_OBJECTS_HELP_TEXT = """\
+  Path to a YAML (or JSON) file containing the SQL Server data sources to avoid backfilling.
+
+  The JSON file is formatted as follows, with camelCase field naming:
+
+  ```
+    {
+      "schemas": [
+        {
+          "schema": "SAMPLE",
+          "tables": [
+            {
+              "table": "SAMPLE_TABLE",
+              "columns": [
+                {
+                  "column": "COL",
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ```
+"""
+
+_SALESFORCE_EXCLUDED_OBJECTS_HELP_TEXT = """\
+  Path to a YAML (or JSON) file containing the Salesforce data sources to avoid backfilling.
+
+  The JSON file is formatted as follows, with camelCase field naming:
+
+  ```
+    {
+      "objects": [
+        {
+          "objectName": "SAMPLE",
+        },
+        {
+          "objectName": "SAMPLE2",
+        }
+      ]
+    }
+  ```
+"""
+
+_MONGODB_EXCLUDED_OBJECTS_HELP_TEXT = """\
+  Path to a YAML (or JSON) file containing the MongoDB data sources to avoid backfilling.
+
+  The JSON file is formatted as follows, with camelCase field naming:
+
+  ```
+    {
+      "databases": [
+        {
+          "database":"sample_database",
+          "collections": [
+            {
+              "collection": "sample_collection",
+              "fields": [
+                {
+                  "field": "sample_field",
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ```
 """
@@ -141,13 +210,15 @@ def AddBackfillStrategyGroup(parser, required=True):
   backfill_group = parser.add_group(required=required, mutex=True)
   backfill_group.add_argument(
       '--backfill-none',
-      help="""Do not automatically backfill any objects.""",
+      help="""Do not automatically backfill any objects. This flag is equivalent
+      to selecting the Manual backfill type in the Google Cloud console.""",
       action='store_true')
   backfill_all_group = backfill_group.add_group()
   backfill_all_group.add_argument(
       '--backfill-all',
       help="""Automatically backfill objects included in the stream source
-      configuration. Specific objects can be excluded.""",
+      configuration. Specific objects can be excluded. This flag is equivalent
+      to selecting the Automatic backfill type in the Google Cloud console.""",
       action='store_true')
   backfill_all_excluded_objects = backfill_all_group.add_group(mutex=True)
   backfill_all_excluded_objects.add_argument(
@@ -159,4 +230,16 @@ def AddBackfillStrategyGroup(parser, required=True):
   backfill_all_excluded_objects.add_argument(
       '--postgresql-excluded-objects',
       help=_POSTGRESQL_EXCLUDED_OBJECTS_HELP_TEXT,
+  )
+  backfill_all_excluded_objects.add_argument(
+      '--sqlserver-excluded-objects',
+      help=_SQLSERVER_EXCLUDED_OBJECTS_HELP_TEXT,
+  )
+  backfill_all_excluded_objects.add_argument(
+      '--salesforce-excluded-objects',
+      help=_SALESFORCE_EXCLUDED_OBJECTS_HELP_TEXT,
+  )
+  backfill_all_excluded_objects.add_argument(
+      '--mongodb-excluded-objects',
+      help=_MONGODB_EXCLUDED_OBJECTS_HELP_TEXT,
   )

@@ -49,22 +49,9 @@ def _get_json_dump(resource):
       ]))
 
 
-def _message_to_dict(message):
-  """Converts message to dict. Returns None is message is None."""
-  # TODO(b/246556206): Remove.
-  if message is not None:
-    result = encoding.MessageToDict(message)
-    # Explicit comparison is needed because we don't want to return None for
-    # False values.
-    if result == []:  # pylint: disable=g-explicit-bool-comparison
-      return None
-    return result
-  return None
-
-
 def _get_formatted_acl(acl):
   """Removes unnecessary fields from acl."""
-  if acl is None:
+  if acl is None or not isinstance(acl, list):
     return acl
   formatted_acl = []
   for acl_entry in acl:
@@ -173,12 +160,14 @@ class GcsBucketResource(resource_reference.BucketResource):
       default_kms_key=None,
       default_storage_class=None,
       etag=None,
+      ip_filter_config=None,
       labels=None,
       lifecycle_config=None,
       location=None,
       location_type=None,
       logging_config=None,
       metadata=None,
+      generation=None,
       metageneration=None,
       per_object_retention=None,
       project_number=None,
@@ -190,6 +179,8 @@ class GcsBucketResource(resource_reference.BucketResource):
       soft_delete_policy=None,
       uniform_bucket_level_access=None,
       update_time=None,
+      soft_delete_time=None,
+      hard_delete_time=None,
       versioning_enabled=None,
       website_config=None,
   ):
@@ -219,6 +210,7 @@ class GcsBucketResource(resource_reference.BucketResource):
     self.custom_placement_config = custom_placement_config
     self.default_acl = default_acl
     self.default_kms_key = default_kms_key
+    self.ip_filter_config = ip_filter_config
     self.location_type = location_type
     self.per_object_retention = per_object_retention
     self.project_number = project_number
@@ -227,6 +219,9 @@ class GcsBucketResource(resource_reference.BucketResource):
     self.satisfies_pzs = satisfies_pzs
     self.soft_delete_policy = soft_delete_policy
     self.uniform_bucket_level_access = uniform_bucket_level_access
+    self.generation = generation
+    self.soft_delete_time = soft_delete_time
+    self.hard_delete_time = hard_delete_time
 
   @property
   def data_locations(self):
@@ -253,6 +248,7 @@ class GcsBucketResource(resource_reference.BucketResource):
         and self.custom_placement_config == other.custom_placement_config
         and self.default_acl == other.default_acl
         and self.default_kms_key == other.default_kms_key
+        and self.ip_filter_config == other.ip_filter_config
         and self.location_type == other.location_type
         and self.per_object_retention == other.per_object_retention
         and self.project_number == other.project_number

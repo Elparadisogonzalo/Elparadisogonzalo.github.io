@@ -20,7 +20,7 @@ class Accelerator(_messages.Message):
 
   Fields:
     count: How many accelerators of this type to attach.
-    type: The accelerator type string (for example, "nvidia-tesla-k80"). Only
+    type: The accelerator type string (for example, "nvidia-tesla-t4"). Only
       NVIDIA GPU accelerators are currently supported. If an NVIDIA GPU is
       attached, the required runtime libraries will be made available to all
       containers under `/usr/local/nvidia`. The driver version to install must
@@ -620,6 +620,8 @@ class LifesciencesProjectsLocationsListRequest(_messages.Message):
   r"""A LifesciencesProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -630,10 +632,11 @@ class LifesciencesProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class LifesciencesProjectsLocationsOperationsCancelRequest(_messages.Message):

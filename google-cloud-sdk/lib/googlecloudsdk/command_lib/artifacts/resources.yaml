@@ -130,3 +130,29 @@ file:
     attribute_name: file
     help: |
       The file associated with the {resource}.
+
+rule:
+  name: rule
+  collection: artifactregistry.projects.locations.repositories.rules
+  attributes:
+  - *project
+  - *location
+  - *repository
+  - &rule
+    parameter_name: rulesId
+    attribute_name: rule
+    help: |
+      The rule associated with the {resource}.
+
+attachment:
+  name: attachment
+  collection: artifactregistry.projects.locations.repositories.attachments
+  attributes:
+  - *project
+  - *location
+  - *repository
+  - &attachment
+    parameter_name: attachmentsId
+    attribute_name: attachment
+    help: |
+      Attachment associated with the {resource}.

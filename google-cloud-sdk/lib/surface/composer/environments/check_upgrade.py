@@ -42,7 +42,9 @@ DETAILED_HELP = {
 }
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
+                    base.ReleaseTrack.GA)
 class CheckUpgrade(base.Command):
   """Check that upgrading a Cloud Composer environment does not result in PyPI module conflicts."""
 
@@ -53,7 +55,8 @@ class CheckUpgrade(base.Command):
     resource_args.AddEnvironmentResourceArg(parser, 'to check upgrade for')
     base.ASYNC_FLAG.AddToParser(parser)
 
-    flags.AddEnvUpgradeFlagsToGroup(parser)
+    flags.AddEnvUpgradeFlagsToGroup(
+        parser, release_track=base.ReleaseTrack.BETA)
 
   def Run(self, args):
     env_resource = args.CONCEPTS.environment.Parse()

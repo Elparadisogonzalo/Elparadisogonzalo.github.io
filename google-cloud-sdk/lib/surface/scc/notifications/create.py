@@ -32,13 +32,19 @@ from googlecloudsdk.core import log
 @base.ReleaseTracks(
     base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA
 )
+@base.DefaultUniverseOnly
 class Create(base.CreateCommand):
-  """Create a Cloud Security Command Center notification config."""
+  """Create a Security Command Center notification config."""
 
   detailed_help = {
       'DESCRIPTION': """\
-      Create a Cloud Security Command Center notification config.
-      """,
+      Create a Security Command Center notification config.
+
+      Notification configs that are created with Security Command Center API V2
+      and later include a `location` attribute. If a location is not specified,
+      the default `global` location is used. For example, the following
+      Notification config name has `location=global` attribute:
+      `organizations/123/locations/global/notificationConfigs/my-config`.""",
       'EXAMPLES': """\
       Create a notification config test-config under organization 123 for
       findings for pubsub-topic projects/test-project/topics/notification-test
@@ -47,35 +53,34 @@ class Create(base.CreateCommand):
         $ {command} test-config --organization=123
           --pubsub-topic=projects/test-project/topics/notification-test
           --filter="resource_name: \\"a\\""
-        $ {command} organizations/123/notificationConfigs/test-config
-          --pubsub-topic=projects/test-project/topics/notification-test
-          --filter="resource_name: \\"a\\""
 
-      Create a notification config test-config under folder 456 for findings for
-      pubsub-topic projects/test-project/topics/notification-test with a filter
-      on resource name:
+      Create a notification config `test-config` under folder `456` for findings
+      for pubsub-topic `projects/test-project/topics/notification-test` with a
+      filter on resource name:
 
         $ {command} test-config --folder=456
           --pubsub-topic=projects/test-project/topics/notification-test
           --filter="resource_name: \\"a\\""
-        $ {command} folders/456/notificationConfigs/test-config
-          --pubsub-topic=projects/test-project/topics/notification-test
-          --filter="resource_name: \\"a\\""
 
-      Create a notification config test-config under project 789 for findings
-      for pubsub-topic projects/test-project/topics/notification-test with a
-      filter on resource name:
+      Create a notification config `test-config` under project `789` for
+      findings for pubsub-topic `projects/test-project/topics/notification-test`
+      with a filter on resource name:
 
         $ {command} test-config --project=789
           --pubsub-topic=projects/test-project/topics/notification-test
           --filter="resource_name: \\"a\\""
-        $ {command} projects/789/notificationConfigs/test-config
+
+      Create a notification config `test-config` under organization `123` for
+      findings for `pubsub-topic projects/test-project/topics/notification-test`
+      with a filter on resource name and `location=eu`
+
+        $ {command} test-config --project=789
           --pubsub-topic=projects/test-project/topics/notification-test
-          --filter="resource_name: \\"a\\""
+          --filter="resource_name: \\"a\\"" --location=eu
       """,
       'API REFERENCE': """\
-      This command uses the securitycenter/v1 API. The full documentation for
-      this API can be found at: https://cloud.google.com/security-command-center
+      This command uses the Security Command Center API. For more information,
+      see [Security Command Center API.](https://cloud.google.com/security-command-center/docs/reference/rest)
       """,
   }
 
@@ -90,7 +95,9 @@ class Create(base.CreateCommand):
     notifications_flags.AddParentGroup(parser)
 
     scc_flags.API_VERSION_FLAG.AddToParser(parser)
-    scc_flags.LOCATION_FLAG.AddToParser(parser)
+    notifications_flags.CREATE_NOTIFICATION_CONFIG_LOCATION_FLAG.AddToParser(
+        parser
+    )
 
   def Run(self, args):
     parent = scc_util.GetParentFromNamedArguments(args)

@@ -18,10 +18,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from googlecloudsdk.api_lib.vmware.networkpeering import NetworkPeeringClient
+from googlecloudsdk.api_lib.vmware import networkpeering
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
-from googlecloudsdk.command_lib.vmware.networks import flags
+from googlecloudsdk.command_lib.vmware.network_peerings import flags
 from googlecloudsdk.core import log
 
 
@@ -42,6 +42,7 @@ DETAILED_HELP = {
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.DefaultUniverseOnly
 class Create(base.CreateCommand):
   """Create a VMware Engine VPC network peering."""
 
@@ -58,6 +59,7 @@ class Create(base.CreateCommand):
         'NETAPP_CLOUD_VOLUMES',
         'THIRD_PARTY_SERVICE',
         'DELL_POWERSCALE',
+        'GOOGLE_CLOUD_NETAPP_VOLUMES',
     ]
     flags.AddNetworkPeeringToParser(parser, positional=True)
     base.ASYNC_FLAG.AddToParser(parser)
@@ -88,8 +90,14 @@ class Create(base.CreateCommand):
         * NETAPP_CLOUD_VOLUMES: Peering connection used for connecting to NetApp Cloud Volumes.
         * THIRD_PARTY_SERVICE: Peering connection used for connecting to third-party services. Most third-party services require manual setup of reverse peering on the VPC network associated with the third-party service.
         * DELL_POWERSCALE: Peering connection used for connecting to Dell PowerScale Filers.
+        * GOOGLE_CLOUD_NETAPP_VOLUMES: Peering connection used for connecting to Google Cloud NetApp Volumes.
         """,
     )
+    parser.add_argument(
+        '--vmware-engine-network-project',
+        help="""\
+        Project of the VMware Engine network to attach the new peering to. Use this flag when the VMware Engine network is in another project.
+        """)
     parser.add_argument(
         '--peer-project',
         help="""\
@@ -150,7 +158,7 @@ class Create(base.CreateCommand):
 
   def Run(self, args):
     peering = args.CONCEPTS.network_peering.Parse()
-    client = NetworkPeeringClient()
+    client = networkpeering.NetworkPeeringClient()
     is_async = args.async_
 
     operation = client.Create(
@@ -159,6 +167,7 @@ class Create(base.CreateCommand):
         peer_network_id=args.peer_network,
         peer_network_type=args.peer_network_type,
         description=args.description,
+        vmware_engine_network_project=args.vmware_engine_network_project,
         peer_project=args.peer_project,
         peer_mtu=args.peer_mtu,
         export_custom_routes=args.export_custom_routes,

@@ -336,6 +336,10 @@ class CLILoader(object):
     """
     self.__modules.append((name, path, component))
 
+  def GetModules(self):
+    """Returns modules added to this CLI tool."""
+    return self.__modules
+
   def RegisterPreRunHook(self, func,
                          include_commands=None, exclude_commands=None):
     """Register a function to be run before command execution.
@@ -594,8 +598,8 @@ class CLILoader(object):
         metavar='CONFIGURATION',
         category=calliope_base.COMMONLY_USED_FLAGS,
         help="""\
-        The configuration to use for this command invocation. For more
-        information on how to use configurations, run:
+        File name of the configuration to use for this command invocation.
+        For more information on how to use configurations, run:
         `gcloud topic configurations`.  You can also use the {0} environment
         variable to set the equivalent of this flag for a terminal
         session.""".format(config.CLOUDSDK_ACTIVE_CONFIG_NAME))
@@ -608,28 +612,11 @@ class CLILoader(object):
         help='Override the default verbosity for this command.',
         action=actions.StoreProperty(properties.VALUES.core.verbosity))
 
-    # This should be a pure Boolean flag, but the alternate true/false explicit
-    # value form is preserved for backwards compatibility. This flag and
-    # is the only Cloud SDK outlier.
-    # TODO(b/24095744): Add true/false deprecation message.
     top_element.ai.add_argument(
         '--user-output-enabled',
-        metavar=' ',  # Help text will look like the flag does not have a value.
-        nargs='?',
         default=None,  # Tri-valued, None => don't override the property.
-        const='true',
-        choices=('true', 'false'),
-        action=actions.DeprecationAction(
-            '--user-output-enabled',
-            warn=(
-                'The `{flag_name}` flag will no longer support the explicit use'
-                ' of the `true/false` optional value in an upcoming release.'
-            ),
-            removed=False,
-            show_message=lambda _: False,
-            action=actions.StoreBooleanProperty(
-                properties.VALUES.core.user_output_enabled
-            ),
+        action=actions.StoreBooleanProperty(
+            properties.VALUES.core.user_output_enabled
         ),
         help='Print user intended output to the console.',
     )

@@ -23,6 +23,7 @@ from googlecloudsdk.api_lib.eventarc import triggers
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.eventarc import flags
 from googlecloudsdk.command_lib.eventarc import types
+from googlecloudsdk.command_lib.util.args import labels_util
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import log
 
@@ -58,6 +59,7 @@ class UnsupportedDestinationError(exceptions.Error):
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.DefaultUniverseOnly
 class Create(base.CreateCommand):
   """Create an Eventarc trigger."""
 
@@ -72,11 +74,13 @@ class Create(base.CreateCommand):
     flags.AddServiceAccountArg(parser)
     flags.AddCreateDestinationArgs(parser, cls.ReleaseTrack(), required=True)
     flags.AddTransportTopicResourceArg(parser)
+    labels_util.AddCreateLabelsFlags(parser)
+
     base.ASYNC_FLAG.AddToParser(parser)
 
   def Run(self, args):
     """Run the create command."""
-    client = triggers.CreateTriggersClient(self.ReleaseTrack())
+    client = triggers.TriggersClientV1()
     trigger_ref = args.CONCEPTS.trigger.Parse()
     channel_ref = flags.GetChannelArg(args, self.ReleaseTrack())
     transport_topic_ref = args.CONCEPTS.transport_topic.Parse()
@@ -88,7 +92,6 @@ class Create(base.CreateCommand):
         args, self.ReleaseTrack()
     )
 
-    destination_message = None
     # destination Cloud Run
     if args.IsSpecified('destination_run_service') or args.IsKnownAndSpecified(
         'destination_run_job'
@@ -181,6 +184,7 @@ class Create(base.CreateCommand):
         destination_message,
         transport_topic_ref,
         channel_ref,
+        labels_util.ParseCreateArgs(args, client.LabelsValueClass()),
     )
     operation = client.Create(trigger_ref, trigger_message)
     self._event_type = event_filters['type']
@@ -220,17 +224,3 @@ class Create(base.CreateCommand):
       destination_location = args.GetValue(location_arg_name)
 
     return destination_location
-
-
-@base.Deprecate(
-    is_removed=False,
-    warning=('This command is deprecated. '
-             'Please use `gcloud eventarc triggers create` instead.'),
-    error=('This command has been removed. '
-           'Please use `gcloud eventarc triggers create` instead.')
-)
-@base.ReleaseTracks(base.ReleaseTrack.BETA)
-class CreateBeta(Create):
-  """Create an Eventarc trigger."""
-
-  detailed_help = _DETAILED_HELP_BETA

@@ -23,44 +23,53 @@ from googlecloudsdk.api_lib.scc import securitycenter_client
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.scc import flags as scc_flags
 from googlecloudsdk.command_lib.scc import util as scc_util
+from googlecloudsdk.command_lib.scc.notifications import flags as notifications_flags
 from googlecloudsdk.command_lib.scc.notifications import notification_util
 
 
 @base.ReleaseTracks(
     base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA
 )
+@base.DefaultUniverseOnly
 class Describe(base.DescribeCommand):
-  """Describe a Cloud Security Command Center notification config."""
+  """Describe a Security Command Center notification config."""
 
   detailed_help = {
       'DESCRIPTION': """\
-      Describe a Cloud Security Command Center notification config.
+      Describe a Security Command Center notification config.
+
+      Notification configs that are created with Security Command Center API V2
+      and later include a `location` attribute. If the `location` attribute is
+      included in the resource name of a Notification configs, you must specify
+      it when referencing the Notification config. For example, the following
+      Notification configs name has `location=eu`:
+      `organizations/123/locations/eu/notificationConfigs/test-config`.
       """,
       'EXAMPLES': """\
-      Describe notification config 'my-config' from organization 123
+      Describe notification config 'test-config' from organization `123`
 
-          $ {command} notifications describe my-config \
+          $ {command} test-config \
               --organization=123
-          $ {command} notifications describe \
-              organizations/123/notificationConfigs/my-config
 
-      Describe notification config 'my-config' from folder 456
+      Describe notification config 'test-config' from folder `456`
 
-          $ {command} notifications describe my-config \
+          $ {command} test-config \
               --folder=456
-          $ {command} notifications describe \
-              folders/456/notificationConfigs/my-config
 
-      Describe notification config 'my-config' from project 789
+      Describe notification config 'test-config' from project `789`
 
-          $ {command} notifications describe my-config \
+          $ {command} test-config \
               --project=789
-          $ {command} notifications describe \
-              projects/789/notificationConfigs/my-config
+
+      Describe notification config 'test-config' from organization `123` and
+      `location=global`
+
+          $ {command} test-config \
+              --organization=123 --location=global
       """,
       'API REFERENCE': """\
-      This command uses the securitycenter/v1 API. The full documentation for
-      this API can be found at: https://cloud.google.com/security-command-center
+      This command uses the Security Command Center API. For more information,
+      see [Security Command Center API.](https://cloud.google.com/security-command-center/docs/reference/rest)
       """,
   }
 
@@ -100,7 +109,9 @@ class Describe(base.DescribeCommand):
         """,
     )
     scc_flags.API_VERSION_FLAG.AddToParser(parser)
-    scc_flags.LOCATION_FLAG.AddToParser(parser)
+    notifications_flags.DESCRIBE_NOTIFICATION_CONFIG_LOCATION_FLAG.AddToParser(
+        parser
+    )
 
   def Run(self, args):
 

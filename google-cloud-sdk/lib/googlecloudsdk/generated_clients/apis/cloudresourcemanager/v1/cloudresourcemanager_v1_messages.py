@@ -1604,9 +1604,13 @@ class Project(_messages.Message):
     TagsValue: Optional. Input only. Immutable. Tag keys/values directly bound
       to this project. Each item in the map must be expressed as " : ". For
       example: "123/environment" : "production", "123/costCenter" :
-      "marketing"
+      "marketing" Note: Currently this field is in Preview.
 
   Fields:
+    configuredCapabilities: Output only. If this project is a Management
+      Project, list of capabilities configured on the parent folder. Note,
+      presence of any capability implies that this is a Management Project.
+      Example: `folders/123/capabilities/app-management`. OUTPUT ONLY.
     createTime: Creation time. Read-only.
     labels: The labels associated with this Project. Label keys must be
       between 1 and 63 characters long and must conform to the following
@@ -1635,7 +1639,7 @@ class Project(_messages.Message):
     tags: Optional. Input only. Immutable. Tag keys/values directly bound to
       this project. Each item in the map must be expressed as " : ". For
       example: "123/environment" : "production", "123/costCenter" :
-      "marketing"
+      "marketing" Note: Currently this field is in Preview.
   """
 
   class LifecycleStateValueValuesEnum(_messages.Enum):
@@ -1692,6 +1696,7 @@ class Project(_messages.Message):
     r"""Optional. Input only. Immutable. Tag keys/values directly bound to
     this project. Each item in the map must be expressed as " : ". For
     example: "123/environment" : "production", "123/costCenter" : "marketing"
+    Note: Currently this field is in Preview.
 
     Messages:
       AdditionalProperty: An additional property for a TagsValue object.
@@ -1713,14 +1718,15 @@ class Project(_messages.Message):
 
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
-  createTime = _messages.StringField(1)
-  labels = _messages.MessageField('LabelsValue', 2)
-  lifecycleState = _messages.EnumField('LifecycleStateValueValuesEnum', 3)
-  name = _messages.StringField(4)
-  parent = _messages.MessageField('ResourceId', 5)
-  projectId = _messages.StringField(6)
-  projectNumber = _messages.IntegerField(7)
-  tags = _messages.MessageField('TagsValue', 8)
+  configuredCapabilities = _messages.StringField(1, repeated=True)
+  createTime = _messages.StringField(2)
+  labels = _messages.MessageField('LabelsValue', 3)
+  lifecycleState = _messages.EnumField('LifecycleStateValueValuesEnum', 4)
+  name = _messages.StringField(5)
+  parent = _messages.MessageField('ResourceId', 6)
+  projectId = _messages.StringField(7)
+  projectNumber = _messages.IntegerField(8)
+  tags = _messages.MessageField('TagsValue', 9)
 
 
 class ProjectCreationStatus(_messages.Message):
@@ -1780,7 +1786,7 @@ class SearchOrganizationsRequest(_messages.Message):
     filter: An optional query string used to filter the Organizations to
       return in the response. Filter rules are case-insensitive. Organizations
       may be filtered by `owner.directoryCustomerId` or by `domain`, where the
-      domain is a G Suite domain, for example: * Filter
+      domain is a verified G Suite domain, for example: * Filter
       `owner.directorycustomerid:123456789` returns Organization resources
       with `owner.directory_customer_id` equal to `123456789`. * Filter
       `domain:google.com` returns Organization resources corresponding to the

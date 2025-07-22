@@ -15,7 +15,7 @@
 """Helpers for the container node pool related commands."""
 
 from googlecloudsdk.api_lib.edge_cloud.container import util
-from googlecloudsdk.calliope import base
+from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.run import flags
 from googlecloudsdk.command_lib.util.args import labels_util
 from googlecloudsdk.core import resources
@@ -71,8 +71,6 @@ def GetNodePoolCreateRequest(args, release_track):
       parent=node_pool_ref.Parent().RelativeName(),
   )
   PopulateNodePoolCreateMessage(req, messages, args)
-  if release_track == base.ReleaseTrack.ALPHA:
-    PopulateNodePoolCreateAlphaMessage(req, messages, args)
   return req
 
 
@@ -96,8 +94,6 @@ def GetNodePoolUpdateRequest(args, release_track, existing_node_pool):
   PopulateNodePoolUpdateMessage(
       req, messages, args, update_mask_pieces, existing_node_pool
   )
-  if release_track == base.ReleaseTrack.ALPHA:
-    PopulateNodePoolUpdateAlphaMessage(req, messages, args, update_mask_pieces)
   req.updateMask = ','.join(update_mask_pieces)
   return req
 
@@ -125,6 +121,47 @@ def PopulateNodePoolCreateMessage(req, messages, args):
       v.key = key
       v.value = value
       req.nodePool.labels.additionalProperties.append(v)
+  if flags.FlagIsExplicitlySet(args, 'node_labels'):
+    req.nodePool.nodeConfig = messages.NodeConfig()
+    req.nodePool.nodeConfig.labels = messages.NodeConfig.LabelsValue()
+    req.nodePool.nodeConfig.labels.additionalProperties = []
+    for key, value in args.node_labels.items():
+      v = messages.NodeConfig.LabelsValue.AdditionalProperty()
+      v.key = key
+      v.value = value
+      req.nodePool.nodeConfig.labels.additionalProperties.append(v)
+  if flags.FlagIsExplicitlySet(args, 'node_storage_schema'):
+    if not req.nodePool.nodeConfig:
+      req.nodePool.nodeConfig = messages.NodeConfig()
+    req.nodePool.nodeConfig.nodeStorageSchema = args.node_storage_schema
+
+
+def PopulateNodePoolUpdateAlphaMessage(req, messages, update_mask_pieces, args):
+  """Filled the Alpha node pool message from command arguments.
+
+  Args:
+    req: create node pool request message.
+    messages: message module of edgecontainer node pool.
+    update_mask_pieces: update masks.
+    args: command line arguments.
+  """
+  if flags.FlagIsExplicitlySet(
+      args, 'use_google_managed_key'
+  ) and flags.FlagIsExplicitlySet(args, 'local_disk_kms_key'):
+    raise exceptions.InvalidArgumentException(
+        '--use-google-managed-key, --local-disk-kms-key',
+        'cannot be specified at the same time',
+    )
+  if flags.FlagIsExplicitlySet(args, 'use_google_managed_key'):
+    update_mask_pieces.append('localDiskEncryption')
+    req.nodePool.localDiskEncryption = messages.LocalDiskEncryption()
+    req.nodePool.localDiskEncryption.kmsKey = ''
+    return
+  if flags.FlagIsExplicitlySet(args, 'local_disk_kms_key'):
+    update_mask_pieces.append('localDiskEncryption')
+    req.nodePool.localDiskEncryption = messages.LocalDiskEncryption()
+    req.nodePool.localDiskEncryption.kmsKey = args.local_disk_kms_key
+    return
 
 
 def PopulateNodePoolUpdateMessage(
@@ -154,36 +191,6 @@ def PopulateNodePoolUpdateMessage(
   if label_update_result.needs_update:
     update_mask_pieces.append('labels')
     req.nodePool.labels = label_update_result.labels
-
-
-def PopulateNodePoolCreateAlphaMessage(req, messages, args):
-  """Filled the Alpha node pool message from command arguments.
-
-  Args:
-    req: create node pool request message.
-    messages: message module of edgecontainer node pool.
-    args: command line arguments.
-  """
-  if flags.FlagIsExplicitlySet(args, 'node_labels'):
-    req.nodePool.nodeConfig = messages.NodeConfig()
-    req.nodePool.nodeConfig.labels = messages.NodeConfig.LabelsValue()
-    req.nodePool.nodeConfig.labels.additionalProperties = []
-    for key, value in args.node_labels.items():
-      v = messages.NodeConfig.LabelsValue.AdditionalProperty()
-      v.key = key
-      v.value = value
-      req.nodePool.nodeConfig.labels.additionalProperties.append(v)
-
-
-def PopulateNodePoolUpdateAlphaMessage(req, messages, args, update_mask_pieces):
-  """Filled the Alpha node pool message from command arguments.
-
-  Args:
-    req: update node pool request message.
-    messages: message module of edgecontainer node pool.
-    args: command line arguments.
-    update_mask_pieces: update mask pieces.
-  """
   if flags.FlagIsExplicitlySet(args, 'node_labels'):
     update_mask_pieces.append('nodeConfig.labels')
     req.nodePool.nodeConfig = messages.NodeConfig()
@@ -194,3 +201,18 @@ def PopulateNodePoolUpdateAlphaMessage(req, messages, args, update_mask_pieces):
       v.key = key
       v.value = value
       req.nodePool.nodeConfig.labels.additionalProperties.append(v)
+  if flags.FlagIsExplicitlySet(
+      args, 'use_google_managed_key'
+  ) and flags.FlagIsExplicitlySet(args, 'local_disk_kms_key'):
+    raise exceptions.InvalidArgumentException(
+        '--use-google-managed-key, --local-disk-kms-key',
+        'cannot be specified at the same time',
+    )
+  if flags.FlagIsExplicitlySet(args, 'use_google_managed_key'):
+    update_mask_pieces.append('localDiskEncryption')
+    req.nodePool.localDiskEncryption = messages.LocalDiskEncryption()
+    req.nodePool.localDiskEncryption.kmsKey = ''
+  if flags.FlagIsExplicitlySet(args, 'local_disk_kms_key'):
+    update_mask_pieces.append('localDiskEncryption')
+    req.nodePool.localDiskEncryption = messages.LocalDiskEncryption()
+    req.nodePool.localDiskEncryption.kmsKey = args.local_disk_kms_key

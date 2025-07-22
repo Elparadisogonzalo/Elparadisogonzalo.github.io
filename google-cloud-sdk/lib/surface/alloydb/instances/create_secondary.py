@@ -28,9 +28,11 @@ from googlecloudsdk.core import properties
 from googlecloudsdk.core import resources
 
 
-@base.ReleaseTracks(
-    base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA, base.ReleaseTrack.GA
-)
+# TODO(b/312466999): Change @base.DefaultUniverseOnly to
+# @base.UniverseCompatible once b/312466999 is fixed.
+# See go/gcloud-cli-running-tpc-tests.
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.GA)
 class CreateSecondary(base.CreateCommand):
   """Creates a new AlloyDB SECONDARY instance within a given cluster."""
 
@@ -55,6 +57,23 @@ class CreateSecondary(base.CreateCommand):
     flags.AddAvailabilityType(parser)
     flags.AddInstance(parser)
     flags.AddRegion(parser)
+    flags.AddDatabaseFlags(parser)
+    flags.AddSSLMode(parser, default_from_primary=True)
+    flags.AddRequireConnectors(parser)
+    flags.AddAssignInboundPublicIp(parser)
+    flags.AddAuthorizedExternalNetworks(parser)
+    flags.AddOutboundPublicIp(parser, show_negated_in_help=True)
+    flags.AddAllowedPSCProjects(parser)
+    flags.AddPSCNetworkAttachmentUri(parser)
+    flags.AddPSCAutoConnections(parser)
+    flags.AddAllocatedIPRangeOverride(parser)
+
+  def ConstructSecondaryCreateRequestFromArgs(
+      self, client, alloydb_messages, cluster_ref, args
+  ):
+    return instance_helper.ConstructSecondaryCreateRequestFromArgsGA(
+        client, alloydb_messages, cluster_ref, args
+    )
 
   def Run(self, args):
     """Constructs and sends request.
@@ -75,25 +94,10 @@ class CreateSecondary(base.CreateCommand):
         locationsId=args.region,
         clustersId=args.cluster,
     )
-    instance_resource = alloydb_messages.Instance()
-    instance_ref = client.resource_parser.Create(
-        'alloydb.projects.locations.clusters.instances',
-        projectsId=properties.VALUES.core.project.GetOrFail,
-        locationsId=args.region,
-        clustersId=args.cluster,
-        instancesId=args.instance,
+    req = self.ConstructSecondaryCreateRequestFromArgs(
+        client, alloydb_messages, cluster_ref, args
     )
-    instance_resource.name = instance_ref.RelativeName()
-    instance_resource.instanceType = (
-        alloydb_messages.Instance.InstanceTypeValueValuesEnum.SECONDARY
-    )
-    instance_resource.availabilityType = instance_helper.ParseAvailabilityType(
-        alloydb_messages, args.availability_type)
-    req = alloydb_messages.AlloydbProjectsLocationsClustersInstancesCreatesecondaryRequest(
-        instance=instance_resource,
-        instanceId=args.instance,
-        parent=cluster_ref.RelativeName(),
-    )
+
     op = alloydb_client.projects_locations_clusters_instances.Createsecondary(
         req
     )
@@ -106,3 +110,19 @@ class CreateSecondary(base.CreateCommand):
           op_ref, 'Creating secondary instance', self.ReleaseTrack()
       )
     return op
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+class CreateSecondaryAlphaBeta(CreateSecondary):
+  """Creates a new AlloyDB SECONDARY instance within a given cluster."""
+
+  @staticmethod
+  def Args(parser):
+    super(CreateSecondaryAlphaBeta, CreateSecondaryAlphaBeta).Args(parser)
+
+  def ConstructSecondaryCreateRequestFromArgs(
+      self, client, alloydb_messages, cluster_ref, args
+  ):
+    return instance_helper.ConstructSecondaryCreateRequestFromArgsAlphaBeta(
+        client, alloydb_messages, cluster_ref, args
+    )

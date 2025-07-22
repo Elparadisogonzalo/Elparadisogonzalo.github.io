@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.functions.v1 import util as functions_api_util
+from googlecloudsdk.api_lib.infra_manager import configmanager_util
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
 
@@ -27,6 +28,16 @@ def AddLabelsFlag(parser, help_text):
   """Add --labels flag."""
   parser.add_argument(
       '--labels',
+      metavar='KEY=VALUE',
+      type=arg_parsers.ArgDict(),
+      help=help_text,
+  )
+
+
+def AddAnnotationsFlag(parser, help_text):
+  """Add --annotations flag."""
+  parser.add_argument(
+      '--annotations',
       metavar='KEY=VALUE',
       type=arg_parsers.ArgDict(),
       help=help_text,
@@ -116,7 +127,7 @@ Create a deployment from the "https://github.com/examples/repository.git" repo, 
 """
 
   local_source_help = """\
-Local storage path where config files are stored.
+Local storage path where config files are stored. When using this option, Terraform config file references outside this storage path is not supported.
       e.g. `./path/to/blueprint`
 
 Examples:
@@ -244,7 +255,7 @@ def AddWorkerPoolFlag(parser, hidden=False):
       '--worker-pool',
       hidden=hidden,
       help=(
-          'User-specified Worker Pool resource in which the Cloud Build job'
+          'User-specified Worker Pool resource in which the Cloud Build job '
           'will execute. Format: '
           'projects/{project}/locations/{location}/workerPools/{workerPoolId}'
       ),
@@ -304,3 +315,69 @@ def AddPreviewModeFlag(parser, hidden=False):
       hidden=hidden,
       help='Preview mode to set it to either default or delete.',
   )
+
+
+def AddFileFlag(parser, help_text, hidden=False):
+  """Add --file flag."""
+  parser.add_argument(
+      '--file',
+      hidden=hidden,
+      help=help_text,
+  )
+
+
+def AddTFVersionConstraintFlag(parser, hidden=False):
+  """Add --tf-version-constraint flag."""
+  parser.add_argument(
+      '--tf-version-constraint',
+      hidden=hidden,
+      help=(
+          'User-specified Terraform version constraint, for example "=1.3.10".'
+      ),
+  )
+
+
+def AddQuotaValidationFlag(parser, hidden=False):
+  """Add --quota-validation flag."""
+
+  parser.add_argument(
+      '--quota-validation',
+      hidden=hidden,
+      help=(
+          'Input to control quota checks for resources in terraform'
+          ' configuration files. There are limited resources on which quota'
+          ' validation applies. Supported values are'
+          ' QUOTA_VALIDATION_UNSPECIFIED, ENABLED, ENFORCED'
+      ),
+      type=QuotaValidationEnum,
+  )
+
+
+def QuotaValidationEnum(quota_validation):
+  """Checks if a quota validation provided by user is valid and returns corresponding enum type.
+
+  Args:
+    quota_validation: value for quota validation.
+
+  Returns:
+    quota validation enum
+  Raises:
+    ArgumentTypeError: If the value provided by user is not valid.
+  """
+  messages = configmanager_util.GetMessagesModule()
+
+  quota_validation_enum_dict = {
+      'QUOTA_VALIDATION_UNSPECIFIED': (
+          messages.Deployment.QuotaValidationValueValuesEnum.QUOTA_VALIDATION_UNSPECIFIED
+      ),
+      'ENABLED': messages.Deployment.QuotaValidationValueValuesEnum.ENABLED,
+      'ENFORCED': messages.Deployment.QuotaValidationValueValuesEnum.ENFORCED,
+  }
+  if quota_validation is None:
+    return
+  if quota_validation not in quota_validation_enum_dict:
+    raise arg_parsers.ArgumentTypeError(
+        "quota validation does not support: '{0}', supported values are: {1}"
+        .format(quota_validation, list(quota_validation_enum_dict))
+    )
+  return quota_validation_enum_dict[quota_validation]

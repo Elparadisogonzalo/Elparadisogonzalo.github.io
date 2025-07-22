@@ -263,7 +263,7 @@ class Instance(_messages.Message):
     MetadataValue: Custom metadata to apply to this instance. For example, to
       specify a Cloud Storage bucket for automatic backup, you can use the
       `gcs-data-bucket` metadata tag. Format: `"--metadata=gcs-data-
-      bucket=``BUCKET''"`.
+      bucket=BUCKET"`.
 
   Fields:
     acceleratorConfig: The hardware accelerator used on this instance. If you
@@ -305,12 +305,12 @@ class Instance(_messages.Message):
     labels: Labels to apply to this instance. These can be later modified by
       the setLabels method.
     machineType: Required. The [Compute Engine machine
-      type](https://cloud.google.com/compute/docs/machine-types) of this
+      type](https://cloud.google.com/compute/docs/machine-resource) of this
       instance.
     metadata: Custom metadata to apply to this instance. For example, to
       specify a Cloud Storage bucket for automatic backup, you can use the
       `gcs-data-bucket` metadata tag. Format: `"--metadata=gcs-data-
-      bucket=``BUCKET''"`.
+      bucket=BUCKET"`.
     name: Output only. The name of this notebook instance. Format:
       `projects/{project_id}/locations/{location}/instances/{instance_id}`
     network: The name of the VPC that this instance is in. Format:
@@ -462,7 +462,7 @@ class Instance(_messages.Message):
   class MetadataValue(_messages.Message):
     r"""Custom metadata to apply to this instance. For example, to specify a
     Cloud Storage bucket for automatic backup, you can use the `gcs-data-
-    bucket` metadata tag. Format: `"--metadata=gcs-data-bucket=``BUCKET''"`.
+    bucket` metadata tag. Format: `"--metadata=gcs-data-bucket=BUCKET"`.
 
     Messages:
       AdditionalProperty: An additional property for a MetadataValue object.
@@ -1006,6 +1006,8 @@ class NotebooksProjectsLocationsListRequest(_messages.Message):
   r"""A NotebooksProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -1016,10 +1018,11 @@ class NotebooksProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class NotebooksProjectsLocationsOperationsCancelRequest(_messages.Message):
@@ -1483,7 +1486,7 @@ class SetInstanceMachineTypeRequest(_messages.Message):
 
   Fields:
     machineType: Required. The [Compute Engine machine
-      type](https://cloud.google.com/compute/docs/machine-types).
+      type](https://cloud.google.com/compute/docs/machine-resource).
   """
 
   machineType = _messages.StringField(1)
@@ -1674,3 +1677,5 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    NotebooksProjectsLocationsInstancesGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

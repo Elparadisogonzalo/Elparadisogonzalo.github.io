@@ -24,10 +24,10 @@ import os
 import textwrap
 
 from googlecloudsdk.calliope import base
-from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.iam.byoid_utilities import cred_config
 from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
+from googlecloudsdk.core.universe_descriptor import universe_descriptor
 from googlecloudsdk.core.util import files
 
 
@@ -35,6 +35,7 @@ RESOURCE_TYPE = 'login configuration file'
 GOOGLE_DEFAULT_CLOUD_WEB_DOMAIN = 'cloud.google'
 
 
+@base.UniverseCompatible
 class CreateLoginConfig(base.CreateCommand):
   """Create a login configuration file to enable sign-in via a web-based authorization flow using Workforce Identity Federation.
 
@@ -101,22 +102,19 @@ class CreateLoginConfig(base.CreateCommand):
     if getattr(args, 'universe_domain', None):
       universe_domain = args.universe_domain
 
-    # TODO(b/284507677): Retrieve automatically when lookup is available.
-    universe_cloud_web_domain = GOOGLE_DEFAULT_CLOUD_WEB_DOMAIN
-    if getattr(args, 'universe_cloud_web_domain', None):
+    # Don't use universe descriptor for GDU as there is a potential edge case
+    # that will result in the cloud web domain not being retrievable.
+    # TODO(b/368357376): Remove once the edge case is fixed.
+    if universe_domain == universe_domain_property.default:
+      universe_cloud_web_domain = GOOGLE_DEFAULT_CLOUD_WEB_DOMAIN
+    # Hidden attribute. Should not be used, but check just in case.
+    elif getattr(args, 'universe_cloud_web_domain', None):
       universe_cloud_web_domain = args.universe_cloud_web_domain
-
-    if (
-        universe_domain != universe_domain_property.default
-        and universe_cloud_web_domain == GOOGLE_DEFAULT_CLOUD_WEB_DOMAIN
-    ) or (
-        universe_domain == universe_domain_property.default
-        and universe_cloud_web_domain != GOOGLE_DEFAULT_CLOUD_WEB_DOMAIN
-    ):
-      raise exceptions.RequiredArgumentException(
-          '--universe-cloud-web-domain',
-          'Both --universe-domain and --universe-cloud-web-domain must be set'
-          ' together.',
+    else:
+      universe_cloud_web_domain = (
+          universe_descriptor.UniverseDescriptor()
+          .Get(universe_domain)
+          .cloud_web_domain
       )
 
     enable_mtls = getattr(args, 'enable_mtls', False)
@@ -125,6 +123,7 @@ class CreateLoginConfig(base.CreateCommand):
     )
     output = {
         'universe_domain': universe_domain,
+        'universe_cloud_web_domain': universe_cloud_web_domain,
         'type': 'external_account_authorized_user_login_config',
         'audience': '//iam.googleapis.com/' + args.audience,
         'auth_url': 'https://auth.{cloud_web_domain}/authorize'.format(

@@ -15,10 +15,6 @@
 
 """services disable command."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from googlecloudsdk.api_lib.services import services_util
 from googlecloudsdk.api_lib.services import serviceusage
 from googlecloudsdk.calliope import base
@@ -34,6 +30,7 @@ OP_WAIT_CMD = OP_BASE_CMD + 'wait {0}'
 
 
 # TODO(b/321801975) make command public after preview.
+@base.UniverseCompatible
 @base.Hidden
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class DisableAlpha(base.SilentCommand):
@@ -88,14 +85,17 @@ class DisableAlpha(base.SilentCommand):
     common_flags.consumer_service_flag(suffix='to disable').AddToParser(parser)
     common_flags.add_resource_args(parser)
     base.ASYNC_FLAG.AddToParser(parser)
+    common_flags.validate_only_args(parser, suffix='disable')
     parser.add_argument(
         '--force',
         action='store_true',
         help=(
             'If specified, the disable call will proceed even if there are'
-            ' enabled services which depend on the service to be disabled.'
-            ' Forcing the call means that the services which depend on the'
-            ' service to be disabled will also be disabled.'
+            ' enabled services which depend on the service to be disabled, or'
+            ' the service to be disabled was used in the last 30 days, or the'
+            ' service to be disabled was enabled in the last 3 days. Forcing'
+            ' the call means that the services which depend on the service to'
+            ' be disabled will also be disabled.'
         ),
     )
 
@@ -109,18 +109,15 @@ class DisableAlpha(base.SilentCommand):
     Returns:
       Nothing.
     """
-    if args.IsSpecified('project'):
-      project = args.project
-    else:
-      project = properties.VALUES.core.project.Get(required=True)
-    if args.IsSpecified('folder'):
-      folder = args.folder
-    else:
-      folder = None
-    if args.IsSpecified('organization'):
-      organization = args.organization
-    else:
-      organization = None
+    project = (
+        args.project
+        if args.IsSpecified('project')
+        else properties.VALUES.core.project.Get(required=True)
+    )
+    folder = args.folder if args.IsSpecified('folder') else None
+    organization = (
+        args.organization if args.IsSpecified('organization') else None
+    )
     for service_name in args.service:
       service_name = arg_parsers.GetServiceNameFromArg(service_name)
 
@@ -139,18 +136,22 @@ class DisableAlpha(base.SilentCommand):
           force=args.force,
           folder=folder,
           organization=organization,
+          validate_only=args.validate_only,
       )
-      if op.done:
-        continue
+
       if args.async_:
         cmd = OP_WAIT_CMD.format(op.name)
         log.status.Print(
-            'Asynchronous operation is in progress... '
-            'Use the following command to wait for its '
-            'completion:\n {0}'.format(cmd)
+            'Asynchronous operation is in progress... Use the following'
+            f' command to wait for its completion:\n {cmd}'
         )
         continue
-    log.status.Print('Operation finished successfully')
+      op = services_util.WaitOperation(op.name, serviceusage.GetOperationV2Beta)
+
+      if args.validate_only:
+        services_util.PrintOperation(op)
+      else:
+        services_util.PrintOperationWithResponse(op)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
@@ -195,9 +196,10 @@ class Disable(base.SilentCommand):
         action='store_true',
         help=(
             'If specified, the disable call will proceed even if there are'
-            ' enabled services which depend on the service to be disabled.'
-            ' Forcing the call means that the services which depend on the'
-            ' service to be disabled will also be disabled.'
+            ' enabled services which depend on the service to be disabled or'
+            ' disable the service used in last 30 days or was enabled in'
+            ' recent 3 days. Forcing the call means that the services which'
+            ' depend on the service to be disabled will also be disabled.'
         ),
     )
 
@@ -232,7 +234,7 @@ class Disable(base.SilentCommand):
         log.status.Print(
             'Asynchronous operation is in progress... '
             'Use the following command to wait for its '
-            'completion:\n {0}'.format(cmd)
+            f'completion:\n {cmd}'
         )
         continue
       op = services_util.WaitOperation(op.name, serviceusage.GetOperation)

@@ -43,7 +43,10 @@ class ConfigV1alpha2(base_api.BaseApiClient):
     self.projects_locations_deployments_revisions = self.ProjectsLocationsDeploymentsRevisionsService(self)
     self.projects_locations_deployments = self.ProjectsLocationsDeploymentsService(self)
     self.projects_locations_operations = self.ProjectsLocationsOperationsService(self)
+    self.projects_locations_previews_resourceChanges = self.ProjectsLocationsPreviewsResourceChangesService(self)
+    self.projects_locations_previews_resourceDrifts = self.ProjectsLocationsPreviewsResourceDriftsService(self)
     self.projects_locations_previews = self.ProjectsLocationsPreviewsService(self)
+    self.projects_locations_terraformVersions = self.ProjectsLocationsTerraformVersionsService(self)
     self.projects_locations = self.ProjectsLocationsService(self)
     self.projects = self.ProjectsService(self)
 
@@ -601,7 +604,7 @@ class ConfigV1alpha2(base_api.BaseApiClient):
           }
 
     def Cancel(self, request, global_params=None):
-      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
+      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
 
       Args:
         request: (ConfigProjectsLocationsOperationsCancelRequest) input message
@@ -705,6 +708,134 @@ class ConfigV1alpha2(base_api.BaseApiClient):
         request_field='',
         request_type_name='ConfigProjectsLocationsOperationsListRequest',
         response_type_name='ListOperationsResponse',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsPreviewsResourceChangesService(base_api.BaseApiService):
+    """Service class for the projects_locations_previews_resourceChanges resource."""
+
+    _NAME = 'projects_locations_previews_resourceChanges'
+
+    def __init__(self, client):
+      super(ConfigV1alpha2.ProjectsLocationsPreviewsResourceChangesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Get a ResourceChange for a given preview.
+
+      Args:
+        request: (ConfigProjectsLocationsPreviewsResourceChangesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ResourceChange) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha2/projects/{projectsId}/locations/{locationsId}/previews/{previewsId}/resourceChanges/{resourceChangesId}',
+        http_method='GET',
+        method_id='config.projects.locations.previews.resourceChanges.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha2/{+name}',
+        request_field='',
+        request_type_name='ConfigProjectsLocationsPreviewsResourceChangesGetRequest',
+        response_type_name='ResourceChange',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists ResourceChanges for a given preview.
+
+      Args:
+        request: (ConfigProjectsLocationsPreviewsResourceChangesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListResourceChangesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha2/projects/{projectsId}/locations/{locationsId}/previews/{previewsId}/resourceChanges',
+        http_method='GET',
+        method_id='config.projects.locations.previews.resourceChanges.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha2/{+parent}/resourceChanges',
+        request_field='',
+        request_type_name='ConfigProjectsLocationsPreviewsResourceChangesListRequest',
+        response_type_name='ListResourceChangesResponse',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsPreviewsResourceDriftsService(base_api.BaseApiService):
+    """Service class for the projects_locations_previews_resourceDrifts resource."""
+
+    _NAME = 'projects_locations_previews_resourceDrifts'
+
+    def __init__(self, client):
+      super(ConfigV1alpha2.ProjectsLocationsPreviewsResourceDriftsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Get a ResourceDrift for a given preview.
+
+      Args:
+        request: (ConfigProjectsLocationsPreviewsResourceDriftsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ResourceDrift) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha2/projects/{projectsId}/locations/{locationsId}/previews/{previewsId}/resourceDrifts/{resourceDriftsId}',
+        http_method='GET',
+        method_id='config.projects.locations.previews.resourceDrifts.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha2/{+name}',
+        request_field='',
+        request_type_name='ConfigProjectsLocationsPreviewsResourceDriftsGetRequest',
+        response_type_name='ResourceDrift',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""List ResourceDrifts for a given preview.
+
+      Args:
+        request: (ConfigProjectsLocationsPreviewsResourceDriftsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListResourceDriftsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha2/projects/{projectsId}/locations/{locationsId}/previews/{previewsId}/resourceDrifts',
+        http_method='GET',
+        method_id='config.projects.locations.previews.resourceDrifts.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha2/{+parent}/resourceDrifts',
+        request_field='',
+        request_type_name='ConfigProjectsLocationsPreviewsResourceDriftsListRequest',
+        response_type_name='ListResourceDriftsResponse',
         supports_download=False,
     )
 
@@ -853,6 +984,70 @@ class ConfigV1alpha2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsTerraformVersionsService(base_api.BaseApiService):
+    """Service class for the projects_locations_terraformVersions resource."""
+
+    _NAME = 'projects_locations_terraformVersions'
+
+    def __init__(self, client):
+      super(ConfigV1alpha2.ProjectsLocationsTerraformVersionsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets details about a TerraformVersion.
+
+      Args:
+        request: (ConfigProjectsLocationsTerraformVersionsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (TerraformVersion) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha2/projects/{projectsId}/locations/{locationsId}/terraformVersions/{terraformVersionsId}',
+        http_method='GET',
+        method_id='config.projects.locations.terraformVersions.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1alpha2/{+name}',
+        request_field='',
+        request_type_name='ConfigProjectsLocationsTerraformVersionsGetRequest',
+        response_type_name='TerraformVersion',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists TerraformVersions in a given project and location.
+
+      Args:
+        request: (ConfigProjectsLocationsTerraformVersionsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListTerraformVersionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1alpha2/projects/{projectsId}/locations/{locationsId}/terraformVersions',
+        http_method='GET',
+        method_id='config.projects.locations.terraformVersions.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v1alpha2/{+parent}/terraformVersions',
+        request_field='',
+        request_type_name='ConfigProjectsLocationsTerraformVersionsListRequest',
+        response_type_name='ListTerraformVersionsResponse',
+        supports_download=False,
+    )
+
   class ProjectsLocationsService(base_api.BaseApiService):
     """Service class for the projects_locations resource."""
 
@@ -909,7 +1104,7 @@ class ConfigV1alpha2(base_api.BaseApiClient):
         method_id='config.projects.locations.list',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=['filter', 'pageSize', 'pageToken'],
+        query_params=['extraLocationTypes', 'filter', 'pageSize', 'pageToken'],
         relative_path='v1alpha2/{+name}/locations',
         request_field='',
         request_type_name='ConfigProjectsLocationsListRequest',

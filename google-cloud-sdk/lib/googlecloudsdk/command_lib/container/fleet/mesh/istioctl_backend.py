@@ -76,7 +76,13 @@ class IstioctlWrapper(binary_operations.StreamingBinaryBackedOperation):
     return exec_args
 
   def _ParseProxyConfigArgs(
-      self, proxy_config_type, pod_name_namespace, context, **kwargs
+      self,
+      proxy_config_type,
+      pod_name_namespace,
+      context,
+      output_format,
+      fqdn,
+      **kwargs
   ):
     del kwargs
     exec_args = [
@@ -86,6 +92,10 @@ class IstioctlWrapper(binary_operations.StreamingBinaryBackedOperation):
         '--context',
         context,
     ]
+    if output_format:
+      exec_args.extend(['-o', output_format])
+    if fqdn:
+      exec_args.extend(['--fqdn', fqdn])
     return exec_args
 
   def _ParseProxyStatusArgs(
@@ -95,12 +105,13 @@ class IstioctlWrapper(binary_operations.StreamingBinaryBackedOperation):
     exec_args = [
         'experimental',
         'proxy-status',
+        '--xds-via-agents'
     ]
     if pod_name:
       exec_args.extend([pod_name])
     exec_args.extend(['--context', context])
     if mesh_name:
-      exec_args.extend(['--meshName', mesh_name])
+      exec_args.extend(['--meshName', 'mesh:' + mesh_name])
     if project_number:
       exec_args.extend(['--projectNumber', project_number])
     return exec_args

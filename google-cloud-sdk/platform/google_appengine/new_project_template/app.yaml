@@ -1,0 +1,11 @@
+application: new-project-template
+version: 1
+runtime: python312
+threadsafe: yes
+entrypoint: exec gunicorn -b :${PORT} main:app
+
+handlers:
+- url: /favicon\.ico
+  static_files: favicon.ico
+  upload: favicon\.ico
+

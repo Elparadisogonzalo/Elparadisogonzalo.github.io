@@ -70,7 +70,12 @@ def _RunBeta(args):
         accelerator_dict=args.accelerator,
         min_replica_count=args.min_replica_count,
         max_replica_count=args.max_replica_count,
-        machine_type=args.machine_type)
+        machine_type=args.machine_type,
+        tpu_topology=args.tpu_topology,
+        multihost_gpu_node_count=args.multihost_gpu_node_count,
+        reservation_affinity=args.reservation_affinity,
+        spot=args.spot,
+    )
     response_msg = operations_util.WaitForOpMaybe(
         operations.OperationsClient(), op,
         deployment_resource_pools_util.ParseOperation(op.name))
@@ -85,6 +90,7 @@ def _RunBeta(args):
 
 @base.Hidden
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+@base.UniverseCompatible
 class CreateV1Beta1(base.CreateCommand):
   """Create a new Vertex AI deployment resource pool.
 

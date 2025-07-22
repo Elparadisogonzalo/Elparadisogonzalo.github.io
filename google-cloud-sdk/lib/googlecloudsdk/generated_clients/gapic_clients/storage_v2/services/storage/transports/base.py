@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ class StorageTransport(abc.ABC):
 
         Args:
             host (Optional[str]):
-                 The hostname to connect to.
+                 The hostname to connect to (default: 'storage.googleapis.com').
             credentials (Optional[google.auth.credentials.Credentials]): The
                 authorization credentials to attach to requests. These
                 credentials identify the application to the service; if none
@@ -117,6 +117,10 @@ class StorageTransport(abc.ABC):
             host += ':443'
         self._host = host
 
+    @property
+    def host(self):
+        return self._host
+
     def _prep_wrapped_messages(self, client_info):
         # Precompute the wrapped methods.
         self._wrapped_methods = {
@@ -165,26 +169,6 @@ class StorageTransport(abc.ABC):
                 default_timeout=None,
                 client_info=client_info,
             ),
-            self.delete_notification_config: gapic_v1.method.wrap_method(
-                self.delete_notification_config,
-                default_timeout=None,
-                client_info=client_info,
-            ),
-            self.get_notification_config: gapic_v1.method.wrap_method(
-                self.get_notification_config,
-                default_timeout=None,
-                client_info=client_info,
-            ),
-            self.create_notification_config: gapic_v1.method.wrap_method(
-                self.create_notification_config,
-                default_timeout=None,
-                client_info=client_info,
-            ),
-            self.list_notification_configs: gapic_v1.method.wrap_method(
-                self.list_notification_configs,
-                default_timeout=None,
-                client_info=client_info,
-            ),
             self.compose_object: gapic_v1.method.wrap_method(
                 self.compose_object,
                 default_timeout=None,
@@ -212,6 +196,11 @@ class StorageTransport(abc.ABC):
             ),
             self.read_object: gapic_v1.method.wrap_method(
                 self.read_object,
+                default_timeout=None,
+                client_info=client_info,
+            ),
+            self.bidi_read_object: gapic_v1.method.wrap_method(
+                self.bidi_read_object,
                 default_timeout=None,
                 client_info=client_info,
             ),
@@ -250,33 +239,8 @@ class StorageTransport(abc.ABC):
                 default_timeout=None,
                 client_info=client_info,
             ),
-            self.get_service_account: gapic_v1.method.wrap_method(
-                self.get_service_account,
-                default_timeout=None,
-                client_info=client_info,
-            ),
-            self.create_hmac_key: gapic_v1.method.wrap_method(
-                self.create_hmac_key,
-                default_timeout=None,
-                client_info=client_info,
-            ),
-            self.delete_hmac_key: gapic_v1.method.wrap_method(
-                self.delete_hmac_key,
-                default_timeout=None,
-                client_info=client_info,
-            ),
-            self.get_hmac_key: gapic_v1.method.wrap_method(
-                self.get_hmac_key,
-                default_timeout=None,
-                client_info=client_info,
-            ),
-            self.list_hmac_keys: gapic_v1.method.wrap_method(
-                self.list_hmac_keys,
-                default_timeout=None,
-                client_info=client_info,
-            ),
-            self.update_hmac_key: gapic_v1.method.wrap_method(
-                self.update_hmac_key,
+            self.move_object: gapic_v1.method.wrap_method(
+                self.move_object,
                 default_timeout=None,
                 client_info=client_info,
             ),
@@ -373,42 +337,6 @@ class StorageTransport(abc.ABC):
         raise NotImplementedError()
 
     @property
-    def delete_notification_config(self) -> Callable[
-            [storage.DeleteNotificationConfigRequest],
-            Union[
-                empty_pb2.Empty,
-                Awaitable[empty_pb2.Empty]
-            ]]:
-        raise NotImplementedError()
-
-    @property
-    def get_notification_config(self) -> Callable[
-            [storage.GetNotificationConfigRequest],
-            Union[
-                storage.NotificationConfig,
-                Awaitable[storage.NotificationConfig]
-            ]]:
-        raise NotImplementedError()
-
-    @property
-    def create_notification_config(self) -> Callable[
-            [storage.CreateNotificationConfigRequest],
-            Union[
-                storage.NotificationConfig,
-                Awaitable[storage.NotificationConfig]
-            ]]:
-        raise NotImplementedError()
-
-    @property
-    def list_notification_configs(self) -> Callable[
-            [storage.ListNotificationConfigsRequest],
-            Union[
-                storage.ListNotificationConfigsResponse,
-                Awaitable[storage.ListNotificationConfigsResponse]
-            ]]:
-        raise NotImplementedError()
-
-    @property
     def compose_object(self) -> Callable[
             [storage.ComposeObjectRequest],
             Union[
@@ -459,6 +387,15 @@ class StorageTransport(abc.ABC):
             Union[
                 storage.ReadObjectResponse,
                 Awaitable[storage.ReadObjectResponse]
+            ]]:
+        raise NotImplementedError()
+
+    @property
+    def bidi_read_object(self) -> Callable[
+            [storage.BidiReadObjectRequest],
+            Union[
+                storage.BidiReadObjectResponse,
+                Awaitable[storage.BidiReadObjectResponse]
             ]]:
         raise NotImplementedError()
 
@@ -526,56 +463,11 @@ class StorageTransport(abc.ABC):
         raise NotImplementedError()
 
     @property
-    def get_service_account(self) -> Callable[
-            [storage.GetServiceAccountRequest],
+    def move_object(self) -> Callable[
+            [storage.MoveObjectRequest],
             Union[
-                storage.ServiceAccount,
-                Awaitable[storage.ServiceAccount]
-            ]]:
-        raise NotImplementedError()
-
-    @property
-    def create_hmac_key(self) -> Callable[
-            [storage.CreateHmacKeyRequest],
-            Union[
-                storage.CreateHmacKeyResponse,
-                Awaitable[storage.CreateHmacKeyResponse]
-            ]]:
-        raise NotImplementedError()
-
-    @property
-    def delete_hmac_key(self) -> Callable[
-            [storage.DeleteHmacKeyRequest],
-            Union[
-                empty_pb2.Empty,
-                Awaitable[empty_pb2.Empty]
-            ]]:
-        raise NotImplementedError()
-
-    @property
-    def get_hmac_key(self) -> Callable[
-            [storage.GetHmacKeyRequest],
-            Union[
-                storage.HmacKeyMetadata,
-                Awaitable[storage.HmacKeyMetadata]
-            ]]:
-        raise NotImplementedError()
-
-    @property
-    def list_hmac_keys(self) -> Callable[
-            [storage.ListHmacKeysRequest],
-            Union[
-                storage.ListHmacKeysResponse,
-                Awaitable[storage.ListHmacKeysResponse]
-            ]]:
-        raise NotImplementedError()
-
-    @property
-    def update_hmac_key(self) -> Callable[
-            [storage.UpdateHmacKeyRequest],
-            Union[
-                storage.HmacKeyMetadata,
-                Awaitable[storage.HmacKeyMetadata]
+                storage.Object,
+                Awaitable[storage.Object]
             ]]:
         raise NotImplementedError()
 

@@ -1,0 +1,76 @@
+2025-07-22 02:57:10,881 DEBUG    root            Loaded Command Group: ['gcloud', 'app']
+2025-07-22 02:57:11,029 DEBUG    root            Loaded Command Group: ['gcloud', 'app', 'create']
+2025-07-22 02:57:11,031 DEBUG    root            Running [gcloud.app.create] with arguments: [--region: "us-central"]
+2025-07-22 02:57:11,109 INFO     ___FILE_ONLY___ You are creating an app for project [elparadisogonzalo-dev].
+
+2025-07-22 02:57:11,109 WARNING  root            Creating an App Engine application for a project is irreversible and the region
+cannot be changed. More information about regions is at
+<https://cloud.google.com/appengine/docs/locations>.
+
+2025-07-22 02:57:11,109 WARNING  root            Starting from March, 2025, App Engine sets the automatic scaling maximum instances
+default for standard environment deployments to 20. This change doesn't impact
+existing apps. To override the default, specify the new max_instances value in your
+app.yaml file, and deploy a new version or redeploy over an existing version.
+For more details on max_instances, see
+<https://cloud.google.com/appengine/docs/standard/reference/app-yaml.md#scaling_elements>.
+
+2025-07-22 02:57:11,110 INFO     ___FILE_ONLY___ NOTE: Cloud Run offers the most modern fully managed application hosting experience
+with lower minimum billable times and support for GPUs on demand for your AI/ML workloads.
+Deploy code written in any programming language supported by App Engine on Cloud Run.
+Learn more at https://cloud.google.com/run/docs/quickstarts#build-and-deploy-a-web-service
+
+
+2025-07-22 02:57:12,654 DEBUG    root            Received operation: [apps/elparadisogonzalo-dev/operations/operation-1753149432594-63a7ae92b00f4-2eb06f7e-d17c1425]
+2025-07-22 02:57:12,654 DEBUG    root            Operation [apps/elparadisogonzalo-dev/operations/operation-1753149432594-63a7ae92b00f4-2eb06f7e-d17c1425] not complete. Waiting to retry.
+2025-07-22 02:57:12,662 INFO     ___FILE_ONLY___ Creating App Engine application in project [elparadisogonzalo-dev] and region [us-central]....
+2025-07-22 02:57:14,479 DEBUG    root            (gcloud.app.create) PERMISSION_DENIED: Read access to project 'elparadisogonzalo-dev' was denied: please check billing account associated and retry. This command is authenticated as genyoungclip@gmail.com which is the active account specified by the [core/account] property
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 985, in Execute
+    resources = calliope_command.Run(cli=self, args=args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 945, in Run
+    resources = command_instance.Run(args)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/surface/app/create.py", line 67, in Run
+    create_util.CreateApp(
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/command_lib/app/create_util.py", line 168, in CreateApp
+    api_client.CreateApp(
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/app/appengine_api_client.py", line 174, in CreateApp
+    return operations_util.WaitForOperation(self.client.apps_operations,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/app/operations_util.py", line 307, in WaitForOperation
+    completed_operation = waiter.WaitFor(
+                          ^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/util/waiter.py", line 261, in WaitFor
+    operation = PollUntilDone(
+                ^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/util/waiter.py", line 322, in PollUntilDone
+    operation = retryer.RetryOnResult(
+                ^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/core/util/retry.py", line 239, in RetryOnResult
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/api_lib/app/operations_util.py", line 200, in Poll
+    operation = self.operation_service.Get(request)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/googlecloudsdk/generated_clients/apis/appengine/v1/appengine_v1_client.py", line 657, in Get
+    return self._RunMethod(
+           ^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 747, in _RunMethod
+    return self.ProcessHttpResponse(method_config, http_response, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 753, in ProcessHttpResponse
+    self.__ProcessHttpResponse(method_config, http_response, request))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/google-cloud-sdk/lib/third_party/apitools/base/py/base_api.py", line 612, in __ProcessHttpResponse
+    raise exceptions.HttpError.FromResponse(
+apitools.base.py.exceptions.HttpForbiddenError: HttpError accessing <https://appengine.googleapis.com/v1/apps/elparadisogonzalo-dev/operations/operation-1753149432594-63a7ae92b00f4-2eb06f7e-d17c1425?alt=json>: response: <{'vary': 'Origin, X-Origin, Referer', 'content-type': 'application/json; charset=UTF-8', 'date': 'Tue, 22 Jul 2025 01:57:14 GMT', 'server': 'ESF', 'x-xss-protection': '0', 'x-frame-options': 'SAMEORIGIN', 'x-content-type-options': 'nosniff', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000', 'transfer-encoding': 'chunked', 'status': '403', 'content-length': '199', '-content-encoding': 'gzip'}>, content <{
+  "error": {
+    "code": 403,
+    "message": "Read access to project 'elparadisogonzalo-dev' was denied: please check billing account associated and retry",
+    "status": "PERMISSION_DENIED"
+  }
+}
+>
+2025-07-22 02:57:14,494 ERROR    root            (gcloud.app.create) PERMISSION_DENIED: Read access to project 'elparadisogonzalo-dev' was denied: please check billing account associated and retry. This command is authenticated as genyoungclip@gmail.com which is the active account specified by the [core/account] property
+2025-07-22 02:57:14,519 DEBUG    root            Metrics reporting process started...

@@ -32,6 +32,41 @@ def MakeSnapshotArg(plural=False):
   )
 
 
+def MakeSnapshotArgForRegionalSnapshots(plural=False):
+  return compute_flags.ResourceArgument(
+      resource_name='snapshot',
+      name='snapshot_name',
+      completer=compute_completers.RoutesCompleter,
+      plural=plural,
+      regional_collection='compute.regionSnapshots',
+      global_collection='compute.snapshots',
+  )
+
+
+def AddScopeArg(parser):
+  """Adds scope flag to the parser.
+
+  Args:
+    parser: parser for command line arguments.
+  """
+  group = parser.add_group(
+      mutex=True,
+      help='Scope for snapshot.',
+  )
+
+  group.add_argument(
+      '--global',
+      action='store_true',
+      help='If set, the snapshot will be created in the global scope',
+  )
+
+  group.add_argument(
+      '--region',
+      help='If set, the snapshot will be created in the regional scope',
+      completer=compute_completers.RegionsCompleter,
+  )
+
+
 def AddChainArg(parser):
   parser.add_argument(
       '--chain-name',
@@ -126,9 +161,10 @@ SOURCE_INSTANT_SNAPSHOT_ARG = compute_flags.ResourceArgument(
     name='--source-instant-snapshot',
     completer=compute_completers.InstantSnapshotsCompleter,
     short_help="""
-    Source instant snapshot used to create the snapshot. To create a snapshot from a source
-    instant snapshot in a different project, specify the full path to the source instant snapshot.
-    For example:
+    The name or URL of the source instant snapshot. If the name is provided, the instant snapshot's zone
+or region must be specified with --source-instant-snapshot-zone or --source-instant-snapshot-region accordingly.
+    To create a snapshot from an instant snapshot in a different project, specify the full path to the instant snapshot.
+    If the URL is provided, format should be:
     https://www.googleapis.com/compute/v1/projects/MY-PROJECT/zones/MY-ZONE/instantSnapshots/MY-INSTANT-SNAPSHOT
     """,
     zonal_collection='compute.instantSnapshots',

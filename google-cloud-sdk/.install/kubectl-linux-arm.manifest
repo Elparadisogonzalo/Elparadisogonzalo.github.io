@@ -1,0 +1,8 @@
+bin/kubectl
+bin/kubectl.1.27
+bin/kubectl.1.28
+bin/kubectl.1.29
+bin/kubectl.1.30
+bin/kubectl.1.31
+bin/kubectl.1.32
+bin/kubectl.1.33

@@ -46,6 +46,14 @@ class Gcloud(base.Group):
         help='Google Cloud user account to use for invocation.',
         action=actions.StoreProperty(properties.VALUES.core.account))
 
+    parser.add_argument(
+        '--universe-domain',
+        metavar='UNIVERSE_DOMAIN',
+        category=base.COMMONLY_USED_FLAGS,
+        help='Universe domain to target.',
+        hidden=True,
+        action=actions.StoreProperty(properties.VALUES.core.universe_domain))
+
     # Ideally this would be on the alpha group (since it's alpha) but there are
     # a bunch of problems with doing that. Global flags are treated differently
     # than other flags and flags on the Alpha group are not treated as global.
@@ -144,16 +152,3 @@ class Gcloud(base.Group):
         action=actions.StoreProperty(properties.VALUES.core.trace_token),
         help='Token used to route traces of service requests for investigation'
         ' of issues.')
-    trace_group.add_argument(
-        '--trace-email',
-        metavar='USERNAME',
-        default=None,
-        action=actions.StoreProperty(properties.VALUES.core.trace_email),
-        hidden=True,
-        help='THIS ARGUMENT NEEDS HELP TEXT.')
-    trace_group.add_argument(
-        '--trace-log',
-        default=None,
-        action=actions.StoreBooleanProperty(properties.VALUES.core.trace_log),
-        hidden=True,
-        help='THIS ARGUMENT NEEDS HELP TEXT.')

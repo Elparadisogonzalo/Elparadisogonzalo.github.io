@@ -1,8 +1,46 @@
+# ~/.bashrc — Termux clean setup
+
+# Set PATH
+export PATH=$PREFIX/bin:$PATH
+
+# Set aliases
+alias ll='ls -la'
+alias gs='git status'
+alias gc='git commit'
+alias gp='git push'
+alias gco='git checkout'
+
+# Set default editor
+export EDITOR=nano
+
+# Add custom prompt (optional)
+PS1='\u@\h:\w$ '
+
+# Enable colors for grep
+export GREP_OPTIONS='--color=auto'
+
+# Load termux styling (optional)
+if [ -f ~/.termux/colors.properties ]; then
+  termux-reload-settings
+fi
+
+# GIT and Android SDK setup
 export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
+export ANDROID_NDK_HOME=$HOME/android-ndk-r25b
+export android_ndk_path=$ANDROID_NDK_HOME
+export PATH=$PATH:$ANDROID_NDK_HOME
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/data/data/com.termux/files/home/google-cloud-sdk/path.bash.inc' ]; then . '/data/data/com.termux/files/home/google-cloud-sdk/path.bash.inc'; fi
+# Node Version Manager (NVM)
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-# The next line enables shell command completion for gcloud.
-if [ -f '/data/data/com.termux/files/home/google-cloud-sdk/completion.bash.inc' ]; then . '/data/data/com.termux/files/home/google-cloud-sdk/completion.bash.inc'; fi
-export PATH="$HOME/google-cloud-sdk/bin:$PATH"
+# Git sync aliases
+alias syncup="git add . && git commit -m '🔄 Sync update' && git pull --rebase origin main && git push"
+alias syncdown="git pull --rebase origin main"
+export GOROOT=/data/data/com.termux/files/usr/lib/go
+export GOPATH=$HOME/go
+export PATH=$GOROOT/bin:$GOPATH/bin:$PATH
+export GOROOT=$PREFIX/lib/go
+export GOPATH=$HOME/go
+export PATH=$GOROOT/bin:$GOPATH/bin:$PATH

@@ -1,15 +1,21 @@
-- release_tracks: [ALPHA]
+- release_tracks: [ALPHA, BETA, GA]
   help_text:
     brief: "Update a storage pool."
     description: "Update a storage pool."
     examples: |
       To update the size of a storage pool named 'my-storage-pool', run th following command:
 
-        $ {command} my-storage-pool --pool-provisioned-capacity=20TB
+        $ {command} my-storage-pool --provisioned-capacity=20TB
 
   request:
+    ALPHA:
+      api_version: alpha
+    BETA:
+      api_version: beta
+    GA:
+      api_version: v1
+
     collection: compute.storagePools
-    api_version: alpha
     method: update
 
   async:

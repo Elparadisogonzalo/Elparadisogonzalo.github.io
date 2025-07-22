@@ -24,34 +24,46 @@ from googlecloudsdk.api_lib.scc import securitycenter_client
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.scc import flags as scc_flags
 from googlecloudsdk.command_lib.scc import util as scc_util
+from googlecloudsdk.command_lib.scc.notifications import flags as notifications_flags
 
 
 @base.ReleaseTracks(
     base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA
 )
+@base.DefaultUniverseOnly
 class List(base.ListCommand):
-  """List Cloud Security Command Center notification configs."""
+  """List Security Command Center notification configs."""
 
   detailed_help = {
-      'DESCRIPTION': 'List Cloud Security Command Center notification configs.',
+      'DESCRIPTION': """List Security Command Center notification configs.
+
+      Notification Configs that are created with Security Command Center API V2
+      and later include a `location` attribute. Include the `--location` flag to
+      list Notification Configs with `location` attribute other than `global`.
+      """,
       'EXAMPLES': """\
-      List notification configs from organization 123
+      List notification configs from organization `123`
 
         $ {command} 123
         $ {command} organizations/123
 
-      List notification configs from folder 456
+      List notification configs from folder `456`
 
         $ {command} folders/456
 
-      List notification configs from project 789
+      List notification configs from project `789`
 
         $ {command} projects/789
+
+      List notification configs from organization `123` and `location=eu`
+
+        $ {command} 123 --location=eu
+        $ {command} organizations/123 --location=locations/eu
       """,
       'API REFERENCE': """\
-      This command uses the securitycenter/v1 API. The full documentation for
-      this API can be found at: https://cloud.google.com/security-command-center
-          """,
+      This command uses the Security Command Center API. For more information,
+      see [Security Command Center API.](https://cloud.google.com/security-command-center/docs/reference/rest)
+      """,
   }
 
   @staticmethod
@@ -61,9 +73,11 @@ class List(base.ListCommand):
 
     # Add shared flags and parent positional argument.
     scc_flags.AppendParentArg()[0].AddToParser(parser)
-
+    notifications_flags.AddParentGroup(parser)
     scc_flags.API_VERSION_FLAG.AddToParser(parser)
-    scc_flags.LOCATION_FLAG.AddToParser(parser)
+    notifications_flags.LIST_NOTIFICATION_CONFIG_LOCATION_FLAG.AddToParser(
+        parser
+    )
 
   def Run(self, args):
     # Determine what version to call from --api-version.

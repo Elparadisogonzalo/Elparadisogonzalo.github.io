@@ -136,6 +136,14 @@ def AddSecurityGatewayTunnelArgs(parser):
       default=None,
       required=True,
       help='Configure the security gateway resource for connecting.')
+  # TODO(b/196572980): Make dest-group required in beta/GA.
+  parser.add_argument(
+      '--use-dest-group',
+      default=False,
+      action='store_true',
+      required=False,
+      help=('Configures the destination group to use when connecting via IP '
+            'address or FQDN.'))
 
 
 def AddProxyServerHelperArgs(parser):
@@ -300,18 +308,20 @@ def _CloseLocalConnectionCallback(local_conn):
       pass
 
 
-def _GetAccessTokenCallback(credentials):
+def _GetAccessTokenCallback(credentials, lock):
   """Callback function to refresh credentials and return access token."""
   if not credentials:
     return None
   log.debug('credentials type for _GetAccessTokenCallback is [%s].',
             six.text_type(credentials))
-  store.RefreshIfAlmostExpire(credentials)
 
-  if creds.IsGoogleAuthCredentials(credentials):
-    return credentials.token
-  else:
-    return credentials.access_token
+  with lock:
+    store.RefreshIfAlmostExpire(credentials)
+
+    if creds.IsGoogleAuthCredentials(credentials):
+      return credentials.token
+    else:
+      return credentials.access_token
 
 
 def _SendLocalDataCallback(local_conn, data):
@@ -363,8 +373,8 @@ class _StdinSocket(object):
   class _StdinSocketMessage(object):
     """A class to wrap messages coming to the stdin socket for windows systems."""
 
-    def __init__(self, messageType, data):
-      self._type = messageType
+    def __init__(self, message_type, data):
+      self._type = message_type
       self._data = data
 
     def GetData(self):
@@ -602,7 +612,8 @@ class _StdinSocket(object):
 class SecurityGatewayTunnelHelper(object):
   """Helper class for starting a Security Gateaway tunnel."""
 
-  def __init__(self, args, project, region, security_gateway, host, port):
+  def __init__(self, args, project, region, security_gateway, host, port,
+               use_dest_group=False):
     # Re-use the same args as IAP to prevent adding more flags than necessary.
     self._tunnel_url_override = args.iap_tunnel_url_override
     self._ignore_certs = args.iap_tunnel_insecure_disable_websocket_cert_check
@@ -613,7 +624,12 @@ class SecurityGatewayTunnelHelper(object):
     self._host = host
     self._port = port
 
+    self._use_dest_group = use_dest_group
+
     self._shutdown = False
+
+    self._credential = store.LoadIfEnabled(use_google_auth=True)
+    self._credential_lock = threading.Lock()
 
   def _InitiateConnection(self, local_conn,
                           get_access_token_callback, user_agent):
@@ -640,9 +656,11 @@ class SecurityGatewayTunnelHelper(object):
         port=self._port,
         url_override=self._tunnel_url_override,
         proxy_info=proxy_info,
+        use_dest_group=self._use_dest_group,
     )
 
-  def RunReceiveLocalData(self, local_conn, socket_address, user_agent):
+  def RunReceiveLocalData(self, local_conn, socket_address, user_agent,
+                          conn_id=-1):
     """Receive data from provided local connection and send over HTTP CONNECT.
 
     Args:
@@ -650,14 +668,18 @@ class SecurityGatewayTunnelHelper(object):
       socket_address: A verbose loggable string describing where conn is
         connected to.
       user_agent: The user_agent of this connection
+      conn_id: The id of the connection.
     """
+    del conn_id  # Unused.
     sg_conn = None
     try:
       sg_conn = self._InitiateConnection(
           local_conn,
-          functools.partial(_GetAccessTokenCallback,
-                            store.LoadIfEnabled(use_google_auth=True)),
-          user_agent)
+          functools.partial(
+              _GetAccessTokenCallback, self._credential, self._credential_lock
+          ),
+          user_agent,
+      )
       while not (self._shutdown or sg_conn.ShouldStop()):
         data = local_conn.recv(utils.SUBPROTOCOL_MAX_DATA_FRAME_SIZE)
         if not data:
@@ -704,17 +726,21 @@ class IAPWebsocketTunnelHelper(object):
 
     self._shutdown = False
 
+    self._credential = store.LoadIfEnabled(use_google_auth=True)
+    self._credential_lock = threading.Lock()
+
   def Close(self):
     self._shutdown = True
 
   def _InitiateConnection(self, local_conn, get_access_token_callback,
-                          user_agent):
+                          user_agent, conn_id=-1):
     tunnel_target = self._GetTunnelTargetInfo()
     new_websocket = iap_tunnel_websocket.IapTunnelWebSocket(
         tunnel_target, get_access_token_callback,
         functools.partial(_SendLocalDataCallback, local_conn),
         functools.partial(_CloseLocalConnectionCallback, local_conn),
-        user_agent, ignore_certs=self._ignore_certs)
+        user_agent, ignore_certs=self._ignore_certs,
+        conn_id=conn_id)
     new_websocket.InitiateConnection()
     return new_websocket
 
@@ -734,7 +760,7 @@ class IAPWebsocketTunnelHelper(object):
                                      host=self._host,
                                      dest_group=self._dest_group)
 
-  def RunReceiveLocalData(self, conn, socket_address, user_agent):
+  def RunReceiveLocalData(self, conn, socket_address, user_agent, conn_id=0):
     """Receive data from provided local connection and send over WebSocket.
 
     Args:
@@ -742,29 +768,40 @@ class IAPWebsocketTunnelHelper(object):
       socket_address: A verbose loggable string describing where conn is
         connected to.
       user_agent: The user_agent of this connection
+      conn_id: Id of the connection.
     """
     websocket_conn = None
     try:
       websocket_conn = self._InitiateConnection(
           conn,
-          functools.partial(_GetAccessTokenCallback,
-                            store.LoadIfEnabled(use_google_auth=True)),
-          user_agent)
+          functools.partial(
+              _GetAccessTokenCallback, self._credential, self._credential_lock
+          ),
+          user_agent,
+          conn_id=conn_id,
+      )
       while not self._shutdown:
         data = conn.recv(utils.SUBPROTOCOL_MAX_DATA_FRAME_SIZE)
         if not data:
           # When we recv an EOF, we notify the websocket_conn of it, then we
           # wait for all data to send before returning.
           websocket_conn.LocalEOF()
+          log.debug('[%d] Received local EOF, closing connection', conn_id)
           if not websocket_conn.WaitForAllSent():
-            log.warning('Failed to send all data from [%s].', socket_address)
+            log.warning('[%d] Failed to send all data from [%s].',
+                        conn_id, socket_address)
           break
         websocket_conn.Send(data)
+    except (Exception, exceptions.Error) as e:  # pylint: disable=broad-exception-caught
+      log.exception('[%d] Error during local connection to [%s]: %s', conn_id,
+                    socket_address, e)
     finally:
       if self._shutdown:
-        log.info('Terminating connection to [%s].', socket_address)
+        log.info('[%d] Terminating connection to [%s].',
+                 conn_id, socket_address)
       else:
-        log.info('Client closed connection from [%s].', socket_address)
+        log.info('[%d] Client closed connection from [%s].',
+                 conn_id, socket_address)
       try:
         conn.close()
       except EnvironmentError:
@@ -787,6 +824,7 @@ class IapTunnelProxyServerHelper():
     self._should_test_connection = should_test_connection
     self._server_sockets = []
     self._connections = []
+    self._total_connections = 0
 
   def __del__(self):
     self._CloseServerSockets()
@@ -820,14 +858,19 @@ class IapTunnelProxyServerHelper():
     log.status.Print('Server shutdown complete.')
 
   def _TestConnection(self):
+    """Test if a connection can be made to the requested endpoint."""
     log.status.Print('Testing if tunnel connection works.')
     user_agent = transport.MakeUserAgentString()
     # pylint: disable=protected-access
     conn = self._tunneler._InitiateConnection(
         None,
-        functools.partial(_GetAccessTokenCallback,
-                          store.LoadIfEnabled(use_google_auth=True)),
-        user_agent)
+        functools.partial(
+            _GetAccessTokenCallback,
+            self._tunneler._credential,
+            threading.Lock(),
+        ),
+        user_agent,
+    )
     # pylint: enable=protected-access
     conn.Close()
 
@@ -845,9 +888,11 @@ class IapTunnelProxyServerHelper():
     ready_read_sockets = ready_sockets[0]
     conn, socket_address = ready_read_sockets[0].accept()
     new_thread = threading.Thread(target=self._HandleNewConnection,
-                                  args=(conn, socket_address))
+                                  args=(conn, socket_address,
+                                        self._total_connections))
     new_thread.daemon = True
     new_thread.start()
+    self._total_connections += 1
     return new_thread, conn
 
   def _CloseServerSockets(self):
@@ -897,11 +942,11 @@ class IapTunnelProxyServerHelper():
       gc.collect(2)
       log.debug('connections alive: [%d]' % len(self._connections))
 
-  def _HandleNewConnection(self, conn, socket_address):
+  def _HandleNewConnection(self, conn, socket_address, conn_id):
     try:
       user_agent = transport.MakeUserAgentString()
       self._tunneler.RunReceiveLocalData(conn, repr(socket_address),
-                                         user_agent)
+                                         user_agent, conn_id=conn_id)
     except EnvironmentError as e:
       log.info('Socket error [%s] while receiving from client.',
                six.text_type(e))

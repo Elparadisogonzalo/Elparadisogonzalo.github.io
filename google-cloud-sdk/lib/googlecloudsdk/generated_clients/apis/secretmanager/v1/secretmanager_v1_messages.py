@@ -636,6 +636,11 @@ class Secret(_messages.Message):
       long, have a UTF-8 encoding of maximum 128 bytes, and must conform to
       the following PCRE regular expression: `[\p{Ll}\p{Lo}\p{N}_-]{0,63}` No
       more than 64 labels can be assigned to a given resource.
+    TagsValue: Optional. Input only. Immutable. Mapping of Tag keys/values
+      directly bound to this resource. For example: "123/environment":
+      "production", "123/costCenter": "marketing" Tags are used to organize
+      and group resources. Tags can be used to control policy evaluation for
+      the resource.
     VersionAliasesValue: Optional. Mapping from version alias to version name.
       A version alias is a string with a maximum length of 63 characters and
       can contain uppercase and lowercase letters, numerals, and the hyphen
@@ -655,6 +660,11 @@ class Secret(_messages.Message):
       (.), and alphanumerics in between these symbols. The total size of
       annotation keys and values must be less than 16KiB.
     createTime: Output only. The time at which the Secret was created.
+    customerManagedEncryption: Optional. The customer-managed encryption
+      configuration of the regionalized secrets. If no configuration is
+      provided, Google-managed default encryption is used. Updates to the
+      Secret encryption configuration only apply to SecretVersions added
+      afterwards. They do not apply retroactively to existing SecretVersions.
     etag: Optional. Etag of the currently stored Secret.
     expireTime: Optional. Timestamp in UTC when the Secret is scheduled to
       expire. This is always provided on output, regardless of what was sent
@@ -673,6 +683,11 @@ class Secret(_messages.Message):
       after the Secret has been created.
     rotation: Optional. Rotation policy attached to the Secret. May be
       excluded if there is no rotation policy.
+    tags: Optional. Input only. Immutable. Mapping of Tag keys/values directly
+      bound to this resource. For example: "123/environment": "production",
+      "123/costCenter": "marketing" Tags are used to organize and group
+      resources. Tags can be used to control policy evaluation for the
+      resource.
     topics: Optional. A list of up to 10 Pub/Sub topics to which messages are
       published when control plane operations are called on the secret or its
       versions.
@@ -685,6 +700,11 @@ class Secret(_messages.Message):
       aliases can be assigned to a given secret. Version-Alias pairs will be
       viewable via GetSecret and modifiable via UpdateSecret. Access by alias
       is only be supported on GetSecretVersion and AccessSecretVersion.
+    versionDestroyTtl: Optional. Secret Version TTL after destruction request
+      This is a part of the Delayed secret version destroy feature. For secret
+      with TTL>0, version destruction doesn't happen immediately on calling
+      destroy instead the version goes to a disabled state and destruction
+      happens after the TTL expires.
   """
 
   @encoding.MapUnrecognizedFields('additionalProperties')
@@ -750,6 +770,33 @@ class Secret(_messages.Message):
     additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   @encoding.MapUnrecognizedFields('additionalProperties')
+  class TagsValue(_messages.Message):
+    r"""Optional. Input only. Immutable. Mapping of Tag keys/values directly
+    bound to this resource. For example: "123/environment": "production",
+    "123/costCenter": "marketing" Tags are used to organize and group
+    resources. Tags can be used to control policy evaluation for the resource.
+
+    Messages:
+      AdditionalProperty: An additional property for a TagsValue object.
+
+    Fields:
+      additionalProperties: Additional properties of type TagsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a TagsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
   class VersionAliasesValue(_messages.Message):
     r"""Optional. Mapping from version alias to version name. A version alias
     is a string with a maximum length of 63 characters and can contain
@@ -783,15 +830,18 @@ class Secret(_messages.Message):
 
   annotations = _messages.MessageField('AnnotationsValue', 1)
   createTime = _messages.StringField(2)
-  etag = _messages.StringField(3)
-  expireTime = _messages.StringField(4)
-  labels = _messages.MessageField('LabelsValue', 5)
-  name = _messages.StringField(6)
-  replication = _messages.MessageField('Replication', 7)
-  rotation = _messages.MessageField('Rotation', 8)
-  topics = _messages.MessageField('Topic', 9, repeated=True)
-  ttl = _messages.StringField(10)
-  versionAliases = _messages.MessageField('VersionAliasesValue', 11)
+  customerManagedEncryption = _messages.MessageField('CustomerManagedEncryption', 3)
+  etag = _messages.StringField(4)
+  expireTime = _messages.StringField(5)
+  labels = _messages.MessageField('LabelsValue', 6)
+  name = _messages.StringField(7)
+  replication = _messages.MessageField('Replication', 8)
+  rotation = _messages.MessageField('Rotation', 9)
+  tags = _messages.MessageField('TagsValue', 10)
+  topics = _messages.MessageField('Topic', 11, repeated=True)
+  ttl = _messages.StringField(12)
+  versionAliases = _messages.MessageField('VersionAliasesValue', 13)
+  versionDestroyTtl = _messages.StringField(14)
 
 
 class SecretPayload(_messages.Message):
@@ -826,6 +876,9 @@ class SecretVersion(_messages.Message):
       specified in SecretPayload object has been received by
       SecretManagerService on SecretManagerService.AddSecretVersion.
     createTime: Output only. The time at which the SecretVersion was created.
+    customerManagedEncryption: Output only. The customer-managed encryption
+      status of the SecretVersion. Only populated if customer-managed
+      encryption is used and Secret is a regionalized secret.
     destroyTime: Output only. The time this SecretVersion was destroyed. Only
       present if state is DESTROYED.
     etag: Output only. Etag of the currently stored SecretVersion.
@@ -833,6 +886,12 @@ class SecretVersion(_messages.Message):
       `projects/*/secrets/*/versions/*`. SecretVersion IDs in a Secret start
       at 1 and are incremented for each subsequent version of the secret.
     replicationStatus: The replication status of the SecretVersion.
+    scheduledDestroyTime: Optional. Output only. Scheduled destroy time for
+      secret version. This is a part of the Delayed secret version destroy
+      feature. For a Secret with a valid version destroy TTL, when a secert
+      version is destroyed, version is moved to disabled state and it is
+      scheduled for destruction Version is destroyed only after the
+      scheduled_destroy_time.
     state: Output only. The current state of the SecretVersion.
   """
 
@@ -854,11 +913,13 @@ class SecretVersion(_messages.Message):
 
   clientSpecifiedPayloadChecksum = _messages.BooleanField(1)
   createTime = _messages.StringField(2)
-  destroyTime = _messages.StringField(3)
-  etag = _messages.StringField(4)
-  name = _messages.StringField(5)
-  replicationStatus = _messages.MessageField('ReplicationStatus', 6)
-  state = _messages.EnumField('StateValueValuesEnum', 7)
+  customerManagedEncryption = _messages.MessageField('CustomerManagedEncryptionStatus', 3)
+  destroyTime = _messages.StringField(4)
+  etag = _messages.StringField(5)
+  name = _messages.StringField(6)
+  replicationStatus = _messages.MessageField('ReplicationStatus', 7)
+  scheduledDestroyTime = _messages.StringField(8)
+  state = _messages.EnumField('StateValueValuesEnum', 9)
 
 
 class SecretmanagerProjectsLocationsGetRequest(_messages.Message):
@@ -875,6 +936,8 @@ class SecretmanagerProjectsLocationsListRequest(_messages.Message):
   r"""A SecretmanagerProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -885,10 +948,11 @@ class SecretmanagerProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class SecretmanagerProjectsLocationsSecretsAddVersionRequest(_messages.Message):
@@ -1508,7 +1572,7 @@ class Topic(_messages.Message):
   events occur on this secret.
 
   Fields:
-    name: Required. The resource name of the Pub/Sub topic that will be
+    name: Identifier. The resource name of the Pub/Sub topic that will be
       published to, in the following format: `projects/*/topics/*`. For
       publication to succeed, the Secret Manager service agent must have the
       `pubsub.topic.publish` permission on the topic. The Pub/Sub Publisher
@@ -1520,7 +1584,7 @@ class Topic(_messages.Message):
 
 class UserManaged(_messages.Message):
   r"""A replication policy that replicates the Secret payload into the
-  locations specified in Secret.replication.user_managed.replicas
+  locations specified in Replication.UserManaged.replicas
 
   Fields:
     replicas: Required. The list of Replicas for this Secret. Cannot be empty.
@@ -1547,3 +1611,7 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    SecretmanagerProjectsLocationsSecretsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    SecretmanagerProjectsSecretsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

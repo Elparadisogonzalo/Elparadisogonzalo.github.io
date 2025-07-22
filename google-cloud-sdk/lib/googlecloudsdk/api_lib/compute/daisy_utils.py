@@ -707,13 +707,18 @@ def _GetSafeBucketName(bucket_name, add_random_suffix=False):
 
 
 def CreateDaisyBucketInProject(
-    bucket_location, storage_client, enable_uniform_level_access=None):
+    bucket_location,
+    storage_client,
+    enable_uniform_level_access=None,
+    soft_delete_duration=None,
+):
   """Creates Daisy bucket in current project.
 
   Args:
     bucket_location: str, specified bucket location.
     storage_client: storage client
     enable_uniform_level_access: bool, to enable uniform bucket level access.
+    soft_delete_duration: int, the soft delete duration in seconds.
 
   Returns:
     str, Daisy bucket.
@@ -726,7 +731,9 @@ def CreateDaisyBucketInProject(
     storage_client.CreateBucketIfNotExists(
         bucket_name,
         location=bucket_location,
-        enable_uniform_level_access=enable_uniform_level_access)
+        enable_uniform_level_access=enable_uniform_level_access,
+        soft_delete_duration=soft_delete_duration,
+    )
   except storage_api.BucketInWrongProjectError:
     # A bucket already exists under the same name but in a different project.
     # Concatenate a random 8 character suffix to the bucket name and try a
@@ -739,7 +746,9 @@ def CreateDaisyBucketInProject(
         storage_client.CreateBucketIfNotExists(
             randomized_bucket_name,
             location=bucket_location,
-            enable_uniform_level_access=enable_uniform_level_access)
+            enable_uniform_level_access=enable_uniform_level_access,
+            soft_delete_duration=soft_delete_duration,
+        )
       except apitools_exceptions.HttpError as err:
         raise DaisyBucketCreationException(
             'Unable to create a temporary bucket [{bucket_name}]: {e}'.format(
@@ -1942,23 +1951,23 @@ def AddComputeServiceAccountArg(parser, operation, roles):
 def AddCloudBuildServiceAccountArg(parser, operation, roles):
   """Adds Cloud Build service account arg."""
   help_text_pattern = """\
-        Image import amd export tools use Cloud Build to import and export images
+        Image import and export tools use Cloud Build to import and export images
         to and from your project.
         Cloud Build uses a specific service account to execute builds on your
         behalf.
-        The Cloud Build service account generates access token for other service
+        The Cloud Build service account generates an access token for other service
         accounts and it is also used for authentication when building the artifacts
         for the image import tool.
 
-        Use this flag to to specify a custom Cloud Build service account for
+        Use this flag to to specify a user-managed service account for
         image import and export. If you don't specify this flag, Cloud Build
         runs using your project's default Cloud Build service account.
-        To set this option, specify the email address corresponding to the
-        required Cloud Build service account.
+        To set this option, specify the email address of the desired
+        user-managed service account.
         Note: You must specify the `--logs-location` flag when
-        you set the custom Cloud Build service account.
+        you set a user-managed service account.
 
-        At minimum, the specified Cloud Build service account needs to have
+        At minimum, the specified user-managed service account needs to have
         the following roles assigned:
         """
   help_text_pattern += '\n'

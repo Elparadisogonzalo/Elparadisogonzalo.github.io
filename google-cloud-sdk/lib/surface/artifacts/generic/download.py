@@ -19,8 +19,6 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import os
-import sys
-import tempfile
 
 from googlecloudsdk.api_lib.artifacts import exceptions as ar_exceptions
 from googlecloudsdk.calliope import base
@@ -30,10 +28,10 @@ from googlecloudsdk.command_lib.artifacts import flags
 from googlecloudsdk.core import log
 
 
+@base.DefaultUniverseOnly
 @base.ReleaseTracks(
     base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA, base.ReleaseTrack.GA
 )
-@base.Hidden
 class Download(base.Command):
   """Download a generic artifact from a generic artifact repository."""
 
@@ -43,14 +41,20 @@ class Download(base.Command):
     To download version v0.1.0 of myfile.txt located in a repository in "us-central1" to /path/to/destination/:
 
         $ {command} --location=us-central1 --project=myproject --repository=myrepo \
-          --package=mypackage --version=v0.1.0 --destination=/path/to/destination/ \
-          --name=myfile.txt
+            --package=mypackage --version=v0.1.0 --destination=/path/to/destination/ \
+            --name=myfile.txt
+
+    To download version v0.1.0 of myfile.txt in 8000 byte chunks located in a repository in "us-central1" to /path/to/destination/:
+
+        $ {command} --location=us-central1 --project=myproject --repository=myrepo \
+            --package=mypackage --version=v0.1.0 --destination=/path/to/destination/ \
+            --name=myfile.txt --chunk-size=8000
 
     To download all files of version v0.1.0 and package mypackage located in a repository in "us-central1" to /path/to/destination/
     while maintaining the folder hierarchy:
 
         $ {command} --location=us-central1 --project=myproject --repository=myrepo \
-          --package=mypackage --version=v0.1.0 --destination=/path/to/destination/
+            --package=mypackage --version=v0.1.0 --destination=/path/to/destination/
     """,
   }
 
@@ -62,6 +66,7 @@ class Download(base.Command):
       parser: An argparse.ArgumentParser.
     """
     flags.GetRequiredRepoFlag().AddToParser(parser)
+    flags.GetChunkSize().AddToParser(parser)
 
     parser.add_argument(
         '--destination',
@@ -91,11 +96,15 @@ class Download(base.Command):
     """Run the generic artifact download command."""
 
     repo_ref = args.CONCEPTS.repository.Parse()
+    args.destination = os.path.expanduser(args.destination)
+    if not os.path.exists(args.destination):
+      raise ar_exceptions.DirectoryNotExistError(
+          'Destination directory does not exist: ' + args.destination
+      )
     if not os.path.isdir(args.destination):
-      log.error(
-          'Directory {} does not exist.'.format(args.destination))
-      sys.exit(1)
-
+      raise ar_exceptions.PathNotDirectoryError(
+          'Destination is not a directory: ' + args.destination
+      )
     # Get the file name when given a file path
     if args.name:
       file_name = os.path.basename(args.name)
@@ -114,24 +123,22 @@ class Download(base.Command):
 
   def downloadGenericArtifact(self, args, repo_ref, file_id, file_name):
     final_path = os.path.join(args.destination, file_name)
-
-    if args.name:
-      tmp_path = os.path.join(tempfile.gettempdir(), file_name)
-    else:
-      tmp_path = final_path
-
     file_escaped = file_util.EscapeFileNameFromIDs(
         repo_ref.projectsId,
         repo_ref.locationsId,
         repo_ref.repositoriesId,
         file_id,
     )
+    default_chunk_size = 3 * 1024 * 1024
+    chunk_size = args.chunk_size or default_chunk_size
 
     download_util.Download(
-        tmp_path,
         final_path,
         file_escaped.RelativeName(),
-        False)
+        file_name,
+        False,
+        int(chunk_size),
+    )
     log.status.Print(
         'Successfully downloaded the file to {}'.format(args.destination)
     )

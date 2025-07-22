@@ -312,7 +312,7 @@ class BinaryauthorizationV1(base_api.BaseApiClient):
           }
 
     def Evaluate(self, request, global_params=None):
-      r"""Evaluates a Kubernetes object versus a GKE platform policy. Returns NOT_FOUND if the policy doesn't exist, INVALID_ARGUMENT if the policy or request is malformed and PERMISSION_DENIED if the client does not have sufficient permissions.
+      r"""Evaluates a Kubernetes object versus a GKE platform policy. Returns `NOT_FOUND` if the policy doesn't exist, `INVALID_ARGUMENT` if the policy or request is malformed and `PERMISSION_DENIED` if the client does not have sufficient permissions.
 
       Args:
         request: (BinaryauthorizationProjectsPlatformsGkePoliciesEvaluateRequest) input message
@@ -404,7 +404,7 @@ class BinaryauthorizationV1(base_api.BaseApiClient):
         method_id='binaryauthorization.projects.platforms.policies.delete',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=[],
+        query_params=['etag'],
         relative_path='v1/{+name}',
         request_field='',
         request_type_name='BinaryauthorizationProjectsPlatformsPoliciesDeleteRequest',

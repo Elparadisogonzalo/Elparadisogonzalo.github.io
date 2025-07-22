@@ -597,6 +597,7 @@ class BareMetalCluster(_messages.Message):
       name differ, the local name is used in the admin cluster controller
       logs. You use the cluster name when accessing the cluster using bmctl
       and kubectl.
+    localNamespace: Output only. The namespace of the cluster.
     maintenanceConfig: Maintenance configuration.
     maintenanceStatus: Output only. Status of on-going maintenance tasks.
     name: Immutable. The bare metal user cluster resource name.
@@ -690,23 +691,24 @@ class BareMetalCluster(_messages.Message):
   fleet = _messages.MessageField('Fleet', 13)
   loadBalancer = _messages.MessageField('BareMetalLoadBalancerConfig', 14)
   localName = _messages.StringField(15)
-  maintenanceConfig = _messages.MessageField('BareMetalMaintenanceConfig', 16)
-  maintenanceStatus = _messages.MessageField('BareMetalMaintenanceStatus', 17)
-  name = _messages.StringField(18)
-  networkConfig = _messages.MessageField('BareMetalNetworkConfig', 19)
-  nodeAccessConfig = _messages.MessageField('BareMetalNodeAccessConfig', 20)
-  nodeConfig = _messages.MessageField('BareMetalWorkloadNodeConfig', 21)
-  osEnvironmentConfig = _messages.MessageField('BareMetalOsEnvironmentConfig', 22)
-  proxy = _messages.MessageField('BareMetalProxyConfig', 23)
-  reconciling = _messages.BooleanField(24)
-  securityConfig = _messages.MessageField('BareMetalSecurityConfig', 25)
-  state = _messages.EnumField('StateValueValuesEnum', 26)
-  status = _messages.MessageField('ResourceStatus', 27)
-  storage = _messages.MessageField('BareMetalStorageConfig', 28)
-  uid = _messages.StringField(29)
-  updateTime = _messages.StringField(30)
-  upgradePolicy = _messages.MessageField('BareMetalClusterUpgradePolicy', 31)
-  validationCheck = _messages.MessageField('ValidationCheck', 32)
+  localNamespace = _messages.StringField(16)
+  maintenanceConfig = _messages.MessageField('BareMetalMaintenanceConfig', 17)
+  maintenanceStatus = _messages.MessageField('BareMetalMaintenanceStatus', 18)
+  name = _messages.StringField(19)
+  networkConfig = _messages.MessageField('BareMetalNetworkConfig', 20)
+  nodeAccessConfig = _messages.MessageField('BareMetalNodeAccessConfig', 21)
+  nodeConfig = _messages.MessageField('BareMetalWorkloadNodeConfig', 22)
+  osEnvironmentConfig = _messages.MessageField('BareMetalOsEnvironmentConfig', 23)
+  proxy = _messages.MessageField('BareMetalProxyConfig', 24)
+  reconciling = _messages.BooleanField(25)
+  securityConfig = _messages.MessageField('BareMetalSecurityConfig', 26)
+  state = _messages.EnumField('StateValueValuesEnum', 27)
+  status = _messages.MessageField('ResourceStatus', 28)
+  storage = _messages.MessageField('BareMetalStorageConfig', 29)
+  uid = _messages.StringField(30)
+  updateTime = _messages.StringField(31)
+  upgradePolicy = _messages.MessageField('BareMetalClusterUpgradePolicy', 32)
+  validationCheck = _messages.MessageField('ValidationCheck', 33)
 
 
 class BareMetalClusterOperationsConfig(_messages.Message):
@@ -729,6 +731,8 @@ class BareMetalClusterUpgradePolicy(_messages.Message):
   Fields:
     controlPlaneOnly: Controls whether upgrade applies to only the control
       plane.
+    pause: Output only. Pause is used to show the upgrade pause status. It's
+      view only for now.
     policy: Specifies which upgrade policy to use.
   """
 
@@ -745,7 +749,8 @@ class BareMetalClusterUpgradePolicy(_messages.Message):
     CONCURRENT = 2
 
   controlPlaneOnly = _messages.BooleanField(1)
-  policy = _messages.EnumField('PolicyValueValuesEnum', 2)
+  pause = _messages.BooleanField(2)
+  policy = _messages.EnumField('PolicyValueValuesEnum', 3)
 
 
 class BareMetalControlPlaneConfig(_messages.Message):
@@ -1486,6 +1491,8 @@ class BareMetalStandaloneCluster(_messages.Message):
       not modifiable. When the local name and cluster name differ, the local
       name is used in the admin cluster controller logs. You use the cluster
       name when accessing the cluster using bmctl and kubectl.
+    localNamespace: Output only. The kubernetes namespace where the custom
+      resource exists.
     maintenanceConfig: Maintenance configuration.
     maintenanceStatus: Output only. Status of on-going maintenance tasks.
     name: Immutable. The bare metal standalone cluster resource name.
@@ -1592,24 +1599,25 @@ class BareMetalStandaloneCluster(_messages.Message):
   fleet = _messages.MessageField('Fleet', 11)
   loadBalancer = _messages.MessageField('BareMetalStandaloneLoadBalancerConfig', 12)
   localName = _messages.StringField(13)
-  maintenanceConfig = _messages.MessageField('BareMetalStandaloneMaintenanceConfig', 14)
-  maintenanceStatus = _messages.MessageField('BareMetalStandaloneMaintenanceStatus', 15)
-  name = _messages.StringField(16)
-  networkConfig = _messages.MessageField('BareMetalStandaloneNetworkConfig', 17)
-  nodeAccessConfig = _messages.MessageField('BareMetalStandaloneNodeAccessConfig', 18)
-  nodeConfig = _messages.MessageField('BareMetalStandaloneWorkloadNodeConfig', 19)
-  osEnvironmentConfig = _messages.MessageField('BareMetalStandaloneOsEnvironmentConfig', 20)
-  profile = _messages.EnumField('ProfileValueValuesEnum', 21)
-  proxy = _messages.MessageField('BareMetalStandaloneProxyConfig', 22)
-  reconciling = _messages.BooleanField(23)
-  securityConfig = _messages.MessageField('BareMetalStandaloneSecurityConfig', 24)
-  state = _messages.EnumField('StateValueValuesEnum', 25)
-  status = _messages.MessageField('ResourceStatus', 26)
-  storage = _messages.MessageField('BareMetalStandaloneStorageConfig', 27)
-  uid = _messages.StringField(28)
-  updateTime = _messages.StringField(29)
-  upgradePolicy = _messages.MessageField('BareMetalStandaloneClusterUpgradePolicy', 30)
-  validationCheck = _messages.MessageField('ValidationCheck', 31)
+  localNamespace = _messages.StringField(14)
+  maintenanceConfig = _messages.MessageField('BareMetalStandaloneMaintenanceConfig', 15)
+  maintenanceStatus = _messages.MessageField('BareMetalStandaloneMaintenanceStatus', 16)
+  name = _messages.StringField(17)
+  networkConfig = _messages.MessageField('BareMetalStandaloneNetworkConfig', 18)
+  nodeAccessConfig = _messages.MessageField('BareMetalStandaloneNodeAccessConfig', 19)
+  nodeConfig = _messages.MessageField('BareMetalStandaloneWorkloadNodeConfig', 20)
+  osEnvironmentConfig = _messages.MessageField('BareMetalStandaloneOsEnvironmentConfig', 21)
+  profile = _messages.EnumField('ProfileValueValuesEnum', 22)
+  proxy = _messages.MessageField('BareMetalStandaloneProxyConfig', 23)
+  reconciling = _messages.BooleanField(24)
+  securityConfig = _messages.MessageField('BareMetalStandaloneSecurityConfig', 25)
+  state = _messages.EnumField('StateValueValuesEnum', 26)
+  status = _messages.MessageField('ResourceStatus', 27)
+  storage = _messages.MessageField('BareMetalStandaloneStorageConfig', 28)
+  uid = _messages.StringField(29)
+  updateTime = _messages.StringField(30)
+  upgradePolicy = _messages.MessageField('BareMetalStandaloneClusterUpgradePolicy', 31)
+  validationCheck = _messages.MessageField('ValidationCheck', 32)
 
 
 class BareMetalStandaloneClusterOperationsConfig(_messages.Message):
@@ -1634,6 +1642,8 @@ class BareMetalStandaloneClusterUpgradePolicy(_messages.Message):
   Fields:
     controlPlaneOnly: Controls whether upgrade applies to only the control
       plane.
+    pause: Output only. Pause is used to show the upgrade pause status. It's
+      view only for now.
     policy: Specifies which upgrade policy to use.
   """
 
@@ -1650,7 +1660,8 @@ class BareMetalStandaloneClusterUpgradePolicy(_messages.Message):
     CONCURRENT = 2
 
   controlPlaneOnly = _messages.BooleanField(1)
-  policy = _messages.EnumField('PolicyValueValuesEnum', 2)
+  pause = _messages.BooleanField(2)
+  policy = _messages.EnumField('PolicyValueValuesEnum', 3)
 
 
 class BareMetalStandaloneControlPlaneConfig(_messages.Message):
@@ -2533,11 +2544,13 @@ class EnrollBareMetalClusterRequest(_messages.Message):
       Otherwise, it must match the object name of the bare metal cluster
       custom resource. It is not modifiable outside / beyond the enrollment
       operation.
+    localNamespace: Optional. The namespace of the cluster.
   """
 
   adminClusterMembership = _messages.StringField(1)
   bareMetalClusterId = _messages.StringField(2)
   localName = _messages.StringField(3)
+  localNamespace = _messages.StringField(4)
 
 
 class EnrollBareMetalNodePoolRequest(_messages.Message):
@@ -2701,6 +2714,11 @@ class GkeonpremProjectsLocationsBareMetalAdminClustersCreateRequest(_messages.Me
   r"""A GkeonpremProjectsLocationsBareMetalAdminClustersCreateRequest object.
 
   Fields:
+    allowPreflightFailure: Optional. If set to true, CLM will force CCFE to
+      persist the cluster resource in RMS when the creation fails during
+      standalone preflight checks. In that case the subsequent create call
+      will fail with "cluster already exists" error and hence a update cluster
+      is required to fix the cluster.
     bareMetalAdminCluster: A BareMetalAdminCluster resource to be passed as
       the request body.
     bareMetalAdminClusterId: Required. User provided identifier that is used
@@ -2712,10 +2730,11 @@ class GkeonpremProjectsLocationsBareMetalAdminClustersCreateRequest(_messages.Me
     validateOnly: Validate the request without actually doing any updates.
   """
 
-  bareMetalAdminCluster = _messages.MessageField('BareMetalAdminCluster', 1)
-  bareMetalAdminClusterId = _messages.StringField(2)
-  parent = _messages.StringField(3, required=True)
-  validateOnly = _messages.BooleanField(4)
+  allowPreflightFailure = _messages.BooleanField(1)
+  bareMetalAdminCluster = _messages.MessageField('BareMetalAdminCluster', 2)
+  bareMetalAdminClusterId = _messages.StringField(3)
+  parent = _messages.StringField(4, required=True)
+  validateOnly = _messages.BooleanField(5)
 
 
 class GkeonpremProjectsLocationsBareMetalAdminClustersEnrollRequest(_messages.Message):
@@ -2769,6 +2788,8 @@ class GkeonpremProjectsLocationsBareMetalAdminClustersGetRequest(_messages.Messa
       `FULL', which returns the complete cluster configuration details.
 
   Fields:
+    allowMissing: Optional. If true, return BareMetal Admin Cluster including
+      the one that only exists in RMS.
     name: Required. Name of the bare metal admin cluster to get. Format: "proj
       ects/{project}/locations/{location}/bareMetalAdminClusters/{bare_metal_a
       dmin_cluster}"
@@ -2797,8 +2818,9 @@ class GkeonpremProjectsLocationsBareMetalAdminClustersGetRequest(_messages.Messa
     BASIC = 1
     FULL = 2
 
-  name = _messages.StringField(1, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 2)
+  allowMissing = _messages.BooleanField(1)
+  name = _messages.StringField(2, required=True)
+  view = _messages.EnumField('ViewValueValuesEnum', 3)
 
 
 class GkeonpremProjectsLocationsBareMetalAdminClustersListRequest(_messages.Message):
@@ -2812,6 +2834,8 @@ class GkeonpremProjectsLocationsBareMetalAdminClustersListRequest(_messages.Mess
       details.
 
   Fields:
+    allowMissing: Optional. If true, return list of BareMetal Admin Clusters
+      including the ones that only exists in RMS.
     pageSize: Requested page size. Server may return fewer items than
       requested. If unspecified, at most 50 clusters will be returned. The
       maximum value is 1000; values above 1000 will be coerced to 1000.
@@ -2844,10 +2868,11 @@ class GkeonpremProjectsLocationsBareMetalAdminClustersListRequest(_messages.Mess
     BASIC = 1
     FULL = 2
 
-  pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(2)
-  parent = _messages.StringField(3, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 4)
+  allowMissing = _messages.BooleanField(1)
+  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(3)
+  parent = _messages.StringField(4, required=True)
+  view = _messages.EnumField('ViewValueValuesEnum', 5)
 
 
 class GkeonpremProjectsLocationsBareMetalAdminClustersOperationsGetRequest(_messages.Message):
@@ -3307,6 +3332,11 @@ class GkeonpremProjectsLocationsBareMetalClustersCreateRequest(_messages.Message
   r"""A GkeonpremProjectsLocationsBareMetalClustersCreateRequest object.
 
   Fields:
+    allowPreflightFailure: Optional. If set to true, CLM will force CCFE to
+      persist the cluster resource in RMS when the creation fails during
+      standalone preflight checks. In that case the subsequent create call
+      will fail with "cluster already exists" error and hence a update cluster
+      is required to fix the cluster.
     bareMetalCluster: A BareMetalCluster resource to be passed as the request
       body.
     bareMetalClusterId: Required. User provided identifier that is used as
@@ -3318,10 +3348,11 @@ class GkeonpremProjectsLocationsBareMetalClustersCreateRequest(_messages.Message
     validateOnly: Validate the request without actually doing any updates.
   """
 
-  bareMetalCluster = _messages.MessageField('BareMetalCluster', 1)
-  bareMetalClusterId = _messages.StringField(2)
-  parent = _messages.StringField(3, required=True)
-  validateOnly = _messages.BooleanField(4)
+  allowPreflightFailure = _messages.BooleanField(1)
+  bareMetalCluster = _messages.MessageField('BareMetalCluster', 2)
+  bareMetalClusterId = _messages.StringField(3)
+  parent = _messages.StringField(4, required=True)
+  validateOnly = _messages.BooleanField(5)
 
 
 class GkeonpremProjectsLocationsBareMetalClustersDeleteRequest(_messages.Message):
@@ -3408,6 +3439,8 @@ class GkeonpremProjectsLocationsBareMetalClustersGetRequest(_messages.Message):
       details.
 
   Fields:
+    allowMissing: Optional. If true, return BareMetal Cluster including the
+      one that only exists in RMS.
     name: Required. Name of the bare metal user cluster to get. Format: "proje
       cts/{project}/locations/{location}/bareMetalClusters/{bare_metal_cluster
       }"
@@ -3436,8 +3469,9 @@ class GkeonpremProjectsLocationsBareMetalClustersGetRequest(_messages.Message):
     BASIC = 1
     FULL = 2
 
-  name = _messages.StringField(1, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 2)
+  allowMissing = _messages.BooleanField(1)
+  name = _messages.StringField(2, required=True)
+  view = _messages.EnumField('ViewValueValuesEnum', 3)
 
 
 class GkeonpremProjectsLocationsBareMetalClustersListRequest(_messages.Message):
@@ -3451,6 +3485,8 @@ class GkeonpremProjectsLocationsBareMetalClustersListRequest(_messages.Message):
       details.
 
   Fields:
+    allowMissing: Optional. If true, return list of BareMetal Clusters
+      including the ones that only exists in RMS.
     filter: A resource filtering expression following
       https://google.aip.dev/160. When non-empty, only resource's whose
       attributes field matches the filter are returned.
@@ -3486,11 +3522,12 @@ class GkeonpremProjectsLocationsBareMetalClustersListRequest(_messages.Message):
     BASIC = 1
     FULL = 2
 
-  filter = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 5)
+  allowMissing = _messages.BooleanField(1)
+  filter = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+  view = _messages.EnumField('ViewValueValuesEnum', 6)
 
 
 class GkeonpremProjectsLocationsBareMetalClustersOperationsGetRequest(_messages.Message):
@@ -3936,6 +3973,8 @@ class GkeonpremProjectsLocationsListRequest(_messages.Message):
   r"""A GkeonpremProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -3946,10 +3985,11 @@ class GkeonpremProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class GkeonpremProjectsLocationsOperationsCancelRequest(_messages.Message):
@@ -4005,6 +4045,11 @@ class GkeonpremProjectsLocationsVmwareAdminClustersCreateRequest(_messages.Messa
   r"""A GkeonpremProjectsLocationsVmwareAdminClustersCreateRequest object.
 
   Fields:
+    allowPreflightFailure: Optional. If set to true, CLM will force CCFE to
+      persist the cluster resource in RMS when the creation fails during
+      standalone preflight checks. In that case the subsequent create call
+      will fail with "cluster already exists" error and hence a update cluster
+      is required to fix the cluster.
     parent: Required. The parent of the project and location where the cluster
       is created in. Format: "projects/{project}/locations/{location}"
     validateOnly: Validate the request without actually doing any updates.
@@ -4016,10 +4061,11 @@ class GkeonpremProjectsLocationsVmwareAdminClustersCreateRequest(_messages.Messa
       /^a-z+[a-z0-9]$/
   """
 
-  parent = _messages.StringField(1, required=True)
-  validateOnly = _messages.BooleanField(2)
-  vmwareAdminCluster = _messages.MessageField('VmwareAdminCluster', 3)
-  vmwareAdminClusterId = _messages.StringField(4)
+  allowPreflightFailure = _messages.BooleanField(1)
+  parent = _messages.StringField(2, required=True)
+  validateOnly = _messages.BooleanField(3)
+  vmwareAdminCluster = _messages.MessageField('VmwareAdminCluster', 4)
+  vmwareAdminClusterId = _messages.StringField(5)
 
 
 class GkeonpremProjectsLocationsVmwareAdminClustersEnrollRequest(_messages.Message):
@@ -4073,6 +4119,8 @@ class GkeonpremProjectsLocationsVmwareAdminClustersGetRequest(_messages.Message)
       `FULL', which returns the complete cluster configuration details.
 
   Fields:
+    allowMissing: Optional. If true, return Vmware Admin Cluster including the
+      one that only exists in RMS.
     name: Required. Name of the VMware admin cluster to be returned. Format: "
       projects/{project}/locations/{location}/vmwareAdminClusters/{vmware_admi
       n_cluster}"
@@ -4101,8 +4149,9 @@ class GkeonpremProjectsLocationsVmwareAdminClustersGetRequest(_messages.Message)
     BASIC = 1
     FULL = 2
 
-  name = _messages.StringField(1, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 2)
+  allowMissing = _messages.BooleanField(1)
+  name = _messages.StringField(2, required=True)
+  view = _messages.EnumField('ViewValueValuesEnum', 3)
 
 
 class GkeonpremProjectsLocationsVmwareAdminClustersListRequest(_messages.Message):
@@ -4116,6 +4165,8 @@ class GkeonpremProjectsLocationsVmwareAdminClustersListRequest(_messages.Message
       details.
 
   Fields:
+    allowMissing: Optional. If true, return list of Vmware Admin Clusters
+      including the ones that only exists in RMS.
     pageSize: Requested page size. Server may return fewer items than
       requested. If unspecified, at most 50 clusters will be returned. The
       maximum value is 1000; values above 1000 will be coerced to 1000.
@@ -4148,10 +4199,11 @@ class GkeonpremProjectsLocationsVmwareAdminClustersListRequest(_messages.Message
     BASIC = 1
     FULL = 2
 
-  pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(2)
-  parent = _messages.StringField(3, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 4)
+  allowMissing = _messages.BooleanField(1)
+  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(3)
+  parent = _messages.StringField(4, required=True)
+  view = _messages.EnumField('ViewValueValuesEnum', 5)
 
 
 class GkeonpremProjectsLocationsVmwareAdminClustersOperationsGetRequest(_messages.Message):
@@ -4249,6 +4301,13 @@ class GkeonpremProjectsLocationsVmwareAdminClustersUnenrollRequest(_messages.Mes
     etag: The current etag of the VMware admin cluster. If an etag is provided
       and does not match the current etag of the cluster, deletion will be
       blocked and an ABORTED error will be returned.
+    ignoreErrors: Optional. If set to true, the unenrollment of a vmware admin
+      cluster resource will succeed even if errors occur during unenrollment.
+      This parameter can be used when you want to unenroll admin cluster
+      resource and the on-prem admin cluster is disconnected / unreachable.
+      WARNING: Using this parameter when your admin cluster still exists may
+      result in a deleted GCP admin cluster but existing resourcelink in on-
+      prem admin cluster and membership.
     name: Required. Name of the VMware admin cluster to be unenrolled. Format:
       "projects/{project}/locations/{location}/vmwareAdminClusters/{cluster}"
     validateOnly: Validate the request without actually doing any updates.
@@ -4256,14 +4315,20 @@ class GkeonpremProjectsLocationsVmwareAdminClustersUnenrollRequest(_messages.Mes
 
   allowMissing = _messages.BooleanField(1)
   etag = _messages.StringField(2)
-  name = _messages.StringField(3, required=True)
-  validateOnly = _messages.BooleanField(4)
+  ignoreErrors = _messages.BooleanField(3)
+  name = _messages.StringField(4, required=True)
+  validateOnly = _messages.BooleanField(5)
 
 
 class GkeonpremProjectsLocationsVmwareClustersCreateRequest(_messages.Message):
   r"""A GkeonpremProjectsLocationsVmwareClustersCreateRequest object.
 
   Fields:
+    allowPreflightFailure: Optional. If set to true, CLM will force CCFE to
+      persist the cluster resource in RMS when the creation fails during
+      standalone preflight checks. In that case the subsequent create call
+      will fail with "cluster already exists" error and hence a update cluster
+      is required to fix the cluster.
     parent: Required. The parent of the project and location where this
       cluster is created in. Format: "projects/{project}/locations/{location}"
     validateOnly: Validate the request without actually doing any updates.
@@ -4273,10 +4338,11 @@ class GkeonpremProjectsLocationsVmwareClustersCreateRequest(_messages.Message):
       RFC-1123 (https://tools.ietf.org/html/rfc1123) format.
   """
 
-  parent = _messages.StringField(1, required=True)
-  validateOnly = _messages.BooleanField(2)
-  vmwareCluster = _messages.MessageField('VmwareCluster', 3)
-  vmwareClusterId = _messages.StringField(4)
+  allowPreflightFailure = _messages.BooleanField(1)
+  parent = _messages.StringField(2, required=True)
+  validateOnly = _messages.BooleanField(3)
+  vmwareCluster = _messages.MessageField('VmwareCluster', 4)
+  vmwareClusterId = _messages.StringField(5)
 
 
 class GkeonpremProjectsLocationsVmwareClustersDeleteRequest(_messages.Message):
@@ -4363,6 +4429,8 @@ class GkeonpremProjectsLocationsVmwareClustersGetRequest(_messages.Message):
       details.
 
   Fields:
+    allowMissing: Optional. If true, return Vmware Cluster including the one
+      that only exists in RMS.
     name: Required. Name of the VMware user cluster to be returned. Format:
       "projects/{project}/locations/{location}/vmwareClusters/{vmware_cluster}
       "
@@ -4390,8 +4458,9 @@ class GkeonpremProjectsLocationsVmwareClustersGetRequest(_messages.Message):
     BASIC = 1
     FULL = 2
 
-  name = _messages.StringField(1, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 2)
+  allowMissing = _messages.BooleanField(1)
+  name = _messages.StringField(2, required=True)
+  view = _messages.EnumField('ViewValueValuesEnum', 3)
 
 
 class GkeonpremProjectsLocationsVmwareClustersListRequest(_messages.Message):
@@ -4404,6 +4473,8 @@ class GkeonpremProjectsLocationsVmwareClustersListRequest(_messages.Message):
       as `FULL', which returns the complete cluster configuration details.
 
   Fields:
+    allowMissing: Optional. If true, return list of Vmware Clusters including
+      the ones that only exists in RMS.
     filter: A resource filtering expression following
       https://google.aip.dev/160. When non-empty, only resource's whose
       attributes field matches the filter are returned.
@@ -4438,11 +4509,12 @@ class GkeonpremProjectsLocationsVmwareClustersListRequest(_messages.Message):
     BASIC = 1
     FULL = 2
 
-  filter = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
-  view = _messages.EnumField('ViewValueValuesEnum', 5)
+  allowMissing = _messages.BooleanField(1)
+  filter = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+  view = _messages.EnumField('ViewValueValuesEnum', 6)
 
 
 class GkeonpremProjectsLocationsVmwareClustersOperationsGetRequest(_messages.Message):
@@ -5620,10 +5692,15 @@ class ResourceStatus(_messages.Message):
       controller creates a cluster or node pool. If the error message persists
       for a longer period of time, it can be used to surface error message to
       indicate real problems requiring user intervention.
+    version: Reflect current version of the resource.
+    versions: Shows the mapping of a given version to the number of machines
+      under this version.
   """
 
   conditions = _messages.MessageField('ResourceCondition', 1, repeated=True)
   errorMessage = _messages.StringField(2)
+  version = _messages.StringField(3)
+  versions = _messages.MessageField('Versions', 4)
 
 
 class SetIamPolicyRequest(_messages.Message):
@@ -5889,6 +5966,31 @@ class ValidationCheckStatus(_messages.Message):
   result = _messages.MessageField('ValidationCheckResult', 1, repeated=True)
 
 
+class Version(_messages.Message):
+  r"""Version describes the number of nodes at a given version under a
+  resource.
+
+  Fields:
+    count: Number of machines under the above version.
+    version: Resource version.
+  """
+
+  count = _messages.IntegerField(1)
+  version = _messages.StringField(2)
+
+
+class Versions(_messages.Message):
+  r"""Versions describes the mapping of a given version to the number of
+  machines under this version.
+
+  Fields:
+    versions: Shows the mapping of a given version to the number of machines
+      under this version.
+  """
+
+  versions = _messages.MessageField('Version', 1, repeated=True)
+
+
 class VmwareAAGConfig(_messages.Message):
   r"""Specifies anti affinity group config for the VMware user cluster.
 
@@ -5981,6 +6083,7 @@ class VmwareAdminCluster(_messages.Message):
     createTime: Output only. The time at which VMware admin cluster was
       created.
     description: A human readable description of this VMware admin cluster.
+    enableAdvancedCluster: Enable advanced cluster.
     endpoint: Output only. The DNS name of VMware admin cluster's API server.
     etag: This checksum is computed by the server based on the value of other
       fields, and may be sent on update and delete requests to ensure the
@@ -6007,6 +6110,7 @@ class VmwareAdminCluster(_messages.Message):
     preparedSecrets: Output only. The VMware admin cluster prepared secrets
       configuration. It should always be enabled by the Central API, instead
       of letting users set it.
+    privateRegistryConfig: Configuration for registry.
     reconciling: Output only. If set, there are currently changes in flight to
       the VMware admin cluster.
     state: Output only. The current state of VMware admin cluster.
@@ -6014,6 +6118,8 @@ class VmwareAdminCluster(_messages.Message):
     uid: Output only. The unique identifier of the VMware admin cluster.
     updateTime: Output only. The time at which VMware admin cluster was last
       updated.
+    validationCheck: Output only. ValidationCheck represents the result of the
+      preflight check job.
     vcenter: The VMware admin cluster VCenter configuration.
   """
 
@@ -6083,23 +6189,26 @@ class VmwareAdminCluster(_messages.Message):
   controlPlaneNode = _messages.MessageField('VmwareAdminControlPlaneNodeConfig', 7)
   createTime = _messages.StringField(8)
   description = _messages.StringField(9)
-  endpoint = _messages.StringField(10)
-  etag = _messages.StringField(11)
-  fleet = _messages.MessageField('Fleet', 12)
-  imageType = _messages.StringField(13)
-  loadBalancer = _messages.MessageField('VmwareAdminLoadBalancerConfig', 14)
-  localName = _messages.StringField(15)
-  name = _messages.StringField(16)
-  networkConfig = _messages.MessageField('VmwareAdminNetworkConfig', 17)
-  onPremVersion = _messages.StringField(18)
-  platformConfig = _messages.MessageField('VmwarePlatformConfig', 19)
-  preparedSecrets = _messages.MessageField('VmwareAdminPreparedSecretsConfig', 20)
-  reconciling = _messages.BooleanField(21)
-  state = _messages.EnumField('StateValueValuesEnum', 22)
-  status = _messages.MessageField('ResourceStatus', 23)
-  uid = _messages.StringField(24)
-  updateTime = _messages.StringField(25)
-  vcenter = _messages.MessageField('VmwareAdminVCenterConfig', 26)
+  enableAdvancedCluster = _messages.BooleanField(10)
+  endpoint = _messages.StringField(11)
+  etag = _messages.StringField(12)
+  fleet = _messages.MessageField('Fleet', 13)
+  imageType = _messages.StringField(14)
+  loadBalancer = _messages.MessageField('VmwareAdminLoadBalancerConfig', 15)
+  localName = _messages.StringField(16)
+  name = _messages.StringField(17)
+  networkConfig = _messages.MessageField('VmwareAdminNetworkConfig', 18)
+  onPremVersion = _messages.StringField(19)
+  platformConfig = _messages.MessageField('VmwarePlatformConfig', 20)
+  preparedSecrets = _messages.MessageField('VmwareAdminPreparedSecretsConfig', 21)
+  privateRegistryConfig = _messages.MessageField('VmwareAdminPrivateRegistryConfig', 22)
+  reconciling = _messages.BooleanField(23)
+  state = _messages.EnumField('StateValueValuesEnum', 24)
+  status = _messages.MessageField('ResourceStatus', 25)
+  uid = _messages.StringField(26)
+  updateTime = _messages.StringField(27)
+  validationCheck = _messages.MessageField('ValidationCheck', 28)
+  vcenter = _messages.MessageField('VmwareAdminVCenterConfig', 29)
 
 
 class VmwareAdminControlPlaneNodeConfig(_messages.Message):
@@ -6195,8 +6304,12 @@ class VmwareAdminMetalLbConfig(_messages.Message):
   r"""VmwareAdminMetalLbConfig represents configuration parameters for a
   MetalLB load balancer. For admin clusters, currently no configurations is
   needed.
+
+  Fields:
+    enabled: Whether MetalLB is enabled.
   """
 
+  enabled = _messages.BooleanField(1)
 
 
 class VmwareAdminNetworkConfig(_messages.Message):
@@ -6236,6 +6349,23 @@ class VmwareAdminPreparedSecretsConfig(_messages.Message):
   """
 
   enabled = _messages.BooleanField(1)
+
+
+class VmwareAdminPrivateRegistryConfig(_messages.Message):
+  r"""VmwareAdminPrivateRegistryConfig represents configuration for admin
+  cluster registry.
+
+  Fields:
+    address: The registry address.
+    caCert: When the container runtime pulls an image from private registry,
+      the registry must prove its identity by presenting a certificate. The
+      registry's certificate is signed by a certificate authority (CA). The
+      container runtime uses the CA's certificate to validate the registry's
+      certificate.
+  """
+
+  address = _messages.StringField(1)
+  caCert = _messages.StringField(2)
 
 
 class VmwareAdminSeesawConfig(_messages.Message):
@@ -6399,6 +6529,7 @@ class VmwareCluster(_messages.Message):
       deleted.
     description: A human readable description of this VMware user cluster.
     disableBundledIngress: Disable bundled ingress.
+    enableAdvancedCluster: Enable advanced cluster.
     enableControlPlaneV2: Enable control plane V2. Default to false.
     endpoint: Output only. The DNS name of VMware user cluster's API server.
     etag: This checksum is computed by the server based on the value of other
@@ -6507,25 +6638,26 @@ class VmwareCluster(_messages.Message):
   deleteTime = _messages.StringField(11)
   description = _messages.StringField(12)
   disableBundledIngress = _messages.BooleanField(13)
-  enableControlPlaneV2 = _messages.BooleanField(14)
-  endpoint = _messages.StringField(15)
-  etag = _messages.StringField(16)
-  fleet = _messages.MessageField('Fleet', 17)
-  loadBalancer = _messages.MessageField('VmwareLoadBalancerConfig', 18)
-  localName = _messages.StringField(19)
-  name = _messages.StringField(20)
-  networkConfig = _messages.MessageField('VmwareNetworkConfig', 21)
-  onPremVersion = _messages.StringField(22)
-  reconciling = _messages.BooleanField(23)
-  state = _messages.EnumField('StateValueValuesEnum', 24)
-  status = _messages.MessageField('ResourceStatus', 25)
-  storage = _messages.MessageField('VmwareStorageConfig', 26)
-  uid = _messages.StringField(27)
-  updateTime = _messages.StringField(28)
-  upgradePolicy = _messages.MessageField('VmwareClusterUpgradePolicy', 29)
-  validationCheck = _messages.MessageField('ValidationCheck', 30)
-  vcenter = _messages.MessageField('VmwareVCenterConfig', 31)
-  vmTrackingEnabled = _messages.BooleanField(32)
+  enableAdvancedCluster = _messages.BooleanField(14)
+  enableControlPlaneV2 = _messages.BooleanField(15)
+  endpoint = _messages.StringField(16)
+  etag = _messages.StringField(17)
+  fleet = _messages.MessageField('Fleet', 18)
+  loadBalancer = _messages.MessageField('VmwareLoadBalancerConfig', 19)
+  localName = _messages.StringField(20)
+  name = _messages.StringField(21)
+  networkConfig = _messages.MessageField('VmwareNetworkConfig', 22)
+  onPremVersion = _messages.StringField(23)
+  reconciling = _messages.BooleanField(24)
+  state = _messages.EnumField('StateValueValuesEnum', 25)
+  status = _messages.MessageField('ResourceStatus', 26)
+  storage = _messages.MessageField('VmwareStorageConfig', 27)
+  uid = _messages.StringField(28)
+  updateTime = _messages.StringField(29)
+  upgradePolicy = _messages.MessageField('VmwareClusterUpgradePolicy', 30)
+  validationCheck = _messages.MessageField('ValidationCheck', 31)
+  vcenter = _messages.MessageField('VmwareVCenterConfig', 32)
+  vmTrackingEnabled = _messages.BooleanField(33)
 
 
 class VmwareClusterUpgradePolicy(_messages.Message):
@@ -6779,8 +6911,8 @@ class VmwareNodeConfig(_messages.Message):
       works for clusters with MetalLB load balancers.
     image: The OS image name in vCenter, only valid when using Windows.
     imageType: Required. The OS image to be used for each node in a node pool.
-      Currently `cos`, `ubuntu`, `ubuntu_containerd` and `windows` are
-      supported.
+      Currently `cos`, `cos_cgv2`, `ubuntu`, `ubuntu_cgv2`,
+      `ubuntu_containerd` and `windows` are supported.
     labels: The map of Kubernetes labels (key/value pairs) to be applied to
       each node. These will added in addition to any default label(s) that
       Kubernetes may apply to the node. In case of conflict in label keys, the
@@ -7167,3 +7299,31 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsBareMetalAdminClustersGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsBareMetalAdminClustersQueryVersionConfigRequest, 'upgradeConfig_clusterName', 'upgradeConfig.clusterName')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsBareMetalClustersGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsBareMetalClustersQueryVersionConfigRequest, 'createConfig_adminClusterMembership', 'createConfig.adminClusterMembership')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsBareMetalClustersQueryVersionConfigRequest, 'createConfig_adminClusterName', 'createConfig.adminClusterName')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsBareMetalClustersQueryVersionConfigRequest, 'upgradeConfig_clusterName', 'upgradeConfig.clusterName')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsBareMetalClustersBareMetalNodePoolsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsBareMetalStandaloneClustersQueryVersionConfigRequest, 'upgradeConfig_clusterName', 'upgradeConfig.clusterName')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsVmwareAdminClustersGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsVmwareClustersGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsVmwareClustersQueryVersionConfigRequest, 'createConfig_adminClusterMembership', 'createConfig.adminClusterMembership')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsVmwareClustersQueryVersionConfigRequest, 'createConfig_adminClusterName', 'createConfig.adminClusterName')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsVmwareClustersQueryVersionConfigRequest, 'upgradeConfig_clusterName', 'upgradeConfig.clusterName')
+encoding.AddCustomJsonFieldMapping(
+    GkeonpremProjectsLocationsVmwareClustersVmwareNodePoolsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

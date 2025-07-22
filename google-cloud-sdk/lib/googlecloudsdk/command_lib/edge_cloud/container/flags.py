@@ -222,6 +222,67 @@ def AddExternalLbIpv6AddressPools(parser):
   )
 
 
+def AddExternalLoadBalancerAddressPools(parser):
+  """Adds external load balancer address pools."""
+
+  external_lb_config_address_pools_help_text = """
+      Path to a YAML/JSON file containing external load balancer pool configuration.
+      External load balancer pools are used for data plane load balancing of
+      local control plane clusters, with custom config such as address pool
+      name. Either --external-lb-ipv4-address-pools or --external-lb-address-pools
+      should be specified.
+      Existing pools cannot be updated after cluster creation; only adding new
+      pools is allowed currently.
+
+      For example,
+
+      ```
+      {
+        "externalLoadBalancerAddressPools": [
+          {
+            "addressPool": "MyLoadBalancerPool",
+            "ipv4Range": ["10.200.0.200-10.200.0.204","10.200.0.300/30"],
+            "avoidBuggyIps": "false",
+            "manualAssign": "true"
+          }
+        ]
+      }
+      ```
+
+      *address_pool*::: Optional. A name that identifies an address pool. If a name is not specified, an auto-generated one will be used.
+
+      *ipv4_range*::: Mandatory. One or more ipv4 address range, each must be specified as one
+      of the following two types of values:
+
+        1. A IPv4 address range, for example, "10.0.0.1-10.0.0.10". A range that contains a single IP (e.g. "10.0.0.1-10.0.0.1") is allowed.
+
+        2. A IPv4 CIDR block, for example, "10.0.0.1/24"
+
+      *ipv6_range*::: Optional. One or more ipv6 address range, each must be specified as one
+      of the following two types of values:
+
+        1. A IPv6 address range, for example, "2001:db8::1-2001:db8::a". A range that contains a single IP (e.g. "2001:db8::1-2001:db8::1") is allowed.
+
+        2. A IPv6 CIDR block, for example, "2001:db8::/120"
+
+      *avoid_buggy_ips*::: Optional. If true, the pool omits IP addresses
+      ending in .0 and .255. Some network hardware drops traffic to these
+      special addresses.
+      Its default value is false.
+
+      *manual_assign*::: Optional. If true, addresses in this pool are not
+      automatically assigned to Kubernetes Services. If true, an IP address in
+      this pool is used only when it is specified explicitly by a service.
+      Its default value is false.
+  """
+
+  parser.add_argument(
+      '--external-lb-address-pools',
+      help=external_lb_config_address_pools_help_text,
+      type=arg_parsers.YAMLFileContents(),
+  )
+
+
 def AddControlPlaneNodeLocation(parser):
   parser.add_argument(
       '--control-plane-node-location',
@@ -267,6 +328,15 @@ def AddControlPlaneSharedDeploymentPolicy(parser):
       deployed on control plane nodes. Instead, it can only be deployed on
       worker nodes. By default, this value is DISALLOWED. The input is case
       insensitive.
+      """,
+  )
+
+
+def AddControlPlaneNodeStorageSchema(parser):
+  parser.add_argument(
+      '--control-plane-node-storage-schema',
+      help="""
+      Name for the storage schema of control plane nodes.
       """,
   )
 
@@ -336,6 +406,17 @@ def AddOfflineCredential(parser):
   )
 
 
+def AddUseGoogleManagedKey(parser):
+  parser.add_argument(
+      '--use-google-managed-key',
+      action='store_true',
+      help="""
+      Once specified, a Google-managed key will be used for the control plane
+      disk encryption.
+      """,
+  )
+
+
 def AddNodeCount(parser, required=True):
   parser.add_argument(
       '--node-count',
@@ -380,16 +461,39 @@ def AddLocalDiskKMSKey(parser):
   )
 
 
-def AddNodeLabels(parser):
+def AddNodeLabelsForCreateNodePool(parser):
   parser.add_argument(
       '--node-labels',
       help="""
       Comma-delimited list of key-value pairs that comprise labels for the
-      individual nodes in the node pool.
+      individual nodes in the node pool. This flag sets the Kubernetes
+      labels, unlike `--labels` which sets the cloud resource labels.
       """,
       metavar='KEY=VALUE',
       type=arg_parsers.ArgDict(),
-      hidden=True,
+  )
+
+
+def AddNodeLabelsForUpdateNodePool(parser):
+  parser.add_argument(
+      '--node-labels',
+      help="""
+      Comma-delimited list of key-value pairs that comprise labels for the
+      individual nodes in the node pool. This flag updates the Kubernetes
+      labels, unlike `--update-labels`, `--remove-labels`, and `--clear-labels`
+      which update the cloud resource labels.
+      """,
+      metavar='KEY=VALUE',
+      type=arg_parsers.ArgDict(),
+  )
+
+
+def AddNodeStorageSchema(parser):
+  parser.add_argument(
+      '--node-storage-schema',
+      help="""
+      Name for the storage schema of worker nodes.
+      """,
   )
 
 
@@ -398,10 +502,66 @@ def AddOfflineRebootTtL(parser):
       '--offline-reboot-ttl',
       type=arg_parsers.Duration(),
       help="""
-      Limits how long a machine can reboot offline(without connection to google)
-      , specified as a duration relative to the machine's most-recent connection
-      to google. The parameter should be a ISO 8601 duration string, for example
-      , "1dT1h2m3s".
+        Specifies the maximum duration a node can reboot offline (without
+        connection to Google) and then rejoin its cluster to resume its
+        designated workloads. This duration is relative to the machine's most
+        recent connection to Google. The maximum allowed duration is 7 days.
+        To disallow offline reboot, set the duration to "PT0S". The parameter
+        should be an ISO 8601 duration string, for example, "P1DT1H2M3S".
       """,
+  )
+
+
+def AddZoneStorageKMSKey(parser):
+  parser.add_argument(
+      '--zone-storage-kms-key',
+      help="""
+      Google Cloud KMS key that will be used to encrypt and decrypt the root key
+      for zone storage encryption. The zone storage KMS key is only
+      applicable to the storage infra cluster. The Edge Container service
+      account for this project must have
+      `roles/cloudkms.cryptoKeyEncrypterDecrypter` on the key.
+
+      If not provided, a Google-managed key will be used by default.
+      """,
+  )
+
+
+def AddContainerDefaultRuntimeClass(parser):
+  parser.add_argument(
+      '--container-default-runtime-class',
+      help="""
+      Name of the default runtime class for containers. It supports two values
+      RUNC and GVISOR.
+      """,
+  )
+
+
+def AddEnableClusterIsolation(parser):
+  parser.add_argument(
+      '--enable-cluster-isolation',
+      help="""
+      If set, the cluster will be created in a secure cluster isolation mode.
+      """,
+  )
+
+
+def AddEnableGoogleGroupAuthentication(parser):
+  parser.add_argument(
+      '--enable-google-group-authentication',
+      action='store_true',
+      help="""
+      If set, the cluster will be configured to use Google Group authentication.
+      """,
+  )
+
+
+def AddEnableRemoteBackup(parser):
+  parser.add_argument(
+      '--enable-remote-backup',
+      action='store_true',
       hidden=True,
+      help="""
+      If set, the cluster will be created with remote backup featureenabled.
+      """,
   )

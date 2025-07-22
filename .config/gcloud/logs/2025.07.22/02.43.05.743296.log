@@ -1,0 +1,11 @@
+2025-07-22 02:43:05,746 DEBUG    root            Loaded Command Group: ['gcloud', 'config']
+2025-07-22 02:43:05,868 DEBUG    root            Loaded Command Group: ['gcloud', 'config', 'set']
+2025-07-22 02:43:05,871 DEBUG    root            Running [gcloud.config.set] with arguments: [SECTION/PROPERTY: "project", VALUE: "elparadisogonzalo-project"]
+2025-07-22 02:43:05,923 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): cloudresourcemanager.googleapis.com:443
+2025-07-22 02:43:07,061 DEBUG    urllib3.connectionpool https://cloudresourcemanager.googleapis.com:443 "GET /v1/projects/elparadisogonzalo-project?alt=json HTTP/11" 200 None
+2025-07-22 02:43:07,067 INFO     ___FILE_ONLY___ Updated property [core/project].
+
+2025-07-22 02:43:07,069 DEBUG    root            Chosen display Format:default
+2025-07-22 02:43:07,071 INFO     root            Display format: "default"
+2025-07-22 02:43:07,071 DEBUG    root            SDK update checks are disabled.
+2025-07-22 02:43:07,080 DEBUG    root            Metrics reporting process started...

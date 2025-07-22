@@ -37,16 +37,40 @@ def _TransformAppProfileToRoutingInfo(app_profile):
   return ''
 
 
-def _TransformAppProfileToFailoverRadius(app_profile):
-  """Extracts the failover radius from the app profile."""
-  if 'multiClusterRoutingUseAny' in app_profile:
-    if 'failoverRadius' in app_profile['multiClusterRoutingUseAny']:
-      return app_profile['multiClusterRoutingUseAny']['failoverRadius']
-  return ''
+def _TransformAppProfileToIsolationMode(app_profile):
+  """Extracts the isolation mode from the app profile."""
+  if 'dataBoostIsolationReadOnly' in app_profile:
+    return 'DATA_BOOST_ISOLATION_READ_ONLY'
+  return 'STANDARD_ISOLATION'
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
-class ListAppProfiles(base.ListCommand):
+def _TransformAppProfileToStandardIsolationPriority(app_profile):
+  """Extracts the Data Boot compute billing owner from the app profile."""
+  if 'dataBoostIsolationReadOnly' in app_profile:
+    return ''
+  elif (
+      'standardIsolation' in app_profile
+      and 'priority' in app_profile['standardIsolation']
+  ):
+    return app_profile['standardIsolation']['priority']
+  else:
+    return 'PRIORITY_HIGH'
+
+
+def _TransformAppProfileToDataBoostComputeBillingOwner(app_profile):
+  """Extracts the Data Boot compute billing owner from the app profile."""
+  if (
+      'dataBoostIsolationReadOnly' in app_profile
+      and 'computeBillingOwner' in app_profile['dataBoostIsolationReadOnly']
+  ):
+    return app_profile['dataBoostIsolationReadOnly']['computeBillingOwner']
+  else:
+    return ''
+
+
+@base.DefaultUniverseOnly
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class ListAppProfilesGA(base.ListCommand):
   """List Bigtable app profiles."""
 
   detailed_help = {
@@ -92,8 +116,8 @@ class ListAppProfiles(base.ListCommand):
     return app_profiles.List(instance_ref)
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class ListAppProfilesAlpha(ListAppProfiles):
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class ListAppProfilesBeta(ListAppProfilesGA):
   """List Bigtable app profiles."""
 
   @staticmethod
@@ -102,7 +126,13 @@ class ListAppProfilesAlpha(ListAppProfiles):
 
     parser.display_info.AddTransforms({
         'routingInfo': _TransformAppProfileToRoutingInfo,
-        'failoverRadius': _TransformAppProfileToFailoverRadius,
+        'isolationMode': _TransformAppProfileToIsolationMode,
+        'standardIsolationPriority': (
+            _TransformAppProfileToStandardIsolationPriority
+        ),
+        'dataBoostComputeBillingOwner': (
+            _TransformAppProfileToDataBoostComputeBillingOwner
+        ),
     })
 
     # ROUTING is a oneof SingleClusterRouting, MultiClusterRoutingUseAny.
@@ -113,6 +143,42 @@ class ListAppProfilesAlpha(ListAppProfiles):
             description:wrap,
             routingInfo():wrap:label=ROUTING,
             singleClusterRouting.allowTransactionalWrites.yesno("Yes"):label=TRANSACTIONAL_WRITES,
-            failoverRadius():label=FAILOVER_RADIUS
+            isolationMode():label=ISOLATION_MODE,
+            standardIsolationPriority():label=STANDARD_ISOLATION_PRIORITY,
+            dataBoostComputeBillingOwner():label=DATA_BOOST_COMPUTE_BILLING_OWNER
+          )
+        """)
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class ListAppProfilesAlpha(ListAppProfilesBeta):
+  """List Bigtable app profiles."""
+
+  @staticmethod
+  def Args(parser):
+    arguments.AddInstanceResourceArg(parser, 'to list app profiles for')
+
+    parser.display_info.AddTransforms({
+        'routingInfo': _TransformAppProfileToRoutingInfo,
+        'isolationMode': _TransformAppProfileToIsolationMode,
+        'standardIsolationPriority': (
+            _TransformAppProfileToStandardIsolationPriority
+        ),
+        'dataBoostComputeBillingOwner': (
+            _TransformAppProfileToDataBoostComputeBillingOwner
+        ),
+    })
+
+    # ROUTING is a oneof SingleClusterRouting, MultiClusterRoutingUseAny.
+    # Combine into a single ROUTING column in the table.
+    parser.display_info.AddFormat("""
+          table(
+            name.basename():sort=1,
+            description:wrap,
+            routingInfo():wrap:label=ROUTING,
+            singleClusterRouting.allowTransactionalWrites.yesno("Yes"):label=TRANSACTIONAL_WRITES,
+            isolationMode():label=ISOLATION_MODE,
+            standardIsolationPriority():label=STANDARD_ISOLATION_PRIORITY,
+            dataBoostComputeBillingOwner():label=DATA_BOOST_COMPUTE_BILLING_OWNER
           )
         """)

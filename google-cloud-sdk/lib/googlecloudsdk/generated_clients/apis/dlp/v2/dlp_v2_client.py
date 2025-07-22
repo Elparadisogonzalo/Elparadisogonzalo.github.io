@@ -44,12 +44,18 @@ class DlpV2(base_api.BaseApiClient):
     self.locations = self.LocationsService(self)
     self.organizations_deidentifyTemplates = self.OrganizationsDeidentifyTemplatesService(self)
     self.organizations_inspectTemplates = self.OrganizationsInspectTemplatesService(self)
+    self.organizations_locations_columnDataProfiles = self.OrganizationsLocationsColumnDataProfilesService(self)
+    self.organizations_locations_connections = self.OrganizationsLocationsConnectionsService(self)
     self.organizations_locations_deidentifyTemplates = self.OrganizationsLocationsDeidentifyTemplatesService(self)
     self.organizations_locations_discoveryConfigs = self.OrganizationsLocationsDiscoveryConfigsService(self)
     self.organizations_locations_dlpJobs = self.OrganizationsLocationsDlpJobsService(self)
+    self.organizations_locations_fileStoreDataProfiles = self.OrganizationsLocationsFileStoreDataProfilesService(self)
+    self.organizations_locations_infoTypes = self.OrganizationsLocationsInfoTypesService(self)
     self.organizations_locations_inspectTemplates = self.OrganizationsLocationsInspectTemplatesService(self)
     self.organizations_locations_jobTriggers = self.OrganizationsLocationsJobTriggersService(self)
+    self.organizations_locations_projectDataProfiles = self.OrganizationsLocationsProjectDataProfilesService(self)
     self.organizations_locations_storedInfoTypes = self.OrganizationsLocationsStoredInfoTypesService(self)
+    self.organizations_locations_tableDataProfiles = self.OrganizationsLocationsTableDataProfilesService(self)
     self.organizations_locations = self.OrganizationsLocationsService(self)
     self.organizations_storedInfoTypes = self.OrganizationsStoredInfoTypesService(self)
     self.organizations = self.OrganizationsService(self)
@@ -59,14 +65,20 @@ class DlpV2(base_api.BaseApiClient):
     self.projects_image = self.ProjectsImageService(self)
     self.projects_inspectTemplates = self.ProjectsInspectTemplatesService(self)
     self.projects_jobTriggers = self.ProjectsJobTriggersService(self)
+    self.projects_locations_columnDataProfiles = self.ProjectsLocationsColumnDataProfilesService(self)
+    self.projects_locations_connections = self.ProjectsLocationsConnectionsService(self)
     self.projects_locations_content = self.ProjectsLocationsContentService(self)
     self.projects_locations_deidentifyTemplates = self.ProjectsLocationsDeidentifyTemplatesService(self)
     self.projects_locations_discoveryConfigs = self.ProjectsLocationsDiscoveryConfigsService(self)
     self.projects_locations_dlpJobs = self.ProjectsLocationsDlpJobsService(self)
+    self.projects_locations_fileStoreDataProfiles = self.ProjectsLocationsFileStoreDataProfilesService(self)
     self.projects_locations_image = self.ProjectsLocationsImageService(self)
+    self.projects_locations_infoTypes = self.ProjectsLocationsInfoTypesService(self)
     self.projects_locations_inspectTemplates = self.ProjectsLocationsInspectTemplatesService(self)
     self.projects_locations_jobTriggers = self.ProjectsLocationsJobTriggersService(self)
+    self.projects_locations_projectDataProfiles = self.ProjectsLocationsProjectDataProfilesService(self)
     self.projects_locations_storedInfoTypes = self.ProjectsLocationsStoredInfoTypesService(self)
+    self.projects_locations_tableDataProfiles = self.ProjectsLocationsTableDataProfilesService(self)
     self.projects_locations = self.ProjectsLocationsService(self)
     self.projects_storedInfoTypes = self.ProjectsStoredInfoTypesService(self)
     self.projects = self.ProjectsService(self)
@@ -82,7 +94,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def List(self, request, global_params=None):
-      r"""Returns a list of the sensitive information types that DLP API supports. See https://cloud.google.com/dlp/docs/infotypes-reference to learn more.
+      r"""Returns a list of the sensitive information types that the DLP API supports. See https://cloud.google.com/sensitive-data-protection/docs/infotypes-reference to learn more.
 
       Args:
         request: (DlpInfoTypesListRequest) input message
@@ -118,7 +130,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def List(self, request, global_params=None):
-      r"""Returns a list of the sensitive information types that DLP API supports. See https://cloud.google.com/dlp/docs/infotypes-reference to learn more.
+      r"""Returns a list of the sensitive information types that the DLP API supports. See https://cloud.google.com/sensitive-data-protection/docs/infotypes-reference to learn more.
 
       Args:
         request: (DlpLocationsInfoTypesListRequest) input message
@@ -165,7 +177,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a DeidentifyTemplate for reusing frequently used configuration for de-identifying content, images, and storage. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Creates a DeidentifyTemplate for reusing frequently used configuration for de-identifying content, images, and storage. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsDeidentifyTemplatesCreateRequest) input message
@@ -192,7 +204,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Deletes a DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsDeidentifyTemplatesDeleteRequest) input message
@@ -219,7 +231,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Gets a DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsDeidentifyTemplatesGetRequest) input message
@@ -246,7 +258,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists DeidentifyTemplates. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Lists DeidentifyTemplates. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsDeidentifyTemplatesListRequest) input message
@@ -273,7 +285,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Updates the DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsDeidentifyTemplatesPatchRequest) input message
@@ -310,7 +322,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates an InspectTemplate for reusing frequently used configuration for inspecting content, images, and storage. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Creates an InspectTemplate for reusing frequently used configuration for inspecting content, images, and storage. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsInspectTemplatesCreateRequest) input message
@@ -337,7 +349,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes an InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Deletes an InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsInspectTemplatesDeleteRequest) input message
@@ -364,7 +376,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets an InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Gets an InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsInspectTemplatesGetRequest) input message
@@ -391,7 +403,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists InspectTemplates. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Lists InspectTemplates. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsInspectTemplatesListRequest) input message
@@ -418,7 +430,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Updates the InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsInspectTemplatesPatchRequest) input message
@@ -444,6 +456,242 @@ class DlpV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class OrganizationsLocationsColumnDataProfilesService(base_api.BaseApiService):
+    """Service class for the organizations_locations_columnDataProfiles resource."""
+
+    _NAME = 'organizations_locations_columnDataProfiles'
+
+    def __init__(self, client):
+      super(DlpV2.OrganizationsLocationsColumnDataProfilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets a column data profile.
+
+      Args:
+        request: (DlpOrganizationsLocationsColumnDataProfilesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ColumnDataProfile) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/columnDataProfiles/{columnDataProfilesId}',
+        http_method='GET',
+        method_id='dlp.organizations.locations.columnDataProfiles.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsColumnDataProfilesGetRequest',
+        response_type_name='GooglePrivacyDlpV2ColumnDataProfile',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists column data profiles for an organization.
+
+      Args:
+        request: (DlpOrganizationsLocationsColumnDataProfilesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListColumnDataProfilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/columnDataProfiles',
+        http_method='GET',
+        method_id='dlp.organizations.locations.columnDataProfiles.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/columnDataProfiles',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsColumnDataProfilesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListColumnDataProfilesResponse',
+        supports_download=False,
+    )
+
+  class OrganizationsLocationsConnectionsService(base_api.BaseApiService):
+    """Service class for the organizations_locations_connections resource."""
+
+    _NAME = 'organizations_locations_connections'
+
+    def __init__(self, client):
+      super(DlpV2.OrganizationsLocationsConnectionsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Create a Connection to an external data source.
+
+      Args:
+        request: (DlpOrganizationsLocationsConnectionsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2Connection) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/connections',
+        http_method='POST',
+        method_id='dlp.organizations.locations.connections.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=[],
+        relative_path='v2/{+parent}/connections',
+        request_field='googlePrivacyDlpV2CreateConnectionRequest',
+        request_type_name='DlpOrganizationsLocationsConnectionsCreateRequest',
+        response_type_name='GooglePrivacyDlpV2Connection',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Delete a Connection.
+
+      Args:
+        request: (DlpOrganizationsLocationsConnectionsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleProtobufEmpty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/connections/{connectionsId}',
+        http_method='DELETE',
+        method_id='dlp.organizations.locations.connections.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsConnectionsDeleteRequest',
+        response_type_name='GoogleProtobufEmpty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Get a Connection by name.
+
+      Args:
+        request: (DlpOrganizationsLocationsConnectionsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2Connection) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/connections/{connectionsId}',
+        http_method='GET',
+        method_id='dlp.organizations.locations.connections.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsConnectionsGetRequest',
+        response_type_name='GooglePrivacyDlpV2Connection',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists Connections in a parent. Use SearchConnections to see all connections within an organization.
+
+      Args:
+        request: (DlpOrganizationsLocationsConnectionsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListConnectionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/connections',
+        http_method='GET',
+        method_id='dlp.organizations.locations.connections.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/connections',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsConnectionsListRequest',
+        response_type_name='GooglePrivacyDlpV2ListConnectionsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Update a Connection.
+
+      Args:
+        request: (DlpOrganizationsLocationsConnectionsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2Connection) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/connections/{connectionsId}',
+        http_method='PATCH',
+        method_id='dlp.organizations.locations.connections.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='googlePrivacyDlpV2UpdateConnectionRequest',
+        request_type_name='DlpOrganizationsLocationsConnectionsPatchRequest',
+        response_type_name='GooglePrivacyDlpV2Connection',
+        supports_download=False,
+    )
+
+    def Search(self, request, global_params=None):
+      r"""Searches for Connections in a parent.
+
+      Args:
+        request: (DlpOrganizationsLocationsConnectionsSearchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2SearchConnectionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('Search')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Search.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/connections:search',
+        http_method='GET',
+        method_id='dlp.organizations.locations.connections.search',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/connections:search',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsConnectionsSearchRequest',
+        response_type_name='GooglePrivacyDlpV2SearchConnectionsResponse',
+        supports_download=False,
+    )
+
   class OrganizationsLocationsDeidentifyTemplatesService(base_api.BaseApiService):
     """Service class for the organizations_locations_deidentifyTemplates resource."""
 
@@ -455,7 +703,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a DeidentifyTemplate for reusing frequently used configuration for de-identifying content, images, and storage. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Creates a DeidentifyTemplate for reusing frequently used configuration for de-identifying content, images, and storage. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsDeidentifyTemplatesCreateRequest) input message
@@ -482,7 +730,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Deletes a DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsDeidentifyTemplatesDeleteRequest) input message
@@ -509,7 +757,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Gets a DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsDeidentifyTemplatesGetRequest) input message
@@ -536,7 +784,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists DeidentifyTemplates. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Lists DeidentifyTemplates. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsDeidentifyTemplatesListRequest) input message
@@ -563,7 +811,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Updates the DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsDeidentifyTemplatesPatchRequest) input message
@@ -745,7 +993,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def List(self, request, global_params=None):
-      r"""Lists DlpJobs that match the specified filter in the request. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.
+      r"""Lists DlpJobs that match the specified filter in the request. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsDlpJobsListRequest) input message
@@ -771,6 +1019,134 @@ class DlpV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class OrganizationsLocationsFileStoreDataProfilesService(base_api.BaseApiService):
+    """Service class for the organizations_locations_fileStoreDataProfiles resource."""
+
+    _NAME = 'organizations_locations_fileStoreDataProfiles'
+
+    def __init__(self, client):
+      super(DlpV2.OrganizationsLocationsFileStoreDataProfilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Delete(self, request, global_params=None):
+      r"""Delete a FileStoreDataProfile. Will not prevent the profile from being regenerated if the resource is still included in a discovery configuration.
+
+      Args:
+        request: (DlpOrganizationsLocationsFileStoreDataProfilesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleProtobufEmpty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/fileStoreDataProfiles/{fileStoreDataProfilesId}',
+        http_method='DELETE',
+        method_id='dlp.organizations.locations.fileStoreDataProfiles.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsFileStoreDataProfilesDeleteRequest',
+        response_type_name='GoogleProtobufEmpty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a file store data profile.
+
+      Args:
+        request: (DlpOrganizationsLocationsFileStoreDataProfilesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2FileStoreDataProfile) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/fileStoreDataProfiles/{fileStoreDataProfilesId}',
+        http_method='GET',
+        method_id='dlp.organizations.locations.fileStoreDataProfiles.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsFileStoreDataProfilesGetRequest',
+        response_type_name='GooglePrivacyDlpV2FileStoreDataProfile',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists file store data profiles for an organization.
+
+      Args:
+        request: (DlpOrganizationsLocationsFileStoreDataProfilesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListFileStoreDataProfilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/fileStoreDataProfiles',
+        http_method='GET',
+        method_id='dlp.organizations.locations.fileStoreDataProfiles.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/fileStoreDataProfiles',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsFileStoreDataProfilesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListFileStoreDataProfilesResponse',
+        supports_download=False,
+    )
+
+  class OrganizationsLocationsInfoTypesService(base_api.BaseApiService):
+    """Service class for the organizations_locations_infoTypes resource."""
+
+    _NAME = 'organizations_locations_infoTypes'
+
+    def __init__(self, client):
+      super(DlpV2.OrganizationsLocationsInfoTypesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def List(self, request, global_params=None):
+      r"""Returns a list of the sensitive information types that the DLP API supports. See https://cloud.google.com/sensitive-data-protection/docs/infotypes-reference to learn more.
+
+      Args:
+        request: (DlpOrganizationsLocationsInfoTypesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListInfoTypesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/infoTypes',
+        http_method='GET',
+        method_id='dlp.organizations.locations.infoTypes.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'languageCode', 'locationId'],
+        relative_path='v2/{+parent}/infoTypes',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsInfoTypesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListInfoTypesResponse',
+        supports_download=False,
+    )
+
   class OrganizationsLocationsInspectTemplatesService(base_api.BaseApiService):
     """Service class for the organizations_locations_inspectTemplates resource."""
 
@@ -782,7 +1158,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates an InspectTemplate for reusing frequently used configuration for inspecting content, images, and storage. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Creates an InspectTemplate for reusing frequently used configuration for inspecting content, images, and storage. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsInspectTemplatesCreateRequest) input message
@@ -809,7 +1185,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes an InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Deletes an InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsInspectTemplatesDeleteRequest) input message
@@ -836,7 +1212,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets an InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Gets an InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsInspectTemplatesGetRequest) input message
@@ -863,7 +1239,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists InspectTemplates. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Lists InspectTemplates. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsInspectTemplatesListRequest) input message
@@ -890,7 +1266,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Updates the InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsInspectTemplatesPatchRequest) input message
@@ -927,7 +1303,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a job trigger to run DLP actions such as scanning storage for sensitive information on a set schedule. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Creates a job trigger to run DLP actions such as scanning storage for sensitive information on a set schedule. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsJobTriggersCreateRequest) input message
@@ -954,7 +1330,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a job trigger. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Deletes a job trigger. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsJobTriggersDeleteRequest) input message
@@ -981,7 +1357,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a job trigger. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Gets a job trigger. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsJobTriggersGetRequest) input message
@@ -1008,7 +1384,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists job triggers. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Lists job triggers. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsJobTriggersListRequest) input message
@@ -1035,7 +1411,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates a job trigger. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Updates a job trigger. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsJobTriggersPatchRequest) input message
@@ -1061,6 +1437,70 @@ class DlpV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class OrganizationsLocationsProjectDataProfilesService(base_api.BaseApiService):
+    """Service class for the organizations_locations_projectDataProfiles resource."""
+
+    _NAME = 'organizations_locations_projectDataProfiles'
+
+    def __init__(self, client):
+      super(DlpV2.OrganizationsLocationsProjectDataProfilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets a project data profile.
+
+      Args:
+        request: (DlpOrganizationsLocationsProjectDataProfilesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ProjectDataProfile) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/projectDataProfiles/{projectDataProfilesId}',
+        http_method='GET',
+        method_id='dlp.organizations.locations.projectDataProfiles.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsProjectDataProfilesGetRequest',
+        response_type_name='GooglePrivacyDlpV2ProjectDataProfile',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists project data profiles for an organization.
+
+      Args:
+        request: (DlpOrganizationsLocationsProjectDataProfilesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListProjectDataProfilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/projectDataProfiles',
+        http_method='GET',
+        method_id='dlp.organizations.locations.projectDataProfiles.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/projectDataProfiles',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsProjectDataProfilesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListProjectDataProfilesResponse',
+        supports_download=False,
+    )
+
   class OrganizationsLocationsStoredInfoTypesService(base_api.BaseApiService):
     """Service class for the organizations_locations_storedInfoTypes resource."""
 
@@ -1072,7 +1512,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a pre-built stored infoType to be used for inspection. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Creates a pre-built stored infoType to be used for inspection. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsStoredInfoTypesCreateRequest) input message
@@ -1099,7 +1539,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a stored infoType. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Deletes a stored infoType. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsStoredInfoTypesDeleteRequest) input message
@@ -1126,7 +1566,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a stored infoType. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Gets a stored infoType. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsStoredInfoTypesGetRequest) input message
@@ -1153,7 +1593,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists stored infoTypes. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Lists stored infoTypes. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsStoredInfoTypesListRequest) input message
@@ -1180,7 +1620,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the stored infoType by creating a new version. The existing version will continue to be used until the new version is ready. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Updates the stored infoType by creating a new version. The existing version will continue to be used until the new version is ready. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsLocationsStoredInfoTypesPatchRequest) input message
@@ -1206,6 +1646,97 @@ class DlpV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class OrganizationsLocationsTableDataProfilesService(base_api.BaseApiService):
+    """Service class for the organizations_locations_tableDataProfiles resource."""
+
+    _NAME = 'organizations_locations_tableDataProfiles'
+
+    def __init__(self, client):
+      super(DlpV2.OrganizationsLocationsTableDataProfilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Delete(self, request, global_params=None):
+      r"""Delete a TableDataProfile. Will not prevent the profile from being regenerated if the table is still included in a discovery configuration.
+
+      Args:
+        request: (DlpOrganizationsLocationsTableDataProfilesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleProtobufEmpty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/tableDataProfiles/{tableDataProfilesId}',
+        http_method='DELETE',
+        method_id='dlp.organizations.locations.tableDataProfiles.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsTableDataProfilesDeleteRequest',
+        response_type_name='GoogleProtobufEmpty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a table data profile.
+
+      Args:
+        request: (DlpOrganizationsLocationsTableDataProfilesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2TableDataProfile) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/tableDataProfiles/{tableDataProfilesId}',
+        http_method='GET',
+        method_id='dlp.organizations.locations.tableDataProfiles.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsTableDataProfilesGetRequest',
+        response_type_name='GooglePrivacyDlpV2TableDataProfile',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists table data profiles for an organization.
+
+      Args:
+        request: (DlpOrganizationsLocationsTableDataProfilesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListTableDataProfilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/organizations/{organizationsId}/locations/{locationsId}/tableDataProfiles',
+        http_method='GET',
+        method_id='dlp.organizations.locations.tableDataProfiles.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/tableDataProfiles',
+        request_field='',
+        request_type_name='DlpOrganizationsLocationsTableDataProfilesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListTableDataProfilesResponse',
+        supports_download=False,
+    )
+
   class OrganizationsLocationsService(base_api.BaseApiService):
     """Service class for the organizations_locations resource."""
 
@@ -1227,7 +1758,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a pre-built stored infoType to be used for inspection. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Creates a pre-built stored infoType to be used for inspection. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsStoredInfoTypesCreateRequest) input message
@@ -1254,7 +1785,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a stored infoType. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Deletes a stored infoType. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsStoredInfoTypesDeleteRequest) input message
@@ -1281,7 +1812,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a stored infoType. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Gets a stored infoType. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsStoredInfoTypesGetRequest) input message
@@ -1308,7 +1839,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists stored infoTypes. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Lists stored infoTypes. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsStoredInfoTypesListRequest) input message
@@ -1335,7 +1866,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the stored infoType by creating a new version. The existing version will continue to be used until the new version is ready. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Updates the stored infoType by creating a new version. The existing version will continue to be used until the new version is ready. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpOrganizationsStoredInfoTypesPatchRequest) input message
@@ -1382,7 +1913,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Deidentify(self, request, global_params=None):
-      r"""De-identifies potentially sensitive info from a ContentItem. This method has limits on input size and output size. See https://cloud.google.com/dlp/docs/deidentify-sensitive-data to learn more. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
+      r"""De-identifies potentially sensitive info from a ContentItem. This method has limits on input size and output size. See https://cloud.google.com/sensitive-data-protection/docs/deidentify-sensitive-data to learn more. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
 
       Args:
         request: (DlpProjectsContentDeidentifyRequest) input message
@@ -1409,7 +1940,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Inspect(self, request, global_params=None):
-      r"""Finds potentially sensitive info in content. This method has limits on input size, processing time, and output size. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated. For how to guides, see https://cloud.google.com/dlp/docs/inspecting-images and https://cloud.google.com/dlp/docs/inspecting-text,.
+      r"""Finds potentially sensitive info in content. This method has limits on input size, processing time, and output size. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated. For how to guides, see https://cloud.google.com/sensitive-data-protection/docs/inspecting-images and https://cloud.google.com/sensitive-data-protection/docs/inspecting-text,.
 
       Args:
         request: (DlpProjectsContentInspectRequest) input message
@@ -1436,7 +1967,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Reidentify(self, request, global_params=None):
-      r"""Re-identifies content that has been de-identified. See https://cloud.google.com/dlp/docs/pseudonymization#re-identification_in_free_text_code_example to learn more.
+      r"""Re-identifies content that has been de-identified. See https://cloud.google.com/sensitive-data-protection/docs/pseudonymization#re-identification_in_free_text_code_example to learn more.
 
       Args:
         request: (DlpProjectsContentReidentifyRequest) input message
@@ -1473,7 +2004,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a DeidentifyTemplate for reusing frequently used configuration for de-identifying content, images, and storage. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Creates a DeidentifyTemplate for reusing frequently used configuration for de-identifying content, images, and storage. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsDeidentifyTemplatesCreateRequest) input message
@@ -1500,7 +2031,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Deletes a DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsDeidentifyTemplatesDeleteRequest) input message
@@ -1527,7 +2058,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Gets a DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsDeidentifyTemplatesGetRequest) input message
@@ -1554,7 +2085,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists DeidentifyTemplates. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Lists DeidentifyTemplates. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsDeidentifyTemplatesListRequest) input message
@@ -1581,7 +2112,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Updates the DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsDeidentifyTemplatesPatchRequest) input message
@@ -1618,7 +2149,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Cancel(self, request, global_params=None):
-      r"""Starts asynchronous cancellation on a long-running DlpJob. The server makes a best effort to cancel the DlpJob, but success is not guaranteed. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.
+      r"""Starts asynchronous cancellation on a long-running DlpJob. The server makes a best effort to cancel the DlpJob, but success is not guaranteed. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more.
 
       Args:
         request: (DlpProjectsDlpJobsCancelRequest) input message
@@ -1645,7 +2176,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Create(self, request, global_params=None):
-      r"""Creates a new job to inspect storage or calculate risk metrics. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more. When no InfoTypes or CustomInfoTypes are specified in inspect jobs, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
+      r"""Creates a new job to inspect storage or calculate risk metrics. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more. When no InfoTypes or CustomInfoTypes are specified in inspect jobs, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
 
       Args:
         request: (DlpProjectsDlpJobsCreateRequest) input message
@@ -1672,7 +2203,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a long-running DlpJob. This method indicates that the client is no longer interested in the DlpJob result. The job will be canceled if possible. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.
+      r"""Deletes a long-running DlpJob. This method indicates that the client is no longer interested in the DlpJob result. The job will be canceled if possible. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more.
 
       Args:
         request: (DlpProjectsDlpJobsDeleteRequest) input message
@@ -1699,7 +2230,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets the latest state of a long-running DlpJob. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.
+      r"""Gets the latest state of a long-running DlpJob. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more.
 
       Args:
         request: (DlpProjectsDlpJobsGetRequest) input message
@@ -1726,7 +2257,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists DlpJobs that match the specified filter in the request. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.
+      r"""Lists DlpJobs that match the specified filter in the request. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more.
 
       Args:
         request: (DlpProjectsDlpJobsListRequest) input message
@@ -1763,7 +2294,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Redact(self, request, global_params=None):
-      r"""Redacts potentially sensitive info from an image. This method has limits on input size, processing time, and output size. See https://cloud.google.com/dlp/docs/redacting-sensitive-data-images to learn more. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
+      r"""Redacts potentially sensitive info from an image. This method has limits on input size, processing time, and output size. See https://cloud.google.com/sensitive-data-protection/docs/redacting-sensitive-data-images to learn more. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated. Only the first frame of each multiframe image is redacted. Metadata and other frames are omitted in the response.
 
       Args:
         request: (DlpProjectsImageRedactRequest) input message
@@ -1800,7 +2331,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates an InspectTemplate for reusing frequently used configuration for inspecting content, images, and storage. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Creates an InspectTemplate for reusing frequently used configuration for inspecting content, images, and storage. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsInspectTemplatesCreateRequest) input message
@@ -1827,7 +2358,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes an InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Deletes an InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsInspectTemplatesDeleteRequest) input message
@@ -1854,7 +2385,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets an InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Gets an InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsInspectTemplatesGetRequest) input message
@@ -1881,7 +2412,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists InspectTemplates. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Lists InspectTemplates. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsInspectTemplatesListRequest) input message
@@ -1908,7 +2439,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Updates the InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsInspectTemplatesPatchRequest) input message
@@ -1972,7 +2503,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Create(self, request, global_params=None):
-      r"""Creates a job trigger to run DLP actions such as scanning storage for sensitive information on a set schedule. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Creates a job trigger to run DLP actions such as scanning storage for sensitive information on a set schedule. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsJobTriggersCreateRequest) input message
@@ -1999,7 +2530,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a job trigger. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Deletes a job trigger. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsJobTriggersDeleteRequest) input message
@@ -2026,7 +2557,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a job trigger. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Gets a job trigger. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsJobTriggersGetRequest) input message
@@ -2053,7 +2584,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists job triggers. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Lists job triggers. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsJobTriggersListRequest) input message
@@ -2080,7 +2611,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates a job trigger. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Updates a job trigger. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsJobTriggersPatchRequest) input message
@@ -2106,6 +2637,242 @@ class DlpV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsColumnDataProfilesService(base_api.BaseApiService):
+    """Service class for the projects_locations_columnDataProfiles resource."""
+
+    _NAME = 'projects_locations_columnDataProfiles'
+
+    def __init__(self, client):
+      super(DlpV2.ProjectsLocationsColumnDataProfilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets a column data profile.
+
+      Args:
+        request: (DlpProjectsLocationsColumnDataProfilesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ColumnDataProfile) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/columnDataProfiles/{columnDataProfilesId}',
+        http_method='GET',
+        method_id='dlp.projects.locations.columnDataProfiles.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpProjectsLocationsColumnDataProfilesGetRequest',
+        response_type_name='GooglePrivacyDlpV2ColumnDataProfile',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists column data profiles for an organization.
+
+      Args:
+        request: (DlpProjectsLocationsColumnDataProfilesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListColumnDataProfilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/columnDataProfiles',
+        http_method='GET',
+        method_id='dlp.projects.locations.columnDataProfiles.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/columnDataProfiles',
+        request_field='',
+        request_type_name='DlpProjectsLocationsColumnDataProfilesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListColumnDataProfilesResponse',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsConnectionsService(base_api.BaseApiService):
+    """Service class for the projects_locations_connections resource."""
+
+    _NAME = 'projects_locations_connections'
+
+    def __init__(self, client):
+      super(DlpV2.ProjectsLocationsConnectionsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Create a Connection to an external data source.
+
+      Args:
+        request: (DlpProjectsLocationsConnectionsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2Connection) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/connections',
+        http_method='POST',
+        method_id='dlp.projects.locations.connections.create',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=[],
+        relative_path='v2/{+parent}/connections',
+        request_field='googlePrivacyDlpV2CreateConnectionRequest',
+        request_type_name='DlpProjectsLocationsConnectionsCreateRequest',
+        response_type_name='GooglePrivacyDlpV2Connection',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Delete a Connection.
+
+      Args:
+        request: (DlpProjectsLocationsConnectionsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleProtobufEmpty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/connections/{connectionsId}',
+        http_method='DELETE',
+        method_id='dlp.projects.locations.connections.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpProjectsLocationsConnectionsDeleteRequest',
+        response_type_name='GoogleProtobufEmpty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Get a Connection by name.
+
+      Args:
+        request: (DlpProjectsLocationsConnectionsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2Connection) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/connections/{connectionsId}',
+        http_method='GET',
+        method_id='dlp.projects.locations.connections.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpProjectsLocationsConnectionsGetRequest',
+        response_type_name='GooglePrivacyDlpV2Connection',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists Connections in a parent. Use SearchConnections to see all connections within an organization.
+
+      Args:
+        request: (DlpProjectsLocationsConnectionsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListConnectionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/connections',
+        http_method='GET',
+        method_id='dlp.projects.locations.connections.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/connections',
+        request_field='',
+        request_type_name='DlpProjectsLocationsConnectionsListRequest',
+        response_type_name='GooglePrivacyDlpV2ListConnectionsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Update a Connection.
+
+      Args:
+        request: (DlpProjectsLocationsConnectionsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2Connection) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/connections/{connectionsId}',
+        http_method='PATCH',
+        method_id='dlp.projects.locations.connections.patch',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='googlePrivacyDlpV2UpdateConnectionRequest',
+        request_type_name='DlpProjectsLocationsConnectionsPatchRequest',
+        response_type_name='GooglePrivacyDlpV2Connection',
+        supports_download=False,
+    )
+
+    def Search(self, request, global_params=None):
+      r"""Searches for Connections in a parent.
+
+      Args:
+        request: (DlpProjectsLocationsConnectionsSearchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2SearchConnectionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('Search')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Search.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/connections:search',
+        http_method='GET',
+        method_id='dlp.projects.locations.connections.search',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/connections:search',
+        request_field='',
+        request_type_name='DlpProjectsLocationsConnectionsSearchRequest',
+        response_type_name='GooglePrivacyDlpV2SearchConnectionsResponse',
+        supports_download=False,
+    )
+
   class ProjectsLocationsContentService(base_api.BaseApiService):
     """Service class for the projects_locations_content resource."""
 
@@ -2117,7 +2884,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Deidentify(self, request, global_params=None):
-      r"""De-identifies potentially sensitive info from a ContentItem. This method has limits on input size and output size. See https://cloud.google.com/dlp/docs/deidentify-sensitive-data to learn more. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
+      r"""De-identifies potentially sensitive info from a ContentItem. This method has limits on input size and output size. See https://cloud.google.com/sensitive-data-protection/docs/deidentify-sensitive-data to learn more. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
 
       Args:
         request: (DlpProjectsLocationsContentDeidentifyRequest) input message
@@ -2144,7 +2911,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Inspect(self, request, global_params=None):
-      r"""Finds potentially sensitive info in content. This method has limits on input size, processing time, and output size. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated. For how to guides, see https://cloud.google.com/dlp/docs/inspecting-images and https://cloud.google.com/dlp/docs/inspecting-text,.
+      r"""Finds potentially sensitive info in content. This method has limits on input size, processing time, and output size. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated. For how to guides, see https://cloud.google.com/sensitive-data-protection/docs/inspecting-images and https://cloud.google.com/sensitive-data-protection/docs/inspecting-text,.
 
       Args:
         request: (DlpProjectsLocationsContentInspectRequest) input message
@@ -2171,7 +2938,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Reidentify(self, request, global_params=None):
-      r"""Re-identifies content that has been de-identified. See https://cloud.google.com/dlp/docs/pseudonymization#re-identification_in_free_text_code_example to learn more.
+      r"""Re-identifies content that has been de-identified. See https://cloud.google.com/sensitive-data-protection/docs/pseudonymization#re-identification_in_free_text_code_example to learn more.
 
       Args:
         request: (DlpProjectsLocationsContentReidentifyRequest) input message
@@ -2208,7 +2975,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a DeidentifyTemplate for reusing frequently used configuration for de-identifying content, images, and storage. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Creates a DeidentifyTemplate for reusing frequently used configuration for de-identifying content, images, and storage. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsLocationsDeidentifyTemplatesCreateRequest) input message
@@ -2235,7 +3002,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Deletes a DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsLocationsDeidentifyTemplatesDeleteRequest) input message
@@ -2262,7 +3029,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Gets a DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsLocationsDeidentifyTemplatesGetRequest) input message
@@ -2289,7 +3056,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists DeidentifyTemplates. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Lists DeidentifyTemplates. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsLocationsDeidentifyTemplatesListRequest) input message
@@ -2316,7 +3083,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the DeidentifyTemplate. See https://cloud.google.com/dlp/docs/creating-templates-deid to learn more.
+      r"""Updates the DeidentifyTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid to learn more.
 
       Args:
         request: (DlpProjectsLocationsDeidentifyTemplatesPatchRequest) input message
@@ -2498,7 +3265,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Cancel(self, request, global_params=None):
-      r"""Starts asynchronous cancellation on a long-running DlpJob. The server makes a best effort to cancel the DlpJob, but success is not guaranteed. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.
+      r"""Starts asynchronous cancellation on a long-running DlpJob. The server makes a best effort to cancel the DlpJob, but success is not guaranteed. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more.
 
       Args:
         request: (DlpProjectsLocationsDlpJobsCancelRequest) input message
@@ -2525,7 +3292,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Create(self, request, global_params=None):
-      r"""Creates a new job to inspect storage or calculate risk metrics. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more. When no InfoTypes or CustomInfoTypes are specified in inspect jobs, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
+      r"""Creates a new job to inspect storage or calculate risk metrics. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more. When no InfoTypes or CustomInfoTypes are specified in inspect jobs, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
 
       Args:
         request: (DlpProjectsLocationsDlpJobsCreateRequest) input message
@@ -2552,7 +3319,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a long-running DlpJob. This method indicates that the client is no longer interested in the DlpJob result. The job will be canceled if possible. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.
+      r"""Deletes a long-running DlpJob. This method indicates that the client is no longer interested in the DlpJob result. The job will be canceled if possible. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more.
 
       Args:
         request: (DlpProjectsLocationsDlpJobsDeleteRequest) input message
@@ -2606,7 +3373,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets the latest state of a long-running DlpJob. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.
+      r"""Gets the latest state of a long-running DlpJob. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more.
 
       Args:
         request: (DlpProjectsLocationsDlpJobsGetRequest) input message
@@ -2660,7 +3427,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists DlpJobs that match the specified filter in the request. See https://cloud.google.com/dlp/docs/inspecting-storage and https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.
+      r"""Lists DlpJobs that match the specified filter in the request. See https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage and https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis to learn more.
 
       Args:
         request: (DlpProjectsLocationsDlpJobsListRequest) input message
@@ -2686,6 +3453,97 @@ class DlpV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsFileStoreDataProfilesService(base_api.BaseApiService):
+    """Service class for the projects_locations_fileStoreDataProfiles resource."""
+
+    _NAME = 'projects_locations_fileStoreDataProfiles'
+
+    def __init__(self, client):
+      super(DlpV2.ProjectsLocationsFileStoreDataProfilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Delete(self, request, global_params=None):
+      r"""Delete a FileStoreDataProfile. Will not prevent the profile from being regenerated if the resource is still included in a discovery configuration.
+
+      Args:
+        request: (DlpProjectsLocationsFileStoreDataProfilesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleProtobufEmpty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/fileStoreDataProfiles/{fileStoreDataProfilesId}',
+        http_method='DELETE',
+        method_id='dlp.projects.locations.fileStoreDataProfiles.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpProjectsLocationsFileStoreDataProfilesDeleteRequest',
+        response_type_name='GoogleProtobufEmpty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a file store data profile.
+
+      Args:
+        request: (DlpProjectsLocationsFileStoreDataProfilesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2FileStoreDataProfile) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/fileStoreDataProfiles/{fileStoreDataProfilesId}',
+        http_method='GET',
+        method_id='dlp.projects.locations.fileStoreDataProfiles.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpProjectsLocationsFileStoreDataProfilesGetRequest',
+        response_type_name='GooglePrivacyDlpV2FileStoreDataProfile',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists file store data profiles for an organization.
+
+      Args:
+        request: (DlpProjectsLocationsFileStoreDataProfilesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListFileStoreDataProfilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/fileStoreDataProfiles',
+        http_method='GET',
+        method_id='dlp.projects.locations.fileStoreDataProfiles.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/fileStoreDataProfiles',
+        request_field='',
+        request_type_name='DlpProjectsLocationsFileStoreDataProfilesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListFileStoreDataProfilesResponse',
+        supports_download=False,
+    )
+
   class ProjectsLocationsImageService(base_api.BaseApiService):
     """Service class for the projects_locations_image resource."""
 
@@ -2697,7 +3555,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Redact(self, request, global_params=None):
-      r"""Redacts potentially sensitive info from an image. This method has limits on input size, processing time, and output size. See https://cloud.google.com/dlp/docs/redacting-sensitive-data-images to learn more. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated.
+      r"""Redacts potentially sensitive info from an image. This method has limits on input size, processing time, and output size. See https://cloud.google.com/sensitive-data-protection/docs/redacting-sensitive-data-images to learn more. When no InfoTypes or CustomInfoTypes are specified in this request, the system will automatically choose what detectors to run. By default this may be all types, but may change over time as detectors are updated. Only the first frame of each multiframe image is redacted. Metadata and other frames are omitted in the response.
 
       Args:
         request: (DlpProjectsLocationsImageRedactRequest) input message
@@ -2723,6 +3581,43 @@ class DlpV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsInfoTypesService(base_api.BaseApiService):
+    """Service class for the projects_locations_infoTypes resource."""
+
+    _NAME = 'projects_locations_infoTypes'
+
+    def __init__(self, client):
+      super(DlpV2.ProjectsLocationsInfoTypesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def List(self, request, global_params=None):
+      r"""Returns a list of the sensitive information types that the DLP API supports. See https://cloud.google.com/sensitive-data-protection/docs/infotypes-reference to learn more.
+
+      Args:
+        request: (DlpProjectsLocationsInfoTypesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListInfoTypesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/infoTypes',
+        http_method='GET',
+        method_id='dlp.projects.locations.infoTypes.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'languageCode', 'locationId'],
+        relative_path='v2/{+parent}/infoTypes',
+        request_field='',
+        request_type_name='DlpProjectsLocationsInfoTypesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListInfoTypesResponse',
+        supports_download=False,
+    )
+
   class ProjectsLocationsInspectTemplatesService(base_api.BaseApiService):
     """Service class for the projects_locations_inspectTemplates resource."""
 
@@ -2734,7 +3629,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates an InspectTemplate for reusing frequently used configuration for inspecting content, images, and storage. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Creates an InspectTemplate for reusing frequently used configuration for inspecting content, images, and storage. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsLocationsInspectTemplatesCreateRequest) input message
@@ -2761,7 +3656,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes an InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Deletes an InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsLocationsInspectTemplatesDeleteRequest) input message
@@ -2788,7 +3683,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets an InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Gets an InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsLocationsInspectTemplatesGetRequest) input message
@@ -2815,7 +3710,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists InspectTemplates. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Lists InspectTemplates. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsLocationsInspectTemplatesListRequest) input message
@@ -2842,7 +3737,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the InspectTemplate. See https://cloud.google.com/dlp/docs/creating-templates to learn more.
+      r"""Updates the InspectTemplate. See https://cloud.google.com/sensitive-data-protection/docs/creating-templates to learn more.
 
       Args:
         request: (DlpProjectsLocationsInspectTemplatesPatchRequest) input message
@@ -2906,7 +3801,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Create(self, request, global_params=None):
-      r"""Creates a job trigger to run DLP actions such as scanning storage for sensitive information on a set schedule. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Creates a job trigger to run DLP actions such as scanning storage for sensitive information on a set schedule. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsLocationsJobTriggersCreateRequest) input message
@@ -2933,7 +3828,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a job trigger. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Deletes a job trigger. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsLocationsJobTriggersDeleteRequest) input message
@@ -2960,7 +3855,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a job trigger. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Gets a job trigger. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsLocationsJobTriggersGetRequest) input message
@@ -3014,7 +3909,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists job triggers. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Lists job triggers. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsLocationsJobTriggersListRequest) input message
@@ -3041,7 +3936,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates a job trigger. See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.
+      r"""Updates a job trigger. See https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers to learn more.
 
       Args:
         request: (DlpProjectsLocationsJobTriggersPatchRequest) input message
@@ -3067,6 +3962,70 @@ class DlpV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsProjectDataProfilesService(base_api.BaseApiService):
+    """Service class for the projects_locations_projectDataProfiles resource."""
+
+    _NAME = 'projects_locations_projectDataProfiles'
+
+    def __init__(self, client):
+      super(DlpV2.ProjectsLocationsProjectDataProfilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets a project data profile.
+
+      Args:
+        request: (DlpProjectsLocationsProjectDataProfilesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ProjectDataProfile) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/projectDataProfiles/{projectDataProfilesId}',
+        http_method='GET',
+        method_id='dlp.projects.locations.projectDataProfiles.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpProjectsLocationsProjectDataProfilesGetRequest',
+        response_type_name='GooglePrivacyDlpV2ProjectDataProfile',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists project data profiles for an organization.
+
+      Args:
+        request: (DlpProjectsLocationsProjectDataProfilesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListProjectDataProfilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/projectDataProfiles',
+        http_method='GET',
+        method_id='dlp.projects.locations.projectDataProfiles.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/projectDataProfiles',
+        request_field='',
+        request_type_name='DlpProjectsLocationsProjectDataProfilesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListProjectDataProfilesResponse',
+        supports_download=False,
+    )
+
   class ProjectsLocationsStoredInfoTypesService(base_api.BaseApiService):
     """Service class for the projects_locations_storedInfoTypes resource."""
 
@@ -3078,7 +4037,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a pre-built stored infoType to be used for inspection. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Creates a pre-built stored infoType to be used for inspection. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsLocationsStoredInfoTypesCreateRequest) input message
@@ -3105,7 +4064,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a stored infoType. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Deletes a stored infoType. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsLocationsStoredInfoTypesDeleteRequest) input message
@@ -3132,7 +4091,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a stored infoType. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Gets a stored infoType. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsLocationsStoredInfoTypesGetRequest) input message
@@ -3159,7 +4118,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists stored infoTypes. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Lists stored infoTypes. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsLocationsStoredInfoTypesListRequest) input message
@@ -3186,7 +4145,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the stored infoType by creating a new version. The existing version will continue to be used until the new version is ready. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Updates the stored infoType by creating a new version. The existing version will continue to be used until the new version is ready. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsLocationsStoredInfoTypesPatchRequest) input message
@@ -3212,6 +4171,97 @@ class DlpV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsTableDataProfilesService(base_api.BaseApiService):
+    """Service class for the projects_locations_tableDataProfiles resource."""
+
+    _NAME = 'projects_locations_tableDataProfiles'
+
+    def __init__(self, client):
+      super(DlpV2.ProjectsLocationsTableDataProfilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Delete(self, request, global_params=None):
+      r"""Delete a TableDataProfile. Will not prevent the profile from being regenerated if the table is still included in a discovery configuration.
+
+      Args:
+        request: (DlpProjectsLocationsTableDataProfilesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleProtobufEmpty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/tableDataProfiles/{tableDataProfilesId}',
+        http_method='DELETE',
+        method_id='dlp.projects.locations.tableDataProfiles.delete',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpProjectsLocationsTableDataProfilesDeleteRequest',
+        response_type_name='GoogleProtobufEmpty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a table data profile.
+
+      Args:
+        request: (DlpProjectsLocationsTableDataProfilesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2TableDataProfile) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/tableDataProfiles/{tableDataProfilesId}',
+        http_method='GET',
+        method_id='dlp.projects.locations.tableDataProfiles.get',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v2/{+name}',
+        request_field='',
+        request_type_name='DlpProjectsLocationsTableDataProfilesGetRequest',
+        response_type_name='GooglePrivacyDlpV2TableDataProfile',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists table data profiles for an organization.
+
+      Args:
+        request: (DlpProjectsLocationsTableDataProfilesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GooglePrivacyDlpV2ListTableDataProfilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v2/projects/{projectsId}/locations/{locationsId}/tableDataProfiles',
+        http_method='GET',
+        method_id='dlp.projects.locations.tableDataProfiles.list',
+        ordered_params=['parent'],
+        path_params=['parent'],
+        query_params=['filter', 'orderBy', 'pageSize', 'pageToken'],
+        relative_path='v2/{+parent}/tableDataProfiles',
+        request_field='',
+        request_type_name='DlpProjectsLocationsTableDataProfilesListRequest',
+        response_type_name='GooglePrivacyDlpV2ListTableDataProfilesResponse',
+        supports_download=False,
+    )
+
   class ProjectsLocationsService(base_api.BaseApiService):
     """Service class for the projects_locations resource."""
 
@@ -3233,7 +4283,7 @@ class DlpV2(base_api.BaseApiClient):
           }
 
     def Create(self, request, global_params=None):
-      r"""Creates a pre-built stored infoType to be used for inspection. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Creates a pre-built stored infoType to be used for inspection. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsStoredInfoTypesCreateRequest) input message
@@ -3260,7 +4310,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a stored infoType. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Deletes a stored infoType. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsStoredInfoTypesDeleteRequest) input message
@@ -3287,7 +4337,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a stored infoType. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Gets a stored infoType. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsStoredInfoTypesGetRequest) input message
@@ -3314,7 +4364,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def List(self, request, global_params=None):
-      r"""Lists stored infoTypes. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Lists stored infoTypes. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsStoredInfoTypesListRequest) input message
@@ -3341,7 +4391,7 @@ class DlpV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates the stored infoType by creating a new version. The existing version will continue to be used until the new version is ready. See https://cloud.google.com/dlp/docs/creating-stored-infotypes to learn more.
+      r"""Updates the stored infoType by creating a new version. The existing version will continue to be used until the new version is ready. See https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes to learn more.
 
       Args:
         request: (DlpProjectsStoredInfoTypesPatchRequest) input message

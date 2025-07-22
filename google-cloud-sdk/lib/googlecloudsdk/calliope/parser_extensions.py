@@ -81,8 +81,6 @@ from googlecloudsdk.core import log
 from googlecloudsdk.core import metrics
 from googlecloudsdk.core.console import console_attr
 from googlecloudsdk.core.console import console_io
-from googlecloudsdk.core.document_renderers import render_document
-from googlecloudsdk.core.updater import update_manager
 import six
 
 
@@ -855,6 +853,9 @@ class ArgumentParser(argparse.ArgumentParser):
     missing_components = cli_generator.ComponentsForMissingCommand(
         self._calliope_command.GetPath() + [arg])
     if missing_components:
+      # pylint: disable=g-import-not-at-top
+      from googlecloudsdk.core.updater import update_manager
+      # pylint: enable=g-import-not-at-top
       msg = ('You do not currently have this command group installed.  Using '
              'it requires the installation of components: '
              '[{missing_components}]'.format(
@@ -1118,6 +1119,9 @@ class ArgumentParser(argparse.ArgumentParser):
           }
         # Otherwise print out usage string.
         elif 'Command name argument expected.' == message:
+          # pylint: disable=g-import-not-at-top
+          from googlecloudsdk.core.document_renderers import render_document
+          # pylint: enable=g-import-not-at-top
           usage_string = self._calliope_command.GetCategoricalUsage()
           # The next if clause is executed if there were no categories to
           # display.

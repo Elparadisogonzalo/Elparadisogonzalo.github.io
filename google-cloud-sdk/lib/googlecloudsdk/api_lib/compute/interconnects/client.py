@@ -14,10 +14,11 @@
 # limitations under the License.
 """Interconnect."""
 
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import dataclasses
 
 
 class Interconnect(object):
@@ -83,40 +84,53 @@ class Interconnect(object):
                     remoteLocation=remote_location,
                     requestedFeatures=requested_features)))
 
-  def _MakePatchRequestTuple(self,
-                             description,
-                             location,
-                             interconnect_type,
-                             requested_link_count,
-                             link_type,
-                             admin_enabled,
-                             noc_contact_email,
-                             labels,
-                             label_fingerprint,
-                             macsec_enabled,
-                             macsec):
+  def _MakePatchRequestTuple(
+      self,
+      description,
+      location,
+      interconnect_type,
+      requested_link_count,
+      link_type,
+      admin_enabled,
+      noc_contact_email,
+      labels,
+      label_fingerprint,
+      macsec_enabled,
+      macsec,
+      aai_enabled,
+      application_aware_interconnect,
+  ):
     """Make a tuple for interconnect patch request."""
     kwargs = {}
     if labels is not None:
       kwargs['labels'] = labels
     if label_fingerprint is not None:
       kwargs['labelFingerprint'] = label_fingerprint
-    return (self._client.interconnects, 'Patch',
-            self._messages.ComputeInterconnectsPatchRequest(
-                interconnect=self.ref.Name(),
-                interconnectResource=self._messages.Interconnect(
-                    name=None,
-                    description=description,
-                    interconnectType=interconnect_type,
-                    linkType=link_type,
-                    nocContactEmail=noc_contact_email,
-                    requestedLinkCount=requested_link_count,
-                    location=location,
-                    adminEnabled=admin_enabled,
-                    macsecEnabled=macsec_enabled,
-                    macsec=macsec,
-                    **kwargs),
-                project=self.ref.project))
+    if aai_enabled is not None:
+      kwargs['aaiEnabled'] = aai_enabled
+    if application_aware_interconnect is not None:
+      kwargs['applicationAwareInterconnect'] = application_aware_interconnect
+    return (
+        self._client.interconnects,
+        'Patch',
+        self._messages.ComputeInterconnectsPatchRequest(
+            interconnect=self.ref.Name(),
+            interconnectResource=self._messages.Interconnect(
+                name=None,
+                description=description,
+                interconnectType=interconnect_type,
+                linkType=link_type,
+                nocContactEmail=noc_contact_email,
+                requestedLinkCount=requested_link_count,
+                location=location,
+                adminEnabled=admin_enabled,
+                macsecEnabled=macsec_enabled,
+                macsec=macsec,
+                **kwargs
+            ),
+            project=self.ref.project,
+        ),
+    )
 
   def _MakeDeleteRequestTuple(self):
     return (self._client.interconnects, 'Delete',
@@ -203,34 +217,69 @@ class Interconnect(object):
       return resources[0]
     return requests
 
-  def Patch(self,
-            description='',
-            location=None,
-            interconnect_type=None,
-            requested_link_count=None,
-            link_type=None,
-            admin_enabled=False,
-            noc_contact_email=None,
-            only_generate_request=False,
-            labels=None,
-            label_fingerprint=None,
-            macsec_enabled=None,
-            macsec=None):
-    """Patch an interconnect."""
-    requests = [
-        self._MakePatchRequestTuple(description,
-                                    location,
-                                    interconnect_type,
-                                    requested_link_count,
-                                    link_type,
-                                    admin_enabled,
-                                    noc_contact_email,
-                                    labels,
-                                    label_fingerprint,
-                                    macsec_enabled,
-                                    macsec)
-    ]
+  def GetApplicationAwarenessConfig(self, only_generate_request=False):
+    # pylint: disable=missing-function-docstring
+    requests = [self._MakeDescribeRequestTuple()]
+
+    @dataclasses.dataclass(frozen=True)
+    class AaiState:
+      """Encapsulates application awareness enabled status and config.
+
+      Attr:
+        aai_enabled: indicates where AAI is enabled.
+        aai_config: AAI policy.
+      """
+
+      aai_enabled: bool
+      aai_config: self._messages.InterconnectApplicationAwareInterconnect
+
     if not only_generate_request:
       resources = self._compute_client.MakeRequests(requests)
+
+      return AaiState(
+          getattr(resources[0], 'aaiEnabled', None),
+          getattr(resources[0], 'applicationAwareInterconnect', None),
+      )
+    return requests
+
+  def Patch(
+      self,
+      description='',
+      location=None,
+      interconnect_type=None,
+      requested_link_count=None,
+      link_type=None,
+      admin_enabled=False,
+      noc_contact_email=None,
+      only_generate_request=False,
+      labels=None,
+      label_fingerprint=None,
+      macsec_enabled=None,
+      macsec=None,
+      aai_enabled=None,
+      application_aware_interconnect=None,
+      cleared_fields=None,
+  ):
+    """Patch an interconnect."""
+    requests = [
+        self._MakePatchRequestTuple(
+            description,
+            location,
+            interconnect_type,
+            requested_link_count,
+            link_type,
+            admin_enabled,
+            noc_contact_email,
+            labels,
+            label_fingerprint,
+            macsec_enabled,
+            macsec,
+            aai_enabled,
+            application_aware_interconnect,
+        )
+    ]
+    if not only_generate_request:
+      with self._client.IncludeFields(cleared_fields):
+        resources = self._compute_client.MakeRequests(requests)
       return resources[0]
     return requests

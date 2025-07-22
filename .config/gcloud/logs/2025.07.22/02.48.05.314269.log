@@ -1,0 +1,24 @@
+2025-07-22 02:48:05,315 DEBUG    root            Loaded Command Group: ['gcloud', 'auth']
+2025-07-22 02:48:05,317 DEBUG    root            Loaded Command Group: ['gcloud', 'auth', 'application_default']
+2025-07-22 02:48:05,350 DEBUG    root            Loaded Command Group: ['gcloud', 'auth', 'application-default', 'set_quota_project']
+2025-07-22 02:48:05,352 DEBUG    root            Running [gcloud.auth.application-default.set-quota-project] with arguments: [QUOTA_PROJECT_ID: "elparadisogonzalo-dev"]
+2025-07-22 02:48:05,377 INFO     root            Using alternate credentials from file: [/data/data/com.termux/files/home/.config/gcloud/application_default_credentials.json]
+2025-07-22 02:48:05,383 DEBUG    google.auth.transport.requests Making request: POST https://oauth2.googleapis.com/token
+2025-07-22 02:48:05,385 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): oauth2.googleapis.com:443
+2025-07-22 02:48:06,276 DEBUG    urllib3.connectionpool https://oauth2.googleapis.com:443 "POST /token HTTP/11" 200 None
+2025-07-22 02:48:06,294 INFO     root            Using alternate credentials from file: [/data/data/com.termux/files/home/.config/gcloud/application_default_credentials.json]
+2025-07-22 02:48:06,324 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): cloudresourcemanager.googleapis.com:443
+2025-07-22 02:48:07,433 DEBUG    urllib3.connectionpool https://cloudresourcemanager.googleapis.com:443 "POST /v1/projects/elparadisogonzalo-dev:testIamPermissions?alt=json HTTP/11" 200 None
+2025-07-22 02:48:07,435 INFO     ___FILE_ONLY___ 
+Credentials saved to file: [/data/data/com.termux/files/home/.config/gcloud/application_default_credentials.json]
+
+2025-07-22 02:48:07,436 INFO     ___FILE_ONLY___ 
+These credentials will be used by any library that requests Application Default Credentials (ADC).
+
+2025-07-22 02:48:07,436 INFO     ___FILE_ONLY___ 
+Quota project "elparadisogonzalo-dev" was added to ADC which can be used by Google client libraries for billing and quota. Note that some services may still bill the project owning the resource.
+
+2025-07-22 02:48:07,436 DEBUG    root            Chosen display Format:none
+2025-07-22 02:48:07,437 INFO     root            Display format: "none"
+2025-07-22 02:48:07,437 DEBUG    root            SDK update checks are disabled.
+2025-07-22 02:48:07,447 DEBUG    root            Metrics reporting process started...

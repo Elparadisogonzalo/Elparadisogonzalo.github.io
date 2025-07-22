@@ -91,8 +91,9 @@ class _RequestQueueGenerator(object):
     def _is_active(self):
         # Note: there is a possibility that this starts *before* the call
         # property is set. So we have to check if self.call is set before
-        # seeing if it's active.
-        return self.call is not None and self.call.is_active()
+        # seeing if it's active. We need to return True if self.call is None.
+        # See https://github.com/googleapis/python-api-core/issues/560.
+        return self.call is None or self.call.is_active()
 
     def __iter__(self):
         if self._initial_request is not None:
@@ -305,6 +306,8 @@ class BidiRpc(object):
         self._request_queue.put(None)
         self.call.cancel()
         self._request_generator = None
+        self._initial_request = None
+        self._callbacks = []
         # Don't set self.call to None. Keep it around so that send/recv can
         # raise the error.
 
@@ -716,6 +719,7 @@ class BackgroundConsumer(object):
                     _LOGGER.warning("Background thread did not exit.")
 
             self._thread = None
+            self._on_response = None
 
     @property
     def is_active(self):

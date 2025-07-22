@@ -31,6 +31,7 @@ from googlecloudsdk.command_lib.util.concepts import presentation_specs
 from googlecloudsdk.core.resource import resource_printer
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA,
                     base.ReleaseTrack.BETA,
                     base.ReleaseTrack.GA)
@@ -58,7 +59,7 @@ class Describe(base.Command):
   }
 
   @staticmethod
-  def CommonArgs(parser):
+  def CommonArgs(parser, is_multi_region=False):
     service_presentation = presentation_specs.ResourcePresentationSpec(
         'SERVICE',
         resource_args.GetServiceResourceSpec(),
@@ -67,9 +68,13 @@ class Describe(base.Command):
         prefixes=False)
     concept_parsers.ConceptParser([service_presentation]).AddToParser(parser)
 
+    formatter = (
+        service_printer.MultiRegionServicePrinter
+        if is_multi_region
+        else service_printer.ServicePrinter
+    )
     resource_printer.RegisterFormatter(
-        service_printer.SERVICE_PRINTER_FORMAT,
-        service_printer.ServicePrinter, hidden=True)
+        service_printer.SERVICE_PRINTER_FORMAT, formatter, hidden=True)
     parser.display_info.AddFormat(service_printer.SERVICE_PRINTER_FORMAT)
     resource_printer.RegisterFormatter(
         export_printer.EXPORT_PRINTER_FORMAT,
@@ -79,10 +84,14 @@ class Describe(base.Command):
   def Args(parser):
     Describe.CommonArgs(parser)
 
+  def _ConnectionContext(self, args):
+    return connection_context.GetConnectionContext(
+        args, flags.Product.RUN, self.ReleaseTrack()
+    )
+
   def Run(self, args):
     """Obtain details about a given service."""
-    conn_context = connection_context.GetConnectionContext(
-        args, flags.Product.RUN, self.ReleaseTrack())
+    conn_context = self._ConnectionContext(args)
     service_ref = args.CONCEPTS.service.Parse()
     flags.ValidateResource(service_ref)
     with serverless_operations.Connect(conn_context) as client:

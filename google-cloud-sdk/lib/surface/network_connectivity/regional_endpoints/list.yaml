@@ -1,4 +1,4 @@
-- release_tracks: [BETA]
+- release_tracks: [BETA, GA]
 
   help_text:
     brief: |
@@ -6,7 +6,7 @@
     description: |
       Retrieve and display a list of all regional endpoints in the specified project.
     examples: |
-      To list all regional endpoints in us-centeral1, run:
+      To list all regional endpoints in us-central1, run:
 
         $ {command}
           --region=us-central1
@@ -23,11 +23,13 @@
       name.basename(),
       name.segment(3):label=LOCATION,
       network.basename(),
-      ipAddress,
+      address,
       targetGoogleApi,
       accessType)
 
   request: &request
     BETA:
       api_version: v1beta
+    GA:
+      api_version: v1
     collection: networkconnectivity.projects.locations.regionalEndpoints

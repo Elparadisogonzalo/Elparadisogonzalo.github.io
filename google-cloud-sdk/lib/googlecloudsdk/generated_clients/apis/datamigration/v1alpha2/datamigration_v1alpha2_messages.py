@@ -696,6 +696,8 @@ class DatamigrationProjectsLocationsListRequest(_messages.Message):
   r"""A DatamigrationProjectsLocationsListRequest object.
 
   Fields:
+    extraLocationTypes: Optional. A list of extra location types that should
+      be used as conditions for controlling the visibility of the locations.
     filter: A filter to narrow down results to a preferred subset. The
       filtering language accepts strings like `"displayName=tokyo"`, and is
       documented in more detail in [AIP-160](https://google.aip.dev/160).
@@ -706,10 +708,11 @@ class DatamigrationProjectsLocationsListRequest(_messages.Message):
       response. Send that page token to receive the subsequent page.
   """
 
-  filter = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
+  extraLocationTypes = _messages.StringField(1, repeated=True)
+  filter = _messages.StringField(2)
+  name = _messages.StringField(3, required=True)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
 
 
 class DatamigrationProjectsLocationsMigrationJobsCreateRequest(_messages.Message):
@@ -1469,6 +1472,9 @@ class MigrationJobVerificationError(_messages.Message):
         defined entities (for example databases, tables, or functions). You
         can only migrate to empty instances. Clear your destination instance
         and retry the migration job.
+      SOURCE_MAX_SUBSCRIPTIONS: The migration job is configured to use max
+        number of subscriptions to migrate data from the source to the
+        destination.
     """
     ERROR_CODE_UNSPECIFIED = 0
     CONNECTION_FAILURE = 1
@@ -1487,6 +1493,7 @@ class MigrationJobVerificationError(_messages.Message):
     EXISTING_CONFLICTING_DATABASES = 14
     PARALLEL_IMPORT_INSUFFICIENT_PRIVILEGE = 15
     EXISTING_DATA = 16
+    SOURCE_MAX_SUBSCRIPTIONS = 17
 
   errorCode = _messages.EnumField('ErrorCodeValueValuesEnum', 1)
   errorDetailMessage = _messages.StringField(2)
@@ -2056,3 +2063,7 @@ encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_1', '1')
 encoding.AddCustomJsonEnumMapping(
     StandardQueryParameters.FXgafvValueValuesEnum, '_2', '2')
+encoding.AddCustomJsonFieldMapping(
+    DatamigrationProjectsLocationsConnectionProfilesGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')
+encoding.AddCustomJsonFieldMapping(
+    DatamigrationProjectsLocationsMigrationJobsGetIamPolicyRequest, 'options_requestedPolicyVersion', 'options.requestedPolicyVersion')

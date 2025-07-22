@@ -260,6 +260,7 @@ def CreateSchedulingMessage(
     local_ssd_recovery_timeout=None,
     availability_domain=None,
     graceful_shutdown=None,
+    discard_local_ssds_at_termination_timestamp=None,
 ):
   """Create scheduling message for VM."""
   # Note: We always specify automaticRestart=False for preemptible VMs. This
@@ -322,17 +323,24 @@ def CreateSchedulingMessage(
     scheduling.locationHint = location_hint
 
   if maintenance_freeze_duration:
-    scheduling.maintenanceFreezeDurationHours = maintenance_freeze_duration // 3600
+    scheduling.maintenanceFreezeDurationHours = (
+        maintenance_freeze_duration // 3600)
 
   if maintenance_interval:
-    scheduling.maintenanceInterval = messages.Scheduling.MaintenanceIntervalValueValuesEnum(
-        maintenance_interval)
+    scheduling.maintenanceInterval = (
+        messages.Scheduling.MaintenanceIntervalValueValuesEnum(
+            maintenance_interval))
 
   if host_error_timeout_seconds:
     scheduling.hostErrorTimeoutSeconds = host_error_timeout_seconds
 
   if availability_domain:
     scheduling.availabilityDomain = availability_domain
+
+  if discard_local_ssds_at_termination_timestamp is not None:
+    scheduling.onInstanceStopAction = messages.SchedulingOnInstanceStopAction(
+        discardLocalSsd=discard_local_ssds_at_termination_timestamp
+    )
 
   return scheduling
 
@@ -360,9 +368,82 @@ def CreateShieldedInstanceIntegrityPolicyMessage(messages,
   return shielded_instance_integrity_policy
 
 
+def ValidateSvsmConfig(svsm_args, support_snp_svsm):
+  """Validates flags specifying SVSM config.
+
+  Args:
+    svsm_args: The flags specifying SVSM config.
+    support_snp_svsm: Whether SVSM is supported.
+
+  Returns:
+    Nothing. Function acts as a validator, and will raise an exception from
+      within the function if needed.
+
+  Raises:
+    calliope_exceptions.RequiredArgumentException when the flags are not
+      specified or are not valid.
+  """
+
+  if not svsm_args or not support_snp_svsm:
+    return
+
+  tpm_choices = ['EPHEMERAL', 'NO_CC_TPM']
+  snp_irq_choices = ['RESTRICTED', 'UNRESTRICTED']
+
+  tpm = svsm_args.get('tpm', None)
+  snp_irq = svsm_args.get('snp-irq', None)
+  if tpm and tpm not in tpm_choices:
+    raise calliope_exceptions.InvalidArgumentException(
+        '--svsm-config',
+        f'Unexpected confidential TPM type: [{tpm}]. Legal values are '
+        f'[{", ".join(tpm_choices)}].',
+    )
+  if snp_irq and snp_irq not in snp_irq_choices:
+    raise calliope_exceptions.InvalidArgumentException(
+        '--svsm-config',
+        f'Unexpected SEV SNP IRQ mode: [{snp_irq}]. Legal values are '
+        f'[{", ".join(snp_irq_choices)}].',
+    )
+
+
+def CreateConfidentialParavisorConfigMessage(args, messages, support_snp_svsm):
+  """Create confidentialParavisorConfig message for VM."""
+  if (
+      not hasattr(args, 'svsm_config') or not args.IsSpecified('svsm_config')
+      or not support_snp_svsm
+  ):
+    return None
+  ValidateSvsmConfig(args.svsm_config, support_snp_svsm)
+  tpm = (
+      args.svsm_config.get('tpm', 'CONFIDENTIAL_TPM_TYPE_UNSPECIFIED')
+      if args.svsm_config
+      else 'CONFIDENTIAL_TPM_TYPE_UNSPECIFIED'
+  )
+  snp_irq = (
+      args.svsm_config.get('snp-irq', 'SEV_SNP_IRQ_MODE_UNSPECIFIED')
+      if args.svsm_config
+      else 'SEV_SNP_IRQ_MODE_UNSPECIFIED'
+  )
+  confidential_tpm_type = (
+      messages.ConfidentialParavisorConfig.ConfidentialTpmTypeValueValuesEnum(
+          tpm
+      )
+  )
+  sev_snp_irq_mode = (
+      messages.ConfidentialParavisorConfig.SevSnpIrqModeValueValuesEnum(
+          snp_irq
+      )
+  )
+  return messages.ConfidentialParavisorConfig(
+      confidentialTpmType=confidential_tpm_type,
+      sevSnpIrqMode=sev_snp_irq_mode,
+  )
+
+
 def CreateConfidentialInstanceMessage(messages, args,
                                       support_confidential_compute_type,
-                                      support_confidential_compute_type_tdx):
+                                      support_confidential_compute_type_tdx,
+                                      support_snp_svsm):
   """Create confidentialInstanceConfig message for VM."""
   confidential_instance_config_msg = None
   enable_confidential_compute = None
@@ -389,9 +470,27 @@ def CreateConfidentialInstanceMessage(messages, args,
       enable_confidential_compute = None
       confidential_instance_type = None
 
-  if confidential_instance_type is not None:
+  confidential_paravisor_config_msg = CreateConfidentialParavisorConfigMessage(
+      args, messages, support_snp_svsm
+  )
+  if (
+      confidential_instance_type is not None
+      and confidential_paravisor_config_msg is not None
+  ):
     confidential_instance_config_msg = messages.ConfidentialInstanceConfig(
-        confidentialInstanceType=confidential_instance_type)
+        confidentialInstanceType=confidential_instance_type,
+        confidentialParavisorConfig=confidential_paravisor_config_msg,
+    )
+  elif confidential_instance_type is not None:
+    confidential_instance_config_msg = messages.ConfidentialInstanceConfig(
+        confidentialInstanceType=confidential_instance_type
+    )
+  elif confidential_paravisor_config_msg is not None:
+    raise calliope_exceptions.InvalidArgumentException(
+        '--confidential-compute-type',
+        'Confidential compute type must be specified when using '
+        '--svsm-config.',
+    )
   elif enable_confidential_compute is not None:
     confidential_instance_config_msg = messages.ConfidentialInstanceConfig(
         enableConfidentialCompute=enable_confidential_compute
@@ -400,13 +499,17 @@ def CreateConfidentialInstanceMessage(messages, args,
   return confidential_instance_config_msg
 
 
-def CreateAdvancedMachineFeaturesMessage(messages,
-                                         enable_nested_virtualization=None,
-                                         threads_per_core=None,
-                                         numa_node_count=None,
-                                         visible_core_count=None,
-                                         enable_uefi_networking=None,
-                                         performance_monitoring_unit=None):
+def CreateAdvancedMachineFeaturesMessage(
+    messages,
+    enable_nested_virtualization=None,
+    threads_per_core=None,
+    numa_node_count=None,
+    visible_core_count=None,
+    enable_uefi_networking=None,
+    performance_monitoring_unit=None,
+    enable_watchdog_timer=None,
+    turbo_mode=None,
+):
   """Create AdvancedMachineFeatures message for an Instance."""
   # Start with an empty AdvancedMachineFeatures and optionally add on
   # the features we have like CreateSchedulingMessage does. This lets us
@@ -432,6 +535,12 @@ def CreateAdvancedMachineFeaturesMessage(messages,
     features.performanceMonitoringUnit = messages.AdvancedMachineFeatures.PerformanceMonitoringUnitValueValuesEnum(
         performance_monitoring_unit.upper()
     )
+
+  if enable_watchdog_timer is not None:
+    features.enableWatchdogTimer = enable_watchdog_timer
+
+  if turbo_mode is not None:
+    features.turboMode = turbo_mode
 
   return features
 
@@ -494,29 +603,40 @@ def ParseDiskResourceFromAttachedDisk(resources, attached_disk):
   """
   try:
     disk = resources.Parse(
-        attached_disk.source, collection='compute.regionDisks')
+        attached_disk.source, collection='compute.regionDisks'
+    )
     if disk:
       return disk
-  except (cloud_resources.WrongResourceCollectionException,
-          cloud_resources.RequiredFieldOmittedException):
+  except (
+      cloud_resources.WrongResourceCollectionException,
+      cloud_resources.RequiredFieldOmittedException,
+  ):
     pass
 
   try:
     disk = resources.Parse(attached_disk.source, collection='compute.disks')
     if disk:
       return disk
-  except (cloud_resources.WrongResourceCollectionException,
-          cloud_resources.RequiredFieldOmittedException):
+  except (
+      cloud_resources.WrongResourceCollectionException,
+      cloud_resources.RequiredFieldOmittedException,
+  ):
     pass
 
-  raise cloud_resources.InvalidResourceException('Unable to parse [{}]'.format(
-      attached_disk.source))
+  raise cloud_resources.InvalidResourceException(
+      "Unable to parse disk's source: [{0}] of device name: [{1}], try using"
+      ' `--device-name` instead.'.format(
+          attached_disk.source,
+          attached_disk.deviceName,
+      )
+  )
 
 
 def GetDiskDeviceName(disk, name, container_mount_disk):
   """Helper method to get device-name for a disk message."""
-  if (container_mount_disk and filter(
-      bool, [d.get('name', name) == name for d in container_mount_disk])):
+  if container_mount_disk and filter(
+      bool, [d.get('name', name) == name for d in container_mount_disk]
+  ):
     # device-name must be the same as name if it is being mounted to a
     # container.
     if not disk.get('device-name'):
@@ -528,21 +648,34 @@ def GetDiskDeviceName(disk, name, container_mount_disk):
           '--container-mount-disk',
           'Attempting to mount disk named [{}] with device-name [{}]. If '
           'being mounted to container, disk name must match device-name.'
-          .format(name, disk.get('device-name')))
+          .format(name, disk.get('device-name')),
+      )
   return disk.get('device-name')
 
 
-def ParseDiskType(resources, disk_type, project, location, scope):
+def ParseDiskType(
+    resources, disk_type, project, location, scope, replica_zone_cnt=0
+):
   """Parses disk type reference based on location scope."""
   if scope == compute_scopes.ScopeEnum.ZONE:
-    collection = 'compute.diskTypes'
-    params = {'project': project, 'zone': location}
+    if replica_zone_cnt != 2:
+      collection = 'compute.diskTypes'
+      params = {'project': project, 'zone': location}
+    else:
+      collection = 'compute.regionDiskTypes'
+      location = GetRegionFromZone(location)
+      params = {'project': project, 'region': location}
   elif scope == compute_scopes.ScopeEnum.REGION:
     collection = 'compute.regionDiskTypes'
     params = {'project': project, 'region': location}
   disk_type_ref = resources.Parse(
       disk_type, collection=collection, params=params)
   return disk_type_ref
+
+
+def GetRegionFromZone(zone):
+  """Returns the GCP region that the input zone is in."""
+  return '-'.join(zone.split('-')[:-1]).lower()
 
 
 def ParseStoragePool(resources, storage_pool, project, location):
@@ -589,7 +722,7 @@ def GetScheduling(
     support_node_affinity=False,
     support_min_node_cpu=True,
     support_node_project=False,
-    support_host_error_timeout_seconds=False,
+    support_host_error_timeout_seconds=True,
     support_max_run_duration=False,
     support_local_ssd_recovery_timeout=False,
     support_graceful_shutdown=False,
@@ -647,6 +780,14 @@ def GetScheduling(
   if support_max_run_duration and hasattr(args, 'termination_time'):
     termination_time = args.termination_time
 
+  discard_local_ssds_at_termination_timestamp = None
+  if support_max_run_duration and hasattr(
+      args, 'discard_local_ssds_at_termination_timestamp'
+  ):
+    discard_local_ssds_at_termination_timestamp = (
+        args.discard_local_ssds_at_termination_timestamp
+    )
+
   # Make sure restart_on_failure always retain user-provided value,
   # but also ignore its default value when asked to skip defaults.
   restart_on_failure = None
@@ -698,6 +839,7 @@ def GetScheduling(
       local_ssd_recovery_timeout=local_ssd_recovery_timeout,
       availability_domain=availability_domain,
       graceful_shutdown=graceful_shutdown,
+      discard_local_ssds_at_termination_timestamp=discard_local_ssds_at_termination_timestamp,
   )
 
 
@@ -875,8 +1017,17 @@ def ParseAcceleratorType(accelerator_type_name, resource_parser, project,
   return accelerator_type
 
 
-def ResolveSnapshotURI(user_project, snapshot, resource_parser):
+def ResolveSnapshotURI(user_project, snapshot, resource_parser, region=None):
+  """Returns snapshot URI based on location scope."""
   if user_project and snapshot and resource_parser:
+    if region:
+      snapshot_ref = resource_parser.Parse(
+          snapshot,
+          collection='compute.regionSnapshots',
+          params={'project': user_project, 'region': region},
+      )
+      return snapshot_ref.SelfLink()
+
     snapshot_ref = resource_parser.Parse(
         snapshot,
         collection='compute.snapshots',

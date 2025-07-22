@@ -180,6 +180,7 @@ class LsExecutor(list_util.BaseListExecutor):
       readable_sizes=False,
       recursion_flag=False,
       use_gsutil_style=False,
+      soft_deleted_buckets=False,
   ):
     """See list_util.BaseListExecutor class for function doc strings."""
     super(LsExecutor, self).__init__(
@@ -195,6 +196,7 @@ class LsExecutor(list_util.BaseListExecutor):
         readable_sizes=readable_sizes,
         recursion_flag=recursion_flag,
         use_gsutil_style=use_gsutil_style,
+        soft_deleted_buckets=soft_deleted_buckets,
     )
 
     if use_gsutil_style:
@@ -226,6 +228,14 @@ class LsExecutor(list_util.BaseListExecutor):
               ),
           )
       )
+
+  def _print_bucket_header(self, url):
+    if (
+        self._use_gsutil_style
+        and len(self._cloud_urls) > 1
+        and not self._buckets_flag
+    ):
+      print('{}:'.format(url.url_string))
 
   def _print_json_list(self, resource_wrappers):
     """Prints ResourceWrapper objects as JSON list."""

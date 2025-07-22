@@ -23,6 +23,20 @@ from typing import MutableMapping
 from googlecloudsdk.api_lib.cloudbuild import cloudbuild_exceptions
 from googlecloudsdk.core import yaml
 
+_DC_GIT_REPO_LINK_PAT = re.compile("^projects/[^/]+/locations/[^/]+/connections"
+                                   "/[^/]+/gitRepositoryLinks/[^/]+$")
+_PUB_SUB_TOPIC_PAT = re.compile("^projects/[^/]+/topics/[^/]+$")
+
+
+def SetDictDottedKeyUpperCase(input_dict, dotted_key):
+  *key, last = dotted_key.split(".")
+  for bit in key:
+    if bit not in input_dict:
+      return
+    input_dict = input_dict.get(bit)
+  if last in input_dict:
+    input_dict[last] = input_dict[last].upper()
+
 
 def LoadYamlFromPath(path):
   try:
@@ -48,35 +62,40 @@ def UnrecognizedFields(message):
             f=", ".join(unrecognized_fields)))
 
 
-def WorkflowTriggerTransform(trigger, resources):
+def WorkflowTriggerTransform(trigger):
   """Transform workflow trigger according to the proto.
 
-  Refer to go/gcb-v2-filters to understand more details.
+  Refer to:
+    * go/gcb-v2-filters
+    * go/re-scope-workflow-resources-to-triggers-only
+  to understand more details.
 
   Args:
     trigger: the trigger defined in the workflow YAML.
-    resources: the workflow resources dictionary.
   Raises:
     InvalidYamlError: The eventType was unsupported.
   """
   trigger["id"] = trigger.pop("name")
-  event_source = trigger.pop("source", trigger.pop("eventSource", ""))
-  if event_source:
-    if event_source not in resources:
+  eventsource = trigger.pop("source", trigger.pop("eventSource", ""))
+  if not eventsource:
+    raise cloudbuild_exceptions.InvalidYamlError("Empty event source")
+  if re.match(_PUB_SUB_TOPIC_PAT, eventsource):
+    trigger["source"] = {"topic": eventsource}
+  elif re.match(_DC_GIT_REPO_LINK_PAT, eventsource):
+    trigger["source"] = {"gitRepoLink": eventsource}
+  elif eventsource.startswith("https://"):
+    trigger["source"] = {"url": eventsource}
+  elif eventsource == "webhook":
+    if not trigger.get("webhookValidationSecret", ""):
       raise cloudbuild_exceptions.InvalidYamlError(
-          "Unfound event source: {event_source} in workflow resources".format(
-              event_source=event_source))
-    if "secret" in resources[event_source]:
-      trigger["webhookSecret"] = {"id": event_source}
-    else:
-      trigger["source"] = {"id": event_source}
-  if "secret" in trigger:
-    secret = trigger.pop("secret")
-    if secret not in resources:
-      raise cloudbuild_exceptions.InvalidYamlError(
-          "Unfound secret: {secret} in workflow resources".format(
-              secret=secret))
-    trigger["webhookSecret"] = {"id": secret}
+          "Webhook trigger requires a webhookValidationSecret")
+  else:
+    raise cloudbuild_exceptions.InvalidYamlError(
+        "Unsupported event source: {eventsource}".format(
+            eventsource=eventsource
+        )
+    )
+
   event_type_mapping = {
       "branch-push": "PUSH_BRANCH",
       "tag-push": "PUSH_TAG",
@@ -113,11 +132,37 @@ def ParamSpecTransform(param_spec):
   _ConvertToUpperCase(param_spec, "type")
 
 
+def PipelineResultTransform(pipeline_result):
+  if "value" in pipeline_result:
+    pipeline_result["value"] = ResultValueTransform(pipeline_result["value"])
+
+
+def TaskStepTransform(task_step):
+  if "ref" in task_step:
+    RefTransform(task_step["ref"])
+  ParamDictTransform(task_step.get("params", []))
+  if "onError" in task_step:
+    OnErrorTransform(task_step)
+
+
+def OnErrorTransform(data):
+  if data["onError"] not in ["continue", "stopAndFail"]:
+    raise cloudbuild_exceptions.InvalidYamlError(
+        "Unsupported onError value: {value}. Supported: continue, stopAndFail"
+        .format(value=data["onError"])
+    )
+  else:
+    data["onError"] = CamelToSnake(data["onError"]).upper()
+
+
 def TaskResultTransform(task_result):
   _ConvertToUpperCase(task_result, "type")
 
   for property_name in task_result.get("properties", []):
     PropertySpecTransform(task_result["properties"][property_name])
+
+  if "value" in task_result:
+    task_result["value"] = ParamValueTransform(task_result["value"])
 
 
 def PropertySpecTransform(property_spec):
@@ -135,7 +180,11 @@ def ParamDictTransform(params):
 
 
 def ParamValueTransform(param_value):
-  if isinstance(param_value, str) or isinstance(param_value, float):
+  if (
+      isinstance(param_value, str)
+      or isinstance(param_value, float)
+      or isinstance(param_value, int)
+  ):
     return {"type": "STRING", "stringVal": str(param_value)}
   elif isinstance(param_value, list):
     return {"type": "ARRAY", "arrayVal": param_value}
@@ -143,6 +192,26 @@ def ParamValueTransform(param_value):
     raise cloudbuild_exceptions.InvalidYamlError(
         "Unsupported param value type. {msg_type}".format(
             msg_type=type(param_value)))
+
+
+def ResultValueTransform(result_value):
+  """Transforms the string result value from Tekton to GCB resultValue struct."""
+  if (
+      isinstance(result_value, str)
+      or isinstance(result_value, float)
+      or isinstance(result_value, int)
+  ):
+    return {"type": "STRING", "stringVal": str(result_value)}
+  elif isinstance(result_value, list):
+    return {"type": "ARRAY", "arrayVal": result_value}
+  elif isinstance(result_value, object):
+    return {"type": "OBJECT", "objectVal": result_value}
+  else:
+    raise cloudbuild_exceptions.InvalidYamlError(
+        "Unsupported param value type. {msg_type}".format(
+            msg_type=type(result_value)
+        )
+    )
 
 
 def RefTransform(ref):

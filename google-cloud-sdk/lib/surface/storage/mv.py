@@ -25,17 +25,17 @@ from googlecloudsdk.command_lib.storage import flags
 from googlecloudsdk.command_lib.storage import storage_url
 
 
+@base.UniverseCompatible
 class Mv(base.Command):
   """Moves or renames objects."""
 
   detailed_help = {
-      "DESCRIPTION":
-          """
+      "DESCRIPTION": """
       The mv command allows you to move data between your local file system and
       the cloud, move data within the cloud, and move data between cloud storage
-      providers
+      providers.
 
-      Renaming Groups Of Objects
+      *Renaming Groups Of Objects*
 
       You can use the mv command to rename all objects with a given prefix to
       have a new prefix. For example, the following command renames all objects
@@ -50,7 +50,7 @@ class Mv(base.Command):
 
       If you do a rename as specified above and you want to preserve ACLs.
 
-      Non-Atomic Operation
+      *Non-Atomic Operation*
 
       Unlike the case with many file systems, the mv command does not perform a
       single atomic operation. Rather, it performs a copy from source to
@@ -61,8 +61,7 @@ class Mv(base.Command):
       Storage object, deletion and data retrieval charges apply.
       See the documentation for pricing details.
       """,
-      "EXAMPLES":
-          """
+      "EXAMPLES": """
 
       To move all objects from a bucket to a local directory you could use:
 
@@ -83,10 +82,11 @@ class Mv(base.Command):
 
   @classmethod
   def Args(cls, parser):
-    cp_command_util.add_cp_and_mv_flags(parser, cls.ReleaseTrack())
+    cp_command_util.add_cp_and_mv_flags(parser)
     flags.add_per_object_retention_flags(parser)
 
   def Run(self, args):
+
     for url_string in args.source:
       url = storage_url.storage_url_from_string(url_string)
       if isinstance(url, storage_url.CloudUrl) and not url.is_object():

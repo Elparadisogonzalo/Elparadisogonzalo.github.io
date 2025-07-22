@@ -87,6 +87,20 @@ DETAILED_HELP_GA = {
 
             $ {command} my-migration-job --region=us-central1 --type=CONTINUOUS
             --source=cp1 --destination=cp2 --conversion-workspace=cw
+
+        To create a continuous SQL Server to SQL Server homogeneous migration
+        job with differential backup enabled:
+            $ {command} my-migration-job --region=us-central1 --type=CONTINUOUS
+            --source=cp1 --destination=cp2
+            --sqlserver-diff-backup
+            --sqlserver-databases=db1,db2,db3
+
+        To create a continuous SQL Server to SQL Server homogeneous migration
+        job with encrypted databases:
+            $ {command} my-migration-job --region=us-central1 --type=CONTINUOUS
+            --source=cp1 --destination=cp2
+            --sqlserver-databases=db1,db2,db3
+            --sqlserver-encrypted-databases=PATH/TO/ENCRYPTION/SETTINGS
         """,
 }
 
@@ -105,7 +119,7 @@ class _Create(object):
     mj_flags.AddNoAsyncFlag(parser)
     mj_flags.AddDisplayNameFlag(parser)
     mj_flags.AddTypeFlag(parser, required=True)
-    mj_flags.AddDumpPathFlag(parser)
+    mj_flags.AddDumpGroupFlag(parser)
     mj_flags.AddConnectivityGroupFlag(
         parser, mj_flags.ApiType.CREATE, required=True
     )
@@ -134,8 +148,8 @@ class _Create(object):
       conversion_workspace_ref = None
       cmek_key_ref = None
 
-    cp_client = migration_jobs.MigrationJobsClient(self.ReleaseTrack())
-    result_operation = cp_client.Create(
+    mj_client = migration_jobs.MigrationJobsClient(self.ReleaseTrack())
+    result_operation = mj_client.Create(
         parent_ref,
         migration_job_ref.migrationJobsId,
         source_ref,
@@ -193,6 +207,10 @@ class CreateGA(_Create, base.Command):
     mj_flags.AddFilterFlag(parser)
     mj_flags.AddCommitIdFlag(parser)
     mj_flags.AddDumpParallelLevelFlag(parser)
+    mj_flags.AddSqlServerHomogeneousMigrationConfigFlag(parser, is_update=False)
+    mj_flags.AddDumpTypeFlag(parser)
+    mj_flags.AddMigrationJobObjectsConfigFlagForCreateAndUpdate(parser)
+    mj_flags.AddHeterogeneousMigrationConfigFlag(parser)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)

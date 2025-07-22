@@ -24,9 +24,17 @@ from googlecloudsdk.api_lib.cloudbuild.v2 import input_util
 from googlecloudsdk.core import yaml
 
 
+_WORKFLOW_OPTIONS_ENUMS = [
+    "options.provenance.enabled",
+    "options.provenance.storage",
+    "options.provenance.region",
+]
+
+
 def CloudBuildYamlDataToWorkflow(workflow):
   """Convert cloudbuild.yaml file into Workflow message."""
   _WorkflowTransform(workflow)
+  _WorkflowValidate(workflow)
 
   messages = client_util.GetMessagesModule()
   schema_message = encoding.DictToMessage(workflow, messages.Workflow)
@@ -34,27 +42,56 @@ def CloudBuildYamlDataToWorkflow(workflow):
   return schema_message
 
 
+def _WorkflowValidate(workflow):
+  """Check that the given workflow has all required fields.
+
+  Args:
+    workflow: The user-supplied Cloud Build Workflow YAML.
+
+  Raises:
+    InvalidYamlError: If the workflow is invalid.
+  """
+  if (
+      "options" not in workflow
+      or "security" not in workflow["options"]
+      or "serviceAccount" not in workflow["options"]["security"]
+  ):
+    raise cloudbuild_exceptions.InvalidYamlError(
+        "A service account is required. Specify your user-managed service"
+        " account using the options.security.serviceAccount field"
+    )
+
+
 def _WorkflowTransform(workflow):
   """Transform workflow message."""
-
-  _ResourcesTransform(workflow)
 
   if "triggers" in workflow:
     workflow["workflowTriggers"] = workflow.pop("triggers")
 
   for workflow_trigger in workflow.get("workflowTriggers", []):
-    input_util.WorkflowTriggerTransform(
-        workflow_trigger, workflow.get("resources", {}))
+    input_util.WorkflowTriggerTransform(workflow_trigger)
 
   for param_spec in workflow.get("params", []):
     input_util.ParamSpecTransform(param_spec)
+    if not param_spec.get("name", ""):
+      raise cloudbuild_exceptions.InvalidYamlError(
+          "Workflow parameter name is required"
+      )
+    if (
+        param_spec.get("type", "string") != "string"
+        or param_spec.get("default", {"type": "STRING"}).get("type") != "STRING"
+    ):
+      raise cloudbuild_exceptions.InvalidYamlError(
+          "Only string are supported for workflow parameters, error at "
+          "parameter with name: {}".format(param_spec.get("name"))
+      )
 
-  pipeline = workflow.pop("pipeline")
-  if "spec" in pipeline:
-    workflow["pipelineSpecYaml"] = yaml.dump(pipeline["spec"], round_trip=True)
-  elif "ref" in pipeline:
-    input_util.RefTransform(pipeline["ref"])
-    workflow["ref"] = pipeline["ref"]
+  if "pipelineSpec" in workflow:
+    workflow["pipelineSpecYaml"] = yaml.dump(
+        workflow.pop("pipelineSpec"), round_trip=True
+    )
+  elif "pipelineRef" in workflow:
+    input_util.RefTransform(workflow["pipelineRef"])
   else:
     raise cloudbuild_exceptions.InvalidYamlError(
         "PipelineSpec or PipelineRef is required.")
@@ -66,35 +103,8 @@ def _WorkflowTransform(workflow):
     popped_status = workflow["options"].pop("status")
     workflow["options"]["statusUpdateOptions"] = popped_status
 
-
-def _ResourcesTransform(workflow):
-  """Transform resources message."""
-
-  resources_map = {}
-  types = ["topic", "secretVersion"]
-  for resource in workflow.get("resources", []):
-    if "name" not in resource:
-      raise cloudbuild_exceptions.InvalidYamlError(
-          "Name is required for resource.")
-    if any(t in resource for t in types):
-      resources_map[resource.pop("name")] = resource
-    elif "repository" in resource:
-      if resource["repository"].startswith("projects/"):
-        resource["repo"] = resource.pop("repository")
-      elif resource["repository"].startswith("https://"):
-        resource["url"] = resource.pop("repository")
-      else:
-        raise cloudbuild_exceptions.InvalidYamlError(
-            "Malformed repo/url resource: {}".format(resource["repository"]))
-      resources_map[resource.pop("name")] = resource
-    else:
-      raise cloudbuild_exceptions.InvalidYamlError(
-          ("Unknown resource. "
-           "Accepted types: {types}").format(
-               types=",".join(types + ["repository"])))
-
-  if resources_map:
-    workflow["resources"] = resources_map
+  for option in _WORKFLOW_OPTIONS_ENUMS:
+    input_util.SetDictDottedKeyUpperCase(workflow, option)
 
 
 def _PipelineSpecTransform(pipeline_spec):

@@ -14,6 +14,35 @@ from apitools.base.py import extra_types
 package = 'composer'
 
 
+class AirflowMetadataRetentionPolicyConfig(_messages.Message):
+  r"""The policy for airflow metadata database retention.
+
+  Enums:
+    RetentionModeValueValuesEnum: Optional. Retention can be either enabled or
+      disabled.
+
+  Fields:
+    retentionDays: Optional. How many days data should be retained for.
+    retentionMode: Optional. Retention can be either enabled or disabled.
+  """
+
+  class RetentionModeValueValuesEnum(_messages.Enum):
+    r"""Optional. Retention can be either enabled or disabled.
+
+    Values:
+      RETENTION_MODE_UNSPECIFIED: Default mode doesn't change environment
+        parameters.
+      RETENTION_MODE_ENABLED: Retention policy is enabled.
+      RETENTION_MODE_DISABLED: Retention policy is disabled.
+    """
+    RETENTION_MODE_UNSPECIFIED = 0
+    RETENTION_MODE_ENABLED = 1
+    RETENTION_MODE_DISABLED = 2
+
+  retentionDays = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  retentionMode = _messages.EnumField('RetentionModeValueValuesEnum', 2)
+
+
 class AllowedIpRange(_messages.Message):
   r"""Allowed IP range with user-provided description.
 
@@ -30,6 +59,36 @@ class AllowedIpRange(_messages.Message):
 
   description = _messages.StringField(1)
   value = _messages.StringField(2)
+
+
+class CheckUpgradeRequest(_messages.Message):
+  r"""Request to check whether image upgrade will succeed.
+
+  Fields:
+    imageVersion: Optional. The version of the software running in the
+      environment. This encapsulates both the version of Cloud Composer
+      functionality and the version of Apache Airflow. It must match the
+      regular expression `composer-([0-9]+(\.[0-9]+\.[0-9]+(-preview\.[0-
+      9]+)?)?|latest)-airflow-([0-9]+(\.[0-9]+(\.[0-9]+)?)?)`. When used as
+      input, the server also checks if the provided version is supported and
+      denies the request for an unsupported version. The Cloud Composer
+      portion of the image version is a full [semantic
+      version](https://semver.org), or an alias in the form of major version
+      number or `latest`. When an alias is provided, the server replaces it
+      with the current Cloud Composer version that satisfies the alias. The
+      Apache Airflow portion of the image version is a full semantic version
+      that points to one of the supported Apache Airflow versions, or an alias
+      in the form of only major or major.minor versions specified. When an
+      alias is provided, the server replaces it with the latest Apache Airflow
+      version that satisfies the alias and is supported in the given Cloud
+      Composer version. In all cases, the resolved image version is stored in
+      the same field. See also [version
+      list](/composer/docs/concepts/versioning/composer-versions) and
+      [versioning overview](/composer/docs/concepts/versioning/composer-
+      versioning-overview).
+  """
+
+  imageVersion = _messages.StringField(1)
 
 
 class CheckUpgradeResponse(_messages.Message):
@@ -124,6 +183,21 @@ class CloudDataLineageIntegration(_messages.Message):
   """
 
   enabled = _messages.BooleanField(1)
+
+
+class ComposerProjectsLocationsEnvironmentsCheckUpgradeRequest(_messages.Message):
+  r"""A ComposerProjectsLocationsEnvironmentsCheckUpgradeRequest object.
+
+  Fields:
+    checkUpgradeRequest: A CheckUpgradeRequest resource to be passed as the
+      request body.
+    environment: Required. The resource name of the environment to check
+      upgrade for, in the form: "projects/{projectId}/locations/{locationId}/e
+      nvironments/{environmentId}"
+  """
+
+  checkUpgradeRequest = _messages.MessageField('CheckUpgradeRequest', 1)
+  environment = _messages.StringField(2, required=True)
 
 
 class ComposerProjectsLocationsEnvironmentsCreateRequest(_messages.Message):
@@ -343,6 +417,21 @@ class ComposerProjectsLocationsEnvironmentsPollAirflowCommandRequest(_messages.M
 
   environment = _messages.StringField(1, required=True)
   pollAirflowCommandRequest = _messages.MessageField('PollAirflowCommandRequest', 2)
+
+
+class ComposerProjectsLocationsEnvironmentsRestartWebServerRequest(_messages.Message):
+  r"""A ComposerProjectsLocationsEnvironmentsRestartWebServerRequest object.
+
+  Fields:
+    name: Required. The resource name of the environment to restart the web
+      server for, in the form: "projects/{projectId}/locations/{locationId}/en
+      vironments/{environmentId}"
+    restartWebServerRequest: A RestartWebServerRequest resource to be passed
+      as the request body.
+  """
+
+  name = _messages.StringField(1, required=True)
+  restartWebServerRequest = _messages.MessageField('RestartWebServerRequest', 2)
 
 
 class ComposerProjectsLocationsEnvironmentsSaveSnapshotRequest(_messages.Message):
@@ -656,7 +745,9 @@ class ComposerWorkloadStatus(_messages.Message):
 
 
 class DagProcessorResource(_messages.Message):
-  r"""Configuration for resources used by Airflow DAG processors.
+  r"""Configuration for resources used by Airflow DAG processors. This field
+  is supported for Cloud Composer environments in versions
+  composer-3-airflow-*.*.*-build.* and newer.
 
   Fields:
     count: Optional. The number of DAG processors. If not provided or set to
@@ -679,11 +770,14 @@ class DataRetentionConfig(_messages.Message):
   r"""The configuration setting for Airflow database data retention mechanism.
 
   Fields:
+    airflowMetadataRetentionConfig: Optional. The retention policy for airflow
+      metadata database.
     taskLogsRetentionConfig: Optional. The configuration settings for task
       logs retention
   """
 
-  taskLogsRetentionConfig = _messages.MessageField('TaskLogsRetentionConfig', 1)
+  airflowMetadataRetentionConfig = _messages.MessageField('AirflowMetadataRetentionPolicyConfig', 1)
+  taskLogsRetentionConfig = _messages.MessageField('TaskLogsRetentionConfig', 2)
 
 
 class DatabaseConfig(_messages.Message):
@@ -782,7 +876,7 @@ class Environment(_messages.Message):
       additionally constrained to be <= 128 bytes in size.
 
   Fields:
-    config: Configuration parameters for this environment.
+    config: Optional. Configuration parameters for this environment.
     createTime: Output only. The time at which this environment was created.
     labels: Optional. User-defined labels for this environment. The labels map
       can contain no more than 64 entries. Entries of the labels map are UTF8
@@ -790,10 +884,11 @@ class Environment(_messages.Message):
       to regexp: \p{Ll}\p{Lo}{0,62} * Values must conform to regexp:
       [\p{Ll}\p{Lo}\p{N}_-]{0,63} * Both keys and values are additionally
       constrained to be <= 128 bytes in size.
-    name: The resource name of the environment, in the form:
+    name: Identifier. The resource name of the environment, in the form:
       "projects/{projectId}/locations/{locationId}/environments/{environmentId
       }" EnvironmentId must start with a lowercase letter followed by up to 63
       lowercase letters, numbers, or hyphens, and cannot end with a hyphen.
+    satisfiesPzi: Output only. Reserved for future use.
     satisfiesPzs: Output only. Reserved for future use.
     state: The current state of the environment.
     storageConfig: Optional. Storage configuration for this environment.
@@ -857,11 +952,12 @@ class Environment(_messages.Message):
   createTime = _messages.StringField(2)
   labels = _messages.MessageField('LabelsValue', 3)
   name = _messages.StringField(4)
-  satisfiesPzs = _messages.BooleanField(5)
-  state = _messages.EnumField('StateValueValuesEnum', 6)
-  storageConfig = _messages.MessageField('StorageConfig', 7)
-  updateTime = _messages.StringField(8)
-  uuid = _messages.StringField(9)
+  satisfiesPzi = _messages.BooleanField(5)
+  satisfiesPzs = _messages.BooleanField(6)
+  state = _messages.EnumField('StateValueValuesEnum', 7)
+  storageConfig = _messages.MessageField('StorageConfig', 8)
+  updateTime = _messages.StringField(9)
+  uuid = _messages.StringField(10)
 
 
 class EnvironmentConfig(_messages.Message):
@@ -909,27 +1005,28 @@ class EnvironmentConfig(_messages.Message):
       window. The maintenance window period must encompass at least 12 hours
       per week. This may be split into multiple chunks, each with a size of at
       least 4 hours. If this value is omitted, the default value for
-      maintenance window will be applied. The default value is Saturday and
-      Sunday 00-06 GMT.
+      maintenance window is applied. By default, maintenance windows are from
+      00:00:00 to 04:00:00 (GMT) on Friday, Saturday, and Sunday every week.
     masterAuthorizedNetworksConfig: Optional. The configuration options for
       GKE cluster master authorized networks. By default master authorized
       networks feature is: - in case of private environment: enabled with no
       external networks allowlisted. - in case of public environment:
       disabled.
-    nodeConfig: The configuration used for the Kubernetes Engine cluster.
+    nodeConfig: Optional. The configuration used for the Kubernetes Engine
+      cluster.
     nodeCount: The number of nodes in the Kubernetes Engine cluster that will
       be used to run this environment. This field is supported for Cloud
       Composer environments in versions composer-1.*.*-airflow-*.*.*.
-    privateEnvironmentConfig: The configuration used for the Private IP Cloud
-      Composer environment.
+    privateEnvironmentConfig: Optional. The configuration used for the Private
+      IP Cloud Composer environment.
     recoveryConfig: Optional. The Recovery settings configuration of an
       environment. This field is supported for Cloud Composer environments in
       versions composer-2.*.*-airflow-*.*.* and newer.
     resilienceMode: Optional. Resilience mode of the Cloud Composer
       Environment. This field is supported for Cloud Composer environments in
       versions composer-2.2.0-airflow-*.*.* and newer.
-    softwareConfig: The configuration settings for software inside the
-      environment.
+    softwareConfig: Optional. The configuration settings for software inside
+      the environment.
     webServerConfig: Optional. The configuration settings for the Airflow web
       server App Engine instance.
     webServerNetworkAccessControl: Optional. The network-level access control
@@ -1282,7 +1379,8 @@ class MasterAuthorizedNetworksConfig(_messages.Message):
   Fields:
     cidrBlocks: Up to 50 external networks that could access Kubernetes master
       through HTTPS.
-    enabled: Whether or not master authorized networks feature is enabled.
+    enabled: Optional. Whether or not master authorized networks feature is
+      enabled.
   """
 
   cidrBlocks = _messages.MessageField('CidrBlock', 1, repeated=True)
@@ -1295,19 +1393,19 @@ class NetworkingConfig(_messages.Message):
 
   Enums:
     ConnectionTypeValueValuesEnum: Optional. Indicates the user requested
-      specifc connection type between Tenant and Customer projects. You cannot
-      set networking connection type in public IP environment.
+      specific connection type between Tenant and Customer projects. You
+      cannot set networking connection type in public IP environment.
 
   Fields:
-    connectionType: Optional. Indicates the user requested specifc connection
+    connectionType: Optional. Indicates the user requested specific connection
       type between Tenant and Customer projects. You cannot set networking
       connection type in public IP environment.
   """
 
   class ConnectionTypeValueValuesEnum(_messages.Enum):
-    r"""Optional. Indicates the user requested specifc connection type between
-    Tenant and Customer projects. You cannot set networking connection type in
-    public IP environment.
+    r"""Optional. Indicates the user requested specific connection type
+    between Tenant and Customer projects. You cannot set networking connection
+    type in public IP environment.
 
     Values:
       CONNECTION_TYPE_UNSPECIFIED: No specific connection type was requested,
@@ -1336,7 +1434,7 @@ class NodeConfig(_messages.Message):
       case of overlap, IPs from this range will not be accessible in the
       user's VPC network. Cannot be updated. If not specified, the default
       value of '100.64.128.0/20' is used. This field is supported for Cloud
-      Composer environments in versions composer-3.*.*-airflow-*.*.* and
+      Composer environments in versions composer-3-airflow-*.*.*-build.* and
       newer.
     composerNetworkAttachment: Optional. Network Attachment that Cloud
       Composer environment is connected to, which provides connectivity with a
@@ -1347,7 +1445,7 @@ class NodeConfig(_messages.Message):
       disabled. Network attachment must be provided in format projects/{projec
       t}/regions/{region}/networkAttachments/{networkAttachment}. This field
       is supported for Cloud Composer environments in versions
-      composer-3.*.*-airflow-*.*.* and newer.
+      composer-3-airflow-*.*.*-build.* and newer.
     diskSizeGb: Optional. The disk size in GB used for node VMs. Minimum size
       is 30GB. If unspecified, defaults to 100GB. Cannot be updated. This
       field is supported for Cloud Composer environments in versions
@@ -1694,7 +1792,7 @@ class PrivateEnvironmentConfig(_messages.Message):
       `NodeConfig.composer_network_attachment` field are specified). If
       `false`, the builds also have access to the internet. This field is
       supported for Cloud Composer environments in versions
-      composer-3.*.*-airflow-*.*.* and newer.
+      composer-3-airflow-*.*.*-build.* and newer.
     enablePrivateEnvironment: Optional. If `true`, a Private IP Cloud Composer
       environment is created. If this field is set to true,
       `IPAllocationPolicy.use_ip_aliases` must be set to true for Cloud
@@ -1739,6 +1837,10 @@ class RecoveryConfig(_messages.Message):
   """
 
   scheduledSnapshotsConfig = _messages.MessageField('ScheduledSnapshotsConfig', 1)
+
+
+class RestartWebServerRequest(_messages.Message):
+  r"""Restart Airflow web server."""
 
 
 class SaveSnapshotRequest(_messages.Message):
@@ -1812,7 +1914,7 @@ class SoftwareConfig(_messages.Message):
     WebServerPluginsModeValueValuesEnum: Optional. Whether or not the web
       server uses custom plugins. If unspecified, the field defaults to
       `PLUGINS_ENABLED`. This field is supported for Cloud Composer
-      environments in versions composer-3.*.*-airflow-*.*.* and newer.
+      environments in versions composer-3-airflow-*.*.*-build.* and newer.
 
   Messages:
     AirflowConfigOverridesValue: Optional. Apache Airflow configuration
@@ -1870,23 +1972,24 @@ class SoftwareConfig(_messages.Message):
       * `C_FORCE_ROOT` * `CONTAINER_NAME` * `DAGS_FOLDER` * `GCP_PROJECT` *
       `GCS_BUCKET` * `GKE_CLUSTER_NAME` * `SQL_DATABASE` * `SQL_INSTANCE` *
       `SQL_PASSWORD` * `SQL_PROJECT` * `SQL_REGION` * `SQL_USER`
-    imageVersion: The version of the software running in the environment. This
-      encapsulates both the version of Cloud Composer functionality and the
-      version of Apache Airflow. It must match the regular expression `compose
-      r-([0-9]+(\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?)?|latest)-airflow-([0-
-      9]+(\.[0-9]+(\.[0-9]+)?)?)`. When used as input, the server also checks
-      if the provided version is supported and denies the request for an
-      unsupported version. The Cloud Composer portion of the image version is
-      a full [semantic version](https://semver.org), or an alias in the form
-      of major version number or `latest`. When an alias is provided, the
-      server replaces it with the current Cloud Composer version that
-      satisfies the alias. The Apache Airflow portion of the image version is
-      a full semantic version that points to one of the supported Apache
-      Airflow versions, or an alias in the form of only major or major.minor
-      versions specified. When an alias is provided, the server replaces it
-      with the latest Apache Airflow version that satisfies the alias and is
-      supported in the given Cloud Composer version. In all cases, the
-      resolved image version is stored in the same field. See also [version
+    imageVersion: Optional. The version of the software running in the
+      environment. This encapsulates both the version of Cloud Composer
+      functionality and the version of Apache Airflow. It must match the
+      regular expression `composer-([0-9]+(\.[0-9]+\.[0-9]+(-preview\.[0-
+      9]+)?)?|latest)-airflow-([0-9]+(\.[0-9]+(\.[0-9]+)?)?)`. When used as
+      input, the server also checks if the provided version is supported and
+      denies the request for an unsupported version. The Cloud Composer
+      portion of the image version is a full [semantic
+      version](https://semver.org), or an alias in the form of major version
+      number or `latest`. When an alias is provided, the server replaces it
+      with the current Cloud Composer version that satisfies the alias. The
+      Apache Airflow portion of the image version is a full semantic version
+      that points to one of the supported Apache Airflow versions, or an alias
+      in the form of only major or major.minor versions specified. When an
+      alias is provided, the server replaces it with the latest Apache Airflow
+      version that satisfies the alias and is supported in the given Cloud
+      Composer version. In all cases, the resolved image version is stored in
+      the same field. See also [version
       list](/composer/docs/concepts/versioning/composer-versions) and
       [versioning overview](/composer/docs/concepts/versioning/composer-
       versioning-overview).
@@ -1908,14 +2011,14 @@ class SoftwareConfig(_messages.Message):
     webServerPluginsMode: Optional. Whether or not the web server uses custom
       plugins. If unspecified, the field defaults to `PLUGINS_ENABLED`. This
       field is supported for Cloud Composer environments in versions
-      composer-3.*.*-airflow-*.*.* and newer.
+      composer-3-airflow-*.*.*-build.* and newer.
   """
 
   class WebServerPluginsModeValueValuesEnum(_messages.Enum):
     r"""Optional. Whether or not the web server uses custom plugins. If
     unspecified, the field defaults to `PLUGINS_ENABLED`. This field is
     supported for Cloud Composer environments in versions
-    composer-3.*.*-airflow-*.*.* and newer.
+    composer-3-airflow-*.*.*-build.* and newer.
 
     Values:
       WEB_SERVER_PLUGINS_MODE_UNSPECIFIED: Default mode.
@@ -2196,18 +2299,14 @@ class TaskLogsRetentionConfig(_messages.Message):
 
   Enums:
     StorageModeValueValuesEnum: Optional. The mode of storage for Airflow
-      workers task logs. For details, see go/composer-store-task-logs-in-
-      cloud-logging-only-design-doc
+      workers task logs.
 
   Fields:
     storageMode: Optional. The mode of storage for Airflow workers task logs.
-      For details, see go/composer-store-task-logs-in-cloud-logging-only-
-      design-doc
   """
 
   class StorageModeValueValuesEnum(_messages.Enum):
-    r"""Optional. The mode of storage for Airflow workers task logs. For
-    details, see go/composer-store-task-logs-in-cloud-logging-only-design-doc
+    r"""Optional. The mode of storage for Airflow workers task logs.
 
     Values:
       TASK_LOGS_STORAGE_MODE_UNSPECIFIED: This configuration is not specified
@@ -2246,12 +2345,14 @@ class UserWorkloadsConfigMap(_messages.Message):
   Messages:
     DataValue: Optional. The "data" field of Kubernetes ConfigMap, organized
       in key-value pairs. For details see:
-      https://kubernetes.io/docs/concepts/configuration/configmap/
+      https://kubernetes.io/docs/concepts/configuration/configmap/ Example: {
+      "example_key": "example_value", "another_key": "another_value" }
 
   Fields:
     data: Optional. The "data" field of Kubernetes ConfigMap, organized in
       key-value pairs. For details see:
-      https://kubernetes.io/docs/concepts/configuration/configmap/
+      https://kubernetes.io/docs/concepts/configuration/configmap/ Example: {
+      "example_key": "example_value", "another_key": "another_value" }
     name: Identifier. The resource name of the ConfigMap, in the form: "projec
       ts/{projectId}/locations/{locationId}/environments/{environmentId}/userW
       orkloadsConfigMaps/{userWorkloadsConfigMapId}"
@@ -2261,7 +2362,8 @@ class UserWorkloadsConfigMap(_messages.Message):
   class DataValue(_messages.Message):
     r"""Optional. The "data" field of Kubernetes ConfigMap, organized in key-
     value pairs. For details see:
-    https://kubernetes.io/docs/concepts/configuration/configmap/
+    https://kubernetes.io/docs/concepts/configuration/configmap/ Example: {
+    "example_key": "example_value", "another_key": "another_value" }
 
     Messages:
       AdditionalProperty: An additional property for a DataValue object.
@@ -2296,14 +2398,18 @@ class UserWorkloadsSecret(_messages.Message):
       key-value pairs, which can contain sensitive values such as a password,
       a token, or a key. The values for all keys have to be base64-encoded
       strings. For details see:
-      https://kubernetes.io/docs/concepts/configuration/secret/
+      https://kubernetes.io/docs/concepts/configuration/secret/ Example: {
+      "example": "ZXhhbXBsZV92YWx1ZQ==", "another-example":
+      "YW5vdGhlcl9leGFtcGxlX3ZhbHVl" }
 
   Fields:
     data: Optional. The "data" field of Kubernetes Secret, organized in key-
       value pairs, which can contain sensitive values such as a password, a
       token, or a key. The values for all keys have to be base64-encoded
       strings. For details see:
-      https://kubernetes.io/docs/concepts/configuration/secret/
+      https://kubernetes.io/docs/concepts/configuration/secret/ Example: {
+      "example": "ZXhhbXBsZV92YWx1ZQ==", "another-example":
+      "YW5vdGhlcl9leGFtcGxlX3ZhbHVl" }
     name: Identifier. The resource name of the Secret, in the form: "projects/
       {projectId}/locations/{locationId}/environments/{environmentId}/userWork
       loadsSecrets/{userWorkloadsSecretId}"
@@ -2315,7 +2421,9 @@ class UserWorkloadsSecret(_messages.Message):
     value pairs, which can contain sensitive values such as a password, a
     token, or a key. The values for all keys have to be base64-encoded
     strings. For details see:
-    https://kubernetes.io/docs/concepts/configuration/secret/
+    https://kubernetes.io/docs/concepts/configuration/secret/ Example: {
+    "example": "ZXhhbXBsZV92YWx1ZQ==", "another-example":
+    "YW5vdGhlcl9leGFtcGxlX3ZhbHVl" }
 
     Messages:
       AdditionalProperty: An additional property for a DataValue object.
@@ -2411,7 +2519,7 @@ class WorkloadsConfig(_messages.Message):
   Fields:
     dagProcessor: Optional. Resources used by Airflow DAG processors. This
       field is supported for Cloud Composer environments in versions
-      composer-3.*.*-airflow-*.*.* and newer.
+      composer-3-airflow-*.*.*-build.* and newer.
     scheduler: Optional. Resources used by Airflow schedulers.
     triggerer: Optional. Resources used by Airflow triggerers.
     webServer: Optional. Resources used by Airflow web server.

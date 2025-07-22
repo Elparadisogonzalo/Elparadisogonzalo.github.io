@@ -216,7 +216,7 @@ def _add_common_args(parser):
       help='Minimum [retention period](https://cloud.google.com'
       '/storage/docs/bucket-lock#retention-periods)'
       ' for objects stored in the bucket, for example'
-      ' ``--retention-period=1Y1M1D5S\'\'. Objects added to the bucket'
+      ' ``--retention-period=P1Y1M1DT5S\'\'. Objects added to the bucket'
       ' cannot be deleted until they\'ve been stored for the specified'
       ' length of time. Default is no retention period. Only available'
       ' for Cloud Storage using the JSON API.')
@@ -316,7 +316,13 @@ def _add_alpha_args(parser):
   Returns:
     buckets update flag group
   """
-  del parser  # Unused. Currently, no alpha args.
+  ip_filter = parser.add_mutually_exclusive_group()
+  ip_filter.add_argument(
+      '--clear-ip-filter',
+      action='store_true',
+      help='Disables and clears IP filter configuration of the bucket.',
+  )
+  flags.add_ip_filter_file_flag(ip_filter)
 
 
 def _is_initial_bucket_metadata_needed(user_request_args):
@@ -333,6 +339,7 @@ def _is_initial_bucket_metadata_needed(user_request_args):
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.UniverseCompatible
 class Update(base.Command):
   """Update bucket settings."""
 

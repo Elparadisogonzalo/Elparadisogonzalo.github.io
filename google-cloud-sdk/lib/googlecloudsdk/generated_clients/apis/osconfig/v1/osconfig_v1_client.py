@@ -39,6 +39,7 @@ class OsconfigV1(base_api.BaseApiClient):
         default_global_params=default_global_params,
         additional_http_headers=additional_http_headers,
         response_encoding=response_encoding)
+    self.projects_locations_global = self.ProjectsLocationsGlobalService(self)
     self.projects_locations_instances_inventories = self.ProjectsLocationsInstancesInventoriesService(self)
     self.projects_locations_instances_osPolicyAssignments_reports = self.ProjectsLocationsInstancesOsPolicyAssignmentsReportsService(self)
     self.projects_locations_instances_osPolicyAssignments = self.ProjectsLocationsInstancesOsPolicyAssignmentsService(self)
@@ -51,6 +52,70 @@ class OsconfigV1(base_api.BaseApiClient):
     self.projects_patchJobs_instanceDetails = self.ProjectsPatchJobsInstanceDetailsService(self)
     self.projects_patchJobs = self.ProjectsPatchJobsService(self)
     self.projects = self.ProjectsService(self)
+
+  class ProjectsLocationsGlobalService(base_api.BaseApiService):
+    """Service class for the projects_locations_global resource."""
+
+    _NAME = 'projects_locations_global'
+
+    def __init__(self, client):
+      super(OsconfigV1.ProjectsLocationsGlobalService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def GetProjectFeatureSettings(self, request, global_params=None):
+      r"""GetProjectFeatureSettings returns the VM Manager feature settings for a project.
+
+      Args:
+        request: (OsconfigProjectsLocationsGlobalGetProjectFeatureSettingsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ProjectFeatureSettings) The response message.
+      """
+      config = self.GetMethodConfig('GetProjectFeatureSettings')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetProjectFeatureSettings.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/global/projectFeatureSettings',
+        http_method='GET',
+        method_id='osconfig.projects.locations.global.getProjectFeatureSettings',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=[],
+        relative_path='v1/{+name}',
+        request_field='',
+        request_type_name='OsconfigProjectsLocationsGlobalGetProjectFeatureSettingsRequest',
+        response_type_name='ProjectFeatureSettings',
+        supports_download=False,
+    )
+
+    def UpdateProjectFeatureSettings(self, request, global_params=None):
+      r"""UpdateProjectFeatureSettings sets the VM Manager features for a project.
+
+      Args:
+        request: (OsconfigProjectsLocationsGlobalUpdateProjectFeatureSettingsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ProjectFeatureSettings) The response message.
+      """
+      config = self.GetMethodConfig('UpdateProjectFeatureSettings')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    UpdateProjectFeatureSettings.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path='v1/projects/{projectsId}/locations/global/projectFeatureSettings',
+        http_method='PATCH',
+        method_id='osconfig.projects.locations.global.updateProjectFeatureSettings',
+        ordered_params=['name'],
+        path_params=['name'],
+        query_params=['updateMask'],
+        relative_path='v1/{+name}',
+        request_field='projectFeatureSettings',
+        request_type_name='OsconfigProjectsLocationsGlobalUpdateProjectFeatureSettingsRequest',
+        response_type_name='ProjectFeatureSettings',
+        supports_download=False,
+    )
 
   class ProjectsLocationsInstancesInventoriesService(base_api.BaseApiService):
     """Service class for the projects_locations_instances_inventories resource."""
@@ -275,7 +340,7 @@ class OsconfigV1(base_api.BaseApiClient):
           }
 
     def Cancel(self, request, global_params=None):
-      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
+      r"""Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
 
       Args:
         request: (OsconfigProjectsLocationsOsPolicyAssignmentsOperationsCancelRequest) input message
@@ -357,7 +422,7 @@ class OsconfigV1(base_api.BaseApiClient):
         method_id='osconfig.projects.locations.osPolicyAssignments.create',
         ordered_params=['parent'],
         path_params=['parent'],
-        query_params=['osPolicyAssignmentId'],
+        query_params=['osPolicyAssignmentId', 'requestId'],
         relative_path='v1/{+parent}/osPolicyAssignments',
         request_field='oSPolicyAssignment',
         request_type_name='OsconfigProjectsLocationsOsPolicyAssignmentsCreateRequest',
@@ -384,7 +449,7 @@ class OsconfigV1(base_api.BaseApiClient):
         method_id='osconfig.projects.locations.osPolicyAssignments.delete',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=[],
+        query_params=['requestId'],
         relative_path='v1/{+name}',
         request_field='',
         request_type_name='OsconfigProjectsLocationsOsPolicyAssignmentsDeleteRequest',
@@ -492,7 +557,7 @@ class OsconfigV1(base_api.BaseApiClient):
         method_id='osconfig.projects.locations.osPolicyAssignments.patch',
         ordered_params=['name'],
         path_params=['name'],
-        query_params=['updateMask'],
+        query_params=['allowMissing', 'requestId', 'updateMask'],
         relative_path='v1/{+name}',
         request_field='oSPolicyAssignment',
         request_type_name='OsconfigProjectsLocationsOsPolicyAssignmentsPatchRequest',

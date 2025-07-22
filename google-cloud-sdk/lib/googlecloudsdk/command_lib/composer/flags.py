@@ -37,7 +37,7 @@ import six
 
 MIN_TRIGGERER_AIRFLOW_VERSION = '2.2.5'
 MIN_TRIGGERER_COMPOSER_VERSION = '2.0.31'
-MIN_COMPOSER3_VERSION = '3.0.0'
+MIN_COMPOSER3_VERSION = '3'
 MIN_SCHEDULED_SNAPSHOTS_COMPOSER_VERSION = '2.0.32'
 MIN_COMPOSER_RUN_AIRFLOW_CLI_VERSION = '2.4.0'
 
@@ -113,13 +113,11 @@ class V2ExclusiveStoreAction(argparse._StoreAction):  # pylint: disable=protecte
   """StoreActionClass first validating if option is Composer >=2 exclusive."""
 
 
-# TODO(b/309750417): Update help text
 _AIRFLOW_VERSION_TYPE = arg_parsers.RegexpValidator(
     r'^(\d+(?:\.\d+(?:\.\d+(?:-build\.\d+)?)?)?)',
     'must be in the form X[.Y[.Z]].',
 )
 
-# TODO(b/309750417): Update help text
 _IMAGE_VERSION_TYPE = arg_parsers.RegexpValidator(
     r'^composer-(\d+(?:\.\d+\.\d+(?:-[a-z]+\.\d+)?)?|latest)-airflow-(\d+(?:\.\d+(?:\.\d+(?:-build\.\d+)?)?)?)',
     'must be in the form \'composer-A[.B.C[-D.E]]-airflow-X[.Y[.Z]]\' or '
@@ -141,9 +139,12 @@ OPERATION_NAME_ARG = base.Argument(
 
 LOCATION_FLAG = base.Argument(
     '--location',
-    required=False,
+    required=arg_parsers.ArgRequiredInUniverse(
+        default_universe=False, non_default_universe=True
+    ),
     help='The Cloud Composer location (e.g., us-central1).',
-    action=actions.StoreProperty(properties.VALUES.composer.location))
+    action=actions.StoreProperty(properties.VALUES.composer.location),
+)
 
 _ENV_VAR_NAME_ERROR = (
     'Only upper and lowercase letters, digits, and underscores are allowed. '
@@ -461,7 +462,7 @@ NETWORK_FLAG = base.Argument(
 SUBNETWORK_FLAG = base.Argument(
     '--subnetwork',
     help=(
-        'The Compute Engine subnetwork '
+        'The Compute Engine Subnetwork '
         '(https://cloud.google.com/compute/docs/subnetworks) to which the '
         'environment will be connected.'
     ),
@@ -469,7 +470,6 @@ SUBNETWORK_FLAG = base.Argument(
 
 NETWORK_ATTACHMENT = base.Argument(
     '--network-attachment',
-    hidden=True,
     help="""\
     Cloud Composer Network Attachment, which provides connectivity with a user's VPC network,
     supported in Composer {} environments or greater.
@@ -556,7 +556,6 @@ SUPPORT_WEB_SERVER_PLUGINS = base.Argument(
     '--support-web-server-plugins',
     action='store_true',
     default=None,
-    hidden=True,
     help="""\
     Enable the support for web server plugins, supported in Composer {}
     or greater.
@@ -568,7 +567,6 @@ ENABLE_PRIVATE_BUILDS_ONLY = base.Argument(
     action='store_const',
     default=None,
     const=True,
-    hidden=True,
     help="""\
     Builds performed during operations that install Python
     packages have only private connectivity to Google services,
@@ -581,11 +579,9 @@ DISABLE_PRIVATE_BUILDS_ONLY = base.Argument(
     action='store_const',
     default=None,
     const=True,
-    hidden=True,
     help="""\
     Builds performed during operations that install Python
-    packages have an access to the internet
-    supported in Composer {} or greater.
+    packages have an access to the internet, supported in Composer {} or greater.
     """.format(MIN_COMPOSER3_VERSION),
 )
 
@@ -883,7 +879,6 @@ CLOUD_SQL_PREFERRED_ZONE = base.Argument(
 DISABLE_VPC_CONNECTIVITY = base.Argument(
     '--disable-vpc-connectivity',
     default=None,
-    hidden=True,
     const=True,
     action='store_const',
     help="""\
@@ -896,7 +891,6 @@ DISABLE_VPC_CONNECTIVITY = base.Argument(
 ENABLE_PRIVATE_ENVIRONMENT_UPDATE_FLAG = base.Argument(
     '--enable-private-environment',
     default=None,
-    hidden=True,
     action='store_true',
     help="""\
     Disable internet connection from any Composer component,
@@ -908,7 +902,6 @@ ENABLE_PRIVATE_ENVIRONMENT_UPDATE_FLAG = base.Argument(
 DISABLE_PRIVATE_ENVIRONMENT_UPDATE_FLAG = base.Argument(
     '--disable-private-environment',
     default=None,
-    hidden=True,
     action='store_true',
     help="""\
     Enable internet connection from any Composer component,
@@ -970,8 +963,8 @@ AIRFLOW_DATABASE_RETENTION_DAYS = base.Argument(
     type=int,
     default=None,
     help="""\
-    The number of retention
-      days for airflow database retention mechanism.
+    The number of days for the Airflow database retention period.
+      If set to 0, the Airflow database retention mechanism will be disabled.
     """)
 
 ENABLE_CLOUD_DATA_LINEAGE_INTEGRATION_FLAG = base.Argument(
@@ -979,7 +972,7 @@ ENABLE_CLOUD_DATA_LINEAGE_INTEGRATION_FLAG = base.Argument(
     default=None,
     action='store_true',
     help="""\
-    Enable Cloud Data Lineage integration.
+    Enable Cloud Data Lineage integration, supported for Composer 2 Environments.
     """)
 
 DISABLE_CLOUD_DATA_LINEAGE_INTEGRATION_FLAG = base.Argument(
@@ -987,7 +980,7 @@ DISABLE_CLOUD_DATA_LINEAGE_INTEGRATION_FLAG = base.Argument(
     default=None,
     action='store_true',
     help="""\
-    Disable Cloud Data Lineage integration.
+    Disable Cloud Data Lineage integration, supported for Composer 2 Environments.
     """)
 
 STORAGE_BUCKET_FLAG = base.Argument(
@@ -1074,9 +1067,14 @@ ENABLE_PRIVATE_ENVIRONMENT_FLAG = base.Argument(
 
     If not specified, cluster nodes will be assigned public IP addresses.
 
+    When used with Composer 3, disable internet connection from any Composer
+    component.
+
     When used with Composer 1.x, cannot be specified unless `--enable-ip-alias`
     is also specified.
-    """)
+
+    """,
+)
 
 ENABLE_PRIVATE_ENDPOINT_FLAG = base.Argument(
     '--enable-private-endpoint',
@@ -1279,7 +1277,6 @@ COMPOSER_INTERNAL_NETWORK_IPV4_CIDR_BLOCK_FORMAT_VALIDATOR = (
 COMPOSER_INTERNAL_IPV4_CIDR_FLAG = base.Argument(
     '--composer-internal-ipv4-cidr-block',
     default=None,
-    hidden=True,
     type=COMPOSER_INTERNAL_NETWORK_IPV4_CIDR_BLOCK_FORMAT_VALIDATOR,
     action=V2ExclusiveStoreAction,
     help="""\
@@ -1365,6 +1362,15 @@ MAINTENANCE_WINDOW_END_FLAG = base.Argument(
     See $ gcloud topic datetimes for information on time formats.
     """)
 
+CLEAR_MAINTENANCE_WINDOW_FLAG = base.Argument(
+    '--clear-maintenance-window',
+    default=None,
+    action='store_true',
+    help="""\
+    Clears the maintenance window settings.
+    Can be specified for Composer {} or greater.
+    """.format(MIN_COMPOSER3_VERSION))
+
 MAINTENANCE_WINDOW_RECURRENCE_FLAG = base.Argument(
     '--maintenance-window-recurrence',
     type=str,
@@ -1377,6 +1383,10 @@ MAINTENANCE_WINDOW_RECURRENCE_FLAG = base.Argument(
 
 MAINTENANCE_WINDOW_FLAG_GROUP_DESCRIPTION = (
     'Group of arguments for setting the maintenance window value.')
+
+MAINTENANCE_WINDOW_FLAG_UPDATE_GROUP_DESCRIPTION = (
+    'Group of arguments for setting the maintenance window value during update.'
+)
 
 SKIP_PYPI_PACKAGES_INSTALLATION = base.Argument(
     '--skip-pypi-packages-installation',
@@ -1710,15 +1720,17 @@ def AddAirflowConfigUpdateFlagsToGroup(update_type_group):
                                     AIRFLOW_CONFIGS_FLAG_GROUP_DESCRIPTION)
 
 
-def AddEnvUpgradeFlagsToGroup(update_type_group):
+def AddEnvUpgradeFlagsToGroup(update_type_group, release_track):
   """Adds flag group to perform in-place env upgrades.
 
   Args:
     update_type_group: argument group, the group to which flags should be added.
+    release_track: gcloud version to add flags to.
   """
   upgrade_group = update_type_group.add_argument_group(
       ENV_UPGRADE_GROUP_DESCRIPTION, mutex=True)
-  UPDATE_AIRFLOW_VERSION_FLAG.AddToParser(upgrade_group)
+  if release_track != base.ReleaseTrack.GA:
+    UPDATE_AIRFLOW_VERSION_FLAG.AddToParser(upgrade_group)
   UPDATE_IMAGE_VERSION_FLAG.AddToParser(upgrade_group)
 
 
@@ -1789,15 +1801,13 @@ def AddAutoscalingUpdateFlagsToGroup(update_type_group, release_track):
   TRIGGERER_MEMORY.AddToParser(triggerer_enabled_group)
   ENABLE_TRIGGERER.AddToParser(triggerer_enabled_group)
   DISABLE_TRIGGERER.AddToParser(triggerer_params_group)
-  if release_track != base.ReleaseTrack.GA:
-    dag_processor_params_group = update_group.add_argument_group(
-        DAG_PROCESSOR_PARAMETERS_FLAG_GROUP_DESCRIPTION,
-        hidden=True,
-    )
-    DAG_PROCESSOR_CPU.AddToParser(dag_processor_params_group)
-    DAG_PROCESSOR_COUNT.AddToParser(dag_processor_params_group)
-    DAG_PROCESSOR_MEMORY.AddToParser(dag_processor_params_group)
-    DAG_PROCESSOR_STORAGE.AddToParser(dag_processor_params_group)
+  dag_processor_params_group = update_group.add_argument_group(
+      DAG_PROCESSOR_PARAMETERS_FLAG_GROUP_DESCRIPTION,
+  )
+  DAG_PROCESSOR_CPU.AddToParser(dag_processor_params_group)
+  DAG_PROCESSOR_COUNT.AddToParser(dag_processor_params_group)
+  DAG_PROCESSOR_MEMORY.AddToParser(dag_processor_params_group)
+  DAG_PROCESSOR_STORAGE.AddToParser(dag_processor_params_group)
 
   # Note: this flag is available for patching of both Composer 1.*.* and 2.*.*
   # environments.
@@ -1817,13 +1827,30 @@ def AddMasterAuthorizedNetworksUpdateFlagsToGroup(update_type_group):
   DISABLE_MASTER_AUTHORIZED_NETWORKS_FLAG.AddToParser(update_group)
 
 
-def AddMaintenanceWindowFlagsGroup(update_type_group):
+def AddMaintenanceWindowFlagsGroup(create_type_group):
   """Adds flag group for maintenance window.
+
+  Args:
+    create_type_group: argument group, the group to which flags should be added.
+  """
+  group = create_type_group.add_group(MAINTENANCE_WINDOW_FLAG_GROUP_DESCRIPTION)
+  MAINTENANCE_WINDOW_START_FLAG.AddToParser(group)
+  MAINTENANCE_WINDOW_END_FLAG.AddToParser(group)
+  MAINTENANCE_WINDOW_RECURRENCE_FLAG.AddToParser(group)
+
+
+def AddMaintenanceWindowFlagsUpdateGroup(update_type_group):
+  """Adds flag group for maintenance window used for an update operation.
 
   Args:
     update_type_group: argument group, the group to which flags should be added.
   """
-  group = update_type_group.add_group(MAINTENANCE_WINDOW_FLAG_GROUP_DESCRIPTION)
+
+  update_group = update_type_group.add_argument_group(
+      MAINTENANCE_WINDOW_FLAG_UPDATE_GROUP_DESCRIPTION, mutex=True)
+
+  CLEAR_MAINTENANCE_WINDOW_FLAG.AddToParser(update_group)
+  group = update_group.add_group(MAINTENANCE_WINDOW_FLAG_GROUP_DESCRIPTION)
   MAINTENANCE_WINDOW_START_FLAG.AddToParser(group)
   MAINTENANCE_WINDOW_END_FLAG.AddToParser(group)
   MAINTENANCE_WINDOW_RECURRENCE_FLAG.AddToParser(group)
@@ -1854,13 +1881,13 @@ def AddComposer3FlagsToGroup(update_type_group):
   SUPPORT_WEB_SERVER_PLUGINS.AddToParser(update_type_group)
 
   private_builds_only_group = update_type_group.add_argument_group(
-      mutex=True, hidden=True
+      mutex=True
   )
   ENABLE_PRIVATE_BUILDS_ONLY.AddToParser(private_builds_only_group)
   DISABLE_PRIVATE_BUILDS_ONLY.AddToParser(private_builds_only_group)
 
   vpc_connectivity_group = update_type_group.add_argument_group(
-      hidden=True, mutex=True
+      mutex=True
   )
   NETWORK_ATTACHMENT.AddToParser(vpc_connectivity_group)
   DISABLE_VPC_CONNECTIVITY.AddToParser(vpc_connectivity_group)

@@ -30,6 +30,7 @@ from googlecloudsdk.command_lib.compute.commitments import flags
 _MISSING_COMMITMENTS_QUOTA_REGEX = r'Quota .COMMITMENTS. exceeded.+'
 
 
+@base.UniverseCompatible
 @base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA,
                     base.ReleaseTrack.ALPHA)
 class Update(base.UpdateCommand):
@@ -59,6 +60,7 @@ class Update(base.UpdateCommand):
     flags.MakeCommitmentArg(plural=False).AddArgument(
         parser, operation_type='update')
     flags.AddUpdateFlags(parser)
+    flags.AddCustomEndTime(parser)
 
   def Run(self, args):
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
@@ -74,6 +76,10 @@ class Update(base.UpdateCommand):
     commitment_resource.autoRenew = flags.TranslateAutoRenewArgForUpdate(args)
     commitment_resource.plan = self._TranslatePlanArgForUpdate(
         messages=messages, plan=args.plan
+    )
+
+    commitment_resource.customEndTimestamp = flags.TranslateCustomEndTimeArg(
+        args
     )
     commitment_update_request = self._GetUpdateRequest(
         messages, commitment_ref, commitment_resource
@@ -118,6 +124,8 @@ class Update(base.UpdateCommand):
       paths.append('autoRenew')
     if commitment_resource.plan is not None:
       paths.append('plan')
+    if commitment_resource.customEndTimestamp is not None:
+      paths.append('customEndTimestamp')
     return paths
 
   def _TranslatePlanArgForUpdate(self, messages=None, plan=None):

@@ -44,7 +44,6 @@ import re
 from googlecloudsdk.calliope.concepts import deps as deps_lib
 from googlecloudsdk.calliope.concepts import deps_map_util
 from googlecloudsdk.calliope.concepts import util as format_util
-from googlecloudsdk.command_lib.util.apis import registry
 from googlecloudsdk.command_lib.util.apis import yaml_command_schema_util as util
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import properties
@@ -94,14 +93,13 @@ class ConceptSpec(object, metaclass=abc.ABCMeta):
   def name(self):
     """The name of the overall concept."""
 
-  @property
-  @abc.abstractmethod
-  def anchor(self):
-    """The anchor attribute of the concept."""
-
   @abc.abstractmethod
   def IsAnchor(self, attribute):
     """Returns True if attribute is an anchor."""
+
+  @abc.abstractmethod
+  def IsLeafAnchor(self, attribute):
+    """Returns True if attribute is a leaf anchor."""
 
   @abc.abstractmethod
   def Initialize(self, fallthroughs_map, parsed_args=None):
@@ -236,6 +234,9 @@ class ResourceSpec(ConceptSpec):
     Returns:
       A ResourceSpec object.
     """
+    # pylint: disable=g-import-not-at-top
+    from googlecloudsdk.command_lib.util.apis import registry
+    # pylint: enable=g-import-not-at-top
     collection = registry.GetAPICollection(
         yaml_data['collection'], api_version=api_version)
     attributes = ParseAttributesFromData(
@@ -356,6 +357,10 @@ class ResourceSpec(ConceptSpec):
     """Convenience method."""
     return attribute == self.anchor
 
+  def IsLeafAnchor(self, attribute):
+    """Convenience method."""
+    return self.IsAnchor(attribute)
+
   @property
   def attribute_to_params_map(self):
     """A map from all attribute names to param names."""
@@ -420,7 +425,8 @@ class ResourceSpec(ConceptSpec):
           deps_lib.Get(
               self.anchor.name, fallthroughs_map, parsed_args=parsed_args),
           collection=self.collection,
-          params=params)
+          params=params,
+          api_version=self._collection_info.api_version)
     except deps_lib.AttributeNotFoundError as e:
       raise InitializationError(
           'The [{}] resource is not properly specified.\n'
@@ -630,16 +636,17 @@ class ResourceParameterAttributeConfig(object):
         for param in completion_request_params_list
     }
 
+    if default_config := DEFAULT_RESOURCE_ATTRIBUTE_CONFIGS.get(attribute_name):
+      fallthroughs = default_config.fallthroughs.copy()
+    else:
+      fallthroughs = []
+
     # Add property fallthroughs.
-    fallthroughs = []
     prop = properties.FromString(data.get('property', ''))
-    if prop:
-      fallthroughs.append(deps_lib.PropertyFallthrough(prop))
-    default_config = DEFAULT_RESOURCE_ATTRIBUTE_CONFIGS.get(attribute_name)
-    if default_config:
-      fallthroughs += [
-          f for f in default_config.fallthroughs if f not in fallthroughs
-      ]
+    prop_fallthrough = prop and deps_lib.PropertyFallthrough(prop)
+    if prop_fallthrough and prop_fallthrough not in fallthroughs:
+      fallthroughs.append(prop_fallthrough)
+
     # Add fallthroughs from python hooks.
     fallthrough_data = data.get('fallthroughs', [])
     fallthroughs_from_hook = []

@@ -89,10 +89,13 @@ class Collections(enum.Enum):
   )
   ORGANIZATIONS_APIS_KEYVALUEMAPS = (
       'organizations.apis.keyvaluemaps',
-      'organizations/{organizationsId}/apis/{apisId}/keyvaluemaps/'
-      '{keyvaluemapsId}',
-      {},
-      ['organizationsId', 'apisId', 'keyvaluemapsId'],
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/apis/{apisId}/keyvaluemaps/'
+              '{keyvaluemapsId}',
+      },
+      ['name'],
       True
   )
   ORGANIZATIONS_APIS_KEYVALUEMAPS_ENTRIES = (
@@ -231,6 +234,16 @@ class Collections(enum.Enum):
           '':
               'organizations/{organizationsId}/developers/{developersId}/'
               'subscriptions/{subscriptionsId}',
+      },
+      ['name'],
+      True
+  )
+  ORGANIZATIONS_DNSZONES = (
+      'organizations.dnsZones',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/dnsZones/{dnsZonesId}',
       },
       ['name'],
       True
@@ -385,10 +398,13 @@ class Collections(enum.Enum):
   )
   ORGANIZATIONS_ENVIRONMENTS_KEYVALUEMAPS = (
       'organizations.environments.keyvaluemaps',
-      'organizations/{organizationsId}/environments/{environmentsId}/'
-      'keyvaluemaps/{keyvaluemapsId}',
-      {},
-      ['organizationsId', 'environmentsId', 'keyvaluemapsId'],
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/environments/{environmentsId}/'
+              'keyvaluemaps/{keyvaluemapsId}',
+      },
+      ['name'],
       True
   )
   ORGANIZATIONS_ENVIRONMENTS_KEYVALUEMAPS_ENTRIES = (
@@ -588,9 +604,12 @@ class Collections(enum.Enum):
   )
   ORGANIZATIONS_KEYVALUEMAPS = (
       'organizations.keyvaluemaps',
-      'organizations/{organizationsId}/keyvaluemaps/{keyvaluemapsId}',
-      {},
-      ['organizationsId', 'keyvaluemapsId'],
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/keyvaluemaps/{keyvaluemapsId}',
+      },
+      ['name'],
       True
   )
   ORGANIZATIONS_KEYVALUEMAPS_ENTRIES = (
@@ -635,13 +654,13 @@ class Collections(enum.Enum):
       ['name'],
       True
   )
-  ORGANIZATIONS_SECURITYFEEDBACK = (
-      'organizations.securityFeedback',
+  ORGANIZATIONS_SECURITYMONITORINGCONDITIONS = (
+      'organizations.securityMonitoringConditions',
       '{+name}',
       {
           '':
-              'organizations/{organizationsId}/securityFeedback/'
-              '{securityFeedbackId}',
+              'organizations/{organizationsId}/securityMonitoringConditions/'
+              '{securityMonitoringConditionsId}',
       },
       ['name'],
       True
@@ -703,6 +722,27 @@ class Collections(enum.Enum):
           '':
               'organizations/{organizationsId}/sites/{sitesId}/apicategories/'
               '{apicategoriesId}',
+      },
+      ['name'],
+      True
+  )
+  ORGANIZATIONS_SITES_APIDOCS = (
+      'organizations.sites.apidocs',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/sites/{sitesId}/apidocs/'
+              '{apidocsId}',
+      },
+      ['name'],
+      True
+  )
+  ORGANIZATIONS_SPACES = (
+      'organizations.spaces',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/spaces/{spacesId}',
       },
       ['name'],
       True
