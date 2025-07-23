@@ -9,13 +9,16 @@
         ],
         "commandName": [
           "remove",
-          "add"
+          "add",
+          "-v",
+          "install"
         ],
         "workspaceCount": [
           "5"
         ],
         "dependencyCount": [
-          "147"
+          "147",
+          "148"
         ]
       },
       "enumerators": {
@@ -25,7 +28,7 @@
       },
       "hits": {
         "installCount": {
-          "node-modules": 1
+          "node-modules": 4
         }
       }
     }
