@@ -1,55 +1,33 @@
 {
-  "lastUpdate": 1753167728089,
-  "lastTips": 1753142400000,
+  "lastUpdate": 1754415034940,
+  "lastTips": 1753228800000,
   "blocks": {
     "*": {
       "values": {
         "version": [
-          "4.9.2",
-          "4.9.1"
+          "4.9.2"
         ],
         "commandName": [
-          "-v",
-          "<none>",
-          "install",
-          "init",
-          "add",
-          "workspace",
-          "create",
           "remove",
-          "cache clean"
+          "add"
         ],
         "workspaceCount": [
-          "5",
-          "3",
-          "1",
-          "2"
+          "5"
         ],
         "dependencyCount": [
-          "147",
-          "7",
-          "0",
-          "2",
-          "3",
-          "1",
-          "12",
-          "11"
+          "147"
         ]
       },
       "enumerators": {
         "projectCount": [
-          "da8416ec718eff9cb2ed298263c8c43c1bae333b15248901a503ad6a66eb45b782d167e3e0068c800648680019efd4b7a963caa6792a853a3a8077b924b4450b",
-          "9df1a3879e8021be7c1f4d1e2da32fb81ee024815cf13d951d982b6ada8faecdc456dff2b8caba7176e77562c35ca9b38c5a248a984ab3e8aba0845f3865b2ac",
-          "15a187213f621973fa80cbd75f443a9ddb7ff8e3d82f979741c2b71f5cb33e4580ddc5cc9dc9a35325276ef6d572dd6b32c269c2c5f85312a3fd8e33493a9d19"
+          "da8416ec718eff9cb2ed298263c8c43c1bae333b15248901a503ad6a66eb45b782d167e3e0068c800648680019efd4b7a963caa6792a853a3a8077b924b4450b"
         ]
       },
       "hits": {
         "installCount": {
-          "node-modules": 5,
-          "pnp": 3
+          "node-modules": 1
         }
       }
     }
-  },
-  "displayedTips": []
+  }
 }

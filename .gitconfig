@@ -1,3 +1,5 @@
 [user]
 	name = Elparadisogonzalo
 	email = genyoungclip@gmail.com
+[http]
+	cookiefile = /data/data/com.termux/files/home/.gitcookies
