@@ -1,7 +1,7 @@
 {
   "Identity": {
-    "PeerID": "12D3KooWGKZXWWz9r9QQYEXvX1wuiMfom8EirzmjbVTUrkScUnXu",
-    "PrivKey": "YOUR_BASE64_ENCODED_PRIVATE_KEY_HERE"
+    "PeerID": "12D3KooWJ1fQ8eR6ifraW8crDsTnZV9CP9njSWQxkBm1kgbpHBaH",
+    "PrivKey": "CAESQFR9+YbnNrAJMm7u7kBnODuAMiD1dY5l4rercA6FXsZGecJeBZpwQWmq9gsVoXzrVvx8mIYx2shaTRMWT/UAMeI="
   },
   "Datastore": {
     "StorageMax": "10GB",
@@ -18,10 +18,10 @@
           "type": "flatfs"
         },
         {
+          "compression": "none",
           "mountpoint": "/",
           "path": "datastore",
           "prefix": "leveldb.datastore",
-          "compression": "none",
           "type": "levelds"
         }
       ],
@@ -35,8 +35,10 @@
     "Swarm": [
       "/ip4/0.0.0.0/tcp/4001",
       "/ip6/::/tcp/4001",
+      "/ip4/0.0.0.0/udp/4001/webrtc-direct",
       "/ip4/0.0.0.0/udp/4001/quic-v1",
       "/ip4/0.0.0.0/udp/4001/quic-v1/webtransport",
+      "/ip6/::/udp/4001/webrtc-direct",
       "/ip6/::/udp/4001/quic-v1",
       "/ip6/::/udp/4001/quic-v1/webtransport"
     ],
@@ -44,7 +46,7 @@
     "AppendAnnounce": [],
     "NoAnnounce": [],
     "API": "/ip4/127.0.0.1/tcp/5001",
-    "Gateway": "/ip4/127.0.0.1/tcp/8088"
+    "Gateway": "/ip4/127.0.0.1/tcp/8080"
   },
   "Mounts": {
     "IPFS": "/ipfs",
@@ -54,21 +56,33 @@
   },
   "Discovery": {
     "MDNS": {
-      "Enabled": false
+      "Enabled": true
     }
   },
+  "Routing": {},
+  "Ipns": {
+    "RepublishPeriod": "",
+    "RecordLifetime": "",
+    "ResolveCacheSize": 128
+  },
   "Bootstrap": [
-    "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpF2",
-    "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gFZ",
-    "/dnsaddr/val.bootstrap.libp2p.io/p2p/12D3KooWKnDdG3iXw9eTFijk3EWSuV5HPL",
-    "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtU",
-    "/ip4/104.131.131.82/udp/4001/quic-v1/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtU"
+    "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+    "/dnsaddr/va1.bootstrap.libp2p.io/p2p/12D3KooWKnDdG3iXw9eTFijk3EWSunZcFi54Zka4wmtqtt6rPxc8",
+    "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
+    "/ip4/104.131.131.82/udp/4001/quic-v1/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
+    "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+    "/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+    "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb"
   ],
   "Gateway": {
     "HTTPHeaders": {},
     "RootRedirect": "",
     "NoFetch": false,
-    "NoDNSLink": false
+    "NoDNSLink": false,
+    "DeserializedResponses": null,
+    "DisableHTMLErrors": null,
+    "PublicGateways": null,
+    "ExposeRoutingAPI": null
   },
   "API": {
     "HTTPHeaders": {}

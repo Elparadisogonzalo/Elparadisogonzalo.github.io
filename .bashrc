@@ -50,3 +50,4 @@ if [ -f '/data/data/com.termux/files/home/google-cloud-sdk/path.bash.inc' ]; the
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/data/data/com.termux/files/home/google-cloud-sdk/completion.bash.inc' ]; then . '/data/data/com.termux/files/home/google-cloud-sdk/completion.bash.inc'; fi
+export PATH=$PATH:$(npm config get prefix)/bin

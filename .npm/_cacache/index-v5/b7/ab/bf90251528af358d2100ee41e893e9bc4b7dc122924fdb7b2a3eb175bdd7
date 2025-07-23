@@ -1,7 +1,2 @@
 
-73f4e9e2b7178757ca9b237d9be0f86dff29993c	{"key":"pacote:tarball:@parcel/rust@2.15.4","integrity":"sha512-OxOux8z8YEYg23+15uMmYaloFp3x1RwcliBay6HqxUW7RTmtI1/z+xd8AtienCckACD60gvDGy04LjgbEGdJVg==","time":1753144459631,"size":6198}
-9d33a51cf1c10bb018e49c024fc785c21ef6914f	{"key":"pacote:tarball:@parcel/rust@2.15.4","integrity":"sha512-OxOux8z8YEYg23+15uMmYaloFp3x1RwcliBay6HqxUW7RTmtI1/z+xd8AtienCckACD60gvDGy04LjgbEGdJVg==","time":1753144486040,"size":6198}
-1fbe8faf02539aad72d15d184b211a673b255a13	{"key":"pacote:tarball:@parcel/rust@2.15.4","integrity":"sha512-OxOux8z8YEYg23+15uMmYaloFp3x1RwcliBay6HqxUW7RTmtI1/z+xd8AtienCckACD60gvDGy04LjgbEGdJVg==","time":1753144588858,"size":6198}
-09bd4becaabd2b73178cab716a34455a25beac2d	{"key":"pacote:tarball:@parcel/rust@2.15.4","integrity":"sha512-OxOux8z8YEYg23+15uMmYaloFp3x1RwcliBay6HqxUW7RTmtI1/z+xd8AtienCckACD60gvDGy04LjgbEGdJVg==","time":1753144606204,"size":6198}
-fe9b491a497b61220167f759256e2729a5577b58	{"key":"pacote:tarball:@parcel/rust@2.15.4","integrity":"sha512-OxOux8z8YEYg23+15uMmYaloFp3x1RwcliBay6HqxUW7RTmtI1/z+xd8AtienCckACD60gvDGy04LjgbEGdJVg==","time":1753144640869,"size":6198}
-a3cb8117400be58bff8dd0b4e7f30662c1a16f05	{"key":"pacote:tarball:@parcel/rust@2.15.4","integrity":"sha512-OxOux8z8YEYg23+15uMmYaloFp3x1RwcliBay6HqxUW7RTmtI1/z+xd8AtienCckACD60gvDGy04LjgbEGdJVg==","time":1753144714505,"size":6198}
+dce251a2df8a33cd81edb6631f026ce577c22d53	{"key":"pacote:tarball:@parcel/rust@2.15.4","integrity":"sha512-OxOux8z8YEYg23+15uMmYaloFp3x1RwcliBay6HqxUW7RTmtI1/z+xd8AtienCckACD60gvDGy04LjgbEGdJVg==","time":1753155804271,"size":6198}

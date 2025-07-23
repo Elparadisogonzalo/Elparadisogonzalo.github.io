@@ -1,1 +1,0 @@
-/\r?\n/g,""),"base64")}return{tag:c.match(i)[1],data:u}}}).call(this)}).call(this,e("buffer").Buffer)}}},{package:"browserify>crypto-browserify>public-encrypt>parse-asn1",file:"node_modules/parse-asn1/fixProc.js"}]],[],{});
