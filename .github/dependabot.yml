@@ -33,4 +33,3 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
-993aa21cbbc7a5eb394617258af435e854cc90a4
