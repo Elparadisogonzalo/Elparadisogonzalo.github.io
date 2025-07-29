@@ -1,7 +1,44 @@
 version: 2
 updates:
-  - package-ecosystem: "mix"
+  # ───────────── Node.js (npm/yarn) ─────────────
+  - package-ecosystem: "npm"
+    directory: "/"  # Root JS
+    schedule: { interval: "daily" }
+
+  - package-ecosystem: "npm"
+    directory: "/packages/frontend"
+    schedule: { interval: "daily" }
+
+  - package-ecosystem: "npm"
+    directory: "/packages/backend"
+    schedule: { interval: "daily" }
+
+  # ───────────── Python (pip) ─────────────
+  - package-ecosystem: "pip"
+    directory: "/packages/api"  # or wherever requirements.txt is
+    schedule: { interval: "weekly" }
+
+  # ───────────── Rust (cargo) ─────────────
+  - package-ecosystem: "cargo"
+    directory: "/packages/rust"  # or adjust if Cargo.toml is elsewhere
+    schedule: { interval: "weekly" }
+
+  # ───────────── Java (maven) ─────────────
+  - package-ecosystem: "maven"
+    directory: "/packages/java"  # adjust if pom.xml is elsewhere
+    schedule: { interval: "weekly" }
+
+  # ───────────── Solidity (custom/hardhat) ─────────────
+  # Hardhat uses npm under the hood, so already covered above.
+  # But if using Foundry or other custom tools:
+  - package-ecosystem: "github-actions"
+    directory: "/contracts"
+    schedule: { interval: "weekly" }
+
+  # ───────────── Docker ─────────────
+  - package-ecosystem: "docker"
     directory: "/"
+<<<<<<< HEAD
     open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
@@ -33,3 +70,11 @@ updates:
     open-pull-requests-limit: 5
     schedule:
       interval: "weekly"
+=======
+    schedule: { interval: "weekly" }
+
+  # ───────────── GitHub Actions ─────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule: { interval: "weekly" }
+>>>>>>> main
