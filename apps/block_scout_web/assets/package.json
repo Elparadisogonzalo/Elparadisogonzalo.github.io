@@ -90,8 +90,13 @@
     "babel-loader": "^9.2.1",
     "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^7.1.2",
+<<<<<<< HEAD
+    "css-minimizer-webpack-plugin": "^7.0.2",
+    "eslint": "^8.57.1",
+=======
     "css-minimizer-webpack-plugin": "^7.0.0",
     "eslint": "^9.32.0",
+>>>>>>> main
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-node": "^11.1.0",
