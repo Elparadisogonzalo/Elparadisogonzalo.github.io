@@ -22,7 +22,8 @@ updates:
     schedule:
       interval: "monthly"
 
-  - package-ecosystem: "yarn"
+  # This handles Yarn too, as long as there's a yarn.lock file present
+  - package-ecosystem: "npm"
     directory: "/"
     open-pull-requests-limit: 5
     schedule:
