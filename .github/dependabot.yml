@@ -8,7 +8,7 @@ updates:
 
   - package-ecosystem: "npm"
     directory: "/apps/block_scout_web/assets"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 100
     schedule:
       interval: "monthly"
     ignore:
