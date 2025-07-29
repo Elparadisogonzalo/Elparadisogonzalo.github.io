@@ -38,7 +38,7 @@ updates:
   # ───────────── Docker ─────────────
   - package-ecosystem: "docker"
     directory: "/"
-<<<<<<< HEAD
+
     open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
@@ -70,11 +70,11 @@ updates:
     open-pull-requests-limit: 5
     schedule:
       interval: "weekly"
-=======
+
     schedule: { interval: "weekly" }
 
   # ───────────── GitHub Actions ─────────────
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule: { interval: "weekly" }
->>>>>>> main
+
