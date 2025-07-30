@@ -1,0 +1,6 @@
+Accept: application/xml
+<OAuth>
+  <token_type>bearer</token_type>
+  <scope>repo,gist</scope>
+  <access_token>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</access_token>
+</OAuth>
