@@ -46,8 +46,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/apps/block_scout_web/assets"
     open-pull-requests-limit: 10
-    schedule:
-      interval: "monthly"
+    schedule: { interval: "monthly" }
     ignore:
       - dependency-name: "bootstrap"
       - dependency-name: "web3"
@@ -56,18 +55,39 @@ updates:
   - package-ecosystem: "npm"
     directory: "/apps/explorer"
     open-pull-requests-limit: 10
-    schedule:
-      interval: "monthly"
+    schedule: { interval: "monthly" }
 
   - package-ecosystem: "yarn"
     directory: "/"
     open-pull-requests-limit: 5
-    schedule:
-      interval: "weekly"
+    schedule: { interval: "weekly" }
 
+  # ───────────── Python (pip) ─────────────
   - package-ecosystem: "pip"
     directory: "/"
     open-pull-requests-limit: 5
+
+    schedule: { interval: "weekly" }
+
+  - package-ecosystem: "pip"
+    directory: "/packages/api"
+    schedule: { interval: "weekly" }
+
+  # ───────────── Rust (cargo) ─────────────
+  - package-ecosystem: "cargo"
+    directory: "/packages/rust"
+    schedule: { interval: "weekly" }
+
+  # ───────────── Java (maven) ─────────────
+  - package-ecosystem: "maven"
+    directory: "/packages/java"
+    schedule: { interval: "weekly" }
+
+  # ───────────── Docker ─────────────
+  - package-ecosystem: "docker"
+    directory: "/"
+    open-pull-requests-limit: 20
+
     schedule:
       interval: "weekly"
 
@@ -78,3 +98,6 @@ updates:
     directory: "/"
     schedule: { interval: "weekly" }
 
+  - package-ecosystem: "github-actions"
+    directory: "/contracts"
+    schedule: { interval: "weekly" }
