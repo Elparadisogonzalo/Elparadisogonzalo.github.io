@@ -1,0 +1,8 @@
+Accept: application/xml
+<OAuth>
+  <device_code>e24972595d09177291908dbc594b6074e86901e4</device_code>
+  <user_code></user_code>
+  <verification_uri>https://github.com/login/device</verification_uri>
+  <expires_in>900</expires_in>
+  <interval>5</interval>
+</OAuth>
