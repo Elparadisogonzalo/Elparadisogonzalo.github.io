@@ -13,8 +13,6 @@ updates:
     directory: "/packages/backend"
     schedule: { interval: "daily" }
 
-<<<<<<< HEAD
-=======
   # ───────────── Python (pip) ─────────────
   - package-ecosystem: "pip"
     directory: "/packages/api"  # or wherever requirements.txt is
@@ -45,7 +43,6 @@ updates:
     schedule:
       interval: "weekly"
 
->>>>>>> 6dd60e2c0 (approve)
   - package-ecosystem: "npm"
     directory: "/apps/block_scout_web/assets"
     open-pull-requests-limit: 10
@@ -69,7 +66,7 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     open-pull-requests-limit: 5
-<<<<<<< HEAD
+
     schedule: { interval: "weekly" }
 
   - package-ecosystem: "pip"
@@ -90,11 +87,10 @@ updates:
   - package-ecosystem: "docker"
     directory: "/"
     open-pull-requests-limit: 20
-=======
+
     schedule:
       interval: "weekly"
 
->>>>>>> 6dd60e2c0 (approve)
     schedule: { interval: "weekly" }
 
   # ───────────── GitHub Actions ─────────────
@@ -102,9 +98,6 @@ updates:
     directory: "/"
     schedule: { interval: "weekly" }
 
-<<<<<<< HEAD
   - package-ecosystem: "github-actions"
     directory: "/contracts"
     schedule: { interval: "weekly" }
-=======
->>>>>>> 6dd60e2c0 (approve)
