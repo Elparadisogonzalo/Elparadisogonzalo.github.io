@@ -1,6 +1,8 @@
 Accept: application/json
 {
-  "access_token":"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",
-  "scope":"repo,gist",
-  "token_type":"bearer"
+  "device_code": "e24972595d09177291908dbc594b6074e86901e4",
+  "user_code": "input_auth_code",
+  "verification_uri": "https://github.com/login/device",
+  "expires_in": 900,
+  "interval": 5
 }
